@@ -21,7 +21,7 @@ public class PaymentTypeRepositoryWrapper {
 
     public PaymentType findOneWithNotFoundDetection(final Long id) {
         final PaymentType paymentType = this.repository.findOne(id);
-        if (paymentType == null) { throw new PaymentTypeNotFoundException(id); }
+        if (paymentType == null || paymentType.isDeleted()) { throw new PaymentTypeNotFoundException(id); }
         return paymentType;
     }
 

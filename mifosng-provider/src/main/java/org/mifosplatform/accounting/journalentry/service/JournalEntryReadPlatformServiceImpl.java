@@ -108,6 +108,7 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
             if (associationParametersData.isPaymentDetailsRequired()) {
                 sb.append(" ,pd.receipt_number as receiptNumber, ").append(" pd.check_number as checkNumber, ")
                         .append(" pd.account_number as accountNumber, ").append(" pt.value as paymentTypeName, ")
+                        .append(" pt.is_deleted as paymentTypeDeleted, ")
                         .append(" pd.payment_type_id as paymentTypeId,").append(" pd.bank_number as bankNumber, ")
                         .append(" pd.routing_code as routingCode, ").append(" note.id as noteId, ")
                         .append(" st.transaction_type_enum as savingsTransactionType ");
@@ -205,7 +206,8 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
                 final Long paymentTypeId = JdbcSupport.getLong(rs, "paymentTypeId");
                 if (paymentTypeId != null) {
                     final String typeName = rs.getString("paymentTypeName");
-                    final PaymentTypeData paymentType = PaymentTypeData.instance(paymentTypeId, typeName);
+                    final boolean deleted = rs.getBoolean("paymentTypeDeleted");
+                    final PaymentTypeData paymentType = PaymentTypeData.instance(paymentTypeId, typeName, deleted);
                     final String accountNumber = rs.getString("accountNumber");
                     final String checkNumber = rs.getString("checkNumber");
                     final String routingCode = rs.getString("routingCode");

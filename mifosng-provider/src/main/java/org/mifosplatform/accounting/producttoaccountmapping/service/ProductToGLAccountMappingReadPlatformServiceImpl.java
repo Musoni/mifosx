@@ -47,7 +47,7 @@ public class ProductToGLAccountMappingReadPlatformServiceImpl implements Product
             return " mapping.id as id, mapping.gl_account_id as glAccountId,glaccount.name as name,glaccount.gl_code as code,"
                     + " mapping.product_id as productId, mapping.product_type as productType,mapping.financial_account_type as financialAccountType, "
                     + " mapping.payment_type as paymentTypeId,pt.value as paymentTypeValue, mapping.charge_id as chargeId, charge.is_penalty as penalty, "
-                    + " charge.name as chargeName "
+                    + " charge.name as chargeName, pt.is_deleted as paymentTypeDeleted "
                     + " from acc_product_mapping mapping left join m_charge charge on mapping.charge_id=charge.id "
                     + " left join acc_gl_account as  glaccount on mapping.gl_account_id = glaccount.id"
                     + " left join m_payment_type pt on mapping.payment_type=pt.id" + " where mapping.product_type= ? ";
@@ -68,6 +68,7 @@ public class ProductToGLAccountMappingReadPlatformServiceImpl implements Product
             final String glCode = rs.getString("code");
             final String chargeName = rs.getString("chargeName");
             final Boolean penalty = rs.getBoolean("penalty");
+            final boolean paymentTypeDeleted = rs.getBoolean("paymentTypeDeleted");
 
             final Map<String, Object> loanProductToGLAccountMap = new LinkedHashMap<>(5);
             loanProductToGLAccountMap.put("id", id);
@@ -82,6 +83,8 @@ public class ProductToGLAccountMappingReadPlatformServiceImpl implements Product
             loanProductToGLAccountMap.put("penalty", penalty);
             loanProductToGLAccountMap.put("glAccountName", glAccountName);
             loanProductToGLAccountMap.put("glCode", glCode);
+            loanProductToGLAccountMap.put("paymentTypeDeleted", paymentTypeDeleted);
+            
             return loanProductToGLAccountMap;
         }
     }
@@ -251,7 +254,9 @@ public class ProductToGLAccountMappingReadPlatformServiceImpl implements Product
             }
             final Long paymentTypeId = (Long) productToGLAccountMap.get("paymentTypeId");
             final String paymentTypeValue = (String) productToGLAccountMap.get("paymentTypeValue");
-            final PaymentTypeData paymentTypeData = PaymentTypeData.instance(paymentTypeId, paymentTypeValue);
+            final boolean paymentTypeDeleted = (Boolean) productToGLAccountMap.get("paymentTypeDeleted");
+            final PaymentTypeData paymentTypeData = PaymentTypeData.instance(paymentTypeId, paymentTypeValue, 
+                    paymentTypeDeleted);
             final Long glAccountId = (Long) productToGLAccountMap.get("glAccountId");
             final String glAccountName = (String) productToGLAccountMap.get("glAccountName");
             final String glCode = (String) productToGLAccountMap.get("glCode");

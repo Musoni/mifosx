@@ -46,7 +46,7 @@ public class PaymentTypeReadPlatformServiceImpl implements PaymentTypeReadPlatfo
         this.context.authenticatedUser();
 
         final PaymentTypeMapper ptm = new PaymentTypeMapper();
-        final String sql = "select " + ptm.schema() + "where pt.id = ?";
+        final String sql = "select " + ptm.schema() + " and pt.id = ?";
 
         return this.jdbcTemplate.queryForObject(sql, ptm, new Object[] { paymentTypeId });
     }
@@ -54,7 +54,9 @@ public class PaymentTypeReadPlatformServiceImpl implements PaymentTypeReadPlatfo
     private static final class PaymentTypeMapper implements RowMapper<PaymentTypeData> {
 
         public String schema() {
-            return " pt.id as id, pt.value as name, pt.description as description,pt.is_cash_payment as isCashPayment,pt.order_position as position from m_payment_type pt ";
+            return " pt.id as id, pt.value as name, pt.description as description, pt.is_deleted as deleted, "
+                    + "pt.is_cash_payment as isCashPayment, pt.order_position as position from m_payment_type pt "
+                    + "where pt.is_deleted = 0 ";
         }
 
         @Override
@@ -65,8 +67,9 @@ public class PaymentTypeReadPlatformServiceImpl implements PaymentTypeReadPlatfo
             final String description = rs.getString("description");
             final boolean isCashPayment = rs.getBoolean("isCashPayment");
             final Long position = rs.getLong("position");
+            final boolean deleted = rs.getBoolean("deleted");
 
-            return PaymentTypeData.instance(id, name, description, isCashPayment, position);
+            return PaymentTypeData.instance(id, name, description, isCashPayment, position, deleted);
         }
 
     }

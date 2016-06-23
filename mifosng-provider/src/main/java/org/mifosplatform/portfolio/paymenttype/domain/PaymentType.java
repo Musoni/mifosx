@@ -33,18 +33,23 @@ public class PaymentType extends AbstractPersistable<Long> {
 
     @Column(name = "order_position")
     private Long position;
+    
+    @Column(name = "is_deleted")
+    private boolean deleted;
 
     protected PaymentType() {}
 
-    public PaymentType(final String name, final String description, final Boolean isCashPayment, final Long position) {
+    public PaymentType(final String name, final String description, final Boolean isCashPayment, final Long position, 
+            final boolean deleted) {
         this.name = name;
         this.description = description;
         this.isCashPayment = isCashPayment;
         this.position = position;
+        this.deleted = deleted;
     }
 
     public static PaymentType create(String name, String description, Boolean isCashPayment, Long position) {
-        return new PaymentType(name, description, isCashPayment, position);
+        return new PaymentType(name, description, isCashPayment, position, false);
     }
 
     public Map<String, Object> update(final JsonCommand command) {
@@ -79,6 +84,23 @@ public class PaymentType extends AbstractPersistable<Long> {
     }
 
     public PaymentTypeData toData() {
-        return PaymentTypeData.instance(getId(), this.name, this.description, this.isCashPayment, this.position);
+        return PaymentTypeData.instance(getId(), this.name, this.description, this.isCashPayment, this.position, 
+                this.deleted);
+    }
+    
+    /**
+     * Delete the {@link PaymentType} entity by setting the "deleted" flag to 1
+     */
+    public void delete() {
+        this.name = this.name + "_deleted_" + this.getId();
+        
+        this.deleted = true;
+    }
+
+    /**
+     * @return the deleted
+     */
+    public boolean isDeleted() {
+        return deleted;
     }
 }

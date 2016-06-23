@@ -10,14 +10,12 @@ import java.util.Map;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResultBuilder;
-import org.mifosplatform.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.mifosplatform.portfolio.paymenttype.api.PaymentTypeApiResourceConstants;
 import org.mifosplatform.portfolio.paymenttype.data.PaymentTypeDataValidator;
 import org.mifosplatform.portfolio.paymenttype.domain.PaymentType;
 import org.mifosplatform.portfolio.paymenttype.domain.PaymentTypeRepository;
 import org.mifosplatform.portfolio.paymenttype.domain.PaymentTypeRepositoryWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -66,25 +64,12 @@ public class PaymentTypeWriteServiceImpl implements PaymentTypeWriteService {
     @Override
     public CommandProcessingResult deletePaymentType(Long paymentTypeId) {
         final PaymentType paymentType = this.repositoryWrapper.findOneWithNotFoundDetection(paymentTypeId);
-        try {
-            this.repository.delete(paymentType);
-            this.repository.flush();
-        } catch (final DataIntegrityViolationException e) {
-            handleDataIntegrityIssues(e);
-        }
+        
+        // delete the entity by setting the "deleted" flag to 1
+        paymentType.delete();
+        
+        this.repository.save(paymentType);
+        
         return new CommandProcessingResultBuilder().withEntityId(paymentType.getId()).build();
-    }
-
-    private void handleDataIntegrityIssues(final DataIntegrityViolationException dve) {
-
-        final Throwable realCause = dve.getMostSpecificCause();
-        if (realCause.getMessage().contains("acc_product_mapping")) {
-            throw new PlatformDataIntegrityException("error.msg.payment.type.association.exist",
-                    "cannot.delete.payment.type.with.association");
-        } else if (realCause.getMessage().contains("payment_type_id")) { throw new PlatformDataIntegrityException(
-                "error.msg.payment.type.association.exist", "cannot.delete.payment.type.with.association"); }
-
-        throw new PlatformDataIntegrityException("error.msg.paymenttypes.unknown.data.integrity.issue",
-                "Unknown data integrity issue with resource.");
     }
 }

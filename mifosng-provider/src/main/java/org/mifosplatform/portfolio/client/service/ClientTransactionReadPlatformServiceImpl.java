@@ -62,7 +62,7 @@ public class ClientTransactionReadPlatformServiceImpl implements ClientTransacti
                     "tr.currency_code as currencyCode, curr.decimal_places as currencyDigits, curr.currency_multiplesof as inMultiplesOf, ");
             sqlBuilder.append("curr.name as currencyName, curr.internationalized_name_code as currencyNameCode,  ");
             sqlBuilder.append("curr.display_symbol as currencyDisplaySymbol,  ");
-            sqlBuilder.append("pt.value as paymentTypeName  ");
+            sqlBuilder.append("pt.value as paymentTypeName, pt.is_deleted as paymentTypeDeleted  ");
             sqlBuilder.append("from m_client c  ");
             sqlBuilder.append("join m_client_transaction tr on tr.client_id = c.id ");
             sqlBuilder.append("join m_currency curr on curr.code = tr.currency_code ");
@@ -96,7 +96,9 @@ public class ClientTransactionReadPlatformServiceImpl implements ClientTransacti
                 final Long paymentTypeId = JdbcSupport.getLong(rs, "paymentType");
                 if (paymentTypeId != null) {
                     final String typeName = rs.getString("paymentTypeName");
-                    final PaymentTypeData paymentType = PaymentTypeData.instance(paymentTypeId, typeName);
+                    final boolean paymentTypeDeleted = rs.getBoolean("paymentTypeDeleted");
+                    final PaymentTypeData paymentType = PaymentTypeData.instance(paymentTypeId, typeName, 
+                            paymentTypeDeleted);
                     final String accountNumber = rs.getString("accountNumber");
                     final String checkNumber = rs.getString("checkNumber");
                     final String routingCode = rs.getString("routingCode");

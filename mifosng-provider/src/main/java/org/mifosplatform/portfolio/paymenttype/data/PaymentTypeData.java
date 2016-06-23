@@ -17,24 +17,28 @@ public class PaymentTypeData {
     private Boolean isCashPayment;
     @SuppressWarnings("unused")
     private Long position;
+    @SuppressWarnings("unused")
+    private boolean deleted;
 
-    public PaymentTypeData(final Long id, final String name, final String description, final Boolean isCashPayment, final Long position) {
+    public PaymentTypeData(final Long id, final String name, final String description, final Boolean isCashPayment, 
+            final Long position, final boolean deleted) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.isCashPayment = isCashPayment;
         this.position = position;
+        this.deleted = deleted;
     }
 
     public static PaymentTypeData instance(final Long id, final String name, final String description, final Boolean isCashPayment,
-            final Long position) {
-        return new PaymentTypeData(id, name, description, isCashPayment, position);
+            final Long position, final boolean deleted) {
+        return new PaymentTypeData(id, name, description, isCashPayment, position, deleted);
     }
 
-    public static PaymentTypeData instance(final Long id, final String name) {
+    public static PaymentTypeData instance(final Long id, final String name, final boolean deleted) {
         String description = null;
         Boolean isCashPayment = null;
         Long position = null;
-        return new PaymentTypeData(id, name, description, isCashPayment, position);
+        return new PaymentTypeData(id, name, description, isCashPayment, position, deleted);
     }
 }
