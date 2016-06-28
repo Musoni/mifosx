@@ -2961,6 +2961,7 @@ public class Loan extends AbstractPersistable<Long> {
 
         for (final LoanTransaction transaction : this.loanTransactions) {
             transaction.reverse();
+            transaction.setNotmanuallyAdjustedOrReversed();
         }
     }
 

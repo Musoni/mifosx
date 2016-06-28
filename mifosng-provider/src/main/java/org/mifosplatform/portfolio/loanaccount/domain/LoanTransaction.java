@@ -672,6 +672,10 @@ public final class LoanTransaction extends AbstractPersistable<Long> {
         this.manuallyAdjustedOrReversed = true;
     }
 
+    public void setNotmanuallyAdjustedOrReversed() {
+        this.manuallyAdjustedOrReversed = false;
+    }
+
     private LocalDate getCreatedDate() {
         return new LocalDate(this.createdDate);
     }
