@@ -442,6 +442,8 @@ public final class Group extends AbstractPersistable<Long> {
         this.staff = null;
     }
 
+    public String getName() {return name;}
+
     public GroupLevel getGroupLevel() {
         return this.groupLevel;
     }
