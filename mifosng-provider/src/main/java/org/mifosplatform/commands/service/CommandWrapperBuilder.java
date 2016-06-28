@@ -589,6 +589,15 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder createDataExport(final String json) {
+        this.actionName = "CREATE";
+        this.entityName = "DATAEXPORT";
+        this.entityId = null;
+        this.href = "/dataexport/";
+        this.json = json;
+        return this;
+    }
+
     public CommandWrapperBuilder createDBDatatable(final String json) {
         this.actionName = "CREATE";
         this.entityName = "DATATABLE";
