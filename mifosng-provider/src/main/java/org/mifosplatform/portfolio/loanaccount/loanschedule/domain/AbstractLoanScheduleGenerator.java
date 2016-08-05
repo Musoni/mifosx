@@ -1866,7 +1866,17 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
                     totalCumulativePrincipal = totalCumulativePrincipal.plus(period.principalDue());
                     totalCumulativeInterest = totalCumulativeInterest.plus(period.interestDue());
                     actualTotalCumulativeInterest = actualTotalCumulativeInterest.plus(period.interestDue());
-                    totalOutstandingInterestPaymentDueToGrace = principalInterestForThisPeriod.interestPaymentDueToGrace();
+                    
+                    switch (loanApplicationTerms.getInterestMethod()) {
+                        case FLAT:
+                            totalOutstandingInterestPaymentDueToGrace = principalInterestForThisPeriod.interestPaymentDueToGrace();
+                            break;
+                            
+                        default:
+                            // interest payment due to grace will remain at zero for declining balance loans
+                            // so that accumulating grace periods interest amount don't get applied to the first installment after the last grace period
+                            break;
+                    }
 
                     installmentFromDate = adjustedInstallmentDueDate;
                     installmentNumber++;
