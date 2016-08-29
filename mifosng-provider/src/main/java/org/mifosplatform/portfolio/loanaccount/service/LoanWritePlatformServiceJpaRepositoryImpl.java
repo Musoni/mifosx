@@ -295,12 +295,14 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         this.loanEventApiJsonValidator.validateDisbursement(command.json(), isAccountTransfer);
 
         final Loan loan = this.loanAssembler.assembleFrom(loanId);
+        final Long productId = loan.getLoanProduct().getId();
+
         checkClientOrGroupActive(loan);
         
         final LocalDate nextPossibleRepaymentDate = loan.getNextPossibleRepaymentDateForRescheduling();
         final Date rescheduledRepaymentDate = command.DateValueOfParameterNamed("adjustRepaymentDate");
 
-        entityDatatableChecksWritePlatformService.runTheCheck(loanId, EntityTables.LOAN.getName(), StatusEnum.ACTIVATE.getCode().longValue(), EntityTables.LOAN.getForeignKeyColumnNameOnDatatable());
+        entityDatatableChecksWritePlatformService.runTheCheckForLoan(loanId, EntityTables.LOAN.getName(), StatusEnum.ACTIVATE.getCode().longValue(), EntityTables.LOAN.getForeignKeyColumnNameOnDatatable(),productId);
 
         // check for product mix validations
         checkForProductMixRestrictions(loan);
@@ -1086,13 +1088,16 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         changes.put("dateFormat", command.dateFormat());
 
         final Loan loan = this.loanAssembler.assembleFrom(loanId);
+        final Long productId = loan.getLoanProduct().getId();
+
         checkClientOrGroupActive(loan);
         
         this.businessEventNotifierService.notifyBusinessEventToBeExecuted(BUSINESS_EVENTS.LOAN_WRITTEN_OFF,
                 constructEntityMap(BUSINESS_ENTITY.LOAN, loan));
 
-        entityDatatableChecksWritePlatformService.runTheCheck(loanId, EntityTables.LOAN.getName(), StatusEnum.WRITE_OFF.getCode().longValue(), EntityTables.LOAN.getForeignKeyColumnNameOnDatatable());
-        
+
+        entityDatatableChecksWritePlatformService.runTheCheckForLoan(loanId, EntityTables.LOAN.getName(), StatusEnum.WRITE_OFF.getCode().longValue(), EntityTables.LOAN.getForeignKeyColumnNameOnDatatable(),productId);
+
         removeLoanCycle(loan);
 
         final List<Long> existingTransactionIds = new ArrayList<>();

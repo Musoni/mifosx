@@ -556,7 +556,7 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
     public boolean isRegisteredDataTable(final String name) {
         // PERMITTED datatables
         final String sql = "select if((exists (select 1 from x_registered_table where registered_table_name = ?)) = 1, 'true', 'false')";
-        final String isRegisteredDataTable = this.jdbcTemplate.queryForObject(sql, String.class, new Object[] { name });
+        final String isRegisteredDataTable = this.jdbcTemplate.queryForObject(sql, String.class, new Object[]{name});
         return new Boolean(isRegisteredDataTable);
     }
 
@@ -674,6 +674,11 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
 
             final JsonElement element = this.fromJsonHelper.parse(command.json());
             final JsonArray columns = this.fromJsonHelper.extractJsonArrayNamed("columns", element);
+
+            // these columns will not be created in the db but only in the meta data table
+            // those meta data will be use only for display purpose
+            final JsonArray johnDoeColumns = this.fromJsonHelper.extractJsonArrayNamed("johnDoeColumns", element);
+
             datatableName = this.fromJsonHelper.extractStringNamed("datatableName", element);
 
             final String apptableName = this.fromJsonHelper.extractStringNamed("apptableName", element);
@@ -732,6 +737,18 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
                      fieldNameAndOrder.add(this.returnFieldNameAndOrder(column.getAsJsonObject(),isConstraintApproach));
                 }
             }
+
+
+            if(johnDoeColumns!=null){
+
+                for (final JsonElement column : johnDoeColumns) {
+                    if(metaData){
+                        fieldNameAndOrder.add(this.returnFieldNameAndOrder(column.getAsJsonObject(),isConstraintApproach));
+                    }
+                }
+            }
+
+
 
             // Remove trailing comma and space
             sqlBuilder = sqlBuilder.delete(sqlBuilder.length() - 2, sqlBuilder.length());
@@ -1077,8 +1094,14 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
 
             final JsonElement element = this.fromJsonHelper.parse(command.json());
             final JsonArray changeColumns = this.fromJsonHelper.extractJsonArrayNamed("changeColumns", element);
+            final JsonArray changeJohnDoeColumns = this.fromJsonHelper.extractJsonArrayNamed("changeJohnDoeColumns", element);
+
             final JsonArray addColumns = this.fromJsonHelper.extractJsonArrayNamed("addColumns", element);
+            final JsonArray addJohnDoeColumns = this.fromJsonHelper.extractJsonArrayNamed("addJohnDoeColumns", element);
+
             final JsonArray dropColumns = this.fromJsonHelper.extractJsonArrayNamed("dropColumns", element);
+            final JsonArray dropJohnDoeColumns = this.fromJsonHelper.extractJsonArrayNamed("dropJohnDoeColumns", element);
+
             final String apptableName = this.fromJsonHelper.extractStringNamed("apptableName", element);
 
             String datatableDisplayName = datatableName;
@@ -1086,7 +1109,7 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
             if(this.fromJsonHelper.parameterExists("displayName",element)){
                 datatableDisplayName =this.fromJsonHelper.extractStringNamed("displayName", element);
             }
-            final Long categoryId = this.fromJsonHelper.extractLongNamed("category",element);
+            final Long categoryId = this.fromJsonHelper.extractLongNamed("category", element);
             Boolean metaData = this.fromJsonHelper.extractBooleanNamed("metaData",element);
 
             final List<Map<String,Object>> fieldNameAndOrder = new ArrayList<Map<String, Object>>();
@@ -1180,6 +1203,23 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
                 }
 
             }
+
+            if(dropJohnDoeColumns!=null){
+
+                if(metaData){
+                    for (final JsonElement column : dropJohnDoeColumns) {
+                        JsonObject columnName = column.getAsJsonObject();
+                        String name = (columnName.has("name")) ? columnName.get("name").getAsString() : null;
+                        RegisteredTableMetaData registeredTableMetaData = this.registeredTableMetaDataRepository.findOneByTableNameAndFieldName(datatableName,name);
+                        if(registeredTableMetaData !=null){
+                            this.registeredTableMetaDataRepository.delete(registeredTableMetaData);
+                        }
+                    }
+                }
+
+            }
+
+
             if (addColumns != null) {
 
                 StringBuilder sqlBuilder = new StringBuilder("ALTER TABLE `" + datatableName + "`");
@@ -1210,6 +1250,26 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
                     }
                 }
             }
+
+            if(addJohnDoeColumns!=null){
+
+                for (final JsonElement column : addJohnDoeColumns) {
+                    if(metaData){
+                        fieldNameAndOrder.add(this.returnFieldNameAndOrder(column.getAsJsonObject(),isConstraintApproach));
+                    }
+                }
+
+                if(metaData){
+                    final RegisteredTable registeredTable = this.registeredTableRepository.findOneByRegisteredTableName(datatableName);
+                    for(Map<String,Object> map : fieldNameAndOrder){
+                        this.registeredTableMetaDataRepository.save(RegisteredTableMetaData.createNewRegisterTableMetaData(registeredTable,datatableName,map));
+                    }
+                }
+
+            }
+
+
+
             if (changeColumns != null) {
 
                 StringBuilder sqlBuilder = new StringBuilder("ALTER TABLE `" + datatableName + "`");
@@ -1260,6 +1320,39 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
                             }
                         }
                     }
+
+
+
+                    if(changeJohnDoeColumns !=null){
+
+
+                        if(metaData){
+                            for (final JsonElement column : changeJohnDoeColumns) {
+                                final JsonObject columnName = column.getAsJsonObject();
+                                final String name = (columnName.has("name")) ? columnName.get("name").getAsString() : null;
+                                final String labelName = (columnName.has("labelName")) ? columnName.get("labelName").getAsString() : null;
+                                final String displayCondition = (columnName.has("displayCondition")) ? columnName.get("displayCondition").getAsString() : null;
+                                //final String formulaExpression = (columnName.has("formulaExpression") && !columnName.get("formulaExpression").getAsString().isEmpty() ) ? columnName.get("formulaExpression").getAsString() : null;
+
+                                final Integer order =(columnName.has("order")) ? columnName.get("order").getAsInt() : 0;
+                                final  RegisteredTableMetaData registeredTableMetaData = this.registeredTableMetaDataRepository.findOneByTableNameAndFieldName(datatableName,name);
+                                if(registeredTableMetaData != null){
+                                    registeredTableMetaData.updateLabelName(labelName);
+                                    registeredTableMetaData.updateOrder(order);
+                                    registeredTableMetaData.updateDisplayCondition(displayCondition);
+                                    //registeredTableMetaData.updateFormulaExpression(formulaExpression);
+                                    this.registeredTableMetaDataRepository.saveAndFlush(registeredTableMetaData);
+                                }else{
+                                    //if column does not exist save the column
+                                    final Map<String, Object> columnsNotSaveYet = this.returnFieldNameAndOrder(column.getAsJsonObject(),isConstraintApproach);
+                                    final RegisteredTable registeredTable = this.registeredTableRepository.findOneByRegisteredTableName(datatableName);
+                                    this.registeredTableMetaDataRepository.save(RegisteredTableMetaData.createNewRegisterTableMetaData(registeredTable,datatableName,columnsNotSaveYet));
+                                }
+                            }
+                        }
+
+                    }
+
 
                 } catch (final GenericJDBCException e) {
                     if (e.getMessage().contains("Error on rename")) { throw new PlatformServiceUnavailableException(
@@ -2315,6 +2408,7 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
 
         fieldNameAndOrder.put("labelName",labelName);
         fieldNameAndOrder.put("order",order);
+        fieldNameAndOrder.put("type",type);
         fieldNameAndOrder.put("displayCondition", displayCondition);
         fieldNameAndOrder.put("formulaExpression", formulaExpression);
 

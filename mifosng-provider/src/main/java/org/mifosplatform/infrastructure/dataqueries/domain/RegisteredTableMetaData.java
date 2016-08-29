@@ -45,6 +45,9 @@ public class RegisteredTableMetaData  extends AbstractPersistable<Long> {
     @Column(name="formula_expression")
     private String formulaExpression;
 
+    @Column(name="type")
+    private String type;
+
     public RegisteredTableMetaData() {
     }
 
@@ -63,10 +66,15 @@ public class RegisteredTableMetaData  extends AbstractPersistable<Long> {
             formulaExpression = mapObject.get("formulaExpression").toString();
         }
 
-        return new RegisteredTableMetaData(registeredTable,tableName,fieldName,labelName,order, displayCondition, formulaExpression);
+        String type = null;
+        if(mapObject.get("type") != null && !mapObject.get("type").toString().isEmpty()) {
+            type = mapObject.get("type").toString();
+        }
+
+        return new RegisteredTableMetaData(registeredTable,tableName,fieldName,labelName,order, displayCondition, formulaExpression,type);
     }
 
-    private RegisteredTableMetaData(final RegisteredTable registeredTable,final String tableName, final String fieldName, final String labelName, final Integer order, final String displayCondition, final String formulaExpression) {
+    private RegisteredTableMetaData(final RegisteredTable registeredTable,final String tableName, final String fieldName, final String labelName, final Integer order, final String displayCondition, final String formulaExpression,final String type) {
         this.registeredTable = registeredTable;
         this.tableName = tableName;
         this.fieldName = fieldName;
@@ -74,6 +82,7 @@ public class RegisteredTableMetaData  extends AbstractPersistable<Long> {
         this.order = order;
         this.displayCondition = displayCondition;
         this.formulaExpression = formulaExpression;
+        this.type = type;
     }
 
     public Map<String, Object> update(final JsonCommand command) {
@@ -158,4 +167,6 @@ public class RegisteredTableMetaData  extends AbstractPersistable<Long> {
     public String getDisplayCondition() { return this.displayCondition; }
 
     public String getFormulaExpression() { return this.formulaExpression; }
+
+    public String getType() { return type;}
 }

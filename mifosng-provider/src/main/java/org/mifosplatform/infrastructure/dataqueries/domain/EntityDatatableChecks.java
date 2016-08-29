@@ -36,15 +36,22 @@ public class EntityDatatableChecks extends AbstractPersistable<Long> {
     @Column(name="system_defined")
     private boolean systemDefined;
 
+
+    @Column(name="product_loan_id", nullable = false)
+    private Long productLoanId;
+
+
+
     public EntityDatatableChecks() {
     }
 
-    public EntityDatatableChecks(final String entity, final Long datatableId, final Long status, final boolean systemDefined) {
+    public EntityDatatableChecks(final String entity, final Long datatableId, final Long status, final boolean systemDefined, final Long productLoanId) {
 
         this.entity = entity;
         this.status = status;
         this.datatableId = datatableId;
         this.systemDefined = systemDefined;
+        this.productLoanId = productLoanId;
     }
 
     public static EntityDatatableChecks fromJson(final JsonCommand command){
@@ -61,8 +68,13 @@ public class EntityDatatableChecks extends AbstractPersistable<Long> {
             systemDefined = false;
         }
 
+        Long productLoanId =null;
 
-        return new EntityDatatableChecks(entity,datatableId,status,systemDefined);
+        if(command.parameterExists("productId")){
+           productLoanId = command.longValueOfParameterNamed("productId");
+        }
+
+        return new EntityDatatableChecks(entity,datatableId,status,systemDefined,productLoanId);
 
     }
 
@@ -81,4 +93,8 @@ public class EntityDatatableChecks extends AbstractPersistable<Long> {
     public boolean isSystemDefined() {return this.systemDefined;}
 
     public RegisteredTable getDatatable(){return this.datatable;}
+
+    public Long getProductLoanId() {
+        return productLoanId;
+    }
 }

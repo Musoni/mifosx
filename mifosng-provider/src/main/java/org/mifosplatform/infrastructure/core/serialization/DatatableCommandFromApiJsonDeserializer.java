@@ -38,16 +38,16 @@ public class DatatableCommandFromApiJsonDeserializer {
      * The parameters supported for this command.
      */
     private final Set<String> supportedParametersForCreate = new HashSet<>(Arrays.asList("datatableName", "apptableName", "multiRow",
-            "columns", "category", "metaData","displayName"));
+            "columns", "category", "metaData","displayName","johnDoeColumns"));
     private final Set<String> supportedParametersForCreateColumns = new HashSet<>(Arrays.asList("name", "type", "length",
-            "mandatory", "code", "labelName", "order","displayCondition", "formulaExpression"));
-    private final Set<String> supportedParametersForUpdate = new HashSet<>(Arrays.asList("apptableName", "changeColumns",
-            "addColumns", "dropColumns", "category", "metaData","displayName"));
+            "mandatory", "code", "labelName", "order","displayCondition", "formulaExpression","type"));
+    private final Set<String> supportedParametersForUpdate = new HashSet<>(Arrays.asList("apptableName", "changeColumns","changeJohnDoeColumns",
+            "addColumns","addJohnDoeColumns","dropColumns", "dropJohnDoeColumns","category", "metaData","displayName"));
     private final Set<String> supportedParametersForAddColumns = new HashSet<>(Arrays.asList("name", "type", "length", "mandatory",
             "after", "code", "labelName", "order","displayCondition", "formulaExpression"));
     private final Set<String> supportedParametersForChangeColumns = new HashSet<>(Arrays.asList("name", "newName", "length",
-            "mandatory", "after", "code", "newCode", "labelName", "order","displayCondition", "formulaExpression"));
-    private final Set<String> supportedParametersForDropColumns = new HashSet<>(Arrays.asList("name"));
+            "mandatory", "after", "code", "newCode", "labelName", "order","displayCondition", "formulaExpression","type"));
+    private final Set<String> supportedParametersForDropColumns = new HashSet<>(Arrays.asList("name","type"));
     private final Object[] supportedColumnTypes = { "string", "number", "boolean", "decimal", "date", "datetime", "text", "dropdown","checkbox","signature","image"};
     private final Object[] supportedApptableNames = { "m_loan", "m_savings_account", "m_client", "m_group", "m_center", "m_office",
             "m_savings_product", "m_product_loan" };
