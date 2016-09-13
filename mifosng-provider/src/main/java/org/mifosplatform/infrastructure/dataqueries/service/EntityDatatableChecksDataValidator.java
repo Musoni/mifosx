@@ -26,7 +26,7 @@ public final class EntityDatatableChecksDataValidator {
     /**
      * The parameters supported for this command.
      */
-    private final Set<String> supportedParameters = new HashSet<>(Arrays.asList("entity", "datatableId", "status","systemDefined"));
+    private final Set<String> supportedParameters = new HashSet<>(Arrays.asList("entity", "datatableId", "status","systemDefined","productId"));
 
 
     private final FromJsonHelper fromApiJsonHelper;
@@ -62,6 +62,11 @@ public final class EntityDatatableChecksDataValidator {
         if(this.fromApiJsonHelper.parameterExists("systemDefined",element)){
             final String systemDefined = this.fromApiJsonHelper.extractStringNamed("systemDefined", element);
             baseDataValidator.reset().parameter("systemDefined").value(systemDefined).validateForBooleanValue();
+        }
+
+        if(this.fromApiJsonHelper.parameterExists("productId",element)){
+            final long loanProductId = this.fromApiJsonHelper.extractLongNamed("productId", element);
+            baseDataValidator.reset().parameter("productId").value(loanProductId).integerZeroOrGreater();
         }
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);

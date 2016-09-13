@@ -57,11 +57,11 @@ public class EntityDatatableChecksApiResource {
     @GET
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String retrieveAll(@Context final UriInfo uriInfo,@QueryParam("status") final Long status) {
+    public String retrieveAll(@Context final UriInfo uriInfo,@QueryParam("status") final Long status,@QueryParam("entity") final String entity,@QueryParam("productLoanId") final Long productLoanId) {
 
 
 
-        final List<EntityDataTableChecksData> result = this.readEntityDatatableChecksService.retrieveAll(status);
+        final List<EntityDataTableChecksData> result = this.readEntityDatatableChecksService.retrieveAll(status,entity,productLoanId);
 
         final boolean prettyPrint = ApiParameterHelper.prettyPrint(uriInfo.getQueryParameters());
         return this.toApiJsonSerializer.serializePretty(prettyPrint, result);

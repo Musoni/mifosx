@@ -13,6 +13,6 @@ import java.util.List;
 public interface EntityDatatableChecksReadService {
 
     EntityDataTableChecksTemplateData retrieveTemplate();
-    List<EntityDataTableChecksData> retrieveAll(Long status);
+    List<EntityDataTableChecksData> retrieveAll(Long status,String entity,Long productLoanId);
 
 }

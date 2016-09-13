@@ -13,10 +13,7 @@ import org.mifosplatform.infrastructure.dataqueries.data.DatatableData;
 import org.mifosplatform.infrastructure.dataqueries.data.EntityTables;
 import org.mifosplatform.infrastructure.dataqueries.domain.EntityDatatableChecks;
 import org.mifosplatform.infrastructure.dataqueries.domain.EntityDatatableChecksRepository;
-import org.mifosplatform.infrastructure.dataqueries.exception.DatatabaleEntryRequiredException;
-import org.mifosplatform.infrastructure.dataqueries.exception.DatatableNotFoundException;
-import org.mifosplatform.infrastructure.dataqueries.exception.EntityDatatableCheckNotSupportedException;
-import org.mifosplatform.infrastructure.dataqueries.exception.EntityDatatableChecksNotFoundException;
+import org.mifosplatform.infrastructure.dataqueries.exception.*;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,6 +74,27 @@ public class EntityDatatableChecksWritePlatformServiceImpl implements EntityData
 
             if(!columnExist){ throw new EntityDatatableCheckNotSupportedException(datatableData.getRegisteredTableName(), entity);}
 
+            final Long productLoanId = command.longValueOfParameterNamed("productId");
+            final Long status = command.longValueOfParameterNamed("status");
+
+            /**
+                if the submitted check does not have a product id
+                we check if there is already a check with a product Id.
+                if it is the case, then one without product id cannot be allow.
+                Mainly because a check without product id means the check applies to all product
+            **/
+            if(productLoanId==null && entity.equals("m_loan")){
+
+                List<EntityDatatableChecks> entityDatatableCheck = this.entityDatatableChecksRepository.findByEntityStatusAndDatatableId(entity,status,datatableId);
+
+                if(!entityDatatableCheck.isEmpty()){
+
+                    throw new EntityDatatableCheckNotAllow(entity);
+
+                }
+
+            }
+
             final EntityDatatableChecks check = EntityDatatableChecks.fromJson(command);
 
             this.entityDatatableChecksRepository.saveAndFlush(check);
@@ -110,42 +128,25 @@ public class EntityDatatableChecksWritePlatformServiceImpl implements EntityData
 
     }
 
-//    @Transactional
-//    @Override
-//    public CommandProcessingResult updateReport(final Long reportId, final JsonCommand command) {
-//
-//        try {
-//            this.context.authenticatedUser();
-//
-//            this.fromApiJsonDeserializer.validate(command.json());
-//
-//            final Report report = this.entityDatatableChecksRepository.findOne(reportId);
-//            if (report == null) { throw new ReportNotFoundException(reportId); }
-//
-//            final Map<String, Object> changes = report.update(command);
-//
-//            if (changes.containsKey("reportParameters")) {
-//                final Set<ReportParameterUsage> reportParameterUsages = assembleSetOfReportParameterUsages(report, command);
-//                final boolean updated = report.update(reportParameterUsages);
-//                if (!updated) {
-//                    changes.remove("reportParameters");
-//                }
-//            }
-//
-//            if (!changes.isEmpty()) {
-//                this.entityDatatableChecksRepository.saveAndFlush(report);
-//            }
-//
-//            return new CommandProcessingResultBuilder() //
-//                    .withCommandId(command.commandId()) //
-//                    .withEntityId(report.getId()) //
-//                    .with(changes) //
-//                    .build();
-//        } catch (final DataIntegrityViolationException dve) {
-//            handleReportDataIntegrityIssues(command, dve);
-//            return CommandProcessingResult.empty();
-//        }
-//    }
+    public void runTheCheckForLoan(final Long entityId,final String entityName,final Long statusCode,String foreignKeyColumn,long productLoanId)
+    {
+        final List<EntityDatatableChecks> tableRequiredBeforAction= entityDatatableChecksRepository.findByEntityStatusAndLoanProduct(entityName, statusCode, productLoanId);
+
+        if(tableRequiredBeforAction != null){
+
+            for(EntityDatatableChecks t : tableRequiredBeforAction){
+
+                final String datatableName = t.getDatatable().getRegisteredTableName();
+                final String displayName = t.getDatatable().getDisplayName();
+                final Long countEntries = readWriteNonCoreDataService.countDatatableEntries(datatableName,entityId,foreignKeyColumn);
+
+                logger.info("The are "+countEntries+" entries in the table "+ datatableName);
+                if(countEntries.intValue()==0){throw new DatatabaleEntryRequiredException(datatableName,displayName);}
+            }
+        }
+
+    }
+
 
     @Transactional
     @Override
