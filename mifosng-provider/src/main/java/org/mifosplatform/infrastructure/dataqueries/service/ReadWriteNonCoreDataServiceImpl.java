@@ -1246,7 +1246,7 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
 
             if(addJohnDoeColumns!=null){
 
-                for (final JsonElement column : addColumns) {
+                for (final JsonElement column : addJohnDoeColumns) {
                     if(metaData){
                         fieldNameAndOrder.add(this.returnFieldNameAndOrder(column.getAsJsonObject(),isConstraintApproach));
                     }
@@ -2407,6 +2407,7 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
 
         fieldNameAndOrder.put("labelName",labelName);
         fieldNameAndOrder.put("order",order);
+        fieldNameAndOrder.put("type",type);
         fieldNameAndOrder.put("displayCondition", displayCondition);
         fieldNameAndOrder.put("formulaExpression", formulaExpression);
 
