@@ -479,7 +479,7 @@ public class TransferWritePlatformServiceJpaRepositoryImpl implements TransferWr
                 Date officeJoiningDate = null;
                 if(client.getStatus().equals(ClientStatus.REJECTED.getValue()) || client.getStatus().equals(ClientStatus.PENDING.getValue()))
                 {
-                    officeJoiningDate = client.getOfficeJoiningLocalDate().toDate();
+                    officeJoiningDate =  todaysDate;
                 }
 
                 // Set clientstatus to active, as some of the actions below require it to be active before transfer.
