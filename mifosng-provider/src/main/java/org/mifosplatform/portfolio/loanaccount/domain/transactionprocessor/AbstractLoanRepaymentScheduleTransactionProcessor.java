@@ -368,10 +368,10 @@ public abstract class AbstractLoanRepaymentScheduleTransactionProcessor implemen
                     || loanCharge.isInstalmentFee()) && !searchForWaivedChargeWithOutstandingAmount) || 
                     (loanCharge.isWaived() && loanCharge.hasOutstandingAmount() && searchForWaivedChargeWithOutstandingAmount)){
                 if (loanCharge.isInstalmentFee()) {
-                    LoanInstallmentCharge unpaidLoanChargePerInstallment = loanCharge.getUnpaidInstallmentLoanCharge();
+                    LoanInstallmentCharge unpaidLoanChargePerInstallment = loanCharge.getUnpaidInstallmentLoanChargeIncludingPartialWaivers();
                     if (chargePerInstallment == null
-                            || chargePerInstallment.getRepaymentInstallment().getDueDate()
-                                    .isAfter(unpaidLoanChargePerInstallment.getRepaymentInstallment().getDueDate())) {
+                            || (chargePerInstallment.getRepaymentInstallment().getDueDate()
+                                    .isAfter(unpaidLoanChargePerInstallment.getRepaymentInstallment().getDueDate()) && !unpaidLoanChargePerInstallment.getAmountOutstanding().equals(BigDecimal.ZERO))) {
                         installemntCharge = loanCharge;
                         chargePerInstallment = unpaidLoanChargePerInstallment;
                     }
