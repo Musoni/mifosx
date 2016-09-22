@@ -106,6 +106,8 @@ public final class PaymentDetail extends AbstractPersistable<Long> {
     public PaymentType getPaymentType() {
         return this.paymentType;
     }
+
+    public String getReceiptNumber() { return this.receiptNumber; }
     
     public static PaymentDetail generatePaymentDetailWithReference(final PaymentType paymentType, final String reference){
         return new PaymentDetail(paymentType, reference);
