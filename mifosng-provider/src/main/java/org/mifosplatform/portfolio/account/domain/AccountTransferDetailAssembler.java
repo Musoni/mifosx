@@ -219,6 +219,49 @@ public class AccountTransferDetailAssembler {
                 transfertype,fromGroup,toGroup);
     }
 
+    public AccountTransferDetails assembleLoanToLoanTransfer(final JsonCommand command, final Loan fromLoanAccount,
+                                                             final Loan toLoanAccount) {
+
+        final JsonElement element = command.parsedJson();
+
+        final Long fromOfficeId = this.fromApiJsonHelper.extractLongNamed(fromOfficeIdParamName, element);
+        final Office fromOffice = this.officeRepository.findOne(fromOfficeId);
+
+        Client fromClient = null;
+        Group fromGroup = null;
+
+        if(this.fromApiJsonHelper.parameterExists(fromClientIdParamName,element)) {
+            final Long fromClientId = this.fromApiJsonHelper.extractLongNamed(fromClientIdParamName, element);
+            fromClient = this.clientRepository.findOneWithNotFoundDetection(fromClientId);
+
+        }else if(this.fromApiJsonHelper.parameterExists(fromGroupIdParamName,element)){
+
+            final Long fromGroupId = this.fromApiJsonHelper.extractLongNamed(toGroupIdParamName,element);
+            fromGroup = this.groupRepository.findOneWithNotFoundDetection(fromGroupId);
+        }
+
+        final Long toOfficeId = this.fromApiJsonHelper.extractLongNamed(toOfficeIdParamName, element);
+        final Office toOffice = this.officeRepository.findOne(toOfficeId);
+
+        Group toGroup = null;
+        Client toClient = null;
+
+        if(this.fromApiJsonHelper.parameterExists(toClientIdParamName,element)) {
+            final Long toClientId = this.fromApiJsonHelper.extractLongNamed(toClientIdParamName, element);
+            toClient = this.clientRepository.findOneWithNotFoundDetection(toClientId);
+
+        }else if(this.fromApiJsonHelper.parameterExists(toGroupIdParamName,element)){
+
+            Long toGroupId = this.fromApiJsonHelper.extractLongNamed(toGroupIdParamName, element);
+            toGroup = this.groupRepository.findOneWithNotFoundDetection(toGroupId);
+        }
+
+        final Integer transfertype = this.fromApiJsonHelper.extractIntegerNamed(transferTypeParamName, element, Locale.getDefault());
+
+        return AccountTransferDetails.loanToLoanTransfer(fromOffice, fromClient, fromLoanAccount, toOffice, toClient, toLoanAccount,
+                transfertype,fromGroup,toGroup);
+    }
+
     public AccountTransferDetails assembleSavingsToLoanTransfer(final SavingsAccount fromSavingsAccount, final Loan toLoanAccount,
             Integer transferType) {
         final Office fromOffice = fromSavingsAccount.office();
@@ -250,6 +293,17 @@ public class AccountTransferDetailAssembler {
         final Client toClient = toSavingsAccount.getClient();
 
         return AccountTransferDetails.LoanTosavingsTransfer(fromOffice, fromClient, fromLoanAccount, toOffice, toClient, toSavingsAccount,
+                transferType);
+    }
+
+    public AccountTransferDetails assembleLoanToLoanTransfer(final Loan fromLoanAccount, final Loan toLoanAccount,
+                                                             Integer transferType){
+        final Office fromOffice = fromLoanAccount.getOffice();
+        final Client fromClient = fromLoanAccount.client();
+        final Office toOffice = toLoanAccount.getOffice();
+        final Client toClient = toLoanAccount.client();
+
+        return AccountTransferDetails.loanToLoanTransfer(fromOffice, fromClient, fromLoanAccount, toOffice, toClient, toLoanAccount,
                 transferType);
     }
 }

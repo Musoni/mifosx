@@ -39,6 +39,8 @@ public interface ReadReportingService {
 
     ReportData retrieveReport(final Long id);
 
+    String  sqlToRunForSmsCampaign(String name, String type, Map<String, String> queryParams);
+
     ByteArrayOutputStream generatePentahoReportAsOutputStream(String reportName, String outputTypeParam,
             Map<String, String> queryParams, Locale locale, AppUser runReportAsUser, StringBuilder errorLog);
 }

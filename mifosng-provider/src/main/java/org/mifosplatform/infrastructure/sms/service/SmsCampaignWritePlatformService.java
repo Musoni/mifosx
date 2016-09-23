@@ -10,6 +10,11 @@ import org.mifosplatform.infrastructure.core.api.JsonQuery;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.jobs.exception.JobExecutionException;
 import org.mifosplatform.infrastructure.sms.data.PreviewCampaignMessage;
+import org.mifosplatform.infrastructure.sms.domain.SmsCampaign;
+import org.mifosplatform.portfolio.loanaccount.domain.Loan;
+import org.mifosplatform.portfolio.loanaccount.domain.LoanTransaction;
+
+import java.util.Map;
 
 public interface SmsCampaignWritePlatformService {
 
@@ -26,6 +31,10 @@ public interface SmsCampaignWritePlatformService {
     CommandProcessingResult reactivateSmsCampaign(Long campaignId,JsonCommand command);
 
     void storeTemplateMessageIntoSmsOutBoundTable() throws JobExecutionException;
+
+    void insertDirectCampaignIntoSmsOutboundTable(Loan loan, SmsCampaign smsCampaign);
+
+    String compileSmsTemplate(String textMessageTemplate, String campaignName, Map<String, Object> smsParams);
 
     PreviewCampaignMessage previewMessage(JsonQuery query);
 

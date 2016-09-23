@@ -4625,6 +4625,10 @@ public class Loan extends AbstractPersistable<Long> {
         this.loanProductCounter = newLoanProductLoanCounter;
     }
 
+    public boolean hasInvalidLoanType(){return AccountType.fromInt(this.loanType).isInvalid();}
+
+    public boolean isIndividualLoan(){return AccountType.fromInt(this.loanType).isIndividualAccount();}
+
     public boolean isGroupLoan() {
         return AccountType.fromInt(this.loanType).isGroupAccount();
     }
@@ -5467,7 +5471,7 @@ public class Loan extends AbstractPersistable<Long> {
      *            TODO
      * @param floatingRateDTO
      *            TODO
-     * @param loanCalendarInstance
+     * @param loanCalendar
      *            Used for accessing the loan's calendar object
      * @return application terms of the Loan object
      **/

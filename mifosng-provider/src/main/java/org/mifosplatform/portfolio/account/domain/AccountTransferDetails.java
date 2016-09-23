@@ -118,6 +118,19 @@ public class AccountTransferDetails extends AbstractPersistable<Long> {
                 transferType, null);
     }
 
+    public static AccountTransferDetails loanToLoanTransfer(final Office fromOffice, final Client fromClient, final Loan fromLoanAccount,
+                                                            final Office toOffice, final Client toClient, final Loan toLoanAccount,
+                                                            final Integer transferType, final Group fromGroup, final Group toGroup) {
+        return new AccountTransferDetails(fromOffice, fromClient, null, fromLoanAccount, toOffice, toClient, null, toLoanAccount,
+                transferType, null, fromGroup, toGroup);
+    }
+
+    public static AccountTransferDetails loanToLoanTransfer(final Office fromOffice, final Client fromClient, final Loan fromLoanAccount,
+                                                            final Office toOffice, final Client toClient, final Loan toLoanAccount, final Integer transferType) {
+        return new AccountTransferDetails(fromOffice, fromClient, null, fromLoanAccount, toOffice, toClient, null, toLoanAccount,
+                transferType, null);
+    }
+
     public static AccountTransferDetails LoanTosavingsTransfer(final Office fromOffice, final Client fromClient,
                                                                final Loan fromLoanAccount, final Office toOffice, final Client toClient, final SavingsAccount toSavingsAccount,
                                                                Integer transferType,final Group fromGroup,final Group toGroup) {

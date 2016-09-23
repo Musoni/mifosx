@@ -5,12 +5,12 @@
  */
 package org.mifosplatform.portfolio.account.exception;
 
-import org.mifosplatform.infrastructure.core.exception.AbstractPlatformResourceNotFoundException;
+import org.mifosplatform.infrastructure.core.exception.AbstractPlatformDomainRuleException;
 
 
-public class AccountTransferLoanToLoanException extends AbstractPlatformResourceNotFoundException {
+public class AccountTransferLoanToLoanException extends AbstractPlatformDomainRuleException {
     public AccountTransferLoanToLoanException(final Long id) {
-        super("error.msg.accounttransfer.loan.to.loan.not.supported", "Account transfer from loan with identifier "+ id  +" to another loan is not supported");
+        super("error.msg.accounttransfer.outstanding.loan.to.loan.not.supported", "Account transfer from an outstanding loan with identifier "+ id  +" to another loan is not supported");
     }
 
 }

@@ -14,12 +14,19 @@ public class MetaDataResultSet {
     private boolean systemDefined;
     private String displayCondition;
     private String formulaExpression;
+    private String type;
 
 
     public static MetaDataResultSet createMetaDataResultSet(final Long id,final String columnName,final String labelName, final Long order,final boolean systemDefined, final String displayCondition, final String formulaExpression){
-        return new MetaDataResultSet(id,columnName,labelName,order,systemDefined, displayCondition, formulaExpression);
+
+        return new MetaDataResultSet(id,columnName,labelName,order,systemDefined, displayCondition, formulaExpression,null);
     }
-    private MetaDataResultSet(final Long id,final String columnName, final String labelName, final Long order,final boolean systemDefined, final String displayCondition, final String formulaExpression) {
+
+    public static MetaDataResultSet createMetaDataResultSet(final Long id,final String columnName,final String labelName, final Long order,final boolean systemDefined, final String displayCondition, final String formulaExpression, final String type){
+        return new MetaDataResultSet(id,columnName,labelName,order,systemDefined, displayCondition, formulaExpression,type);
+    }
+
+    private MetaDataResultSet(final Long id,final String columnName, final String labelName, final Long order,final boolean systemDefined, final String displayCondition, final String formulaExpression, final String type) {
         this.id = id;
         this.columnName = columnName;
         this.labelName = labelName;
@@ -27,6 +34,7 @@ public class MetaDataResultSet {
         this.systemDefined = systemDefined;
         this.displayCondition = displayCondition;
         this.formulaExpression = formulaExpression;
+        this.type = type;
     }
 
     public String getColumnName() {
@@ -50,4 +58,8 @@ public class MetaDataResultSet {
     public String getDisplayCondition() { return displayCondition; }
 
     public String getFormulaExpression() { return formulaExpression; }
+
+    public String getType() {
+        return type;
+    }
 }

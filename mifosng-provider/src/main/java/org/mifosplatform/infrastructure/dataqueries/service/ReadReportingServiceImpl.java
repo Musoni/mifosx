@@ -205,7 +205,8 @@ public class ReadReportingServiceImpl implements ReadReportingService {
 
     }
 
-    private String  sqlToRunForSmsCampaign(final String name, final String type, final Map<String, String> queryParams) {
+    @Override
+    public String sqlToRunForSmsCampaign(final String name, final String type, final Map<String, String> queryParams) {
         String sql = getSql(name, type);
 
         final Set<String> keys = queryParams.keySet();

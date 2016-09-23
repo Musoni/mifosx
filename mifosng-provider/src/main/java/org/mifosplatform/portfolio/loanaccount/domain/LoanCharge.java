@@ -241,6 +241,20 @@ public class LoanCharge extends AbstractPersistable<Long> {
             chargeAmount = amount;
         }
 
+        /** comment this for now
+        if(loan !=null) {
+            //round charge amount using the curr
+            if(chargeAmount !=null){
+                chargeAmount = chargeAmount.setScale(loan.getCurrency().getDigitsAfterDecimal(),RoundingMode.HALF_EVEN);
+            }
+
+        }
+        else if(loanProduct !=null){
+            if(chargeAmount !=null){
+                chargeAmount = chargeAmount.setScale(loanProduct.getCurrency().getDigitsAfterDecimal(),RoundingMode.HALF_EVEN);
+            }
+        } */
+
         this.chargePaymentMode = chargeDefinition.getChargePaymentMode();
         if (chargePaymentMode != null) {
             this.chargePaymentMode = chargePaymentMode.getValue();
@@ -763,7 +777,7 @@ public class LoanCharge extends AbstractPersistable<Long> {
     /**
      * @param feeAmount
      *            TODO
-     * @param processAmount
+     * @param incrementBy
      *            Amount used to pay off this charge
      * @return Actual amount paid on this charge
      */
@@ -771,7 +785,7 @@ public class LoanCharge extends AbstractPersistable<Long> {
         Money processAmount = Money.zero(incrementBy.getCurrency());
         if (isInstalmentFee()) {
             if (installmentNumber == null) {
-                processAmount = getUnpaidInstallmentLoanCharge().updatePaidAmountBy(incrementBy, feeAmount);
+                processAmount = getUnpaidInstallmentLoanChargeIncludingPartialWaivers().updatePaidAmountBy(incrementBy, feeAmount);
             } else {
                 processAmount = getInstallmentLoanCharge(installmentNumber).updatePaidAmountBy(incrementBy, feeAmount);
             }
@@ -862,6 +876,18 @@ public class LoanCharge extends AbstractPersistable<Long> {
             if (loanChargePerInstallment.isPending()
                     && (unpaidChargePerInstallment == null || unpaidChargePerInstallment.getRepaymentInstallment().getDueDate()
                             .isAfter(loanChargePerInstallment.getRepaymentInstallment().getDueDate()))) {
+                unpaidChargePerInstallment = loanChargePerInstallment;
+            }
+        }
+        return unpaidChargePerInstallment;
+    }
+
+    public LoanInstallmentCharge getUnpaidInstallmentLoanChargeIncludingPartialWaivers() {
+        LoanInstallmentCharge unpaidChargePerInstallment = null;
+        for (final LoanInstallmentCharge loanChargePerInstallment : this.loanInstallmentCharge) {
+            if (loanChargePerInstallment.isPendingIncludePartialWaivers()
+                    && (unpaidChargePerInstallment == null || unpaidChargePerInstallment.getRepaymentInstallment().getDueDate()
+                    .isAfter(loanChargePerInstallment.getRepaymentInstallment().getDueDate()))) {
                 unpaidChargePerInstallment = loanChargePerInstallment;
             }
         }

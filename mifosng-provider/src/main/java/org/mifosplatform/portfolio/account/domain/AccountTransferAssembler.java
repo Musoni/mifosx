@@ -49,6 +49,25 @@ public class AccountTransferAssembler {
         return accountTransferDetails;
     }
 
+    public AccountTransferDetails assembleLoanToLoanTransfer(final JsonCommand command, final Loan fromLoanAccount,
+                                                             final Loan toLoanAccount, final LoanTransaction loanRefundTransaction,
+                                                             final LoanTransaction loanRepaymentTransaction){
+
+        final AccountTransferDetails accountTransferDetails = this.accountTransferDetailAssembler.assembleLoanToLoanTransfer(command,
+                fromLoanAccount, toLoanAccount);
+
+        final LocalDate transactionDate = command.localDateValueOfParameterNamed(transferDateParamName);
+        final BigDecimal transactionAmount = command.bigDecimalValueOfParameterNamed(transferAmountParamName);
+        final Money transactionMonetaryAmount = Money.of(toLoanAccount.getCurrency(), transactionAmount);
+
+        final String description = command.stringValueOfParameterNamed(transferDescriptionParamName);
+
+        AccountTransferTransaction accountTransferTransaction = AccountTransferTransaction.loanToLoanTransfer(accountTransferDetails,
+                loanRefundTransaction, loanRepaymentTransaction, transactionDate, transactionMonetaryAmount, description);
+        accountTransferDetails.addAccountTransferTransaction(accountTransferTransaction);
+        return accountTransferDetails;
+    }
+
     public AccountTransferDetails assembleSavingsToLoanTransfer(final JsonCommand command, final SavingsAccount fromSavingsAccount,
             final Loan toLoanAccount, final SavingsAccountTransaction withdrawal, final LoanTransaction loanRepaymentTransaction) {
 
@@ -132,4 +151,18 @@ public class AccountTransferAssembler {
         return accountTransferDetails;
     }
 
+    public AccountTransferDetails assembleLoanToLoanTransfer(final AccountTransferDTO accountTransferDTO, final Loan fromLoanAccount,
+                                                             final Loan toLoanAccount, final LoanTransaction loanRepaymentTransaction, final LoanTransaction loanRefundTransaction) {
+        final Money transactionMonetaryAmount = Money.of(fromLoanAccount.getCurrency(), accountTransferDTO.getTransactionAmount());
+        AccountTransferDetails accountTransferDetails = accountTransferDTO.getAccountTransferDetails();
+        if (accountTransferDetails == null) {
+            accountTransferDetails = this.accountTransferDetailAssembler.assembleLoanToLoanTransfer(fromLoanAccount, toLoanAccount,
+                    accountTransferDTO.getTransferType());
+        }
+        AccountTransferTransaction accountTransferTransaction = AccountTransferTransaction.loanToLoanTransfer(accountTransferDetails,
+                loanRepaymentTransaction, loanRefundTransaction, accountTransferDTO.getTransactionDate(), transactionMonetaryAmount,
+                accountTransferDTO.getDescription());
+        accountTransferDetails.addAccountTransferTransaction(accountTransferTransaction);
+        return accountTransferDetails;
+    }
 }

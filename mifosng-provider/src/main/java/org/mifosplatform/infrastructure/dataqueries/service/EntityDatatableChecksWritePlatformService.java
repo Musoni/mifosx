@@ -13,5 +13,8 @@ public interface EntityDatatableChecksWritePlatformService {
     CommandProcessingResult createCheck(JsonCommand command);
     CommandProcessingResult deleteCheck(final Long entityDatatableCheckId);
     void runTheCheck(final Long entityId,final String entityName,final Long statusCode,String foreignKeyColumn);
+    void runTheCheckForLoan(final Long entityId,final String entityName,final Long statusCode,String foreignKeyColumn,long productLoanId);
+
+
 
 }

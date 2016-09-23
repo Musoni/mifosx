@@ -894,6 +894,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 
         final Loan loan = retrieveLoanBy(loanId);
 
+
         final JsonArray disbursementDataArray = command.arrayOfParameterNamed(LoanApiConstants.disbursementDataParameterName);
 
         expectedDisbursementDate = command.localDateValueOfParameterNamed(LoanApiConstants.disbursementDateParameterName);
@@ -903,6 +904,9 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
         if (loan.loanProduct().isMultiDisburseLoan()) {
             this.validateMultiDisbursementData(command, expectedDisbursementDate);
         }
+
+        final long productId = loan.getLoanProduct().getId();
+
 
         checkClientOrGroupActive(loan);
         
@@ -914,11 +918,12 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             this.loanScheduleAssembler.validateDisbursementDateWithMeetingDates(expectedDisbursementDate, calendar);
         }
 
+
         final Map<String, Object> changes = loan.loanApplicationApproval(currentUser, command, disbursementDataArray,
                 defaultLoanLifecycleStateMachine());
-        
-        entityDatatableChecksWritePlatformService.runTheCheck(loanId, EntityTables.LOAN.getName(), StatusEnum.APPROVE.getCode().longValue(), 
-                EntityTables.LOAN.getForeignKeyColumnNameOnDatatable());
+
+        entityDatatableChecksWritePlatformService.runTheCheckForLoan(loanId, EntityTables.LOAN.getName(), StatusEnum.APPROVE.getCode().longValue(), EntityTables.LOAN.getForeignKeyColumnNameOnDatatable(),productId);
+
 
         // run loan credit checks
         this.loanCreditCheckWritePlatformService.runLoanCreditChecks(loan);
@@ -1016,9 +1021,11 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
         this.loanApplicationTransitionApiJsonValidator.validateRejection(command.json());
 
         final Loan loan = retrieveLoanBy(loanId);
+        final Long productId = loan.getLoanProduct().getId();
+
         checkClientOrGroupActive(loan);
 
-        entityDatatableChecksWritePlatformService.runTheCheck(loanId, EntityTables.LOAN.getName(), StatusEnum.REJECTED.getCode().longValue(), EntityTables.LOAN.getForeignKeyColumnNameOnDatatable());
+        entityDatatableChecksWritePlatformService.runTheCheckForLoan(loanId, EntityTables.LOAN.getName(), StatusEnum.REJECTED.getCode().longValue(), EntityTables.LOAN.getForeignKeyColumnNameOnDatatable(),productId);
 
         final Map<String, Object> changes = loan.loanApplicationRejection(currentUser, command, defaultLoanLifecycleStateMachine());
         if (!changes.isEmpty()) {
@@ -1030,6 +1037,8 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
                 this.noteRepository.save(note);
             }
         }
+
+        this.businessEventNotifierService.notifyBusinessEventWasExecuted(BUSINESS_EVENTS.LOAN_REJECTED, constructEntityMap(BUSINESS_ENTITY.LOAN, loan));
 
         return new CommandProcessingResultBuilder() //
                 .withCommandId(command.commandId()) //
@@ -1051,9 +1060,12 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
         this.loanApplicationTransitionApiJsonValidator.validateApplicantWithdrawal(command.json());
 
         final Loan loan = retrieveLoanBy(loanId);
+
+        final Long productId = loan.getLoanProduct().getId();
+
         checkClientOrGroupActive(loan);
 
-        entityDatatableChecksWritePlatformService.runTheCheck(loanId, EntityTables.LOAN.getName(), StatusEnum.WITHDRAWN.getCode().longValue(), EntityTables.LOAN.getForeignKeyColumnNameOnDatatable());
+        entityDatatableChecksWritePlatformService.runTheCheckForLoan(loanId, EntityTables.LOAN.getName(), StatusEnum.WITHDRAWN.getCode().longValue(), EntityTables.LOAN.getForeignKeyColumnNameOnDatatable(),productId);
 
         final Map<String, Object> changes = loan.loanApplicationWithdrawnByApplicant(currentUser, command,
                 defaultLoanLifecycleStateMachine());

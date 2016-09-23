@@ -19,6 +19,9 @@ public class SmsBusinessRulesData {
     private final String reportType;
 
     @SuppressWarnings("unused")
+    private final String reportSubType;
+
+    @SuppressWarnings("unused")
     private final String reportDescription;
 
     @SuppressWarnings("unused")
@@ -26,19 +29,20 @@ public class SmsBusinessRulesData {
 
 
 
-    public SmsBusinessRulesData(final Long reportId, final String reportName,final String reportType, final Map<String,Object> reportParamName,
-                                final String reportDescription) {
+    public SmsBusinessRulesData(final Long reportId, final String reportName,final String reportType, final String reportSubType,
+                                final Map<String,Object> reportParamName, final String reportDescription) {
         this.reportId = reportId;
         this.reportName = reportName;
         this.reportType = reportType;
+        this.reportSubType = reportSubType;
         this.reportParamName = reportParamName;
         this.reportDescription = reportDescription;
     }
 
 
-    public static SmsBusinessRulesData instance(final Long reportId, final String reportName,final String reportType,final Map<String,Object> reportParamName,
-                                                final String reportDescription){
-        return new SmsBusinessRulesData(reportId,reportName,reportType,reportParamName,reportDescription);
+    public static SmsBusinessRulesData instance(final Long reportId, final String reportName,final String reportType, final String reportSubType,
+                                                final Map<String,Object> reportParamName, final String reportDescription){
+        return new SmsBusinessRulesData(reportId,reportName,reportType,reportSubType,reportParamName,reportDescription);
     }
 
     public Map<String, Object> getReportParamName() {

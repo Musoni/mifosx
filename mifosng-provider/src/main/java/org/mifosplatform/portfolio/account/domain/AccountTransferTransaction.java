@@ -86,6 +86,13 @@ public class AccountTransferTransaction extends AbstractPersistable<Long> {
                 transactionAmount, description);
     }
 
+    public static AccountTransferTransaction loanToLoanTransfer(final AccountTransferDetails accountTransferDetails,
+            final LoanTransaction loanRefundTransaction, final LoanTransaction loanRepaymentTransaction,
+            final LocalDate transactionDate, final Money transactionAmount, final String description){
+        return new AccountTransferTransaction(accountTransferDetails, null, null, loanRepaymentTransaction, loanRefundTransaction,
+                transactionDate, transactionAmount, description);
+    }
+
     protected AccountTransferTransaction() {
         //
     }

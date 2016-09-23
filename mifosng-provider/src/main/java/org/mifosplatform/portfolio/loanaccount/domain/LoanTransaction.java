@@ -426,6 +426,10 @@ public final class LoanTransaction extends AbstractPersistable<Long> {
         return Money.of(currency, this.overPaymentPortion);
     }
 
+    public BigDecimal getOutstandingLoanBalance() {
+        return outstandingLoanBalance;
+    }
+
     public Money getAmount(final MonetaryCurrency currency) {
         return Money.of(currency, this.amount);
     }

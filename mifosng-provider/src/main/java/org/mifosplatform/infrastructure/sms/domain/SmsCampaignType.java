@@ -7,7 +7,8 @@ package org.mifosplatform.infrastructure.sms.domain;
 
 public enum SmsCampaignType {
     DIRECT(1,"smsCampaignStatusType.direct"),
-    SCHEDULE(2,"smsCampaignStatusType.schedule");
+    SCHEDULE(2,"smsCampaignStatusType.schedule"),
+    TRIGGERED(3,"smsCampaignStatusType.triggered");
 
     private Integer value;
     private String code;
@@ -34,6 +35,9 @@ public enum SmsCampaignType {
             case 2:
                 type = SCHEDULE;
                 break;
+            case 3:
+                type = TRIGGERED;
+                break;
         }
         return type;
     }
@@ -44,5 +48,9 @@ public enum SmsCampaignType {
 
     public boolean isSchedule(){
         return this.value.equals(SmsCampaignType.SCHEDULE.getValue());
+    }
+
+    public boolean isTriggered(){
+        return this.value.equals(SmsCampaignType.TRIGGERED.getValue());
     }
 }

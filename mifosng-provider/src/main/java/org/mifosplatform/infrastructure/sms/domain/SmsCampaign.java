@@ -306,6 +306,10 @@ public class SmsCampaign extends AbstractPersistable<Long> {
         return SmsCampaignType.fromInt(this.campaignType).isSchedule();
     }
 
+    public boolean isTriggered(){
+        return SmsCampaignType.fromInt(this.campaignType).isTriggered();
+    }
+
     private void validate() {
         final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
         validateActivationDate(dataValidationErrors);

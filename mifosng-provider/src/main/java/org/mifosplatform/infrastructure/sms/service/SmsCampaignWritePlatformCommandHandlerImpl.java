@@ -49,6 +49,12 @@ import org.mifosplatform.infrastructure.sms.exception.SmsCampaignNotFound;
 import org.mifosplatform.portfolio.calendar.service.CalendarUtils;
 import org.mifosplatform.portfolio.client.domain.Client;
 import org.mifosplatform.portfolio.client.domain.ClientRepository;
+import org.mifosplatform.portfolio.group.domain.Group;
+import org.mifosplatform.portfolio.group.domain.GroupRepository;
+import org.mifosplatform.portfolio.loanaccount.domain.Loan;
+import org.mifosplatform.portfolio.loanaccount.domain.LoanRepository;
+import org.mifosplatform.portfolio.loanaccount.domain.LoanTransaction;
+import org.mifosplatform.portfolio.loanaccount.exception.InvalidLoanTypeException;
 import org.mifosplatform.template.domain.TemplateRepository;
 import org.mifosplatform.template.service.TemplateMergeService;
 import org.mifosplatform.useradministration.domain.AppUser;
@@ -56,18 +62,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class SmsCampaignWritePlatformCommandHandlerImpl implements SmsCampaignWritePlatformService {
@@ -85,10 +88,14 @@ public class SmsCampaignWritePlatformCommandHandlerImpl implements SmsCampaignWr
     private final TemplateMergeService templateMergeService;
     private final SmsMessageRepository smsMessageRepository;
     private final ClientRepository clientRepository;
+    private final GroupRepository groupRepository;
     private final SchedularWritePlatformService schedularWritePlatformService;
     private final ReadReportingService readReportingService;
     private final GenericDataService genericDataService;
     private final FromJsonHelper fromJsonHelper;
+    private final LoanRepository loanRepository;
+    //private final HashMap<>
+
 
 
 
@@ -97,7 +104,8 @@ public class SmsCampaignWritePlatformCommandHandlerImpl implements SmsCampaignWr
         final SmsCampaignValidator smsCampaignValidator,final SmsCampaignReadPlatformService smsCampaignReadPlatformService,
         final ReportRepository reportRepository,final TemplateRepository templateRepository, final TemplateMergeService templateMergeService,
         final SmsMessageRepository smsMessageRepository,final ClientRepository clientRepository,final SchedularWritePlatformService schedularWritePlatformService,
-        final ReadReportingService readReportingService, final GenericDataService genericDataService,final FromJsonHelper fromJsonHelper) {
+        final ReadReportingService readReportingService, final GenericDataService genericDataService,final FromJsonHelper fromJsonHelper,
+        final LoanRepository loanRepository, final GroupRepository groupRepository) {
         this.context = context;
         this.smsCampaignRepository = smsCampaignRepository;
         this.smsCampaignValidator = smsCampaignValidator;
@@ -111,6 +119,8 @@ public class SmsCampaignWritePlatformCommandHandlerImpl implements SmsCampaignWr
         this.readReportingService = readReportingService;
         this.genericDataService = genericDataService;
         this.fromJsonHelper = fromJsonHelper;
+        this.loanRepository = loanRepository;
+        this.groupRepository = groupRepository;
     }
 
     @Transactional
@@ -193,7 +203,6 @@ public class SmsCampaignWritePlatformCommandHandlerImpl implements SmsCampaignWr
 
     }
 
-
     private void insertDirectCampaignIntoSmsOutboundTable(final String smsParams,
                                                           final String textMessageTemplate,final String campaignName){
         try{
@@ -220,6 +229,59 @@ public class SmsCampaignWritePlatformCommandHandlerImpl implements SmsCampaignWr
             // TODO throw something here
         }
 
+    }
+
+    @Override
+    public void insertDirectCampaignIntoSmsOutboundTable(final Loan loan, final SmsCampaign smsCampaign){
+        try{
+            if(loan.hasInvalidLoanType()){
+                throw new InvalidLoanTypeException("Loan Type cannot be 0 for the Triggered Sms Campaign");
+            }
+
+            Set<Client> clientSet = new HashSet<>();
+
+            HashMap<String, String> campaignParams = new ObjectMapper().readValue(
+                    smsCampaign.getParamValue(), new TypeReference<HashMap<String, String>>() {});
+            campaignParams.put("${loanId}", loan.getId().toString());
+
+            HashMap<String, String> queryParamForRunReport = new ObjectMapper().readValue(
+                    smsCampaign.getParamValue(), new TypeReference<HashMap<String, String>>() {});
+            queryParamForRunReport.put("${loanId}", loan.getId().toString());
+
+            if(loan.isGroupLoan()){
+                Group group = this.groupRepository.findOne(loan.getGroupId());
+                clientSet.addAll(group.getClientMembers());
+                campaignParams.put("${groupId}", group.getId().toString());
+                queryParamForRunReport.put("${groupId}", group.getId().toString());
+            }else{
+                Client client = this.clientRepository.findOne(loan.getClientId());
+                clientSet.add(client);
+            }
+
+            for(Client client : clientSet) {
+                campaignParams.put("${clientId}", client.getId().toString());
+                queryParamForRunReport.put("${clientId}", client.getId().toString());
+
+                List<HashMap<String, Object>> runReportObject = this.getRunReportByServiceImpl(
+                        campaignParams.get("reportName"), queryParamForRunReport);
+
+                if (runReportObject != null && runReportObject.size() > 0) {
+                    for (HashMap<String, Object> entry : runReportObject) {
+                        String textMessage = this.compileSmsTemplate(smsCampaign.getMessage(), smsCampaign.getCampaignName(), entry);
+                        Object mobileNo = entry.get("mobileNo");
+
+                        if (mobileNo != null) {
+                            SmsMessage smsMessage = SmsMessage.pendingSms(
+                                    null, null, client, null, textMessage, null, mobileNo.toString(), smsCampaign.getCampaignName());
+                            this.smsMessageRepository.save(smsMessage);
+                        }
+                    }
+                }
+            }
+        }catch(final IOException e){
+            System.out.println("IOException: " + e.getMessage());
+            // TODO throw something here
+        }catch(final RuntimeException e){System.out.println("RuntimeException: " + e.getMessage());}
     }
 
     @Override
@@ -353,7 +415,8 @@ public class SmsCampaignWritePlatformCommandHandlerImpl implements SmsCampaignWr
                 .build();
     }
 
-    private String compileSmsTemplate(final String textMessageTemplate,final String campaignName , final Map<String, Object> smsParams)  {
+    @Override
+    public String compileSmsTemplate(final String textMessageTemplate,final String campaignName , final Map<String, Object> smsParams)  {
         final MustacheFactory mf = new DefaultMustacheFactory();
         final Mustache mustache = mf.compile(new StringReader(textMessageTemplate), campaignName);
 

@@ -219,10 +219,37 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
             }
 
 
-        } else {
-            /**  throw an exception here for loan to loan transfer not supported */
+        } else if (isLoanToLoanAccountTransfer(fromAccountType, toAccountType)) {
+            // FIXME - kw - ADD overpaid loan to loan account transfer
+            // support.
+
             fromLoanAccountId = command.longValueOfParameterNamed(fromAccountIdParamName);
-            throw new AccountTransferLoanToLoanException(fromLoanAccountId);
+            final Loan fromLoanAccount = this.loanAccountAssembler.assembleFrom(fromLoanAccountId);
+            /**
+             * throw an exception if the from loan account is not an overpaid loan
+             */
+            if(fromLoanAccount.getTotalOverpaid() != null && !(fromLoanAccount.getTotalOverpaid().compareTo(BigDecimal.ZERO) == 1)){
+                throw new AccountTransferLoanToLoanException(fromLoanAccountId);
+            }
+
+            final LoanTransaction loanRefundTransaction = this.loanAccountDomainService.makeRefund(fromLoanAccountId,
+                    new CommandProcessingResultBuilder(), transactionDate, transactionAmount, paymentDetail, null, null);
+
+            final Long toLoanAccountId = command.longValueOfParameterNamed(toAccountIdParamName);
+            final Loan toLoanAccount = this.loanAccountAssembler.assembleFrom(toLoanAccountId);
+
+            final boolean isRecoveryRepayment = false;
+            final Boolean isHolidayValidationDone=false;
+            final HolidayDetailDTO holidayDetailDto=null;
+            final LoanTransaction loanRepaymentTransaction = this.loanAccountDomainService.makeRepayment(toLoanAccount,
+                    new CommandProcessingResultBuilder(), transactionDate, transactionAmount, paymentDetail, null, null,
+                    isRecoveryRepayment, isAccountTransfer, holidayDetailDto, isHolidayValidationDone);
+
+            final AccountTransferDetails accountTransferDetails = this.accountTransferAssembler.assembleLoanToLoanTransfer(command,
+                    fromLoanAccount, toLoanAccount, loanRefundTransaction, loanRepaymentTransaction);
+            this.accountTransferDetailRepository.saveAndFlush(accountTransferDetails);
+            transferDetailId = accountTransferDetails.getId();
+
         }
 
         final CommandProcessingResultBuilder builder = new CommandProcessingResultBuilder().withEntityId(transferDetailId);
@@ -466,6 +493,10 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
 
     private boolean isLoanToSavingsAccountTransfer(final PortfolioAccountType fromAccountType, final PortfolioAccountType toAccountType) {
         return fromAccountType.isLoanAccount() && toAccountType.isSavingsAccount();
+    }
+
+    private boolean isLoanToLoanAccountTransfer(final PortfolioAccountType fromAccountType, final PortfolioAccountType toAccountType) {
+        return fromAccountType.isLoanAccount() && toAccountType.isLoanAccount();
     }
 
     private boolean isSavingsToLoanAccountTransfer(final PortfolioAccountType fromAccountType, final PortfolioAccountType toAccountType) {
