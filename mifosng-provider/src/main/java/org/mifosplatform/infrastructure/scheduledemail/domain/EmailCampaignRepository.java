@@ -3,15 +3,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package org.mifosplatform.infrastructure.dataqueries.domain;
+package org.mifosplatform.infrastructure.scheduledemail.domain;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-import java.util.List;
-
-public interface ReportParameterUsageRepository extends JpaRepository<ReportParameterUsage, Long>,
-        JpaSpecificationExecutor<ReportParameterUsage> {
-    // no added behaviour
-    List<ReportParameterUsage> findByReport(Report report);
+public interface EmailCampaignRepository extends JpaRepository<EmailCampaign, Long>, JpaSpecificationExecutor<EmailCampaign> {
 }
