@@ -279,4 +279,8 @@ public final class Report extends AbstractPersistable<Long> {
         return new ReportData(this.getId(), this.reportName, this.reportType, this.reportSubType, this.reportCategory,
                 this.description, this.reportSql, this.coreReport, this.useReport, null);
     }
+
+    public Set<ReportParameterUsage> getReportParameterUsages() {
+        return this.reportParameterUsages;
+    }
 }

@@ -37,6 +37,9 @@ public class Staff extends AbstractPersistable<Long> {
     @Column(name = "mobile_no", length = 50, nullable = false, unique = true)
     private String mobileNo;
 
+    @Column(name = "email_address", length = 50, unique = true)
+    private String emailAddress;
+
     @Column(name = "external_id", length = 100, nullable = true, unique = true)
     private String externalId;
 
@@ -235,6 +238,10 @@ public class Staff extends AbstractPersistable<Long> {
 
     public String mobileNo() {
         return this.mobileNo;
+    }
+
+    public String emailAddress() {
+        return emailAddress;
     }
 
     public Office office() {
