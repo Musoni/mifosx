@@ -108,6 +108,9 @@ public final class Client extends AbstractPersistable<Long> {
     @Column(name = "mobile_no", length = 50, nullable = false, unique = true)
     private String mobileNo;
 
+    @Column(name = "email_address", length = 50, unique = true)
+    private String emailAddress;
+
     @Column(name = "external_id", length = 100, nullable = true, unique = true)
     private String externalId;
 
@@ -221,6 +224,7 @@ public final class Client extends AbstractPersistable<Long> {
         final String accountNo = command.stringValueOfParameterNamed(ClientApiConstants.accountNoParamName);
         final String externalId = command.stringValueOfParameterNamed(ClientApiConstants.externalIdParamName);
         final String mobileNo = command.stringValueOfParameterNamed(ClientApiConstants.mobileNoParamName);
+        final String emailAddress = command.stringValueOfParameterNamed(ClientApiConstants.emailAddressParamName);
 
         final String firstname = command.stringValueOfParameterNamed(ClientApiConstants.firstnameParamName);
         final String middlename = command.stringValueOfParameterNamed(ClientApiConstants.middlenameParamName);
@@ -252,7 +256,7 @@ public final class Client extends AbstractPersistable<Long> {
         }
         final SavingsAccount account = null;
         return new Client(currentUser, status, clientOffice, clientParentGroup, accountNo, firstname, middlename, lastname, fullname,
-                activationDate, officeJoiningDate, externalId, mobileNo, staff, submittedOnDate, savingsProduct, account, dataOfBirth,
+                activationDate, officeJoiningDate, externalId, mobileNo, emailAddress, staff, submittedOnDate, savingsProduct, account, dataOfBirth,
                 gender, clientType, clientClassification, legalForm);
     }
 
@@ -262,7 +266,7 @@ public final class Client extends AbstractPersistable<Long> {
 
     private Client(final AppUser currentUser, final ClientStatus status, final Office office, final Group clientParentGroup,
             final String accountNo, final String firstname, final String middlename, final String lastname, final String fullname,
-            final LocalDate activationDate, final LocalDate officeJoiningDate, final String externalId, final String mobileNo,
+            final LocalDate activationDate, final LocalDate officeJoiningDate, final String externalId, final String mobileNo, final String emailAddress,
             final Staff staff, final LocalDate submittedOnDate, final SavingsProduct savingsProduct, final SavingsAccount savingsAccount,
             final LocalDate dateOfBirth, final CodeValue gender, final CodeValue clientType, final CodeValue clientClassification, final Integer legalForm) {
 
@@ -288,6 +292,12 @@ public final class Client extends AbstractPersistable<Long> {
             this.mobileNo = mobileNo.trim();
         } else {
             this.mobileNo = null;
+        }
+
+        if (StringUtils.isNotBlank(emailAddress)) {
+            this.emailAddress = emailAddress.trim();
+        } else {
+            this.emailAddress = null;
         }
 
         if (activationDate != null) {
@@ -477,6 +487,12 @@ public final class Client extends AbstractPersistable<Long> {
             final String newValue = command.stringValueOfParameterNamed(ClientApiConstants.mobileNoParamName);
             actualChanges.put(ClientApiConstants.mobileNoParamName, newValue);
             this.mobileNo = StringUtils.defaultIfEmpty(newValue, null);
+        }
+
+        if (command.isChangeInStringParameterNamed(ClientApiConstants.emailAddressParamName, this.emailAddress)) {
+            final String newValue = command.stringValueOfParameterNamed(ClientApiConstants.emailAddressParamName);
+            actualChanges.put(ClientApiConstants.emailAddressParamName, newValue);
+            this.emailAddress = StringUtils.defaultIfEmpty(newValue, null);
         }
 
         if (command.isChangeInStringParameterNamed(ClientApiConstants.firstnameParamName, this.firstname)) {
@@ -737,8 +753,16 @@ public final class Client extends AbstractPersistable<Long> {
         return this.mobileNo;
     }
 
+    public String emailAddress() {
+        return this.emailAddress;
+    }
+
     public void setMobileNo(final String mobileNo) {
         this.mobileNo = mobileNo;
+    }
+
+    public void setEmailAddress(final String emailAddress) {
+        this.emailAddress = emailAddress;
     }
 
     public String getFirstname(){return this.firstname;}
@@ -982,7 +1006,7 @@ public final class Client extends AbstractPersistable<Long> {
 
 	public ClientData toData(){
 	    return ClientData.instance(this.accountNumber, null, null, null, null, null, null, this.getId(), 
-	            null, null, null, null, this.displayName, null, null, null, null, null, null, null, null, 
+	            null, null, null, null, this.displayName, null, null, null, null, null, null, null, null, null,
 	            null, null, null, null, null, null);
     }
 
