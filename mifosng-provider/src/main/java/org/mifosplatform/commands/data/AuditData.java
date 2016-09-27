@@ -64,6 +64,8 @@ public final class AuditData {
     private String savingStatus;
     @SuppressWarnings("unused")
     private Long savingsId;
+    @SuppressWarnings("unused")
+    private String clientGroupName;
 
     public AuditData(final Long id, final String actionName, final String entityName, final Long resourceId, final Long subresourceId,
             final String maker, final DateTime madeOnDate, final String checker, final DateTime checkedOnDate,
@@ -98,6 +100,7 @@ public final class AuditData {
         this.savingOutStanding = null;
         this.savingStatus = null;
         this.savingsId = savingsId;
+        this.clientGroupName = null;
     }
     
 	public AuditData(final Long id, final String actionName, final String entityName, final Long resourceId, final Long subresourceId,
@@ -106,7 +109,7 @@ public final class AuditData {
             final String groupName, final String clientName, final String loanAccountNo, final String savingsAccountNo,
             final Long clientId, final Long loanId, final String url,final Double disbursementAmount, final DateTime disbursementDate,
             final Double loanOutStanding, final String loanStatus,final Double savingOutStanding, final String savingStatus,
-            final Long savingsId) {
+            final Long savingsId,final String clientGroupName) {
 
        this.id = id;
        this.actionName = actionName;
@@ -135,6 +138,7 @@ public final class AuditData {
        this.savingStatus = savingStatus;
        this.savingOutStanding = savingOutStanding;
         this.savingsId = savingsId;
+        this.clientGroupName = clientGroupName;
    }
 
     public void setCommandAsJson(final String commandAsJson) {
