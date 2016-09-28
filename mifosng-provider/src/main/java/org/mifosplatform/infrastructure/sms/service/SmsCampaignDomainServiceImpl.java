@@ -15,6 +15,8 @@ import org.mifosplatform.infrastructure.dataqueries.exception.ReportParameterNot
 import org.mifosplatform.infrastructure.dataqueries.service.GenericDataService;
 import org.mifosplatform.infrastructure.dataqueries.service.ReadReportingService;
 import org.mifosplatform.infrastructure.sms.domain.*;
+import org.mifosplatform.organisation.office.domain.Office;
+import org.mifosplatform.organisation.office.domain.OfficeRepository;
 import org.mifosplatform.portfolio.account.service.AccountTransfersReadPlatformService;
 import org.mifosplatform.portfolio.account.service.AccountTransfersWritePlatformService;
 import org.mifosplatform.portfolio.client.domain.Client;
@@ -63,6 +65,7 @@ public class SmsCampaignDomainServiceImpl implements SmsCampaignDomainService {
     private final SmsCampaignRepository smsCampaignRepository;
     private final SmsMessageRepository smsMessageRepository;
     private final ClientRepository clientRepository;
+    private final OfficeRepository officeRepository;
     private final AccountTransfersWritePlatformService accountTransfersWritePlatformService;
     private final BusinessEventNotifierService businessEventNotifierService;
     private final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository;
@@ -82,7 +85,7 @@ public class SmsCampaignDomainServiceImpl implements SmsCampaignDomainService {
     @Autowired
     public SmsCampaignDomainServiceImpl(final SmsCampaignRepository smsCampaignRepository, final SmsMessageRepository smsMessageRepository,
                                         final AccountTransfersWritePlatformService accountTransfersWritePlatformService,
-                                        final BusinessEventNotifierService businessEventNotifierService,
+                                        final BusinessEventNotifierService businessEventNotifierService, final OfficeRepository officeRepository,
                                         final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository,
                                         final SavingsAccountDomainService savingsAccountDomainService, final GenericDataService genericDataService,
                                         final SavingsAccountTransactionSummaryWrapper savingsAccountTransactionSummaryWrapper,
@@ -102,6 +105,7 @@ public class SmsCampaignDomainServiceImpl implements SmsCampaignDomainService {
         this.codeValueRepository = codeValueRepository;
         this.paymentDetailRepository = paymentDetailRepository;
         this.clientRepository = clientRepository;
+        this.officeRepository = officeRepository;
         this.smsCampaignWritePlatformCommandHandler = smsCampaignWritePlatformCommandHandler;
         this.groupRepository = groupRepository;
         this.readReportingService = readReportingService;
@@ -169,7 +173,12 @@ public class SmsCampaignDomainServiceImpl implements SmsCampaignDomainService {
                                         spvalue = smsParams.get(key).toString();
                                     }
                                     if (spkeycheck && !(value.equals("-1") || spvalue.equals(value))) {
-                                        throw new RuntimeException();
+                                        if(key.equals("${officeId}")){
+                                            Office campaignOffice = this.officeRepository.findOne(Long.valueOf(value));
+                                            if(campaignOffice.doesNotHaveAnOfficeInHierarchyWithId(client.getOffice().getId())){
+                                                throw new RuntimeException();
+                                            }
+                                        }else{throw new RuntimeException();}
                                     }
                                 }
                                 String message = this.smsCampaignWritePlatformCommandHandler.compileSmsTemplate(smsCampaign.getMessage(), smsCampaign.getCampaignName(), smsParams);
