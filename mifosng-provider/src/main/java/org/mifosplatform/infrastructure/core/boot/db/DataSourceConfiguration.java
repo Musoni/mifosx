@@ -19,7 +19,7 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class DataSourceConfiguration {
-	private static final Logger logger = LoggerFactory.getLogger(DataSourceConfiguration.class);
+    private static final Logger logger = LoggerFactory.getLogger(DataSourceConfiguration.class);
 
     @Bean
     public DataSourceProperties dataSourceProperties() {
