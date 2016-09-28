@@ -5,6 +5,7 @@
  */
 package org.mifosplatform.portfolio.transfer.domain;
 
+import org.joda.time.LocalDate;
 import org.mifosplatform.organisation.office.domain.Office;
 import org.mifosplatform.organisation.staff.domain.Staff;
 import org.mifosplatform.portfolio.client.domain.Client;
@@ -141,5 +142,9 @@ public class UndoTransfer extends AbstractPersistable<Long> {
 
     public void updateTransferUndone(boolean transferUndone) {
         this.transferUndone = transferUndone;
+    }
+
+    public LocalDate getSubmittedOnDate() {
+        return new LocalDate(this.submittedOnDate);
     }
 }
