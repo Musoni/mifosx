@@ -5,17 +5,13 @@
  */
 package org.mifosplatform.batch.exception;
 
+import org.mifosplatform.commands.exception.UnsupportedCommandException;
 import org.mifosplatform.infrastructure.core.exception.AbstractPlatformResourceNotFoundException;
 import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.mifosplatform.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.mifosplatform.infrastructure.core.exception.PlatformInternalServerException;
 import org.mifosplatform.infrastructure.core.exception.UnsupportedParameterException;
-import org.mifosplatform.infrastructure.core.exceptionmapper.PlatformApiDataValidationExceptionMapper;
-import org.mifosplatform.infrastructure.core.exceptionmapper.PlatformDataIntegrityExceptionMapper;
-import org.mifosplatform.infrastructure.core.exceptionmapper.PlatformDomainRuleExceptionMapper;
-import org.mifosplatform.infrastructure.core.exceptionmapper.PlatformInternalServerExceptionMapper;
-import org.mifosplatform.infrastructure.core.exceptionmapper.PlatformResourceNotFoundExceptionMapper;
-import org.mifosplatform.infrastructure.core.exceptionmapper.UnsupportedParameterExceptionMapper;
+import org.mifosplatform.infrastructure.core.exceptionmapper.*;
 import org.mifosplatform.portfolio.loanaccount.exception.MultiDisbursementDataRequiredException;
 import org.mifosplatform.portfolio.loanproduct.exception.LinkedAccountRequiredException;
 import org.springframework.transaction.TransactionException;
@@ -107,6 +103,12 @@ public class ErrorHandler extends RuntimeException {
             final String errorBody = jsonHelper.toJson(mapper.toResponse((PlatformInternalServerException) exception).getEntity());
 
             return new ErrorInfo(500, 5001, errorBody);
+        } else if (exception instanceof UnsupportedCommandException) {
+
+            final UnsupportedCommandExceptionMapper mapper = new UnsupportedCommandExceptionMapper();
+            final String errorBody = jsonHelper.toJson(mapper.toResponse((UnsupportedCommandException) exception).getEntity());
+
+            return new ErrorInfo(403, 6001, errorBody);
         }
 
         return new ErrorInfo(500, 9999, "{\"Exception\": " + exception.toString() + "}");
