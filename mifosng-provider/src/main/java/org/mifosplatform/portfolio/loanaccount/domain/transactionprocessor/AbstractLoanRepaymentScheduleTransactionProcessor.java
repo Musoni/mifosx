@@ -331,7 +331,7 @@ public abstract class AbstractLoanRepaymentScheduleTransactionProcessor implemen
 
         Money amountRemaining = feeCharges;
         while (amountRemaining.isGreaterThanZero()) {
-            final LoanCharge unpaidCharge = findEarliestUnpaidChargeFromUnOrderedSet(charges, false);
+            final LoanCharge unpaidCharge = findEarliestUnpaidChargeFromUnOrderedSet(charges, feeCharges.getCurrency());
             Money feeAmount = feeCharges.zero();
             if (loanTransaction.isChargePayment()) {
                 feeAmount = feeCharges;
@@ -359,14 +359,12 @@ public abstract class AbstractLoanRepaymentScheduleTransactionProcessor implemen
     }
 
     private LoanCharge findEarliestUnpaidChargeFromUnOrderedSet(final Set<LoanCharge> charges, 
-            final boolean searchForWaivedChargeWithOutstandingAmount) {
+            final MonetaryCurrency currency) {
         LoanCharge earliestUnpaidCharge = null;
         LoanCharge installemntCharge = null;
         LoanInstallmentCharge chargePerInstallment = null;
         for (final LoanCharge loanCharge : charges) {
-            if ((loanCharge.isNotFullyPaid() && !loanCharge.isDueAtDisbursement() && (!loanCharge.isWaived() 
-                    || loanCharge.isInstalmentFee()) && !searchForWaivedChargeWithOutstandingAmount) || 
-                    (loanCharge.isWaived() && loanCharge.hasOutstandingAmount() && searchForWaivedChargeWithOutstandingAmount)){
+            if (loanCharge.getAmountOutstanding(currency).isGreaterThanZero() && !loanCharge.isDueAtDisbursement()) {
                 if (loanCharge.isInstalmentFee()) {
                     LoanInstallmentCharge unpaidLoanChargePerInstallment = loanCharge.getUnpaidInstallmentLoanCharge();
                     if (chargePerInstallment == null
@@ -385,9 +383,9 @@ public abstract class AbstractLoanRepaymentScheduleTransactionProcessor implemen
                         chargePerInstallment.getRepaymentInstallment().getDueDate()))) {
             earliestUnpaidCharge = installemntCharge;
         }
-        if (earliestUnpaidCharge == null && !searchForWaivedChargeWithOutstandingAmount) {
+        /*if (earliestUnpaidCharge == null && !searchForWaivedChargeWithOutstandingAmount) {
             return findEarliestUnpaidChargeFromUnOrderedSet(charges, true);
-        }
+        } */
 
         return earliestUnpaidCharge;
     }

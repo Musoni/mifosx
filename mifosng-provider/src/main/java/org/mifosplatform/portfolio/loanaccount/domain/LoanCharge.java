@@ -1029,6 +1029,10 @@ public class LoanCharge extends AbstractPersistable<Long> {
         return this.loan;
     }
 
+    public Money getAmountOutstanding(final MonetaryCurrency currency) {
+        return Money.of(currency, this.amountOutstanding);
+    }
+
     public boolean hasOutstandingAmount() {
         boolean hasOutstandingAmount = false;
         
