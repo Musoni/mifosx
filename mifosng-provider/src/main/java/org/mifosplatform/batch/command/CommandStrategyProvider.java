@@ -15,9 +15,9 @@ import org.springframework.stereotype.Component;
 /**
  * Provides an appropriate CommandStrategy using the 'method' and 'resourceUrl'.
  * CommandStrategy bean is created using Spring Application Context.
- * 
+ *
  * @author Rishabh Shukla
- * 
+ *
  * @see org.mifosplatform.batch.command.internal.UnknownCommandStrategy
  */
 @Component
@@ -31,7 +31,7 @@ public class CommandStrategyProvider {
      * type. It also initialize commandStrategies using init() function by
      * filling it with available CommandStrategies in
      * {@link org.mifosplatform.batch.command.internal}.
-     * 
+     *
      * @param applicationContext
      */
     @Autowired
@@ -47,7 +47,7 @@ public class CommandStrategyProvider {
      * Returns an appropriate commandStrategy after determining it using the
      * CommandContext of the request. If no such Strategy is found then a
      * default strategy is returned back.
-     * 
+     *
      * @param commandContext
      * @return CommandStrategy
      * @see org.mifosplatform.batch.command.internal.UnknownCommandStrategy
@@ -88,6 +88,8 @@ public class CommandStrategyProvider {
                 "disburseLoanCommandStrategy");
         this.commandStrategies.put(CommandContext.resource("datatables\\/\\w+\\/\\d+").method("POST").build(), "createDatatableEntryCommandStrategy");
         this.commandStrategies.put(CommandContext.resource("groups\\/\\d+\\?command=assignRole").method("POST").build(), "assignRoleToGroupCommandStrategy");
+        this.commandStrategies.put(CommandContext.resource("loans\\/\\d+\\/collaterals").method("POST").build(), "createCollateralCommandStrategy");
+        this.commandStrategies.put(CommandContext.resource("loans\\/\\d+\\/guarantors").method("POST").build(), "createGuarantorCommandStrategy");
     }
 
 }
