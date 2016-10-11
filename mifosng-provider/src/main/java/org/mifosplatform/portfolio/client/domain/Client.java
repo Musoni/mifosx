@@ -843,6 +843,15 @@ public final class Client extends AbstractPersistable<Long> {
         return false;
     }
 
+    public Group getClientGroupById(final Long groupId) {
+        if (groupId != null && this.groups != null && !this.groups.isEmpty()) {
+            for (final Group group : this.groups) {
+                if (group.getId().equals(groupId)) { return group; }
+            }
+        }
+        return null;
+    }
+
     private Long savingsProductId() {
         Long savingsProductId = null;
         if (this.savingsProduct != null) {
