@@ -67,8 +67,18 @@ public class GroupRolesWritePlatformServiceJpaRepositoryImpl implements GroupRol
             final Long clientId = command.longValueOfParameterNamed(GroupingTypesApiConstants.clientIdParamName);
             final Client client = this.clientRepository.findOneWithNotFoundDetection(clientId);
 
-            final Group group = this.groupRepository.findOneWithNotFoundDetection(command.getGroupId());
-            if (!group.hasClientAsMember(client)) { throw new ClientNotInGroupException(clientId, command.getGroupId()); }
+            Group group = this.groupRepository.findOneWithNotFoundDetection(command.getGroupId());
+            if (!group.hasClientAsMember(client))
+            {
+                // Because groupRepository is not correctly updated when createRole is used in a batch API we pick the groups from the client:
+                group = client.getClientGroupById(command.getGroupId());
+
+                if(group == null)
+                {
+                    throw new ClientNotInGroupException(clientId, command.getGroupId());
+                }
+            }
+
             final GroupRole groupRole = GroupRole.createGroupRole(group, client, role);
             this.groupRoleRepository.save(groupRole);
             return new CommandProcessingResultBuilder().withClientId(client.getId()).withGroupId(group.getId())
