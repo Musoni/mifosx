@@ -17,17 +17,14 @@ public class DatatableData {
 
     @SuppressWarnings("unused")
     private final String applicationTableName;
-    @SuppressWarnings("unused")
     private final String registeredTableName;
     @SuppressWarnings("unused")
     private final Long category;
 
-    @SuppressWarnings("unused")
     private final String displayName;
 
     @SuppressWarnings("unused")
     private final boolean systemDefined;
-    @SuppressWarnings("unused")
     private final List<ResultsetColumnHeaderData> columnHeaderData;
     @SuppressWarnings("unused")
     private final List<MetaDataResultSet> metaDataResultSets;
@@ -66,5 +63,12 @@ public class DatatableData {
 
     public String getRegisteredTableName(){
         return registeredTableName;
+    }
+    
+    /**
+     * @return the displayName
+     */
+    public String getDisplayName() {
+    	return this.displayName;
     }
 }
