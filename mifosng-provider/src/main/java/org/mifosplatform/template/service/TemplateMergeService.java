@@ -8,7 +8,9 @@ package org.mifosplatform.template.service;
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
+
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.ser.std.StdArraySerializers;
 import org.codehaus.jackson.type.TypeReference;
 import org.mifosplatform.template.domain.Template;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,12 +31,10 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
+import java.text.DecimalFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 import org.slf4j.Logger;
@@ -57,12 +57,14 @@ public class TemplateMergeService {
         //final String auth = ThreadLocalContextUtil.getAuthToken();
     	this.authToken =  authToken;
     }
+
+
     
 
-    public String compile(final Template template, final Map<String, Object> scopes) throws MalformedURLException, IOException {
+    public String compile(final Template template, final Map<String, Object> scopes) throws MalformedURLException, IOException, ParseException {
         this.scopes = scopes;
         this.scopes.put("static", TemplateMergeService.now());
-        
+
         final MustacheFactory mf = new DefaultMustacheFactory();
         final Mustache mustache = mf.compile(new StringReader(template.getText()), template.getName());
 
@@ -84,7 +86,36 @@ public class TemplateMergeService {
         return dateFormat.format(date);
     }
 
-	private Map<String, Object> getCompiledMapFromMappers(final Map<String, String> data) {
+    public String formatDate(String stringDate) throws ParseException {
+        final DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+
+        final DateFormat formatTo = new SimpleDateFormat("dd MMMM yyyy");
+        Date date = dateFormat.parse(stringDate);
+        return formatTo.format(date);
+
+    }
+
+    public String formatDouble (Double removeZeros){
+        DecimalFormat decimalFormat = new DecimalFormat("#,###.##");
+        return decimalFormat.format(removeZeros);
+    }
+
+    private void formatDecimalDigits(HashMap<String,Object> objs) {
+        for(Map.Entry<String,Object> entrySet: objs.entrySet()){
+            final String key = entrySet.getKey();
+            final Object value = entrySet.getValue();
+            if(value instanceof Double){
+                String doubleFormatted = this.formatDouble((Double) value);
+                objs.put(key,doubleFormatted);
+            }else if (value instanceof LinkedHashMap){
+                this.formatDecimalDigits((HashMap) value);
+            }
+        }
+    }
+
+
+
+	private Map<String, Object> getCompiledMapFromMappers(final Map<String, String> data) throws ParseException {
         final MustacheFactory mf = new DefaultMustacheFactory();
 
         if (data != null) {
@@ -98,7 +129,35 @@ public class TemplateMergeService {
                     url = this.scopes.get("BASE_URI") + url;
                 }
                 try {
-                    this.scopes.put(entry.getKey(), getMapFromUrl(url));
+                    final List<HashMap<String,Object>> mapFromUrl = getMapFromUrl(url);
+                    /** this function changes the date format of [1997,7-1] to 1-7-1997 **/
+                    for(final HashMap<String,Object> dateFormat : mapFromUrl){
+                        for(Map.Entry<String,Object> map: dateFormat.entrySet()){
+                            final Object obj  = map.getValue();
+                            final String key = map.getKey();
+                            if(obj instanceof ArrayList && (key.contains("date") || key.contains("Date")) && ((ArrayList) obj).size() == 3){
+                                String changeArrayDateToStringDate =  ((ArrayList) obj).get(2).toString() +"-"+((ArrayList) obj).get(1).toString() +"-"+((ArrayList) obj).get(0).toString();
+                                dateFormat.put(key,this.formatDate(changeArrayDateToStringDate));
+                            }
+                            if(obj instanceof LinkedHashMap){
+                                this.formatArrayDate((HashMap) obj);
+                                this.formatDecimalDigits((HashMap) obj);
+                            }
+
+                            if(obj instanceof Double){
+                                String doubleFormatted = this.formatDouble((Double) obj);
+                                dateFormat.put(key,doubleFormatted);
+                            }
+                        }
+                    }
+                    /** this function handles single maps from main entity ex loan and client else handles many to many relationships
+                     * where mustache has to loop the info and display it
+                     * */
+                    if(mapFromUrl.size() == 1){
+                        this.scopes.put(entry.getKey(), mapFromUrl.get(0));
+                    }else{
+                        this.scopes.put(entry.getKey(), mapFromUrl);
+                    }
                 } catch (final IOException e) {
                 	logger.error("getCompiledMapFromMappers() failed", e);
                 }
@@ -107,16 +166,36 @@ public class TemplateMergeService {
         return this.scopes;
     }
 
+    private void formatArrayDate(HashMap<String,Object> objs) throws ParseException{
+         for(Map.Entry<String,Object> entrySet: objs.entrySet()){
+             final String key = entrySet.getKey();
+             final Object value = entrySet.getValue();
+             if(value instanceof ArrayList && (key.contains("date") || key.contains("Date")) && ((ArrayList) value).size() == 3){
+                 String changeArrayDateToStringDate =  ((ArrayList) value).get(2).toString() +"-"+((ArrayList) value).get(1).toString() +"-"+((ArrayList) value).get(0).toString();
+                 objs.put(key,this.formatDate(changeArrayDateToStringDate));
+             }else if (value instanceof LinkedHashMap){
+                 this.formatArrayDate((HashMap) value);
+             }
+         }
+    }
+
     @SuppressWarnings("unchecked")
-    private Map<String, Object> getMapFromUrl(final String url) throws MalformedURLException, IOException {
+    private List<HashMap<String, Object>> getMapFromUrl(final String url) throws MalformedURLException, IOException {
         final HttpURLConnection connection = getConnection(url);
 
         final String response = getStringFromInputStream(connection.getInputStream());
-        HashMap<String, Object> result = new HashMap<>();
+        List<HashMap<String, Object>> result = new ArrayList<>();
+        HashMap<String,Object> hashMap  = new HashMap<>();
         if (connection.getContentType().equals("text/plain")) {
-            result.put("src", response);
+            hashMap.put("src",response);
+            result.add(hashMap);
         } else {
-            result = new ObjectMapper().readValue(response, HashMap.class);
+            if(response.startsWith("[")){ // means this is an array
+                result = new ObjectMapper().readValue(response, new TypeReference<List<HashMap<String,Object>>>(){});
+            }else{
+                hashMap = new ObjectMapper().readValue(response, HashMap.class);
+                result.add(hashMap);
+            }
         }
         return result;
     }

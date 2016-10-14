@@ -13,6 +13,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.math.RoundingMode;
 import java.net.MalformedURLException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -64,7 +65,7 @@ public class TemplateMergeServiceTest {
     }
 
     @Test
-    public void compileLoanSummary() throws IOException {
+    public void compileLoanSummary() throws IOException ,ParseException{
         LocalDate july2nd = new LocalDate(2012, 7, 2);
         MonetaryCurrency usDollars = new MonetaryCurrencyBuilder().withCode("USD").withDigitsAfterDecimal(2).build();
         List<LoanRepaymentScheduleInstallment> installments = LoanScheduleTestDataHelper.createSimpleLoanSchedule(july2nd, usDollars);
@@ -106,7 +107,7 @@ public class TemplateMergeServiceTest {
         assertEquals(expectedOutput, output);
     }
 
-    protected String compileTemplateText(String templateText, Map<String, Object> scope) throws MalformedURLException, IOException {
+    protected String compileTemplateText(String templateText, Map<String, Object> scope) throws MalformedURLException, IOException,ParseException {
         List<TemplateMapper> mappers = new ArrayList<>();
         Template template = new Template("TemplateName", templateText, null, null, mappers);
         return tms.compile(template, scope);
