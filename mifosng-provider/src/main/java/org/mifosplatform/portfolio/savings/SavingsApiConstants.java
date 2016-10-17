@@ -24,6 +24,7 @@ public class SavingsApiConstants {
     public static String summitalAction = ".summital";
     public static String approvalAction = ".approval";
     public static String undoApprovalAction = ".undoApproval";
+    public static String undoRejectionAction = ".undoRejection";
     public static String rejectAction = ".reject";
     public static String withdrawnByApplicantAction = ".withdrawnByApplicant";
     public static String activateAction = ".activate";
@@ -33,6 +34,7 @@ public class SavingsApiConstants {
     public static String applyAnnualFeeTransactionAction = ".applyannualfee";
     public static String adjustTransactionAction = ".adjusttransaction";
     public static String closeAction = ".close";
+    public static String reopenAction = ".reopen";
     public static String payChargeTransactionAction = ".paycharge";
     public static String waiveChargeTransactionAction = ".waivecharge";
     public static String updateMaturityDetailsAction = ".updateMaturityDetails";
