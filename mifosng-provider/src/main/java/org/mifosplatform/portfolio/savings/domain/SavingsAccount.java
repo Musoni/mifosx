@@ -1856,6 +1856,41 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         return actualChanges;
     }
 
+    public Map<String, Object> undoApplicationRejection() {
+        final Map<String, Object> actualChanges = new LinkedHashMap<>();
+
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
+                .resource(SAVINGS_ACCOUNT_RESOURCE_NAME + SavingsApiConstants.undoRejectionAction);
+
+        final SavingsAccountStatusType currentStatus = SavingsAccountStatusType.fromInt(this.status);
+        if (!SavingsAccountStatusType.REJECTED.hasStateOf(currentStatus)) {
+
+            baseDataValidator.reset().parameter(SavingsApiConstants.rejectedOnDateParamName)
+                    .failWithCodeNoParameterAddedToErrorCode("not.in.rejected.state");
+
+            if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
+        }
+
+        this.status = SavingsAccountStatusType.SUBMITTED_AND_PENDING_APPROVAL.getValue();
+        actualChanges.put(SavingsApiConstants.statusParamName, SavingsEnumerations.status(this.status));
+
+        this.approvedOnDate = null;
+        this.approvedBy = null;
+        this.rejectedOnDate = null;
+        this.rejectedBy = null;
+        this.withdrawnOnDate = null;
+        this.withdrawnBy = null;
+        this.closedOnDate = null;
+        this.closedBy = null;
+        actualChanges.put(SavingsApiConstants.rejectedOnDateParamName, "");
+
+        // FIXME - kw - support field officer history for savings accounts
+        // this.loanOfficerHistory.clear();
+
+        return actualChanges;
+    }
+
     public Map<String, Object> applicantWithdrawsFromApplication(final AppUser currentUser, final JsonCommand command,
             final LocalDate tenantsTodayDate) {
         final Map<String, Object> actualChanges = new LinkedHashMap<>();
@@ -2106,6 +2141,43 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         this.withdrawnBy = null;
         this.closedOnDate = closedDate.toDate();
         this.closedBy = currentUser;
+
+        return actualChanges;
+    }
+
+    public Map<String, Object> reopen() {
+        final Map<String, Object> actualChanges = new LinkedHashMap<>();
+
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
+                .resource(SAVINGS_ACCOUNT_RESOURCE_NAME + SavingsApiConstants.reopenAction);
+
+        final SavingsAccountStatusType currentStatus = SavingsAccountStatusType.fromInt(this.status);
+        if (!SavingsAccountStatusType.CLOSED.hasStateOf(currentStatus)) {
+
+            baseDataValidator.reset().parameter(SavingsApiConstants.closedOnDateParamName)
+                    .failWithCodeNoParameterAddedToErrorCode("not.in.closed.state");
+
+            if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
+        }
+
+        this.status = SavingsAccountStatusType.SUBMITTED_AND_PENDING_APPROVAL.getValue();
+        actualChanges.put(SavingsApiConstants.statusParamName, SavingsEnumerations.status(this.status));
+
+        this.approvedOnDate = null;
+        this.approvedBy = null;
+        this.rejectedOnDate = null;
+        this.rejectedBy = null;
+        this.withdrawnOnDate = null;
+        this.withdrawnBy = null;
+        this.closedOnDate = null;
+        this.closedBy = null;
+        this.activatedOnDate = null;
+        this.activatedBy = null;
+        actualChanges.put(SavingsApiConstants.closedOnDateParamName, "");
+
+        // FIXME - kw - support field officer history for savings accounts
+        // this.loanOfficerHistory.clear();
 
         return actualChanges;
     }
