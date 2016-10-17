@@ -1228,6 +1228,15 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder undoSavingsAccountRejection(final Long accountId){
+        this.actionName = "UNDOREJECT";
+        this.entityName = "SAVINGSACCOUNT";
+        this.entityId = accountId;
+        this.savingsId = accountId;
+        this.href = "/savingsaccounts/" + accountId + "?command=undoreject";
+        return this;
+    }
+
     public CommandWrapperBuilder savingsAccountActivation(final Long accountId) {
         this.actionName = "ACTIVATE";
         this.entityName = "SAVINGSACCOUNT";
@@ -1243,6 +1252,15 @@ public class CommandWrapperBuilder {
         this.entityId = accountId;
         this.savingsId = accountId;
         this.href = "/savingsaccounts/" + accountId + "?command=close";
+        return this;
+    }
+
+    public CommandWrapperBuilder reopenSavingsAccount(final Long accountId){
+        this.actionName = "REOPEN";
+        this.entityName = "SAVINGSACCOUNT";
+        this.entityId = accountId;
+        this.savingsId = accountId;
+        this.href = "/savingsaccounts/" + accountId + "?command=reopen";
         return this;
     }
 

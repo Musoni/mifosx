@@ -21,6 +21,10 @@ public interface SavingsApplicationProcessWritePlatformService {
 
     CommandProcessingResult undoApplicationApproval(Long savingsId, JsonCommand command);
 
+    CommandProcessingResult undoApplicationRejection(Long savingsId, JsonCommand command);
+
+    CommandProcessingResult reopen(Long savingsId, JsonCommand command);
+
     CommandProcessingResult rejectApplication(Long savingsId, JsonCommand command);
 
     CommandProcessingResult applicantWithdrawsFromApplication(Long savingsId, JsonCommand command);
