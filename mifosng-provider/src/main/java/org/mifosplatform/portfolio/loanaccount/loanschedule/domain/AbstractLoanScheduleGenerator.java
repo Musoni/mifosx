@@ -280,7 +280,17 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
                         calculateInterestForDays(daysInPeriodApplicableInFullInstallment, interestForThisinstallment.getAmount(),
                                 daysInPeriodApplicableForInterest));
             }
-            totalOutstandingInterestPaymentDueToGrace = principalInterestForThisPeriod.interestPaymentDueToGrace();
+            
+            switch (loanApplicationTerms.getInterestMethod()) {
+                case FLAT:
+                    totalOutstandingInterestPaymentDueToGrace = principalInterestForThisPeriod.interestPaymentDueToGrace();
+                    break;
+                    
+                default:
+                    // interest payment due to grace will remain at zero for declining balance loans
+                    // so that accumulating grace periods interest amount don't get applied to the first installment after the last grace period
+                    break;
+            }
 
             if (interestForThisinstallment.isGreaterThanZero()) {
                 interestForThisinstallment = interestForThisinstallment.plus(interestToBeAdded);

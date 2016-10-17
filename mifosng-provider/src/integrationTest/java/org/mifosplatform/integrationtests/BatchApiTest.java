@@ -409,4 +409,31 @@ public class BatchApiTest {
         Assert.assertEquals("Verify Status Code 200 for Approve Loan", 200L, (long) response.get(3).getStatusCode());
         Assert.assertEquals("Verify Status Code 200 for Disburse Loan", 200L, (long) response.get(4).getStatusCode());
     }
+
+    /**
+     * Test to check a role is assigned to a group successfully using the
+     * {@link org.mifosplatform.batch.command.internal.AssignRoleToGroupCommandStrategy}.
+     */
+    @Test
+    public void shouldReturnOkStatusOnSuccessfulAssignmentOfRoleToAGroup() {
+
+        final BatchRequest createGroupClientBatchRequest = BatchHelper.createGroupClientRequest(9054L);
+        final BatchRequest assignRoleToGroupBatchRequest = BatchHelper.assignRoleToGroupBatchRequest(9055L, 9054L);
+
+        final List<BatchRequest> batchRequests = new ArrayList<>(2);
+        batchRequests.add(createGroupClientBatchRequest);
+        batchRequests.add(assignRoleToGroupBatchRequest);
+
+        final String jsonifiedRequest = BatchHelper.toJsonString(batchRequests);
+
+        final List<BatchResponse> responseList = BatchHelper.postBatchRequestsWithEnclosingTransaction(this.requestSpec,
+                this.responseSpec, jsonifiedRequest);
+
+        Assert.assertEquals("Verify Status Code 200 for Create Group Client", 200L,
+                (long) responseList.get(0).getStatusCode());
+        Assert.assertEquals("Verify Status Code 200 for Assign Role to Group", 200L,
+                (long) responseList.get(1).getStatusCode());
+
+    }
+
 }

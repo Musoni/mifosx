@@ -761,7 +761,7 @@ public class TransferWritePlatformServiceJpaRepositoryImpl implements TransferWr
           reverse transaction made on initiate transfer and accept transfer
           Ideally this reversal would be inside the previous If, but we can't put it there because there are still transfers that did do the bookings, that can be reversed.
          */
-        this.reverseTransferTransaction(clientId);
+        this.reverseTransferTransaction(clientId,clientUndoTransfer.getSubmittedOnDate());
 
 
 
@@ -823,19 +823,22 @@ public class TransferWritePlatformServiceJpaRepositoryImpl implements TransferWr
 
     }
 
-    private void reverseTransferTransaction(final Long clientId){
+    private void reverseTransferTransaction(final Long clientId,final LocalDate clientTransferDate){
         if(this.loanRepository.doNonClosedLoanAccountsExistForClient(clientId)){
             for(final Loan loan : this.loanRepository.findLoanByClientId(clientId)){
                 if(loan.isDisbursed() && !loan.isClosed()){
                     List<Long> existingTransactionIds = new ArrayList<Long>(loan.findExistingTransactionIds());
                     List<Long> existingReversedTransactionIds = new ArrayList<Long>(loan.findExistingReversedTransactionIds());
                     for(final LoanTransaction loanTransaction :this.loanTransactionRepository.currentTransferTransaction(loan.getId())){
-                        if(loanTransaction.getTypeOf().equals(LoanTransactionType.INITIATE_TRANSFER) && loanTransaction.isNotReversed()){
-                            loanTransaction.reverse();
+                        if(loanTransaction.getTransactionDate().equals(clientTransferDate)){
+                            if(loanTransaction.getTypeOf().equals(LoanTransactionType.INITIATE_TRANSFER) && loanTransaction.isNotReversed()){
+                                loanTransaction.reverse();
+                            }
+                            if(loanTransaction.getTypeOf().equals(LoanTransactionType.APPROVE_TRANSFER) && loanTransaction.isNotReversed()){
+                                loanTransaction.reverse();
+                            }
                         }
-                        if(loanTransaction.getTypeOf().equals(LoanTransactionType.APPROVE_TRANSFER) && loanTransaction.isNotReversed()){
-                            loanTransaction.reverse();
-                        }
+
                     }
                     this.postJournalEntriesLoan(loan,existingTransactionIds,existingReversedTransactionIds);
                 }
@@ -848,12 +851,15 @@ public class TransferWritePlatformServiceJpaRepositoryImpl implements TransferWr
                     Set<Long> existingTransactionIds = new HashSet<Long>(savingsAccount.findExistingTransactionIds());
                     Set<Long> existingReversedTransactionIds = new HashSet<Long>(savingsAccount.findExistingReversedTransactionIds());
                     for(SavingsAccountTransaction savingsAccountTransaction: this.savingsAccountTransactionRepository.currentTransferTransaction(savingsAccount.getId())){
-                        if(savingsAccountTransaction.isTransferInitiation() && savingsAccountTransaction.isNotReversed()){
-                            savingsAccountTransaction.reverse();
+                        if(savingsAccountTransaction.transactionLocalDate().equals(clientTransferDate)){
+                            if(savingsAccountTransaction.isTransferInitiation() && savingsAccountTransaction.isNotReversed()){
+                                savingsAccountTransaction.reverse();
+                            }
+                            if(savingsAccountTransaction.isTransferApproval() && savingsAccountTransaction.isNotReversed()){
+                                savingsAccountTransaction.reverse();
+                            }
                         }
-                        if(savingsAccountTransaction.isTransferApproval() && savingsAccountTransaction.isNotReversed()){
-                            savingsAccountTransaction.reverse();
-                        }
+
                     }
 
                     this.postJournalEntries(savingsAccount, existingTransactionIds, existingReversedTransactionIds);
@@ -980,7 +986,7 @@ public class TransferWritePlatformServiceJpaRepositoryImpl implements TransferWr
           transfer client back to group and
          */
         for(Client client : clients){
-             this.reverseTransferTransaction(client.getId());
+             this.reverseTransferTransaction(client.getId(),groupUndoTransfer.getSubmittedOnDate());
              this.undoClientTransfer(client,client.getId());
         }
 

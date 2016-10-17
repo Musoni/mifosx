@@ -21,9 +21,8 @@ import com.jayway.restassured.specification.ResponseSpecification;
  * Helper class for {@link org.mifosplatform.integrationtests.BatchApiTest}. It
  * takes care of creation of {@code BatchRequest} list and posting this list to
  * the server.
- * 
+ *
  * @author Rishabh Shukla
- * 
  * @see org.mifosplatform.integrationtests.BatchApiTest
  */
 public class BatchHelper {
@@ -37,7 +36,7 @@ public class BatchHelper {
 
     /**
      * Returns a JSON String for a list of {@code BatchRequest}s
-     * 
+     *
      * @param batchRequests
      * @return JSON String of BatchRequest
      */
@@ -47,26 +46,27 @@ public class BatchHelper {
 
     /**
      * Returns the converted string response into JSON.
-     * 
+     *
      * @param json
      * @return List<BatchResponse>
      */
     private static List<BatchResponse> fromJsonString(final String json) {
-        return new Gson().fromJson(json, new TypeToken<List<BatchResponse>>() {}.getType());
+        return new Gson().fromJson(json, new TypeToken<List<BatchResponse>>() {
+        }.getType());
     }
 
     /**
      * Returns a list of BatchResponse with query parameter enclosing
      * transaction set to false by posting the jsonified BatchRequest to the
      * server.
-     * 
+     *
      * @param requestSpec
      * @param responseSpec
      * @param jsonifiedBatchRequests
      * @return a list of BatchResponse
      */
     public static List<BatchResponse> postBatchRequestsWithoutEnclosingTransaction(final RequestSpecification requestSpec,
-            final ResponseSpecification responseSpec, final String jsonifiedBatchRequests) {
+                                                                                   final ResponseSpecification responseSpec, final String jsonifiedBatchRequests) {
         final String response = Utils.performServerPost(requestSpec, responseSpec, BATCH_API_URL, jsonifiedBatchRequests, null);
         return BatchHelper.fromJsonString(response);
     }
@@ -75,14 +75,14 @@ public class BatchHelper {
      * Returns a list of BatchResponse with query parameter enclosing
      * transaction set to true by posting the jsonified BatchRequest to the
      * server.
-     * 
+     *
      * @param requestSpec
      * @param responseSpec
      * @param jsonifiedBatchRequests
      * @return a list of BatchResponse
      */
     public static List<BatchResponse> postBatchRequestsWithEnclosingTransaction(final RequestSpecification requestSpec,
-            final ResponseSpecification responseSpec, final String jsonifiedBatchRequests) {
+                                                                                final ResponseSpecification responseSpec, final String jsonifiedBatchRequests) {
         final String response = Utils.performServerPost(requestSpec, responseSpec, BATCH_API_URL_EXT, jsonifiedBatchRequests, null);
         return BatchHelper.fromJsonString(response);
     }
@@ -90,12 +90,11 @@ public class BatchHelper {
     /**
      * Returns a BatchResponse based on the given BatchRequest, by posting the
      * request to the server.
-     * 
-     * @param BatchRequest
+     *
      * @return List<BatchResponse>
      */
     public static List<BatchResponse> postWithSingleRequest(final RequestSpecification requestSpec,
-            final ResponseSpecification responseSpec, final BatchRequest br) {
+                                                            final ResponseSpecification responseSpec, final BatchRequest br) {
 
         final List<BatchRequest> batchRequests = new ArrayList<>();
         batchRequests.add(br);
@@ -115,8 +114,8 @@ public class BatchHelper {
      * Creates and returns a
      * {@link org.mifosplatform.batch.command.internal.CreateClientCommandStrategy}
      * Request as one of the request in Batch.
-     * 
-     * @param reqId
+     *
+     * @param requestId
      * @param externalId
      * @return BatchRequest
      */
@@ -142,13 +141,31 @@ public class BatchHelper {
         return br;
     }
 
+    public static BatchRequest createGroupClientRequest(final Long requestId) {
+
+        final BatchRequest br = new BatchRequest();
+        br.setRequestId(requestId);
+        br.setRelativeUrl("clients");
+        br.setMethod("POST");
+
+        final String body = "{\"active\":false,\"dateFormat\":\"dd-MM-yyyy\",\"dateOfBirth\":\"20-09-1998\"," +
+                "\"firstname\":\"TestMe\",\"genderId\":54,\"groupId\":10,\"lastname\":\"nOW\",\"locale\":\"en\"," +
+                "\"middlename\":\"SD\",\"mobileNo\":\"103832999\",\"officeId\":2,\"staffId\":2," +
+                "\"submittedOnDate\":\"20-09-2016\"}";
+
+        br.setBody(body);
+
+        return br;
+
+    }
+
     /**
      * Creates and returns a
      * {@link org.mifosplatform.batch.command.internal.UpdateClientCommandStrategy}
      * Request with given requestId and reference.
-     * 
-     * @param reqId
-     * @param clientId
+     *
+     * @param requestId
+     * @param reference
      * @return BatchRequest
      */
     public static BatchRequest updateClientRequest(final Long requestId, final Long reference) {
@@ -168,7 +185,7 @@ public class BatchHelper {
      * Creates and returns a
      * {@link org.mifosplatform.batch.command.internal.ApplyLoanCommandStrategy}
      * Request with given requestId and reference.
-     * 
+     *
      * @param requestId
      * @param reference
      * @param productId
@@ -199,7 +216,7 @@ public class BatchHelper {
      * Creates and returns a
      * {@link org.mifosplatform.batch.command.internal.ApplySavingsCommandStrategy}
      * Request with given requestId and reference.
-     * 
+     *
      * @param requestId
      * @param reference
      * @param productId
@@ -225,7 +242,7 @@ public class BatchHelper {
      * Creates and returns a
      * {@link org.mifosplatform.batch.command.internal.CreateChargeCommandStrategy}
      * Request with given requestId and reference
-     * 
+     *
      * @param requestId
      * @param reference
      * @return BatchRequest
@@ -249,7 +266,7 @@ public class BatchHelper {
      * Creates and returns a
      * {@link org.mifosplatform.batch.command.internal.CollectChargesCommandStrategy}
      * Request with given requestId and reference.
-     * 
+     *
      * @param requestId
      * @param reference
      * @return BatchRequest
@@ -271,8 +288,7 @@ public class BatchHelper {
      * Creates and returns a
      * {@link org.mifosplatform.batch.command.internal.ActivateClientCommandStrategy}
      * Request with given requestId and reference.
-     * 
-     * 
+     *
      * @param requestId
      * @param reference
      * @return BatchRequest
@@ -289,13 +305,12 @@ public class BatchHelper {
 
         return br;
     }
-    
+
     /**
      * Creates and returns a
      * {@link org.mifosplatform.batch.command.internal.ApproveLoanCommandStrategy}
      * Request with given requestId and reference.
-     * 
-     * 
+     *
      * @param requestId
      * @param reference
      * @return BatchRequest
@@ -307,7 +322,7 @@ public class BatchHelper {
         br.setRelativeUrl("loans/$.loanId?command=approve");
         br.setReference(reference);
         br.setMethod("POST");
-        br.setBody("{\"locale\": \"en\", \"dateFormat\": \"dd MMMM yyyy\", \"approvedOnDate\": \"12 September 2013\"," 
+        br.setBody("{\"locale\": \"en\", \"dateFormat\": \"dd MMMM yyyy\", \"approvedOnDate\": \"12 September 2013\","
                 + "\"note\": \"Loan approval note\"}");
 
         return br;
@@ -317,8 +332,7 @@ public class BatchHelper {
      * Creates and returns a
      * {@link org.mifosplatform.batch.command.internal.DisburseLoanCommandStrategy}
      * Request with given requestId and reference.
-     * 
-     * 
+     *
      * @param requestId
      * @param reference
      * @return BatchRequest
@@ -334,20 +348,34 @@ public class BatchHelper {
 
         return br;
     }
-    
+
     /**
      * Checks that the client with given externalId is not created on the
      * server.
-     * 
+     *
      * @param requestSpec
      * @param responseSpec
      * @param externalId
      */
     public static void verifyClientCreatedOnServer(final RequestSpecification requestSpec, final ResponseSpecification responseSpec,
-            final String externalId) {
+                                                   final String externalId) {
         System.out.println("------------------------------CHECK CLIENT DETAILS------------------------------------\n");
         final String CLIENT_URL = "/mifosng-provider/api/v1/clients?externalId=" + externalId + "&" + Utils.TENANT_IDENTIFIER;
         final Integer responseRecords = Utils.performServerGet(requestSpec, responseSpec, CLIENT_URL, "totalFilteredRecords");
         Assert.assertEquals("No records found with given externalId", (long) responseRecords, (long) 0);
+    }
+
+    public static BatchRequest assignRoleToGroupBatchRequest(final Long requestId, final Long reference) {
+
+        final BatchRequest br = new BatchRequest();
+
+        br.setRequestId(requestId);
+        br.setReference(reference);
+        br.setRelativeUrl("groups/10?command=assignRole");
+        br.setMethod("POST");
+        br.setBody("{\"clientId\":\"$.clientId\",\"role\":58}");
+
+        return br;
+
     }
 }

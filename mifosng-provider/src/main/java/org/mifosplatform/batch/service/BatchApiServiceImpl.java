@@ -193,7 +193,7 @@ public class BatchApiServiceImpl implements BatchApiService {
 
             for (BatchResponse res : checkList) {
                 if (!res.getStatusCode().equals(200)) {
-                    errResponse.setBody("Transaction is being rolled back. First erroneous request: \n" + new Gson().toJson(res));
+                    errResponse.setBody(new Gson().toJson(res));
                     break;
                 }
             }
