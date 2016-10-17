@@ -23,7 +23,9 @@ import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
 import org.mifosplatform.infrastructure.core.service.RoutingDataSource;
 import org.mifosplatform.infrastructure.dataexport.api.DataExportApiConstants;
 import org.mifosplatform.infrastructure.dataexport.data.DataExportBaseEntity;
+import org.mifosplatform.infrastructure.dataexport.data.DataExportCoreColumn;
 import org.mifosplatform.infrastructure.dataexport.data.DataExportData;
+import org.mifosplatform.infrastructure.dataexport.data.DataExportEntityColumnName;
 import org.mifosplatform.infrastructure.dataexport.data.DataExportEntityData;
 import org.mifosplatform.infrastructure.dataexport.data.DataExportFileData;
 import org.mifosplatform.infrastructure.dataexport.data.DataExportFileFormat;
@@ -220,6 +222,7 @@ public class DataExportReadPlatformServiceImpl implements DataExportReadPlatform
     
     private List<EntityColumnMetaData> getEntityColumnsMetaData(final String tableName) {
         final List<EntityColumnMetaData> entityColumnsMetaData = new ArrayList<>();
+        final List<String> columnNames = new ArrayList<>();
         
         try {
             // see - http://dev.mysql.com/doc/refman/5.7/en/limit-optimization.html
@@ -245,11 +248,24 @@ public class DataExportReadPlatformServiceImpl implements DataExportReadPlatform
                     boolean isNullable = (columnIsNullable != 0);
                     String columnLabel = this.getEntityColumnLabel(columnName);
                     
-                    EntityColumnMetaData entityColumnMetaData = EntityColumnMetaData.newInstance(columnName, 
-                            columnLabel, columnType, isNullable);
-                    
-                    entityColumnsMetaData.add(entityColumnMetaData);
+                    if (!DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.
+                    		contains(columnName)) {
+                    	EntityColumnMetaData entityColumnMetaData = EntityColumnMetaData.newInstance(columnName, 
+                                columnLabel, columnType, isNullable);
+                        
+                        entityColumnsMetaData.add(entityColumnMetaData);
+                        columnNames.add(columnName);
+                    }
                 }
+                
+                /*for (DataExportCoreColumn coreColumn : DataExportCoreColumn.values()) {
+                	if (!columnNames.contains(coreColumn.getName())) {
+                		EntityColumnMetaData entityColumnMetaData = EntityColumnMetaData.newInstance(
+                				coreColumn.getName(), coreColumn.getLabel(), coreColumn.getDataType(), true);
+                        
+                        entityColumnsMetaData.add(entityColumnMetaData);
+                	}
+                }*/
             }
         }
         

@@ -33,14 +33,12 @@ public enum DataExportBaseEntity {
     public static DataExportBaseEntity fromEntityName(final String entityName) {
         DataExportBaseEntity dataExportBaseEntity = INVALID;
         
-        if (CLIENT.entityName.equalsIgnoreCase(entityName)) {
-            dataExportBaseEntity = CLIENT;
-        } else if (GROUP.entityName.equals(entityName)) {
-            dataExportBaseEntity = GROUP;
-        } else if (LOAN.entityName.equals(entityName)) {
-            dataExportBaseEntity = LOAN;
-        } else if (SAVINGSACCOUNT.entityName.equals(entityName)) {
-            dataExportBaseEntity = SAVINGSACCOUNT;
+        for (DataExportBaseEntity baseEntity : DataExportBaseEntity.values()) {
+        	if (baseEntity.entityName.equalsIgnoreCase(entityName)) {
+        		dataExportBaseEntity = baseEntity;
+        		
+        		break;
+        	}
         }
         
         return dataExportBaseEntity;
@@ -55,14 +53,12 @@ public enum DataExportBaseEntity {
     public static DataExportBaseEntity fromTableName(final String tableName) {
         DataExportBaseEntity dataExportBaseEntity = INVALID;
         
-        if (CLIENT.tableName.equalsIgnoreCase(tableName)) {
-            dataExportBaseEntity = CLIENT;
-        } else if (GROUP.tableName.equals(tableName)) {
-            dataExportBaseEntity = GROUP;
-        } else if (LOAN.tableName.equals(tableName)) {
-            dataExportBaseEntity = LOAN;
-        } else if (SAVINGSACCOUNT.tableName.equals(tableName)) {
-            dataExportBaseEntity = SAVINGSACCOUNT;
+        for (DataExportBaseEntity baseEntity : DataExportBaseEntity.values()) {
+        	if (baseEntity.tableName.equalsIgnoreCase(tableName)) {
+        		dataExportBaseEntity = baseEntity;
+        		
+        		break;
+        	}
         }
         
         return dataExportBaseEntity;

@@ -5,8 +5,6 @@
  */
 package org.mifosplatform.infrastructure.dataexport.api;
 
-import com.google.common.collect.ImmutableList;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -27,64 +25,8 @@ public class DataExportApiConstants {
     public static final String XML_FILE_FORMAT = "xml";
     public static final String XLS_FILE_FORMAT = "xlsx";
 
-    // json parameter and format constants
-    public final static String FILE_FORMAT = "fileFormat";
-    public final static String DATA_EXPORT_PROCESS_ID = "dataExportProcessId";
-    public final static String DATA_EXPORT = "DATAEXPORT";
-    public final static String ENTITY_NAME = "entityName";
-    public final static String ENTITY_TABLE = "entityTable";
-    public final static String DATATABLE_NAME = "datatableName";
-    public final static String ENTITY_ID = "id";
-    public final static String ENTITY_STATUS = "status";
-    public final static String ENTITY_TYPE = "type";
-    public final static String ENTITY_OFFICE = "office";
-    public final static String ENTITY_STAFF = "staff";
-    public final static String ENTITY_CLIENT_ID = "clientId";
-    public final static String ENTITY_GROUP_ID = "groupId";
-    public final static String ENTITY_SUBMITDATE = "submittedondate";
-    public final static String ENTITY_PRINCIPAL = "principal";
-    public final static String ENTITY_OUTSTANDING = "outstanding";
-    public final static String ENTITY_BALANCE = "balance";
-    public final static String SUBMITTEDON_DATE_FORMAT = "dd-MM-yyyy";
-    public final static String ENTITY = "entity";
     public static final String DATA_EXPORT_FILENAME_DATETIME_FORMAT_PATTERN = "yyyyMMddHHmmss";
 
-    // field name constants
-    public final static String CLIENT_ID = "client_id";
-    public final static String GROUP_ID = "group_id";
-    public final static String LOAN_ID = "loan_id";
-    public final static String SAVINGS_ACCOUNT_ID = "savingsaccount_id";
-    public final static String OFFICE_TABLE = "m_office";
-    public final static String ACCOUNT_NO = "account_no";
-    public final static String EXTERNAL_ID = "external_id";
-    public final static String OFFICE_ID = "office_id";
-    public final static String OFFICE_NAME = "name";
-    public final static String FULL_NAME = "display_name";
-    public final static String STATUS = "status_enum";
-    public final static String LOAN_STATUS = "loan_status_id";
-    public final static String LOAN_TYPE = "loan_type_enum";
-    public final static String SAVINGS_PRODUCT_TYPE = "product_id";
-    public final static String LOAN_PRINCIPAL = "principal_amount";
-    public final static String TOTAL_OUTSTANDING = "total_outstanding_derived";
-    public final static String SUBMITTED_ON_DATE = "submittedon_date";
-    public final static String MOBILE_NO = "mobile_no";
-    public final static String STAFF_ID = "staff_id";
-    public final static String ACCOUNT_BALANCE = "account_balance_derived";
-
-    // entity-independent supported parameter list
-    public final static ImmutableList<String> BASIC_SUPPORTED_PARAMETERS =
-            ImmutableList.of(ENTITY,ENTITY_NAME,DATATABLE_NAME);
-
-    // lists of fields to be entered in the data export for each entity type
-    public final static ImmutableList<String> CLIENT_FIELD_NAMES =
-            ImmutableList.of(ENTITY_ID,ACCOUNT_NO,FULL_NAME, OFFICE_ID,MOBILE_NO,STATUS, SUBMITTED_ON_DATE);
-    public final static ImmutableList<String> GROUP_FIELD_NAMES =
-            ImmutableList.of(ENTITY_ID,EXTERNAL_ID,FULL_NAME, OFFICE_ID,STAFF_ID,STATUS, SUBMITTED_ON_DATE);
-    public final static ImmutableList<String> LOAN_FIELD_NAMES =
-            ImmutableList.of(ENTITY_ID,ACCOUNT_NO,LOAN_TYPE,CLIENT_ID,GROUP_ID,LOAN_STATUS,SUBMITTED_ON_DATE,LOAN_PRINCIPAL,TOTAL_OUTSTANDING);
-    public final static ImmutableList<String> SAVINGS_ACCOUNT_FIELD_NAMES =
-            ImmutableList.of(ENTITY_ID,ACCOUNT_NO,CLIENT_ID,GROUP_ID,SAVINGS_PRODUCT_TYPE,STATUS, SUBMITTED_ON_DATE, ACCOUNT_BALANCE);
-    
     public static final String DATA_EXPORT_ENTITY_NAME = "DATAEXPORT";
     
     // common API resource request parameter constants
@@ -96,6 +38,7 @@ public class DataExportApiConstants {
     public static final String COLUMNS_PARAM_NAME = "columns";
     public static final String DATATABLES_PARAM_NAME = "datatables";
     public static final String FILTERS_PARAM_NAME = "filters";
+    public static final String FILE_FORMAT_PARAM_NAME = "fileFormat";
     
     // set of supported parameter strings for API create data export request
     public static final Set<String> CREATE_DATA_EXPORT_REQUEST_PARAMETERS = new HashSet<>(Arrays.asList(LOCALE_PARAM_NAME, 

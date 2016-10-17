@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDateTime;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
@@ -20,6 +21,7 @@ import org.mifosplatform.infrastructure.core.data.CommandProcessingResultBuilder
 import org.mifosplatform.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
 import org.mifosplatform.infrastructure.dataexport.api.DataExportApiConstants;
+import org.mifosplatform.infrastructure.dataexport.data.DataExportBaseEntity;
 import org.mifosplatform.infrastructure.dataexport.data.DataExportCoreColumn;
 import org.mifosplatform.infrastructure.dataexport.data.DataExportCreateRequestData;
 import org.mifosplatform.infrastructure.dataexport.data.DataExportEntityData;
@@ -186,24 +188,88 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
                 sqlStringBuilder.append(" " + tableAlias + ".`username` as `" + column.getLabel() + "`,");
                 joinSqlStringBuilder.append(" left join `m_appuser` `" + tableAlias + "` on `"
                         + tableAlias + "`.`id` = `" + baseEntityName + "`.`" + column.getName() + "`");
-            } else if (columnName.contains("office_id")) { 
+            } else if (columnName.equals("office_id")) { 
                 String tableAlias = "office" + referencedTableIndex++;
                 
-                sqlStringBuilder.append(" " + tableAlias + ".`name` as `" + column.getLabel() + "`,");
+                sqlStringBuilder.append(" `" + tableAlias + "`.`id` as `office id`, `" + tableAlias
+                		+ "`.`name` as `office name`,");
                 joinSqlStringBuilder.append(" left join `m_office` `" + tableAlias + "` on `"
                         + tableAlias + "`.`id` = `" + baseEntityName + "`.`" + column.getName() + "`");
-            } else if (columnName.contains("staff_id")) { 
+            } else if (columnName.equals("staff_id")) { 
                 String tableAlias = "staff" + referencedTableIndex++;
                 
-                sqlStringBuilder.append(" " + tableAlias + ".`display_name` as `" + column.getLabel() + "`,");
+                sqlStringBuilder.append(" `" + tableAlias + "`.`id` as `staff id`, `" + tableAlias
+                		+ "`.`display_name` as `staff name`,");
                 joinSqlStringBuilder.append(" left join `m_staff` `" + tableAlias + "` on `"
+                        + tableAlias + "`.`id` = `" + baseEntityName + "`.`" + column.getName() + "`");
+            } else if (columnName.equals("group_id")) { 
+                String tableAlias = "group" + referencedTableIndex++;
+                
+                sqlStringBuilder.append(" `" + tableAlias + "`.`id` as `group id`, `" + tableAlias
+                		+ "`.`display_name` as `group name`,");
+                joinSqlStringBuilder.append(" left join `m_group` `" + tableAlias + "` on `"
+                        + tableAlias + "`.`id` = `" + baseEntityName + "`.`" + column.getName() + "`");
+            } else if (columnName.equals("client_id")) { 
+                String tableAlias = "client" + referencedTableIndex++;
+                
+                sqlStringBuilder.append(" `" + tableAlias + "`.`id` as `client id`, `" + tableAlias
+                		+ "`.`display_name` as `client name`,");
+                joinSqlStringBuilder.append(" left join `m_group` `" + tableAlias + "` on `"
+                        + tableAlias + "`.`id` = `" + baseEntityName + "`.`" + column.getName() + "`");
+            } else if (columnName.equals("loan_officer_id")) { 
+                String tableAlias = "staff" + referencedTableIndex++;
+                
+                sqlStringBuilder.append(" `" + tableAlias + "`.`id` as `loan officer id`, `" + tableAlias
+                		+ "`.`display_name` as `loan officer name`,");
+                joinSqlStringBuilder.append(" left join `m_staff` `" + tableAlias + "` on `"
+                        + tableAlias + "`.`id` = `" + baseEntityName + "`.`" + column.getName() + "`");
+            } else if (columnName.equals("loan_status_id")) { 
+                String tableAlias = "rev" + referencedTableIndex++;
+                
+                sqlStringBuilder.append(" `" + tableAlias + "`.`enum_value` as `loan status`,");
+                joinSqlStringBuilder.append(" left join `r_enum_value` `" + tableAlias + "` on `"
+                        + tableAlias + "`.`enum_id` = `" + baseEntityName + "`.`" + column.getName()
+                        		+ "` and `" + tableAlias + "`.`enum_name` = 'loan_status_id'");
+            } else if (columnName.equals("status_enum")) { 
+                String tableAlias = "rev" + referencedTableIndex++;
+                
+                sqlStringBuilder.append(" `" + tableAlias + "`.`enum_value` as `" + column.getLabel() + "`,");
+                joinSqlStringBuilder.append(" left join `r_enum_value` `" + tableAlias + "` on `"
+                        + tableAlias + "`.`enum_id` = `" + baseEntityName + "`.`" + column.getName()
+                        		+ "` and `" + tableAlias + "`.`enum_name` = 'status_enum'");
+            } else if (columnName.equals("closure_reason_cv_id") || columnName.equals("gender_cv_id") || 
+            		columnName.equals("loanpurpose_cv_id")) { 
+                String tableAlias = "mcv" + referencedTableIndex++;
+                
+                sqlStringBuilder.append(" `" + tableAlias + "`.`code_value` as `" + column.getLabel() + "`,");
+                joinSqlStringBuilder.append(" left join `m_code_value` `" + tableAlias + "` on `"
+                        + tableAlias + "`.`id` = `" + baseEntityName + "`.`" + column.getName() + "`");
+            } else if (columnName.equals("product_id") && 
+            		(baseEntityName.equalsIgnoreCase(DataExportBaseEntity.LOAN.getEntityName()) || 
+            				baseEntityName.equalsIgnoreCase(DataExportBaseEntity.SAVINGSACCOUNT.getEntityName()))) { 
+            	DataExportBaseEntity baseEntity = DataExportBaseEntity.fromEntityName(baseEntityName);
+            	String tableAlias = "product" + referencedTableIndex++;
+                String joinTable = "";
+                
+                switch (baseEntity) {
+                	case SAVINGSACCOUNT:
+                		joinTable = "m_savings_product";
+                		break;
+					default:
+						joinTable = "m_product_loan";
+						break;
+                }
+                
+                sqlStringBuilder.append(" `" + tableAlias + "`.`id` as `product id`, `" + tableAlias + "`.`name` as `product name`,");
+                joinSqlStringBuilder.append(" left join `" + joinTable + "` `" + tableAlias + "` on `"
                         + tableAlias + "`.`id` = `" + baseEntityName + "`.`" + column.getName() + "`");
             } else {
                 sqlStringBuilder.append(" `" + baseEntityName + "`.`" + columnName + "` as `" + column.getLabel() + "`,");
             } 
         }
         
-        this.addCoreColumnsToSqlSelectExpression(sqlStringBuilder, joinSqlStringBuilder, dataExportEntityData);
+        /*this.addCoreColumnsToSqlSelectExpression(sqlStringBuilder, joinSqlStringBuilder, dataExportEntityData, 
+        		referencedTableIndex);*/
         
         if (selectedDatatables.size() > 0) {
         	
@@ -272,9 +338,10 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
     }
     
     private void addCoreColumnsToSqlSelectExpression(final StringBuilder sqlStringBuilder, 
-    		final StringBuilder joinSqlStringBuilder, final DataExportEntityData dataExportEntityData) {
+    		final StringBuilder joinSqlStringBuilder, final DataExportEntityData dataExportEntityData, 
+    		int referencedTableIndex) {
     	final Collection<EntityColumnMetaData> entityColumns = dataExportEntityData.getColumns();
-    	int referencedTableIndex = 0;
+    	String entityName = dataExportEntityData.getEntityName();
     	
     	for (DataExportCoreColumn coreColumn : DataExportCoreColumn.values()) {
     		String coreColumnName = coreColumn.getName();
@@ -284,7 +351,7 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
     				entityColumns);
     		
     		if (entityColumnMetaData != null) {
-    			if (coreColumnReferencedTableName != null) {
+    			if (StringUtils.isNotBlank(coreColumnReferencedTableName)) {
     				String tableAlias = coreColumnReferencedTableName + referencedTableIndex++;
     				
     				sqlStringBuilder.append(" `" + tableAlias + "`.`" + coreColumnSelectExpressionColumnName);
@@ -299,7 +366,31 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
     				sqlStringBuilder.append(coreColumnSelectExpressionColumnName + "` as `");
     				sqlStringBuilder.append(coreColumn.getLabel() + "`,");
     			}
-    		} else if (entityColumnMetaData == null) { 
+    		} else if (entityName.equalsIgnoreCase(DataExportBaseEntity.CLIENT.getEntityName())) {
+    			
+    			if (coreColumn.equals(DataExportCoreColumn.CLIENT_ID)) {
+    				sqlStringBuilder.append(" `" + entityName + "`.`" + DataExportCoreColumn.CLIENT_ID.getSelectExpressionColumnName());
+    				sqlStringBuilder.append("` as `" + coreColumn.getLabel() + "`,");
+    			} else if (coreColumn.equals(DataExportCoreColumn.CLIENT_NAME)) {
+    				sqlStringBuilder.append(" `" + entityName + "`.`" + DataExportCoreColumn.CLIENT_NAME.getSelectExpressionColumnName());
+    				sqlStringBuilder.append("` as `" + coreColumn.getLabel() + "`,");
+    			} else { 
+        			sqlStringBuilder.append(" NULL as `" + coreColumn.getLabel() + "`,");
+        		}
+    			
+    		} else if (entityName.equalsIgnoreCase(DataExportBaseEntity.GROUP.getEntityName())) {
+    			
+    			if (coreColumn.equals(DataExportCoreColumn.GROUP_ID)) {
+    				sqlStringBuilder.append(" `" + entityName + "`.`" + DataExportCoreColumn.GROUP_ID.getSelectExpressionColumnName());
+    				sqlStringBuilder.append("` as `" + coreColumn.getLabel() + "`,");
+    			} else if (coreColumn.equals(DataExportCoreColumn.GROUP_NAME)) {
+    				sqlStringBuilder.append(" `" + entityName + "`.`" + DataExportCoreColumn.GROUP_NAME.getSelectExpressionColumnName());
+    				sqlStringBuilder.append("` as `" + coreColumn.getLabel() + "`,");
+    			} else { 
+        			sqlStringBuilder.append(" NULL as `" + coreColumn.getLabel() + "`,");
+        		}
+    			
+    		} else { 
     			sqlStringBuilder.append(" NULL as `" + coreColumn.getLabel() + "`,");
     		}
     	}

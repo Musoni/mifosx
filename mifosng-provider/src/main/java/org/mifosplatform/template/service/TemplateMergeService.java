@@ -98,7 +98,26 @@ public class TemplateMergeService {
                     url = this.scopes.get("BASE_URI") + url;
                 }
                 try {
-                    this.scopes.put(entry.getKey(), getMapFromUrl(url));
+                    final List<HashMap<String,Object>> mapFromUrl = getMapFromUrl(url);
+                    /** this function changes the date format of [1997,7-1] to 1-7-1997 **/
+                    for(final HashMap<String,Object> dateFormat : mapFromUrl){
+                        for(Map.Entry<String,Object> map: dateFormat.entrySet()){
+                            final Object obj  = map.getValue();
+                            final String key = map.getKey();
+                            if(obj instanceof ArrayList && ((ArrayList) obj).size() == 3){
+                                String changeArrayDateToStringDate =  ((ArrayList) obj).get(2).toString() +"-"+((ArrayList) obj).get(1).toString() +"-"+((ArrayList) obj).get(0).toString();
+                                dateFormat.put(key,changeArrayDateToStringDate);
+                            }
+                        }
+                    }
+                    /** this function handles single maps from main entity ex loan and client else handles many to many relationships
+                     * where mustache has to loop the info and display it
+                     * */
+                    if(mapFromUrl.size() == 1){
+                        this.scopes.put(entry.getKey(), mapFromUrl.get(0));
+                    }else{
+                        this.scopes.put(entry.getKey(), mapFromUrl);
+                    }
                 } catch (final IOException e) {
                 	logger.error("getCompiledMapFromMappers() failed", e);
                 }
@@ -108,15 +127,22 @@ public class TemplateMergeService {
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, Object> getMapFromUrl(final String url) throws MalformedURLException, IOException {
+    private List<HashMap<String, Object>> getMapFromUrl(final String url) throws MalformedURLException, IOException {
         final HttpURLConnection connection = getConnection(url);
 
         final String response = getStringFromInputStream(connection.getInputStream());
-        HashMap<String, Object> result = new HashMap<>();
+        List<HashMap<String, Object>> result = new ArrayList<>();
+        HashMap<String,Object> hashMap  = new HashMap<>();
         if (connection.getContentType().equals("text/plain")) {
-            result.put("src", response);
+            hashMap.put("src",response);
+            result.add(hashMap);
         } else {
-            result = new ObjectMapper().readValue(response, HashMap.class);
+            if(response.startsWith("[")){ // means this is an array
+                result = new ObjectMapper().readValue(response, new TypeReference<List<HashMap<String,Object>>>(){});
+            }else{
+                hashMap = new ObjectMapper().readValue(response, HashMap.class);
+                result.add(hashMap);
+            }
         }
         return result;
     }

@@ -6,18 +6,19 @@
 package org.mifosplatform.infrastructure.dataexport.data;
 
 public enum DataExportCoreColumn {
-	BRANCH("office_id", "Branch", "m_office", "name"),
-	LOAN_OFFICER("loan_officer_id", "Loan Officer", "m_staff", "display_name"),
-	GROUP_NAME("group_id", "Group Name", "m_group", "display_name"),
-	GROUP_ID("group_id", "Group ID", "m_group", "id"),
-	CLIENT_NAME("client_id", "Client Name", "m_client", "display_name"),
-	CLIENT_ID("client_id", "Client ID", "m_client", "id"),
-	DATE_OF_BIRTH("date_of_birth", "Date Of Birth", "", "date_of_birth"),
-	GENDER("gender_cv_id", "Gender", "m_code_value", "code_value"),
-	PHONE_NUMBER("mobile_no", "Phone Number", "", "mobile_no");
+	BRANCH("office_id", "Branch", "BIGINT", "m_office", "name"),
+	LOAN_OFFICER("loan_officer_id", "Loan Officer", "BIGINT", "m_staff", "display_name"),
+	GROUP_ID("group_id", "Group ID", "BIGINT", "m_group", "id"),
+	GROUP_NAME("group_id", "Group Name", "BIGINT", "m_group", "display_name"),
+	CLIENT_ID("client_id", "Client ID", "BIGINT", "m_client", "id"),
+	CLIENT_NAME("client_id", "Client Name", "BIGINT", "m_client", "display_name"),
+	DATE_OF_BIRTH("date_of_birth", "Date Of Birth", "DATE", "", "date_of_birth"),
+	GENDER("gender_cv_id", "Gender", "BIGINT", "m_code_value", "code_value"),
+	PHONE_NUMBER("mobile_no", "Phone Number", "VARCHAR", "", "mobile_no");
 	
 	private final String name;
 	private final String label;
+	private final String dataType;
 	private final String referencedTableName;
 	private final String selectExpressionColumnName;
 	
@@ -25,10 +26,11 @@ public enum DataExportCoreColumn {
 	 * @param name
 	 * @param label
 	 */
-	private DataExportCoreColumn(final String name, final String label, 
+	private DataExportCoreColumn(final String name, final String label, final String dataType, 
 			final String referencedTableName, final String selectExpressionColumnName) {
 		this.name = name;
 		this.label = label;
+		this.dataType = dataType;
 		this.referencedTableName = referencedTableName;
 		this.selectExpressionColumnName = selectExpressionColumnName;
 	}
@@ -68,12 +70,22 @@ public enum DataExportCoreColumn {
 	}
 
 	/**
+	 * @return the dataType
+	 */
+	public String getDataType() {
+		return dataType;
+	}
+
+	/**
 	 * @return the referencedTableName
 	 */
 	public String getReferencedTableName() {
 		return referencedTableName;
 	}
 
+	/**
+	 * @return the selectExpressionColumnName
+	 */
 	public String getSelectExpressionColumnName() {
 		return selectExpressionColumnName;
 	}

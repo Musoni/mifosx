@@ -56,7 +56,7 @@ public class DataExportApiResource {
     @Produces({ MediaType.APPLICATION_JSON})
     public String retrieveAllDataExports(@Context final UriInfo uriInfo){
 
-        this.platformSecurityContext.authenticatedUser().validateHasReadPermission(DataExportApiConstants.DATA_EXPORT);
+        this.platformSecurityContext.authenticatedUser().validateHasReadPermission(DataExportApiConstants.DATA_EXPORT_ENTITY_NAME);
 
         final Collection<DataExportData> dataExports = this.dataExportReadPlatformService.retrieveAll();
 
@@ -69,7 +69,7 @@ public class DataExportApiResource {
     @Produces({ MediaType.APPLICATION_JSON})
     public String retrieveOneDataExport(@PathParam("resourceId") final Long resourceId, @Context final UriInfo uriInfo){
 
-        this.platformSecurityContext.authenticatedUser().validateHasReadPermission(DataExportApiConstants.DATA_EXPORT);
+        this.platformSecurityContext.authenticatedUser().validateHasReadPermission(DataExportApiConstants.DATA_EXPORT_ENTITY_NAME);
 
         final DataExportData dataExport = this.dataExportReadPlatformService.retrieveOne(resourceId);
 
@@ -109,8 +109,8 @@ public class DataExportApiResource {
     @Path("{resourceId}/download")
     @Produces({ MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON })
     public Response downloadDataExportFile(@PathParam("resourceId") final Long resourceId, 
-            @QueryParam(DataExportApiConstants.ENTITY) final String entity, 
-            @QueryParam(DataExportApiConstants.FILE_FORMAT) final String fileFormat) {
+            @QueryParam(DataExportApiConstants.BASE_ENTITY_NAME_PARAM_NAME) final String baseEntityName, 
+            @QueryParam(DataExportApiConstants.FILE_FORMAT_PARAM_NAME) final String fileFormat) {
 
         //this.platformSecurityContext.authenticatedUser().validateHasReadPermission(entity);
 
