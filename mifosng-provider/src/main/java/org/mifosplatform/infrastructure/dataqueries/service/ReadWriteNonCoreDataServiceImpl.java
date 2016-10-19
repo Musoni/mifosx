@@ -1352,22 +1352,7 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
                         }
 
                     }
-                    
-                    // =================================================================================
-                    // the following sql statement will delete all entries in the "x_registered_table_metadata" table 
-                    // that ain't suppose to be there
-                    StringBuilder deleteSqlStringBuilder = new StringBuilder("delete from `x_registered_table_metadata`");
-                    
-                    deleteSqlStringBuilder.append(" where id in (select id from (");
-                    deleteSqlStringBuilder.append(" select met.id from `x_registered_table_metadata` as met");
-                    deleteSqlStringBuilder.append(" left join ");
-                    deleteSqlStringBuilder.append(" ( select table_name, COLUMN_NAME from INFORMATION_SCHEMA.COLUMNS");
-                    deleteSqlStringBuilder.append(" where TABLE_SCHEMA = (SELECT DATABASE())");
-                    deleteSqlStringBuilder.append(" ) as str on met.table_name = str.table_name and met.field_name = str.column_name");
-                    deleteSqlStringBuilder.append(" where str.column_name is null) as temp)");
 
-                    this.jdbcTemplate.execute(deleteSqlStringBuilder.toString());
-                    // =====================================================================================
 
                 } catch (final GenericJDBCException e) {
                     if (e.getMessage().contains("Error on rename")) { throw new PlatformServiceUnavailableException(
