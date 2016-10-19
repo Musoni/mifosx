@@ -268,7 +268,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             if (newClient.isAccountNumberRequiresAutoGeneration()) {
                 AccountNumberFormat accountNumberFormat = this.accountNumberFormatRepository.findByAccountType(EntityAccountType.CLIENT);
                 if(accountNumberFormat != null && accountNumberFormat.getCustomPattern() !=null){
-                    newClient.updateAccountNo(accountNumberGenerator.generateCustom(newClient,accountNumberFormat));
+                    newClient.updateAccountNo(accountNumberGenerator.generateCustomAccount(newClient,accountNumberFormat));
                 }else{
                     newClient.updateAccountNo(accountNumberGenerator.generate(newClient, accountNumberFormat));
                 }

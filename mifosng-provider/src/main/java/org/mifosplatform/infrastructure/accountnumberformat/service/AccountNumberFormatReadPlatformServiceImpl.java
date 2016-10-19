@@ -75,7 +75,7 @@ public class AccountNumberFormatReadPlatformServiceImpl implements AccountNumber
             if (prefixTypeEnum != null) {
                 prefixType = AccountNumberFormatEnumerations.accountNumberPrefixType(prefixTypeEnum);
             }
-            return new AccountNumberFormatData(id, accountNumberType, prefixType,customPadding,zeroPadding);
+            return new AccountNumberFormatData(id, accountNumberType, prefixType,customPadding,zeroPadding,null);
         }
     }
 
@@ -103,6 +103,7 @@ public class AccountNumberFormatReadPlatformServiceImpl implements AccountNumber
         final List<EnumOptionData> entityAccountTypeOptions = AccountNumberFormatEnumerations.entityAccountType(EntityAccountType.values());
 
         Map<String, List<EnumOptionData>> accountNumberPrefixTypeOptions = new HashMap<>();
+        Map<String,Set<String>> customPrefixOptions =new HashMap<>();
         /***
          * If an Account type is passed in, return prefixes only for the passed
          * in account type, else return all allowed prefixes keyed by all
@@ -110,13 +111,14 @@ public class AccountNumberFormatReadPlatformServiceImpl implements AccountNumber
          **/
         if (entityAccountTypeForTemplate != null) {
             determinePrefixTypesForAccounts(accountNumberPrefixTypeOptions, entityAccountTypeForTemplate);
+            determinCustomPrefixTypesForAccounts(entityAccountTypeForTemplate,customPrefixOptions);
         } else {
             for (EntityAccountType entityAccountType : EntityAccountType.values()) {
                 determinePrefixTypesForAccounts(accountNumberPrefixTypeOptions, entityAccountType);
-
+                determinCustomPrefixTypesForAccounts(entityAccountType,customPrefixOptions);
             }
         }
-        return new AccountNumberFormatData(entityAccountTypeOptions, accountNumberPrefixTypeOptions);
+        return new AccountNumberFormatData(entityAccountTypeOptions, accountNumberPrefixTypeOptions,customPrefixOptions);
     }
 
     public void determinePrefixTypesForAccounts(Map<String, List<EnumOptionData>> accountNumberPrefixTypeOptions,
@@ -145,5 +147,25 @@ public class AccountNumberFormatReadPlatformServiceImpl implements AccountNumber
 
         accountNumberPrefixTypeOptions.put(entityAccountType.getCode(),
                 AccountNumberFormatEnumerations.accountNumberPrefixType(accountNumberPrefixTypes));
+    }
+
+    public void determinCustomPrefixTypesForAccounts(EntityAccountType entityAccountType, Map<String,Set<String>> customPrefixOptions){
+        Set<String> accountNumberPrefixTypesSet = new HashSet<>();
+        switch (entityAccountType) {
+            case LOAN:
+                accountNumberPrefixTypesSet = AccountNumberFormatEnumerations.customAccountNumberPrefixesForLoanAccounts;
+                break;
+            case CLIENT:
+                accountNumberPrefixTypesSet = AccountNumberFormatEnumerations.customAccountNumberPrefixesForClientAccounts;
+                break;
+            case SAVINGS:
+                accountNumberPrefixTypesSet = AccountNumberFormatEnumerations.customAccountNumberPrefixesForSavingsAccounts;
+                break;
+            case GROUP:
+                accountNumberPrefixTypesSet = AccountNumberFormatEnumerations.customAccountPrefixesForGroupExternalId;
+                break;
+        }
+        customPrefixOptions.put(entityAccountType.getCode(),accountNumberPrefixTypesSet);
+
     }
 }

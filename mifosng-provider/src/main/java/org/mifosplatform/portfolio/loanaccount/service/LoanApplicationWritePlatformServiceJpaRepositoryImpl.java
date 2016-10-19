@@ -271,7 +271,7 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
                 final AccountNumberFormat accountNumberFormat = this.accountNumberFormatRepository
                         .findByAccountType(EntityAccountType.LOAN);
                 if(accountNumberFormat !=null && accountNumberFormat.getCustomPattern() !=null){
-                    newLoanApplication.updateAccountNo(this.accountNumberGenerator.generateCustom(newLoanApplication,accountNumberFormat));
+                    newLoanApplication.updateAccountNo(this.accountNumberGenerator.generateCustomAccount(newLoanApplication,accountNumberFormat));
                 }else{
                     newLoanApplication.updateAccountNo(this.accountNumberGenerator.generate(newLoanApplication, accountNumberFormat));
                 }
