@@ -6,6 +6,10 @@
 package org.mifosplatform.infrastructure.accountnumberformat.domain;
 
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
+import org.mifosplatform.portfolio.client.domain.Client;
+import org.mifosplatform.portfolio.group.domain.Group;
+import org.mifosplatform.portfolio.loanaccount.domain.Loan;
+import org.mifosplatform.portfolio.savings.domain.SavingsAccount;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,6 +31,24 @@ public class AccountNumberFormatEnumerations {
     		AccountNumberPrefixType.OFFICE_NAME));
     public final static Set<AccountNumberPrefixType> accountNumberPrefixesForGroups = new HashSet<>(Arrays.asList(
     		AccountNumberPrefixType.OFFICE_NAME));
+
+    public final static Set<String> customAccountNumberPrefixesForClientAccounts = new HashSet<>(Arrays.asList(
+            "{{officeId}}","{{staffId}}","{{entityId}}"
+    ));
+
+    public final static Set<String> customAccountNumberPrefixesForLoanAccounts = new HashSet<>(Arrays.asList(
+            "{{officeId}}","{{officeExternalId}}","{{staffId}}","{{loanProductShortName}}","{{loanProduct}}","{{clientId}}","{{entityId}}"
+    ));
+
+    public final static Set<String> customAccountNumberPrefixesForSavingsAccounts = new HashSet<>(Arrays.asList(
+            "{{officeId}}","{{officeExternalId}}","{{staffId}}","{{savingsProductShortName}}","{{savingsProduct}}","{{clientId}}","{{entityId}}"
+    ));
+
+    public final static Set<String> customAccountPrefixesForGroupExternalId = new HashSet<>(Arrays.asList(
+            "{{officeId}}","{{staffId}}","{{officeExternalId}}","{{groupName}}","{{entityId}}"
+    ));
+
+
 
     public enum AccountNumberPrefixType {
         OFFICE_NAME(1, "accountNumberPrefixType.officeName"), CLIENT_TYPE(101, "accountNumberPrefixType.clientType"), LOAN_PRODUCT_SHORT_NAME(

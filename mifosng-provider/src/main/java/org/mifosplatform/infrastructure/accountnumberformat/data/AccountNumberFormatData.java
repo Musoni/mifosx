@@ -10,6 +10,7 @@ import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class AccountNumberFormatData implements Serializable {
 
@@ -25,24 +26,27 @@ public class AccountNumberFormatData implements Serializable {
     private final String customPattern;
     private  final Integer zeroPadding;
 
+    private Map<String,Set<String>> customPrefixOptions;
+
 
     public AccountNumberFormatData(final Long id, final EnumOptionData accountType, final EnumOptionData prefixType,
-                                   final String customPattern, final Integer zeroPadding) {
-        this(id, accountType, prefixType, null, null,customPattern,zeroPadding);
+                                   final String customPattern, final Integer zeroPadding,final Map<String,Set<String>> customPrefixOptions) {
+        this(id, accountType, prefixType, null, null,customPattern,zeroPadding,customPrefixOptions);
     }
 
-    public AccountNumberFormatData(final List<EnumOptionData> accountTypeOptions, Map<String, List<EnumOptionData>> prefixTypeOptions) {
-        this(null, null, null, accountTypeOptions, prefixTypeOptions,null,null);
+    public AccountNumberFormatData(final List<EnumOptionData> accountTypeOptions, Map<String, List<EnumOptionData>> prefixTypeOptions,Map<String,Set<String>> customPrefixOptions) {
+        this(null, null, null, accountTypeOptions, prefixTypeOptions,null,null,customPrefixOptions);
     }
 
-    public void templateOnTop(List<EnumOptionData> accountTypeOptions, Map<String, List<EnumOptionData>> prefixTypeOptions) {
+    public void templateOnTop(List<EnumOptionData> accountTypeOptions, Map<String, List<EnumOptionData>> prefixTypeOptions,Map<String,Set<String>> customPrefixOptions ) {
         this.accountTypeOptions = accountTypeOptions;
         this.prefixTypeOptions = prefixTypeOptions;
+        this.customPrefixOptions = customPrefixOptions;
     }
 
     private AccountNumberFormatData(final Long id, final EnumOptionData accountType, final EnumOptionData prefixType,
             final List<EnumOptionData> accountTypeOptions, Map<String, List<EnumOptionData>> prefixTypeOptions,
-            final String customPattern, final Integer zeroPadding) {
+            final String customPattern, final Integer zeroPadding,final Map<String,Set<String>> customPrefixOptions) {
         this.id = id;
         this.accountType = accountType;
         this.prefixType = prefixType;
@@ -50,6 +54,7 @@ public class AccountNumberFormatData implements Serializable {
         this.prefixTypeOptions = prefixTypeOptions;
         this.customPattern = customPattern;
         this.zeroPadding  =zeroPadding;
+        this.customPrefixOptions = customPrefixOptions;
     }
 
     public Long getId() {

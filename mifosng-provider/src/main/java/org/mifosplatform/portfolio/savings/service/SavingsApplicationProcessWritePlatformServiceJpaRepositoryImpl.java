@@ -181,7 +181,7 @@ public class SavingsApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
         if (account.isAccountNumberRequiresAutoGeneration()) {
             final AccountNumberFormat accountNumberFormat = this.accountNumberFormatRepository.findByAccountType(EntityAccountType.SAVINGS);
             if(accountNumberFormat !=null && accountNumberFormat.getCustomPattern() !=null){
-                account.updateAccountNo(this.accountNumberGenerator.generateCustom(account,accountNumberFormat));
+                account.updateAccountNo(this.accountNumberGenerator.generateCustomAccount(account,accountNumberFormat));
             }else{
                 account.updateAccountNo(this.accountNumberGenerator.generate(account, accountNumberFormat));
             }
