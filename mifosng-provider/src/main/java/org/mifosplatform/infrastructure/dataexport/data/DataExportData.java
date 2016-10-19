@@ -12,6 +12,7 @@ import org.mifosplatform.infrastructure.dataexport.domain.DataExport;
  */
 public class DataExportData {
     private final Long id;
+    private final String name;
     private final String baseEntityName;
     private final String userRequestMap;
     private final String filename;
@@ -20,15 +21,17 @@ public class DataExportData {
     
     /**
      * @param id
+     * @param name
      * @param baseEntityName
      * @param userRequestMap
      * @param fileDownloadCount
      * @param timeline
      * @param filename
      */
-    private DataExportData(final Long id, final String baseEntityName, final String userRequestMap, 
+    private DataExportData(final Long id, final String name, final String baseEntityName, final String userRequestMap, 
             final Integer fileDownloadCount, final DataExportTimelineData timeline, final String filename) {
         this.id = id;
+        this.name = name;
         this.baseEntityName = baseEntityName;
         this.userRequestMap = userRequestMap;
         this.fileDownloadCount = fileDownloadCount;
@@ -40,6 +43,7 @@ public class DataExportData {
      * Creates a new {@link DataExportData} object
      * 
      * @param id
+     * @param name
      * @param baseEntityName
      * @param userRequestMap
      * @param fileDownloadCount
@@ -47,9 +51,10 @@ public class DataExportData {
      * @param filename
      * @return {@link DataExportData} object
      */
-    public static DataExportData newInstance(final Long id, final String baseEntityName, final String userRequestMap, 
-            final Integer fileDownloadCount, final DataExportTimelineData timeline, final String filename) {
-        return new DataExportData(id, baseEntityName, userRequestMap, fileDownloadCount, timeline, filename);
+    public static DataExportData newInstance(final Long id, final String name, final String baseEntityName, 
+    		final String userRequestMap, final Integer fileDownloadCount, final DataExportTimelineData timeline, 
+    		final String filename) {
+        return new DataExportData(id, name, baseEntityName, userRequestMap, fileDownloadCount, timeline, filename);
     }
 
     /**
@@ -60,6 +65,13 @@ public class DataExportData {
     }
 
     /**
+	 * @return the name
+	 */
+	public String getName() {
+		return name;
+	}
+
+	/**
      * @return the baseEntityName
      */
     public String getBaseEntityName() {

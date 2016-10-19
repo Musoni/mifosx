@@ -34,6 +34,7 @@ public class DataExportApiConstants {
     public static final String DATE_FORMAT_PARAM_NAME = "dateFormat";
     
     // request parameters
+    public static final String NAME_PARAM_NAME = "name";
     public static final String BASE_ENTITY_NAME_PARAM_NAME = "baseEntityName";
     public static final String COLUMNS_PARAM_NAME = "columns";
     public static final String DATATABLES_PARAM_NAME = "datatables";
@@ -43,7 +44,7 @@ public class DataExportApiConstants {
     // set of supported parameter strings for API create data export request
     public static final Set<String> CREATE_DATA_EXPORT_REQUEST_PARAMETERS = new HashSet<>(Arrays.asList(LOCALE_PARAM_NAME, 
             DATE_FORMAT_PARAM_NAME, BASE_ENTITY_NAME_PARAM_NAME, DATATABLES_PARAM_NAME, FILTERS_PARAM_NAME, 
-            COLUMNS_PARAM_NAME));
+            COLUMNS_PARAM_NAME, NAME_PARAM_NAME));
     
     public static final String USER_CREATED_DATATABLE_NAME_PREFIX = "cct_";
     public static final String MUSONI_SYSTEM_DATATABLE_NAME_PREFIX = "ml_";

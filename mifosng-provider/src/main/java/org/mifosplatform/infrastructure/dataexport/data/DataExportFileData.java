@@ -81,9 +81,7 @@ public class DataExportFileData {
             if (inputStream == null) {
                 inputStream = new FileInputStream(this.file);
             }
-        }
-
-        catch (Exception exception) {
+        } catch (Exception exception) {
             logger.error(exception.getMessage());
         }
 

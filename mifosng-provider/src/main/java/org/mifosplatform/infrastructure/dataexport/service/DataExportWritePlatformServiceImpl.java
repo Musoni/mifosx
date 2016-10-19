@@ -80,6 +80,7 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
             
             final DataExportCreateRequestData dataExportCreateRequestData = this.fromJsonHelper.fromJson(
                     jsonCommand.json(), DataExportCreateRequestData.class);
+            final String name = dataExportCreateRequestData.getName();
             final String baseEntityName = dataExportCreateRequestData.getBaseEntityName();
             final String[] datatableNames = dataExportCreateRequestData.getDatatables();
             final String[] columnNames = dataExportCreateRequestData.getColumns();
@@ -121,11 +122,11 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
             
             final String dataSql = this.generateDataSql(dataExportEntityData, selectedDatatables, 
                     selectedColumns, selectedFilters);
-            final DataExport dataExport = DataExport.newInstance(baseEntityName, jsonCommand.json(), dataSql);
+            final DataExport dataExport = DataExport.newInstance(name, baseEntityName, jsonCommand.json(), dataSql);
             final LocalDateTime currentDataTime = new LocalDateTime();
             final String dateTimeString = currentDataTime.toString(
             		DataExportApiConstants.DATA_EXPORT_FILENAME_DATETIME_FORMAT_PATTERN);
-            final String filename = baseEntityName + "_data_export_" + dateTimeString;
+            final String filename = name + "_" + dateTimeString;
             
             dataExport.updateFilename(filename);
             
@@ -289,9 +290,10 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
                 DataExportCoreDatatable coreDatatable = DataExportCoreDatatable.newInstance(datatableName);
                 String datatableDisplayName = datatableData.getDisplayName();
                 String baseEntityReferenceColumn = baseEntityName.concat("_id");
-                List<RegisteredTableMetaData> registeredTablesMetaData = this.registeredTableMetaDataRepository.findAllByTableName(datatableName);
+                List<RegisteredTableMetaData> registeredTablesMetaData = this.registeredTableMetaDataRepository.
+                		findAllByTableName(datatableName);
                 
-                if (coreDatatable.equals(DataExportCoreDatatable.SAVINGS_ACCOUNT_CHARGES)) {
+                if ((coreDatatable != null) && DataExportCoreDatatable.SAVINGS_ACCOUNT_CHARGES.equals(coreDatatable)) {
                 	joinSqlStringBuilder.append(" left join `" + datatableName + "` `" + datatableName + "` on `"
                     		+ datatableName + "`.`savings_account_id` = `" + baseEntityName + "`.`id`");
                 } else {
@@ -351,6 +353,18 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
                                 joinSqlStringBuilder.append(" left join `m_code_value` `" + tableAlias + "` on `"
                                         + tableAlias + "`.`id` = `" + datatableName + "`.`" + fieldName + "`");
                     		} else if (fieldName.equalsIgnoreCase("id")) {
+                            	sqlStringBuilder.append(" `" + datatableName + "`.`" + fieldName + "` as `" + datatableDisplayName + " id`,");
+                            } else {
+                    			sqlStringBuilder.append(" `" + datatableName + "`.`" + fieldName + "` as `" + fieldLabel + "`,");
+                    		}
+                		} else if (coreDatatable.equals(DataExportCoreDatatable.LOAN_COLLATERALS)) {
+                			if (fieldName.equalsIgnoreCase("type_cv_id")) {
+                    			String tableAlias = "mcv" + referencedTableIndex++;
+                    			
+                    			sqlStringBuilder.append(" `" + tableAlias + "`.`code_value` as `collateral type`,");
+                                joinSqlStringBuilder.append(" left join `m_code_value` `" + tableAlias + "` on `"
+                                        + tableAlias + "`.`id` = `" + datatableName + "`.`" + fieldName + "`");
+                			} else if (fieldName.equalsIgnoreCase("id")) {
                             	sqlStringBuilder.append(" `" + datatableName + "`.`" + fieldName + "` as `" + datatableDisplayName + " id`,");
                             } else {
                     			sqlStringBuilder.append(" `" + datatableName + "`.`" + fieldName + "` as `" + fieldLabel + "`,");

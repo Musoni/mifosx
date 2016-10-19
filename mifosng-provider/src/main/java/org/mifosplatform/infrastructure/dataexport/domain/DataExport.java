@@ -17,6 +17,9 @@ import javax.persistence.Table;
 public class DataExport extends AbstractAuditableCustom<AppUser, Long> {
     private static final long serialVersionUID = 4164504837938484160L;
     
+    @Column(name = "name", nullable = false)
+    private String name;
+    
     @Column(name = "base_entity_name", nullable = false)
     private String baseEntityName;
     
@@ -41,6 +44,7 @@ public class DataExport extends AbstractAuditableCustom<AppUser, Long> {
     protected DataExport() { }
 
     /**
+     * @param name
      * @param baseEntityName
      * @param userRequestMap
      * @param dataSql
@@ -48,8 +52,10 @@ public class DataExport extends AbstractAuditableCustom<AppUser, Long> {
      * @param fileDownloadCount
      * @param filename
      */
-    private DataExport(final String baseEntityName, final String userRequestMap, final String dataSql, 
-            final boolean deleted, final Integer fileDownloadCount, final String filename) {
+    private DataExport(final String name, final String baseEntityName, final String userRequestMap, 
+    		final String dataSql, final boolean deleted, final Integer fileDownloadCount, 
+    		final String filename) {
+    	this.name = name;
         this.baseEntityName = baseEntityName;
         this.userRequestMap = userRequestMap;
         this.dataSql = dataSql;
@@ -61,14 +67,22 @@ public class DataExport extends AbstractAuditableCustom<AppUser, Long> {
     /**
      * Creates a new instance of the {@link DataExport} object
      * 
+     * @param name
      * @param baseEntityName
      * @param userRequestMap
      * @param dataSql
      * @return {@link DataExport} object
      */
-    public static DataExport newInstance(final String baseEntityName, final String userRequestMap, 
-            final String dataSql) {
-        return new DataExport(baseEntityName, userRequestMap, dataSql, false, 0, null);
+    public static DataExport newInstance(final String name, final String baseEntityName, 
+    		final String userRequestMap, final String dataSql) {
+        return new DataExport(name, baseEntityName, userRequestMap, dataSql, false, 0, null);
+    }
+    
+    /**
+     * @return the name
+     */
+    public String getName() {
+    	return name;
     }
 
     /**
@@ -117,6 +131,7 @@ public class DataExport extends AbstractAuditableCustom<AppUser, Long> {
      * Performs a soft delete of the entity by setting the "deleted" property to true
      */
     public void delete() {
+    	this.name = this.name + "_" + this.getId() + "_deleted";
         this.deleted = true;
     }
     

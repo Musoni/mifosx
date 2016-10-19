@@ -8,19 +8,22 @@ package org.mifosplatform.infrastructure.dataexport.data;
 import java.util.Map;
 
 public class DataExportCreateRequestData {
+	private final String name;
     private final String baseEntityName;
     private final Map<String, String> filters;
     private final String[] datatables;
     private final String[] columns;
     
     /**
+     * @param name
      * @param baseEntityName
      * @param filters
      * @param datatables
      * @param columns
      */
-    public DataExportCreateRequestData(final String baseEntityName, final Map<String, String> filters,
-            final String[] datatables, final String[] columns) {
+    public DataExportCreateRequestData(final String name, final String baseEntityName, 
+    		final Map<String, String> filters, final String[] datatables, final String[] columns) {
+    	this.name = name;
         this.baseEntityName = baseEntityName;
         this.filters = filters;
         this.datatables = datatables;
@@ -28,6 +31,13 @@ public class DataExportCreateRequestData {
     }
 
     /**
+	 * @return the name
+	 */
+	public String getName() {
+		return name;
+	}
+
+	/**
      * @return the baseEntityName
      */
     public String getBaseEntityName() {

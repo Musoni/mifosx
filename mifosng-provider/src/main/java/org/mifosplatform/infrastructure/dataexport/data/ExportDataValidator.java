@@ -55,6 +55,10 @@ public class ExportDataValidator {
         final DataValidatorBuilder dataValidatorBuilder = new DataValidatorBuilder(dataValidationErrors).
                 resource(StringUtils.lowerCase(DataExportApiConstants.DATA_EXPORT_ENTITY_NAME));
         
+        final String name = this.fromJsonHelper.extractStringNamed(
+                DataExportApiConstants.NAME_PARAM_NAME, jsonElement);
+        dataValidatorBuilder.reset().parameter(DataExportApiConstants.BASE_ENTITY_NAME_PARAM_NAME).value(name).notBlank();
+        
         final String baseEntity = this.fromJsonHelper.extractStringNamed(
                 DataExportApiConstants.BASE_ENTITY_NAME_PARAM_NAME, jsonElement);
         dataValidatorBuilder.reset().parameter(DataExportApiConstants.BASE_ENTITY_NAME_PARAM_NAME).value(baseEntity).notBlank();

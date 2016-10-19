@@ -150,7 +150,7 @@ public class DataExportReadPlatformServiceImpl implements DataExportReadPlatform
     }
     
     private static final class DataExportRowMapper implements RowMapper<DataExportData> {
-        public StringBuilder sqlStringBuilder = new StringBuilder("mde.id, mde.base_entity_name as baseEntityName, ").
+        public StringBuilder sqlStringBuilder = new StringBuilder("mde.id, mde.name, mde.base_entity_name as baseEntityName, ").
                 append("mde.user_request_map as userRequestMap, mde.file_download_count as fileDownloadCount, ").
                 append("cbu.username as createdByUsername, cbu.firstname as createdByFirstname, ").
                 append("cbu.lastname as createdByLastname, mde.created_date as createdOnDate, ").
@@ -163,6 +163,7 @@ public class DataExportReadPlatformServiceImpl implements DataExportReadPlatform
         @Override
         public DataExportData mapRow(ResultSet rs, int rowNum) throws SQLException {
             final Long id = rs.getLong("id");
+            final String name = rs.getString("name");
             final String baseEntityName = rs.getString("baseEntityName");
             final String userRequestMap = rs.getString("userRequestMap");
             final Integer fileDownloadCount = JdbcSupport.getInteger(rs, "fileDownloadCount");
@@ -179,7 +180,7 @@ public class DataExportReadPlatformServiceImpl implements DataExportReadPlatform
                     modifiedByFirstname, modifiedByLastname, modifiedOnDate);
             final String filename = rs.getString("filename");
             
-            return DataExportData.newInstance(id, baseEntityName, userRequestMap, fileDownloadCount, timeline, 
+            return DataExportData.newInstance(id, name, baseEntityName, userRequestMap, fileDownloadCount, timeline, 
                     filename);
         }
     }
