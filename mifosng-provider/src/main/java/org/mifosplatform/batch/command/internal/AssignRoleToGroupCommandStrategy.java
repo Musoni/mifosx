@@ -13,7 +13,6 @@ import org.mifosplatform.batch.exception.ErrorInfo;
 import org.mifosplatform.commands.exception.UnsupportedCommandException;
 import org.mifosplatform.portfolio.group.api.GroupsApiResource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.core.UriInfo;
