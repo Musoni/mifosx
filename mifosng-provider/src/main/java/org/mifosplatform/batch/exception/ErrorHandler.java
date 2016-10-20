@@ -95,7 +95,7 @@ public class ErrorHandler extends RuntimeException {
             return new ErrorInfo(403, 3003, errorBody);
             
         } else if (exception instanceof TransactionException) {
-            return new ErrorInfo(400, 4001, "{\"Exception\": " + exception.getMessage()+"}");
+            return new ErrorInfo(400, 4001, "{\"Exception\": \"" + exception.getMessage()+"\"}");
 
         } else if (exception instanceof PlatformInternalServerException) {
 
@@ -111,6 +111,6 @@ public class ErrorHandler extends RuntimeException {
             return new ErrorInfo(403, 6001, errorBody);
         }
 
-        return new ErrorInfo(500, 9999, "{\"Exception\": " + exception.toString() + "}");
+        return new ErrorInfo(500, 9999, "{\"Exception\": \"" + exception.toString() + "\"}");
     }
 }
