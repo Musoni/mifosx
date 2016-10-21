@@ -152,6 +152,11 @@ tomcatRun {
     stopKey=   'stopKey'
     enableSSL = true
     configFile = file('src/test/resources/META-INF/context.xml')
+    copy {
+        from 'src/test/resources/'
+        into 'build/tmp/tomcatRunWar/conf/'
+        include '*.properties'
+    }
 }
 
 tomcatRunWar {
@@ -205,6 +210,11 @@ task integrationTest(type:Test){
     doFirst {
         tomcatRunWar.daemon = true
         tomcatRunWar.execute()
+        copy {
+            from 'src/test/resources/'
+            into 'build/tmp/tomcatRunWar/conf/'
+            include '*.properties'
+        }
     }
 
 
