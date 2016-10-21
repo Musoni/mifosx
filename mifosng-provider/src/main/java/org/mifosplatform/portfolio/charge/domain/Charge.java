@@ -60,10 +60,10 @@ public class Charge extends AbstractPersistable<Long> {
     @Column(name = "charge_time_enum", nullable = false)
     private Integer chargeTimeType;
 
-    @Column(name = "charge_calculation_enum")
+    @Column(name = "charge_calculation_enum", nullable = false)
     private Integer chargeCalculation;
 
-    @Column(name = "charge_payment_mode_enum", nullable = true)
+    @Column(name = "charge_payment_mode_enum")
     private Integer chargePaymentMode;
 
     @Column(name = "fee_on_day", nullable = true)
@@ -80,6 +80,9 @@ public class Charge extends AbstractPersistable<Long> {
 
     @Column(name = "is_active", nullable = false)
     private boolean active;
+
+    @Column(name = "allow_override", nullable = false)
+    private boolean allowOverride;
 
     @Column(name = "is_deleted", nullable = false)
     private boolean deleted = false;
@@ -113,13 +116,14 @@ public class Charge extends AbstractPersistable<Long> {
 
         final boolean penalty = command.booleanPrimitiveValueOfParameterNamed("penalty");
         final boolean active = command.booleanPrimitiveValueOfParameterNamed("active");
+        final boolean allowOverride = command.booleanPrimitiveValueOfParameterNamed("allowOverride");
         final MonthDay feeOnMonthDay = command.extractMonthDayNamed("feeOnMonthDay");
         final Integer feeInterval = command.integerValueOfParameterNamed("feeInterval");
         final BigDecimal minCap = command.bigDecimalValueOfParameterNamed("minCap");
         final BigDecimal maxCap = command.bigDecimalValueOfParameterNamed("maxCap");
         final Integer feeFrequency = command.integerValueOfParameterNamed("feeFrequency");
 
-        return new Charge(name, amount, currencyCode, chargeAppliesTo, chargeTimeType, chargeCalculationType, penalty, active, paymentMode,
+        return new Charge(name, amount, currencyCode, chargeAppliesTo, chargeTimeType, chargeCalculationType, penalty, active, allowOverride, paymentMode,
                 feeOnMonthDay, feeInterval, minCap, maxCap, feeFrequency, account);
     }
 
@@ -129,7 +133,7 @@ public class Charge extends AbstractPersistable<Long> {
 
     private Charge(final String name, final BigDecimal amount, final String currencyCode, final ChargeAppliesTo chargeAppliesTo,
             final ChargeTimeType chargeTime, final ChargeCalculationType chargeCalculationType, final boolean penalty, final boolean active,
-            final ChargePaymentMode paymentMode, final MonthDay feeOnMonthDay, final Integer feeInterval, final BigDecimal minCap,
+            final boolean allowOverride, final ChargePaymentMode paymentMode, final MonthDay feeOnMonthDay, final Integer feeInterval, final BigDecimal minCap,
             final BigDecimal maxCap, final Integer feeFrequency, final GLAccount account) {
         this.name = name;
         this.amount = amount;
@@ -139,6 +143,7 @@ public class Charge extends AbstractPersistable<Long> {
         this.chargeCalculation = chargeCalculationType.getValue();
         this.penalty = penalty;
         this.active = active;
+        this.allowOverride = allowOverride;
         this.account = account;
         this.chargePaymentMode = paymentMode == null ? null : paymentMode.getValue();
 
@@ -243,6 +248,8 @@ public class Charge extends AbstractPersistable<Long> {
     public boolean isDeleted() {
         return this.deleted;
     }
+
+    public boolean isAllowedToOverride() { return this.allowOverride; }
 
     public boolean isLoanCharge() {
         return ChargeAppliesTo.fromInt(this.chargeAppliesTo).isLoanCharge();
@@ -472,6 +479,13 @@ public class Charge extends AbstractPersistable<Long> {
             this.active = newValue;
         }
 
+        final String allowedToOverrideParamName = "allowedOverride";
+        if (command.isChangeInBooleanParameterNamed(allowedToOverrideParamName, this.allowOverride)) {
+            final boolean newValue = command.booleanPrimitiveValueOfParameterNamed(allowedToOverrideParamName);
+            actualChanges.put(allowedToOverrideParamName, newValue);
+            this.active = newValue;
+        }
+
         if (isPercentageBased()) {
             final String minCapParamName = "minCap";
             if (command.isChangeInBigDecimalParameterNamed(minCapParamName, this.minCap)) {
@@ -535,7 +549,7 @@ public class Charge extends AbstractPersistable<Long> {
         }
         final CurrencyData currency = new CurrencyData(this.currencyCode, null, 0, 0, null, null);
         return ChargeData.instance(getId(), this.name, this.amount, currency, chargeTimeType, chargeAppliesTo, chargeCalculationType,
-                chargePaymentmode, getFeeOnMonthDay(), this.feeInterval, this.penalty, this.active, this.minCap, this.maxCap,
+                chargePaymentmode, getFeeOnMonthDay(), this.feeInterval, this.penalty, this.active, this.allowOverride, this.minCap, this.maxCap,
                 feeFrequencyType, accountData);
     }
 
