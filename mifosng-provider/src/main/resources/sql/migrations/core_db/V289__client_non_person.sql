@@ -16,7 +16,6 @@ CREATE TABLE `m_client_non_person` (
 	`main_business_line_cv_id` INT(11),
 	`remarks` varchar(150),
 	PRIMARY KEY (`id`),
-	INDEX `FK_client_id` (`client_id`),	
-	CONSTRAINT `FK_client_id` FOREIGN KEY (`client_id`) REFERENCES `m_client` (`id`)
+	CONSTRAINT FOREIGN KEY (`client_id`) REFERENCES `m_client` (`id`)
 );
 
