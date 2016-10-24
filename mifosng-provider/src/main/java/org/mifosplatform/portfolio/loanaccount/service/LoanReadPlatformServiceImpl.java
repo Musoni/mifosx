@@ -1469,7 +1469,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
         final StringBuilder sqlBuilder = new StringBuilder(400);
 
         sqlBuilder.append("select ").append(this.loaanLoanMapper.loanSchema()).append(" where DATE_SUB( l.maturedon_date , INTERVAL ? DAY) < CURDATE() ")
-                .append(" and  l.loan_status_id = 300 AND (select count(id) from m_loan_charge where loan_id = l.id and charge_time_enum=15 and is_active=1 and is_waived=0 ) = 0");
+                .append(" and  l.loan_status_id = 300 AND (select count(id) from m_loan_charge where loan_id = l.id and charge_time_enum=15 and is_active=1 and waived=0 ) = 0");
 
 
         return this.jdbcTemplate.query(sqlBuilder.toString(), this.loaanLoanMapper, new Object[] { penaltyWaitPeriod });
