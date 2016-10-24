@@ -80,7 +80,8 @@ public class ChargeDropdownReadPlatformServiceImpl implements ChargeDropdownRead
                 chargeTimeType(ChargeTimeType.INSTALMENT_FEE), chargeTimeType(ChargeTimeType.OVERDUE_INSTALLMENT),
                 chargeTimeType(ChargeTimeType.TRANCHE_DISBURSEMENT), 
                 chargeTimeType(ChargeTimeType.DISBURSEMENT_PAID_WITH_REPAYMENT), 
-                chargeTimeType(ChargeTimeType.LOAN_RESCHEDULING_FEE));
+                chargeTimeType(ChargeTimeType.LOAN_RESCHEDULING_FEE),
+                chargeTimeType(ChargeTimeType.OVERDUE_ON_MATURITY));
     }
 
     @Override

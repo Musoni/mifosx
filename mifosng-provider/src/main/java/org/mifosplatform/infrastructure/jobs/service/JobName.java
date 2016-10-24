@@ -32,7 +32,8 @@ public enum JobName {
     SEND_MESSAGES_TO_EMAIL_GATEWAY("Send messages to Email gateway"),
     UPDATE_EMAIL_OUTBOUND_WITH_CAMPAIGN_MESSAGE("Update Email Outbound with campaign message"),
     EXECUTE_REPORT_MAILING_JOBS("Execute Report Mailing Jobs"),
-    EXECUTE_EMAIL("Execute Email");
+    EXECUTE_EMAIL("Execute Email"),
+    APPLY_CHARGE_TO_OVERDUE_ON_MATURITY_LOANS("Apply penalty to overdue on maturity loans");
 
 
     private final String name;
