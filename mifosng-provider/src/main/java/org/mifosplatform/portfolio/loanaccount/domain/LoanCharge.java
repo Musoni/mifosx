@@ -218,6 +218,7 @@ public class LoanCharge extends AbstractPersistable<Long> {
 
         if (ChargeTimeType.fromInt(this.chargeTime).equals(ChargeTimeType.SPECIFIED_DUE_DATE)
                 || ChargeTimeType.fromInt(this.chargeTime).equals(ChargeTimeType.OVERDUE_INSTALLMENT)
+                || ChargeTimeType.fromInt(this.chargeTime).equals(ChargeTimeType.OVERDUE_ON_MATURITY)
                 || ChargeTimeType.fromInt(this.chargeTime).equals(ChargeTimeType.LOAN_RESCHEDULING_FEE)) {
 
             if (dueDate == null) {

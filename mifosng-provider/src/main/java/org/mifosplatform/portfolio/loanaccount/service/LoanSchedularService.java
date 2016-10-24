@@ -12,6 +12,8 @@ public interface LoanSchedularService {
 
     void applyChargeForOverdueLoans() throws JobExecutionException;
 
+    void applyChargeForOverdueOnMaturityLoans() throws JobExecutionException;
+
     void recalculateInterest() throws JobExecutionException;
 
 }
