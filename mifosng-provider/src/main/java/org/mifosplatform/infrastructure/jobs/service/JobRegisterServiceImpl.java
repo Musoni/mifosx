@@ -136,7 +136,7 @@ public class JobRegisterServiceImpl implements JobRegisterService, ApplicationLi
      **/
     private boolean isSchedulerEnabledInQuartzPropertiesFile() {
         // scheduler is disabled by default
-        boolean isEnabled = false;
+        boolean isEnabled = true;
         Properties quartzProperties = new Properties();
         InputStream quartzPropertiesInputStream = null;
         File catalinaBaseConfDirectory = null;

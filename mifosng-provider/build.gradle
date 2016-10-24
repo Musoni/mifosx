@@ -204,7 +204,6 @@ task integrationTest(type:Test){
     it.dependsOn war
     doFirst {
         tomcatRunWar.daemon = true
-        tomcatRunWar.additionalRuntimeResources << file('src/test/resources/quartz.properties')
         tomcatRunWar.execute()
     }
 
