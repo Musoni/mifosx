@@ -483,7 +483,7 @@ public class Charge extends AbstractPersistable<Long> {
         if (command.isChangeInBooleanParameterNamed(allowedToOverrideParamName, this.allowOverride)) {
             final boolean newValue = command.booleanPrimitiveValueOfParameterNamed(allowedToOverrideParamName);
             actualChanges.put(allowedToOverrideParamName, newValue);
-            this.active = newValue;
+            this.allowOverride = newValue;
         }
 
         if (isPercentageBased()) {
