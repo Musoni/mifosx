@@ -29,7 +29,7 @@ public class ChargeData implements Comparable<ChargeData>, Serializable {
     private final String name;
     private final boolean active;
     private final boolean penalty;
-    private final boolean allowedOverride;
+    private final boolean allowOverride;
     private final CurrencyData currency;
     private final BigDecimal amount;
     private final EnumOptionData chargeTimeType;
@@ -76,7 +76,7 @@ public class ChargeData implements Comparable<ChargeData>, Serializable {
 
     public static ChargeData withTemplate(final ChargeData charge, final ChargeData template) {
         return new ChargeData(charge.id, charge.name, charge.amount, charge.currency, charge.chargeTimeType, charge.chargeAppliesTo,
-                charge.chargeCalculationType, charge.chargePaymentMode, charge.penalty, charge.active, charge.allowedOverride, template.currencyOptions,
+                charge.chargeCalculationType, charge.chargePaymentMode, charge.penalty, charge.active, charge.allowOverride, template.currencyOptions,
                 template.chargeCalculationTypeOptions, template.chargeAppliesToOptions, template.chargeTimeTypeOptions,
                 template.chargePaymetModeOptions, template.loanChargeCalculationTypeOptions, template.loanChargeTimeTypeOptions,
                 template.savingsChargeCalculationTypeOptions, template.savingsChargeTimeTypeOptions,
@@ -88,7 +88,7 @@ public class ChargeData implements Comparable<ChargeData>, Serializable {
     public static ChargeData instance(final Long id, final String name, final BigDecimal amount, final CurrencyData currency,
             final EnumOptionData chargeTimeType, final EnumOptionData chargeAppliesTo, final EnumOptionData chargeCalculationType,
             final EnumOptionData chargePaymentMode, final MonthDay feeOnMonthDay, final Integer feeInterval, final boolean penalty,
-            final boolean active, final boolean allowedOverride, final BigDecimal minCap, final BigDecimal maxCap, final EnumOptionData feeFrequency,
+            final boolean active, final boolean allowOverride, final BigDecimal minCap, final BigDecimal maxCap, final EnumOptionData feeFrequency,
             final GLAccountData accountData) {
 
         final Collection<CurrencyData> currencyOptions = null;
@@ -106,7 +106,7 @@ public class ChargeData implements Comparable<ChargeData>, Serializable {
         final Map<String, List<GLAccountData>> incomeOrLiabilityAccountOptions = null;
 
         return new ChargeData(id, name, amount, currency, chargeTimeType, chargeAppliesTo, chargeCalculationType, chargePaymentMode,
-                penalty, active, allowedOverride, currencyOptions, chargeCalculationTypeOptions, chargeAppliesToOptions, chargeTimeTypeOptions,
+                penalty, active, allowOverride, currencyOptions, chargeCalculationTypeOptions, chargeAppliesToOptions, chargeTimeTypeOptions,
                 chargePaymentModeOptions, loansChargeCalculationTypeOptions, loansChargeTimeTypeOptions,
                 savingsChargeCalculationTypeOptions, savingsChargeTimeTypeOptions, clientChargeCalculationTypeOptions,
                 clientChargeTimeTypeOptions, feeOnMonthDay, feeInterval, minCap, maxCap, feeFrequency, feeFrequencyOptions, accountData,
@@ -124,7 +124,7 @@ public class ChargeData implements Comparable<ChargeData>, Serializable {
         final Integer feeInterval = null;
         final Boolean penalty = isPenalty;
         final Boolean active = false;
-        final Boolean allowedOverride = false;
+        final Boolean allowOverride = false;
         final BigDecimal minCap = null;
         final BigDecimal maxCap = null;
         final Collection<CurrencyData> currencyOptions = null;
@@ -143,7 +143,7 @@ public class ChargeData implements Comparable<ChargeData>, Serializable {
         final GLAccountData account = null;
         final Map<String, List<GLAccountData>> incomeOrLiabilityAccountOptions = null;
         return new ChargeData(id, name, amount, currency, chargeTimeType, chargeAppliesTo, chargeCalculationType, chargePaymentMode,
-                penalty, active, allowedOverride, currencyOptions, chargeCalculationTypeOptions, chargeAppliesToOptions, chargeTimeTypeOptions,
+                penalty, active, allowOverride, currencyOptions, chargeCalculationTypeOptions, chargeAppliesToOptions, chargeTimeTypeOptions,
                 chargePaymentModeOptions, loansChargeCalculationTypeOptions, loansChargeTimeTypeOptions,
                 savingsChargeCalculationTypeOptions, savingsChargeTimeTypeOptions, clientChargeCalculationTypeOptions,
                 clientChargeTimeTypeOptions, feeOnMonthDay, feeInterval, minCap, maxCap, feeFrequency, feeFrequencyOptions, account,
@@ -152,7 +152,7 @@ public class ChargeData implements Comparable<ChargeData>, Serializable {
 
     private ChargeData(final Long id, final String name, final BigDecimal amount, final CurrencyData currency,
             final EnumOptionData chargeTimeType, final EnumOptionData chargeAppliesTo, final EnumOptionData chargeCalculationType,
-            final EnumOptionData chargePaymentMode, final boolean penalty, final boolean active, final boolean allowedOverride,
+            final EnumOptionData chargePaymentMode, final boolean penalty, final boolean active, final boolean allowOverride,
             final Collection<CurrencyData> currencyOptions, final List<EnumOptionData> chargeCalculationTypeOptions,
             final List<EnumOptionData> chargeAppliesToOptions, final List<EnumOptionData> chargeTimeTypeOptions,
             final List<EnumOptionData> chargePaymentModeOptions, final List<EnumOptionData> loansChargeCalculationTypeOptions,
@@ -174,7 +174,7 @@ public class ChargeData implements Comparable<ChargeData>, Serializable {
         this.feeOnMonthDay = feeOnMonthDay;
         this.penalty = penalty;
         this.active = active;
-        this.allowedOverride = allowedOverride;
+        this.allowOverride = allowOverride;
         this.minCap = minCap;
         this.maxCap = maxCap;
         this.currencyOptions = currencyOptions;
