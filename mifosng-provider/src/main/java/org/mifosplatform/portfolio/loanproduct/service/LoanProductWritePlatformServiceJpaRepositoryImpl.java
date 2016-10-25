@@ -37,10 +37,7 @@ import org.mifosplatform.portfolio.loanproduct.LoanProductConstants;
 import org.mifosplatform.portfolio.loanproduct.domain.LoanProduct;
 import org.mifosplatform.portfolio.loanproduct.domain.LoanProductRepository;
 import org.mifosplatform.portfolio.loanproduct.domain.LoanTransactionProcessingStrategy;
-import org.mifosplatform.portfolio.loanproduct.exception.InvalidCurrencyException;
-import org.mifosplatform.portfolio.loanproduct.exception.LoanProductCannotBeModifiedDueToNonClosedLoansException;
-import org.mifosplatform.portfolio.loanproduct.exception.LoanProductDateException;
-import org.mifosplatform.portfolio.loanproduct.exception.LoanProductNotFoundException;
+import org.mifosplatform.portfolio.loanproduct.exception.*;
 import org.mifosplatform.portfolio.loanproduct.serialization.LoanProductDataValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,6 +101,7 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
 
             this.fromApiJsonDeserializer.validateForCreate(command.json());
             validateInputDates(command);
+            validateInMultiplesOf(command);
 
             final Fund fund = findFundByIdIfProvided(command.longValueOfParameterNamed("fundId"));
 
@@ -177,6 +175,7 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
 
             this.fromApiJsonDeserializer.validateForUpdate(command.json(), product);
             validateInputDates(command);
+            validateInMultiplesOf(command);
 
             if(anyChangeInCriticalFloatingRateLinkedParams(command, product) 
             		&& this.loanRepository.doNonClosedLoanAccountsExistForProduct(product.getId())){
@@ -353,6 +352,25 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
 
         if (startDate != null && closeDate != null) {
             if (closeDate.isBefore(startDate)) { throw new LoanProductDateException(startDate.toString(), closeDate.toString()); }
+        }
+    }
+
+    /*
+    * Validates if installmentAmountInMultiplesOf is equal to or bigger than and divisible by inMultiplesOf
+    */
+    private void validateInMultiplesOf(final JsonCommand command){
+        final Integer inMultiplesOf = command.integerValueOfParameterNamed("inMultiplesOf");
+        final Integer installmentAmountInMultiplesOf = command.integerValueOfParameterNamed("installmentAmountInMultiplesOf");
+
+        if(inMultiplesOf != null && installmentAmountInMultiplesOf != null){
+            if(inMultiplesOf > installmentAmountInMultiplesOf){
+                throw new InvalidInstallmentAmountInMultiplesOfException("Loan product Installment Amount In Multiples Of value must be equal to or larger than In Multiples Of value",
+                        inMultiplesOf.toString(), installmentAmountInMultiplesOf.toString());
+            }
+            if((installmentAmountInMultiplesOf % inMultiplesOf) != 0){
+                throw new InvalidInstallmentAmountInMultiplesOfException("Loan product Installment Amount In Multiples Of value must be divisible by In Multiples Of value",
+                        inMultiplesOf.toString(), installmentAmountInMultiplesOf.toString());
+            }
         }
     }
 
