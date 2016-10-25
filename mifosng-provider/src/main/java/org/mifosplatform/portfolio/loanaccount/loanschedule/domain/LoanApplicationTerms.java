@@ -508,7 +508,7 @@ public final class LoanApplicationTerms {
 
         switch (this.interestMethod) {
             case FLAT:
-                principalForInstallment = calculateTotalPrincipalPerPeriodWithoutGrace(mc, periodNumber);
+                principalForInstallment = calculateTotalPrincipalPerPeriodWithoutGrace(mc, periodNumber, interestForThisInstallment);
             break;
             case DECLINING_BALANCE:
                 switch (this.amortizationMethod) {
@@ -744,12 +744,18 @@ public final class LoanApplicationTerms {
         return totalInterestForLoanTerm.dividedBy(Long.valueOf(this.actualNumberOfRepayments), mc.getRoundingMode());
     }
 
-    private Money calculateTotalPrincipalPerPeriodWithoutGrace(final MathContext mc, final int periodNumber) {
+    private Money calculateTotalPrincipalPerPeriodWithoutGrace(final MathContext mc, final int periodNumber, Money interestForThisInstallment) {
         final int totalRepaymentsWithCapitalPayment = calculateNumberOfRepaymentsWithPrincipalPayment();
         Money principalPerPeriod = this.principal.dividedBy(totalRepaymentsWithCapitalPayment, mc.getRoundingMode()).plus(
                 this.adjustPrincipalForFlatLoans);
         if (isPrincipalGraceApplicableForThisPeriod(periodNumber)) {
             principalPerPeriod = principalPerPeriod.zero();
+        }
+        if(this.installmentAmountInMultiplesOf != null){
+            double installmentAmount = principalPerPeriod.plus(interestForThisInstallment).getAmount().doubleValue();
+            installmentAmount = Money.roundToMultiplesOf(installmentAmount, this.installmentAmountInMultiplesOf);
+            Money installmentMoney = Money.of(principalPerPeriod.getCurrency(),BigDecimal.valueOf(installmentAmount));
+            principalPerPeriod = installmentMoney.minus(interestForThisInstallment);
         }
         if (!isPrincipalGraceApplicableForThisPeriod(periodNumber) && currentPeriodFixedPrincipalAmount != null) {
             this.adjustPrincipalForFlatLoans = this.adjustPrincipalForFlatLoans.plus(principalPerPeriod.minus(
@@ -757,6 +763,7 @@ public final class LoanApplicationTerms {
             principalPerPeriod = this.principal.zero().plus(currentPeriodFixedPrincipalAmount);
 
         }
+
         return principalPerPeriod;
     }
 
