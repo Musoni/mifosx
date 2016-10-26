@@ -27,6 +27,9 @@ public interface ReadReportingService {
     //needed for smsCampaign jobs where securityContext is null
     GenericResultsetData retrieveGenericResultSetForSmsCampaign(String name, String type, Map<String, String> extractedQueryParams);
 
+    //needed for emailCampaign jobs where securityContext is null
+    GenericResultsetData retrieveGenericResultSetForEmailCampaign(String name, String type, Map<String, String> extractedQueryParams);
+
     Response processPentahoRequest(String reportName, String outputType, Map<String, String> queryParams, Locale locale);
 
     String retrieveReportPDF(String name, String type, Map<String, String> extractedQueryParams);

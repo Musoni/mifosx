@@ -56,7 +56,7 @@ public class GroupLoanMembersAllocationReadPlatformServiceImpl implements GroupL
             final String displayName = rs.getString("displayName");
             final String accountNo = rs.getString("accountNo");
 
-            final ClientData clientData =  ClientData.instance(accountNo, null, null, null, null, null, null, clientId, null, null, null, null, displayName, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+            final ClientData clientData =  ClientData.instance(accountNo, null, null, null, null, null, null, clientId, null, null, null, null, displayName, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
 
             return  GroupLoanMembersAllocationData.newOne(id, loanId, clientData, amount);
 
