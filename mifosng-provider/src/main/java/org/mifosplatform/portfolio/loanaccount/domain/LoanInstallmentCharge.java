@@ -153,7 +153,7 @@ public class LoanInstallmentCharge extends AbstractPersistable<Long> {
 
     public boolean isPendingIncludePartialWaivers() {
 
-        if(!(isPaid() || isWaived()) || (isWaived() && this.amount != this.amountWaived))
+        if(!(isPaid() || isWaived()) || (isWaived() && !this.amount.equals(this.amountWaived.add(this.amountPaid))))
         {
             return true;
         }
