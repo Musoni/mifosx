@@ -131,7 +131,7 @@ public class DataExport extends AbstractAuditableCustom<AppUser, Long> {
      * Performs a soft delete of the entity by setting the "deleted" property to true
      */
     public void delete() {
-    	this.name = this.name + "_" + this.getId() + "_deleted";
+    	this.name = this.name + "_deleted_" + this.getId();
         this.deleted = true;
     }
     

@@ -6,47 +6,103 @@
 package org.mifosplatform.infrastructure.dataexport.data;
 
 public enum DataExportCoreColumn {
-	BRANCH("office_id", "Branch", "BIGINT", "m_office", "name"),
-	LOAN_OFFICER("loan_officer_id", "Loan Officer", "BIGINT", "m_staff", "display_name"),
-	GROUP_ID("group_id", "Group ID", "BIGINT", "m_group", "id"),
-	GROUP_NAME("group_id", "Group Name", "BIGINT", "m_group", "display_name"),
-	CLIENT_ID("client_id", "Client ID", "BIGINT", "m_client", "id"),
-	CLIENT_NAME("client_id", "Client Name", "BIGINT", "m_client", "display_name"),
-	DATE_OF_BIRTH("date_of_birth", "Date Of Birth", "DATE", "", "date_of_birth"),
-	GENDER("gender_cv_id", "Gender", "BIGINT", "m_code_value", "code_value"),
-	PHONE_NUMBER("mobile_no", "Phone Number", "VARCHAR", "", "mobile_no");
+	BRANCH_NAME("branch_name", "branch name", "VARCHAR", true, "office_id", "name", "m_office", null),
+	LOAN_OFFICER_NAME("loan_officer_name", "loan officer name", "VARCHAR", true, "loan_officer_id", "display_name", "m_staff", null),
+	FIELD_OFFICER_NAME("field_officer_name", "field officer name", "VARCHAR", true, "field_officer_id", "display_name", "m_staff", null),
+	STAFF_NAME("staff_name", "staff name", "VARCHAR", true, "staff_id", "display_name", "m_staff", null),
+	GROUP_NAME("group_name", "group name", "VARCHAR", true, "group_id", "display_name", "m_group", null),
+	CLIENT_NAME("client_name", "client name", "VARCHAR", true, "client_id", "display_name", "m_client", null),
+	LOAN_PRODUCT_NAME("loan_product_name", "product name", "VARCHAR", true, "product_id", "name", "m_product_loan", DataExportBaseEntity.LOAN),
+	SAVINGS_PRODUCT_NAME("savings_product_name", "product name", "VARCHAR", true, "product_id", "name", "m_savings_product", DataExportBaseEntity.SAVINGSACCOUNT);
 	
-	private final String name;
-	private final String label;
-	private final String dataType;
-	private final String referencedTableName;
-	private final String selectExpressionColumnName;
+	private String name;
+	private String label;
+	private String type;
+	private boolean nullable;
+	private String foreignKeyIndexColumnName;
+	private String referencedColumnName;
+	private String referencedTableName;
+	private DataExportBaseEntity baseEntity;
 	
 	/**
 	 * @param name
 	 * @param label
+	 * @param type
+	 * @param nullable
+	 * @param foreignKeyIndexColumnName
+	 * @param referencedTableName
+	 * @param baseEntity
 	 */
-	private DataExportCoreColumn(final String name, final String label, final String dataType, 
-			final String referencedTableName, final String selectExpressionColumnName) {
+	private DataExportCoreColumn(final String name, final String label, 
+			final String type, final boolean nullable, final String foreignKeyIndexColumnName, 
+			final String referencedColumnName, final String referencedTableName, 
+			final DataExportBaseEntity baseEntity) {
 		this.name = name;
 		this.label = label;
-		this.dataType = dataType;
+		this.type = type;
+		this.nullable = nullable;
+		this.foreignKeyIndexColumnName = foreignKeyIndexColumnName;
+		this.referencedColumnName = referencedColumnName;
 		this.referencedTableName = referencedTableName;
-		this.selectExpressionColumnName = selectExpressionColumnName;
+		this.baseEntity = baseEntity;
 	}
 	
 	/**
-	 * Creates a new {@link DataExportCoreColumn} object
+	 * Creates a new {@link DataExportCoreColumn} object with name similar to the one provided
 	 * 
-	 * @param name name of column
+	 * @param name column name
 	 * @return {@link DataExportCoreColumn} object
 	 */
-	public static DataExportCoreColumn newInstance(final String name) {
+	public static DataExportCoreColumn newInstanceFromName(final String name) {
 		DataExportCoreColumn dataExportCoreColumn = null;
 		
-		for (DataExportCoreColumn column : DataExportCoreColumn.values()) {
-			if (column.name.equalsIgnoreCase(name)) {
-				dataExportCoreColumn = column;
+		for (DataExportCoreColumn coreColumn : DataExportCoreColumn.values()) {
+			if (coreColumn.name.equalsIgnoreCase(name)) {
+				dataExportCoreColumn = coreColumn;
+				
+				break;
+			}
+		}
+		
+		return dataExportCoreColumn;
+	}
+	
+	/**
+	 * Creates a new {@link DataExportCoreColumn} object with foreign key index column name similar 
+	 * to the one provided
+	 * 
+	 * @param name column name
+	 * @return {@link DataExportCoreColumn} object
+	 */
+	public static DataExportCoreColumn newInstanceFromForeignKeyIndexColumnName(final String name) {
+		DataExportCoreColumn dataExportCoreColumn = null;
+		
+		for (DataExportCoreColumn coreColumn : DataExportCoreColumn.values()) {
+			if (coreColumn.foreignKeyIndexColumnName.equalsIgnoreCase(name)) {
+				dataExportCoreColumn = coreColumn;
+				
+				break;
+			}
+		}
+		
+		return dataExportCoreColumn;
+	}
+	
+	/**
+	 * Creates a new {@link DataExportCoreColumn} object with foreign key index column name similar 
+	 * to the one provided
+	 * 
+	 * @param name column name
+	 * @param baseEntity {@link DataExportBaseEntity} object
+	 * @return {@link DataExportCoreColumn} object
+	 */
+	public static DataExportCoreColumn newInstanceFromForeignKeyIndexColumnName(final String name, 
+			final DataExportBaseEntity baseEntity) {
+		DataExportCoreColumn dataExportCoreColumn = null;
+		
+		for (DataExportCoreColumn coreColumn : DataExportCoreColumn.values()) {
+			if (coreColumn.foreignKeyIndexColumnName.equalsIgnoreCase(name) && (baseEntity == coreColumn.baseEntity)) {
+				dataExportCoreColumn = coreColumn;
 				
 				break;
 			}
@@ -70,10 +126,31 @@ public enum DataExportCoreColumn {
 	}
 
 	/**
-	 * @return the dataType
+	 * @return the type
 	 */
-	public String getDataType() {
-		return dataType;
+	public String getType() {
+		return type;
+	}
+
+	/**
+	 * @return the nullable
+	 */
+	public boolean isNullable() {
+		return nullable;
+	}
+
+	/**
+	 * @return the foreignKeyIndexColumnName
+	 */
+	public String getForeignKeyIndexColumnName() {
+		return foreignKeyIndexColumnName;
+	}
+
+	/**
+	 * @return the referencedColumnName
+	 */
+	public String getReferencedColumnName() {
+		return referencedColumnName;
 	}
 
 	/**
@@ -84,9 +161,9 @@ public enum DataExportCoreColumn {
 	}
 
 	/**
-	 * @return the selectExpressionColumnName
+	 * @return the baseEntity
 	 */
-	public String getSelectExpressionColumnName() {
-		return selectExpressionColumnName;
+	public DataExportBaseEntity getBaseEntity() {
+		return baseEntity;
 	}
 }

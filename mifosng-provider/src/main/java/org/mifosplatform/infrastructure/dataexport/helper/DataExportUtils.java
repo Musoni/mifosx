@@ -26,33 +26,13 @@ public class DataExportUtils {
 	 * @return string
 	 */
 	public static String createHumanReadableTableColumnLabel(final String columnName) {
-		final int numberOfReplacementStrings = 8;
-        final String[] searchList = new String[numberOfReplacementStrings];
-        final String[] replacementList = new String[numberOfReplacementStrings];
+        final String[] searchList = {
+        	"activation_date", "_on_userid", "on_userid", "_on_date", "on_date", "_cv_id", "_enum", "_"
+        };
         
-        searchList[0] = "activation_date";
-        replacementList[0] = "activation date";
-        
-        searchList[1] = "_on_userid";
-        replacementList[1] = " by user";
-        
-        searchList[2] = "on_userid";
-        replacementList[2] = " by user";
-        
-        searchList[3] = "_on_date";
-        replacementList[3] = " on date";
-        
-        searchList[4] = "on_date";
-        replacementList[4] = " on date";
-        
-        searchList[5] = "_cv_id";
-        replacementList[5] = "";
-        
-        searchList[6] = "_enum";
-        replacementList[6] = "";
-        
-        searchList[7] = "_";
-        replacementList[7] = " ";
+        final String[] replacementList = {
+        	"activation date", " by user", " by user", " on date", " on date", "", "", " "
+        };
         
         // replace all occurrences of the strings the "searchList" array with 
         // their corresponding string in the "replacementList" array

@@ -15,6 +15,7 @@ import java.util.Map;
 
 import javax.ws.rs.core.Response;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.WordUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -23,6 +24,7 @@ import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
 import org.mifosplatform.infrastructure.core.service.RoutingDataSource;
 import org.mifosplatform.infrastructure.dataexport.api.DataExportApiConstants;
 import org.mifosplatform.infrastructure.dataexport.data.DataExportBaseEntity;
+import org.mifosplatform.infrastructure.dataexport.data.DataExportCoreColumn;
 import org.mifosplatform.infrastructure.dataexport.data.DataExportCoreDatatable;
 import org.mifosplatform.infrastructure.dataexport.data.DataExportData;
 import org.mifosplatform.infrastructure.dataexport.data.DataExportEntityData;
@@ -214,7 +216,7 @@ public class DataExportReadPlatformServiceImpl implements DataExportReadPlatform
                 }
             }
             
-            // add the core datatables to the list
+            // add the core datatables to the list of datatables
             for (DataExportCoreDatatable coreDatatable : DataExportCoreDatatable.values()) {
             	DataExportBaseEntity baseEntity = coreDatatable.getBaseEntity();
             	
@@ -225,6 +227,34 @@ public class DataExportReadPlatformServiceImpl implements DataExportReadPlatform
                 	datatables.add(datatableData);
             	}
             }
+            
+            final Collection<EntityColumnMetaData> coreColumns = new ArrayList<>();
+            
+            // add the core columns to the list of columns
+            for (EntityColumnMetaData column : columns) {
+            	DataExportCoreColumn coreColumn = DataExportCoreColumn.newInstanceFromForeignKeyIndexColumnName(
+            			column.getName());
+            	
+            	if (coreColumn != null) {
+            		DataExportCoreColumn[] loanAndSavingsProducts = {
+            			DataExportCoreColumn.LOAN_PRODUCT_NAME, DataExportCoreColumn.SAVINGS_PRODUCT_NAME
+                	};
+            		
+            		// this column is "base entity" specific
+            		if (ArrayUtils.contains(loanAndSavingsProducts, coreColumn)) {
+                		coreColumn = DataExportCoreColumn.newInstanceFromForeignKeyIndexColumnName(
+                    			column.getName(), dataExportBaseEntity);
+                	}
+            		
+            		EntityColumnMetaData metaData = EntityColumnMetaData.newInstance(coreColumn.getName(), 
+            				coreColumn.getLabel(), coreColumn.getType(), coreColumn.isNullable());
+            		
+            		coreColumns.add(metaData);
+            	}
+            }
+            
+            // add core columns to the columns list
+            columns.addAll(coreColumns);
             
             dataExportEntityData = DataExportEntityData.newInstance(dataExportBaseEntity.getEntityName(), 
                     dataExportBaseEntity.getTableName(), datatables, columns);

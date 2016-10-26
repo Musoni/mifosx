@@ -95,12 +95,9 @@ public class DataExportApiResource {
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public String createDataExport(final String apiRequestBodyAsJson) {
-
-        final CommandWrapper commandRequest = new CommandWrapperBuilder() //
-                .createDataExport(apiRequestBodyAsJson) //
-                .build();
-
-        final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+    	final CommandWrapper commandWrapper = new CommandWrapperBuilder().
+        		createDataExport().withJson(apiRequestBodyAsJson).build();
+        final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandWrapper);
 
         return this.toApiJsonSerializer.serialize(result);
     }
@@ -112,8 +109,32 @@ public class DataExportApiResource {
             @QueryParam(DataExportApiConstants.BASE_ENTITY_NAME_PARAM_NAME) final String baseEntityName, 
             @QueryParam(DataExportApiConstants.FILE_FORMAT_PARAM_NAME) final String fileFormat) {
 
-        //this.platformSecurityContext.authenticatedUser().validateHasReadPermission(entity);
+        this.platformSecurityContext.authenticatedUser().validateHasReadPermission(baseEntityName);
 
         return this.dataExportReadPlatformService.downloadDataExportFile(resourceId, fileFormat);
+    }
+    
+    @PUT
+    @Path("{entityId}")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String updateDataExport(@PathParam("entityId") final Long entityId, final String apiRequestBodyAsJson) {
+    	final CommandWrapper commandWrapper = new CommandWrapperBuilder().
+    			updateDataExport(entityId).withJson(apiRequestBodyAsJson).build();
+    	final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandWrapper);
+    	
+    	return this.toApiJsonSerializer.serialize(result);
+    }
+    
+    @DELETE
+    @Path("{entityId}")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String deleteDataExport(@PathParam("entityId") final Long entityId, final String apiRequestBodyAsJson) {
+    	final CommandWrapper commandWrapper = new CommandWrapperBuilder().
+    			deleteDataExport(entityId).withJson(apiRequestBodyAsJson).build();
+    	final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandWrapper);
+    	
+    	return this.toApiJsonSerializer.serialize(result);
     }
 }

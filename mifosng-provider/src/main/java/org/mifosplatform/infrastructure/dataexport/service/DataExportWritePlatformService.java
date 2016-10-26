@@ -11,4 +11,6 @@ import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 public interface DataExportWritePlatformService {
 
     CommandProcessingResult createDataExport(JsonCommand command);
+    CommandProcessingResult updateDataExport(Long id, JsonCommand command);
+    CommandProcessingResult deleteDataExport(Long id);
 }

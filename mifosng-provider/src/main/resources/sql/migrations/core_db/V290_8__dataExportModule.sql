@@ -11,14 +11,11 @@ created_date datetime not null,
 lastmodifiedby_id bigint,
 lastmodified_date datetime,
 foreign key (createdby_id) references m_appuser(id),
-foreign key (lastmodifiedby_id) references m_appuser(id)
-);
+foreign key (lastmodifiedby_id) references m_appuser(id));
 
 INSERT INTO `m_permission`
-(`grouping`,`code`,`entity_name`,`action_name`,`can_maker_checker`) VALUES
-('dataexport','CREATE_DATAEXPORT','DATAEXPORT','CREATE',0),
-('dataexport','READ_DATAEXPORT','DATAEXPORT','READ',0),
-('dataexport','DELETE_DATAEXPORT','DATAEXPORT','DELETE',0),
-('dataexport','CREATE_DATAEXPORTPROCESS','DATAEXPORTPROCESS','CREATE',0),
-('dataexport','READ_DATAEXPORTPROCESS','DATAEXPORTPROCESS','READ',0),
-('dataexport','DELETE_DATAEXPORTPROCESS','DATAEXPORTPROCESS','DELETE',0);
+(`grouping`,`code`, `entity_name`, `action_name`, `can_maker_checker`) VALUES
+('dataexport', 'CREATE_DATAEXPORT', 'DATAEXPORT', 'CREATE', 0),
+('dataexport', 'READ_DATAEXPORT', 'DATAEXPORT', 'READ', 0),
+('dataexport', 'DELETE_DATAEXPORT', 'DATAEXPORT', 'DELETE', 0),
+('dataexport', 'UPDATE_DATAEXPORT', 'DATAEXPORT', 'UPDATE', 0);
