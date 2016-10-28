@@ -15,14 +15,7 @@ import static org.mifosplatform.portfolio.savings.SavingsApiConstants.withdrawBa
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
@@ -62,6 +55,10 @@ import org.mifosplatform.portfolio.charge.domain.Charge;
 import org.mifosplatform.portfolio.charge.domain.ChargeRepositoryWrapper;
 import org.mifosplatform.portfolio.client.domain.Client;
 import org.mifosplatform.portfolio.client.exception.ClientNotActiveException;
+import org.mifosplatform.portfolio.common.BusinessEventNotificationConstants;
+import org.mifosplatform.portfolio.common.service.BusinessEventNotifierService;
+import org.mifosplatform.portfolio.common.BusinessEventNotificationConstants.BUSINESS_ENTITY;
+import org.mifosplatform.portfolio.common.BusinessEventNotificationConstants.BUSINESS_EVENTS;
 import org.mifosplatform.portfolio.group.domain.Group;
 import org.mifosplatform.portfolio.group.exception.GroupNotActiveException;
 import org.mifosplatform.portfolio.note.domain.Note;
@@ -123,6 +120,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
     private final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository;
     private final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService;
     private final StandingInstructionRepository standingInstructionRepository;
+    private final BusinessEventNotifierService businessEventNotifierService;
 
     @Autowired
     public SavingsAccountWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -143,7 +141,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             final StaffRepositoryWrapper staffRepository, final ConfigurationDomainService configurationDomainService,
             final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository, 
             final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService, 
-            final StandingInstructionRepository standingInstructionRepository) {
+            final StandingInstructionRepository standingInstructionRepository,
+            final BusinessEventNotifierService businessEventNotifierService) {
         this.context = context;
         this.savingAccountRepository = savingAccountRepository;
         this.savingsAccountTransactionRepository = savingsAccountTransactionRepository;
@@ -168,6 +167,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         this.depositAccountOnHoldTransactionRepository= depositAccountOnHoldTransactionRepository;
         this.entityDatatableChecksWritePlatformService = entityDatatableChecksWritePlatformService;
         this.standingInstructionRepository = standingInstructionRepository;
+        this.businessEventNotifierService = businessEventNotifierService;
     }
 
     @Transactional
@@ -197,6 +197,9 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         }
 
         postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
+
+        this.businessEventNotifierService.notifyBusinessEventWasExecuted(BUSINESS_EVENTS.SAVINGS_ACTIVATION,
+                constructEntityMap(BUSINESS_ENTITY.SAVINGSACCOUNT, account));
 
         return new CommandProcessingResultBuilder() //
                 .withEntityId(savingsId) //
@@ -263,6 +266,9 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         changes.put("transactionDate", command.stringValueOfParameterNamed("transactionDate"));
         changes.put("transactionAmount", command.stringValueOfParameterNamed("transactionAmount"));
 
+        this.businessEventNotifierService.notifyBusinessEventWasExecuted(BUSINESS_EVENTS.SAVINGS_DEPOSIT,
+                constructEntityMap(BUSINESS_ENTITY.SAVINGSACCOUNT_TRANSACTION, deposit));
+
         return new CommandProcessingResultBuilder() //
                 .withEntityId(deposit.getId()) //
                 .withOfficeId(account.officeId()) //
@@ -308,6 +314,9 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         
         changes.put("transactionDate", command.stringValueOfParameterNamed("transactionDate"));
         changes.put("transactionAmount", command.stringValueOfParameterNamed("transactionAmount"));
+
+        this.businessEventNotifierService.notifyBusinessEventWasExecuted(BUSINESS_EVENTS.SAVINGS_WITHDRAWAL,
+                constructEntityMap(BUSINESS_ENTITY.SAVINGSACCOUNT_TRANSACTION, withdrawal));
 
         return new CommandProcessingResultBuilder() //
                 .withEntityId(withdrawal.getId()) //
@@ -1261,6 +1270,12 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             user = this.context.getAuthenticatedUserIfPresent();
         }
         return user;
+    }
+
+    private Map<BusinessEventNotificationConstants.BUSINESS_ENTITY, Object> constructEntityMap(final BusinessEventNotificationConstants.BUSINESS_ENTITY entityEvent, Object entity) {
+        Map<BusinessEventNotificationConstants.BUSINESS_ENTITY, Object> map = new HashMap<>(1);
+        map.put(entityEvent, entity);
+        return map;
     }
 
     /** 
