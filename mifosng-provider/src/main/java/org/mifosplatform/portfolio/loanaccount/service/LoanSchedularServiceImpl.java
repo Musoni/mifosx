@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import org.mifosplatform.accounting.journalentry.exception.JournalEntryInvalidException;
 import org.mifosplatform.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.mifosplatform.infrastructure.core.data.ApiParameterError;
 import org.mifosplatform.infrastructure.core.exception.AbstractPlatformDomainRuleException;
@@ -175,9 +176,9 @@ public class LoanSchedularServiceImpl implements LoanSchedularService {
 				Integer numberOfRetries = 0;
 				while (numberOfRetries <= maxNumberOfRetries) {
 					try {
+						numberOfRetries++;
 						this.loanWritePlatformService
 								.recalculateInterest(loanId);
-						numberOfRetries = maxNumberOfRetries + 1;
 					} catch (CannotAcquireLockException
 							| ObjectOptimisticLockingFailureException exception) {
 						logger.info("Recalulate interest job has been retried  "
@@ -209,6 +210,13 @@ public class LoanSchedularServiceImpl implements LoanSchedularService {
 							sb.append("Interest recalculation for loans failed " + exception.getMessage()) ;
 							break;
 						}
+					} catch (JournalEntryInvalidException je) {
+						String exceptionMessage = je.getDefaultUserMessage();
+						
+						logger.error("Interest recalculation for loans failed for account:"	+ loanId + " with message - \""
+								+ exceptionMessage + "\"");
+						sb.append("Interest recalculation for loans failed for account:").append(loanId).append(" with message - \"")
+                        .append(exceptionMessage + "\"");
 					} catch (Exception e) {
 						Throwable realCause = e;
 						if (e.getCause() != null) {
