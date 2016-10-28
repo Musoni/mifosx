@@ -95,14 +95,6 @@ public class LoanRepaymentScheduleProcessingWrapper {
                         && loanCharge.getChargeCalculation().isPercentageBased()) {
                     BigDecimal amount = BigDecimal.ZERO;
                     
-                    // specified due date charges are usually attached to loan installments, therefore:
-                    // totalPrincipal = the loan installment principal
-                    // totalInterest = the loan installment interest
-                    if (loanCharge.isSpecifiedDueDate()) {
-                        totalPrincipal = period.getPrincipal(monetaryCurrency);
-                        totalInterest = period.getInterestCharged(monetaryCurrency);
-                    }
-                    
                     if (loanCharge.getChargeCalculation().isPercentageOfAmountAndInterest()) {
                         amount = amount.add(totalPrincipal.getAmount()).add(totalInterest.getAmount());
                     } else if (loanCharge.getChargeCalculation().isPercentageOfInterest()) {
