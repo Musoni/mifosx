@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service;
 import retrofit.Callback;
 
 import java.io.IOException;
-import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -128,7 +127,7 @@ public class TwilioHookProcessor implements HookProcessor {
                     json = new JsonParser().parse(jsonString).getAsJsonObject();
                 }
             }
-        } catch (IOException | ParseException e) {
+        } catch (IOException e) {
         }
         return json;
     }
