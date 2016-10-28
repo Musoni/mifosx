@@ -13,6 +13,7 @@ import org.mifosplatform.infrastructure.sms.data.PreviewCampaignMessage;
 import org.mifosplatform.infrastructure.sms.domain.SmsCampaign;
 import org.mifosplatform.portfolio.loanaccount.domain.Loan;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTransaction;
+import org.mifosplatform.portfolio.savings.domain.SavingsAccount;
 
 import java.util.Map;
 
@@ -32,7 +33,9 @@ public interface SmsCampaignWritePlatformService {
 
     void storeTemplateMessageIntoSmsOutBoundTable() throws JobExecutionException;
 
-    void insertDirectCampaignIntoSmsOutboundTable(Loan loan, SmsCampaign smsCampaign);
+    void insertTriggeredCampaignIntoSmsOutboundTable(Loan loan, SmsCampaign smsCampaign);
+
+    void insertTriggeredCampaignIntoSmsOutboundTable(SavingsAccount savingsAccount, SmsCampaign smsCampaign);
 
     String compileSmsTemplate(String textMessageTemplate, String campaignName, Map<String, Object> smsParams);
 
