@@ -9,10 +9,7 @@ package org.mifosplatform.infrastructure.dataqueries.domain;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-import java.util.List;
-
 public interface RegisteredTableRepository extends JpaRepository<RegisteredTable, Long>, JpaSpecificationExecutor<RegisteredTable> {
     RegisteredTable findOneByRegisteredTableName(String registeredTableName);
 
-    List<RegisteredTable> findAllByApplicationTableName (String applicationTableName);
 }
