@@ -7,7 +7,6 @@ package org.mifosplatform.commands.service;
 
 import org.mifosplatform.commands.domain.CommandWrapper;
 import org.mifosplatform.infrastructure.accountnumberformat.service.AccountNumberFormatConstants;
-import org.mifosplatform.infrastructure.dataexport.api.DataExportApiConstants;
 import org.mifosplatform.portfolio.client.api.ClientApiConstants;
 import org.mifosplatform.portfolio.paymenttype.api.PaymentTypeApiResourceConstants;
 import org.mifosplatform.portfolio.savings.DepositsApiConstants;
@@ -2865,7 +2864,6 @@ public class CommandWrapperBuilder {
         this.href = "/reportmailingjobs/" + entityId;
         return this;
     }
-    
     public CommandWrapperBuilder undoLoanRejectApplication(final Long loanId) {
         this.actionName = "UNDOREJECT";
         this.entityName = "LOAN";
@@ -2874,36 +2872,12 @@ public class CommandWrapperBuilder {
         this.href = "/loans/" + loanId;
         return this;
     }
-    
     public CommandWrapperBuilder undoLoanWithdrawnByApplicant(final Long loanId) {
         this.actionName = "UNDOWITHDRAW";
         this.entityName = "LOAN";
         this.entityId = loanId;
         this.loanId = loanId;
         this.href = "/loans/" + loanId;
-        return this;
-    }
-    
-    public CommandWrapperBuilder createDataExport() {
-        this.actionName = "CREATE";
-        this.entityName = DataExportApiConstants.DATA_EXPORT_ENTITY_NAME;
-        this.href = "/dataexport/";
-        return this;
-    }
-    
-    public CommandWrapperBuilder updateDataExport(final Long entityId) {
-        this.actionName = "UPDATE";
-        this.entityName = DataExportApiConstants.DATA_EXPORT_ENTITY_NAME;
-        this.entityId = entityId;
-        this.href = "/dataexport/" + entityId;
-        return this;
-    }
-    
-    public CommandWrapperBuilder deleteDataExport(final Long entityId) {
-        this.actionName = "DELETE";
-        this.entityName = DataExportApiConstants.DATA_EXPORT_ENTITY_NAME;
-        this.entityId = entityId;
-        this.href = "/dataexport/" + entityId;
         return this;
     }
 }
