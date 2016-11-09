@@ -7,6 +7,7 @@ package org.mifosplatform.commands.service;
 
 import org.mifosplatform.commands.domain.CommandWrapper;
 import org.mifosplatform.infrastructure.accountnumberformat.service.AccountNumberFormatConstants;
+import org.mifosplatform.infrastructure.dataexport.api.DataExportApiConstants;
 import org.mifosplatform.portfolio.client.api.ClientApiConstants;
 import org.mifosplatform.portfolio.paymenttype.api.PaymentTypeApiResourceConstants;
 import org.mifosplatform.portfolio.savings.DepositsApiConstants;
@@ -337,6 +338,84 @@ public class CommandWrapperBuilder {
         this.entityName = "SMS_CAMPAIGN";
         this.entityId = resourceId;
         this.href = "/sms/campaign/"+resourceId + "?command=reactivate";
+        return this;
+    }
+
+    public CommandWrapperBuilder createEmail() {
+        this.actionName = "CREATE";
+        this.entityName = "EMAIL";
+        this.entityId = null;
+        this.href = "/scheduledemail/template";
+        return this;
+    }
+
+    public CommandWrapperBuilder updateEmail(final Long resourceId) {
+        this.actionName = "UPDATE";
+        this.entityName = "EMAIL";
+        this.entityId = resourceId;
+        this.href = "/scheduledemail/" + resourceId;
+        return this;
+    }
+
+    public CommandWrapperBuilder deleteEmail(final Long resourceId) {
+        this.actionName = "DELETE";
+        this.entityName = "EMAIL";
+        this.entityId = resourceId;
+        this.href = "/scheduledemail/" + resourceId;
+        return this;
+    }
+
+    public CommandWrapperBuilder createEmailCampaign() {
+        this.actionName = "CREATE";
+        this.entityName = "EMAIL_CAMPAIGN";
+        this.entityId = null;
+        this.href = "/scheduledemail/campaign";
+        return this;
+    }
+
+    public CommandWrapperBuilder updateEmailCampaign(final Long resourceId) {
+        this.actionName = "UPDATE";
+        this.entityName = "EMAIL_CAMPAIGN";
+        this.entityId = resourceId;
+        this.href = "/scheduledemail/campaign/"+resourceId;
+        return this;
+    }
+
+    public CommandWrapperBuilder deleteEmailCampaign(final Long resourceId) {
+        this.actionName = "DELETE";
+        this.entityName = "EMAIL_CAMPAIGN";
+        this.entityId = resourceId;
+        this.href = "/scheduledemail/campaign/"+resourceId;
+        return this;
+    }
+
+    public CommandWrapperBuilder activateEmailCampaign(final Long resourceId) {
+        this.actionName = "ACTIVATE";
+        this.entityName = "EMAIL_CAMPAIGN";
+        this.entityId = resourceId;
+        this.href = "/scheduledemail/campaign/"+resourceId + "?command=activate";
+        return this;
+    }
+
+    public CommandWrapperBuilder closeEmailCampaign(final Long resourceId) {
+        this.actionName = "CLOSE";
+        this.entityName = "EMAIL_CAMPAIGN";
+        this.entityId = resourceId;
+        this.href = "/scheduledemail/campaign/"+resourceId + "?command=close";
+        return this;
+    }
+    public CommandWrapperBuilder reactivateEmailCampaign(final Long resourceId) {
+        this.actionName = "REACTIVATE";
+        this.entityName = "EMAIL_CAMPAIGN";
+        this.entityId = resourceId;
+        this.href = "/scheduledemail/campaign/"+resourceId + "?command=reactivate";
+        return this;
+    }
+
+    public CommandWrapperBuilder updateEmailConfiguration() {
+        this.actionName = "UPDATE";
+        this.entityName = "EMAIL_CONFIGURATION";
+        this.href = "/scheduledemail/configuration/";
         return this;
     }
 
@@ -2786,6 +2865,7 @@ public class CommandWrapperBuilder {
         this.href = "/reportmailingjobs/" + entityId;
         return this;
     }
+    
     public CommandWrapperBuilder undoLoanRejectApplication(final Long loanId) {
         this.actionName = "UNDOREJECT";
         this.entityName = "LOAN";
@@ -2794,12 +2874,36 @@ public class CommandWrapperBuilder {
         this.href = "/loans/" + loanId;
         return this;
     }
+    
     public CommandWrapperBuilder undoLoanWithdrawnByApplicant(final Long loanId) {
         this.actionName = "UNDOWITHDRAW";
         this.entityName = "LOAN";
         this.entityId = loanId;
         this.loanId = loanId;
         this.href = "/loans/" + loanId;
+        return this;
+    }
+    
+    public CommandWrapperBuilder createDataExport() {
+        this.actionName = "CREATE";
+        this.entityName = DataExportApiConstants.DATA_EXPORT_ENTITY_NAME;
+        this.href = "/dataexport/";
+        return this;
+    }
+    
+    public CommandWrapperBuilder updateDataExport(final Long entityId) {
+        this.actionName = "UPDATE";
+        this.entityName = DataExportApiConstants.DATA_EXPORT_ENTITY_NAME;
+        this.entityId = entityId;
+        this.href = "/dataexport/" + entityId;
+        return this;
+    }
+    
+    public CommandWrapperBuilder deleteDataExport(final Long entityId) {
+        this.actionName = "DELETE";
+        this.entityName = DataExportApiConstants.DATA_EXPORT_ENTITY_NAME;
+        this.entityId = entityId;
+        this.href = "/dataexport/" + entityId;
         return this;
     }
 }

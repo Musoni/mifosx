@@ -33,7 +33,7 @@ import com.google.gson.GsonBuilder;
  */
 public class ErrorHandler extends RuntimeException {
 
-    private static Gson jsonHelper = new GsonBuilder().setPrettyPrinting().create();
+    private static Gson jsonHelper = new GsonBuilder().create();
 
     /**
      * Sole Constructor

@@ -15,9 +15,11 @@ import java.util.TreeMap;
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
 import org.mifosplatform.infrastructure.core.service.DateUtils;
+import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
 import org.mifosplatform.organisation.monetary.domain.Money;
 import org.mifosplatform.portfolio.loanaccount.data.LoanTermVariationsData;
 import org.mifosplatform.portfolio.loanproduct.domain.AmortizationMethod;
+import org.mifosplatform.portfolio.loanproduct.domain.InterestMethod;
 
 /**
  * <p>
@@ -141,6 +143,22 @@ public class DecliningBalanceInterestLoanScheduleGenerator extends AbstractLoanS
         Money principalForThisInstallment = loanApplicationTerms.calculateTotalPrincipalForPeriod(calculator, outstandingBalance,
                 periodNumber, mc, interestForPeriod);
 
+        if(loanApplicationTerms.getAmortizationMethod().equals(AmortizationMethod.EQUAL_PRINCIPAL)){
+            Money overflow = loanApplicationTerms.getInterestRoundingOverflow();
+            if(overflow != null && !overflow.isZero()){
+                interestForThisInstallment = interestForThisInstallment.plus(overflow);
+            }
+            if(loanApplicationTerms.getInstallmentAmountInMultiplesOf() != null){
+                final MonetaryCurrency currency = interestForThisInstallment.getCurrency();
+                double installmentAmount = principalForThisInstallment.plus(interestForThisInstallment).getAmount().doubleValue();
+                installmentAmount = Money.roundToMultiplesOf(installmentAmount, loanApplicationTerms.getInstallmentAmountInMultiplesOf());
+                Money installmentMoney = Money.of(currency,BigDecimal.valueOf(installmentAmount));
+                Money newInterestForThisInstallment = installmentMoney.minus(principalForThisInstallment);
+                loanApplicationTerms.setInterestRoundingOverflow(interestForThisInstallment.minus(newInterestForThisInstallment));
+                interestForThisInstallment = loanApplicationTerms.adjustInterestIfLastRepaymentPeriod(newInterestForThisInstallment,
+                        Money.zero(currency),Money.zero(currency),periodNumber);
+            }
+        }
         // update cumulative fields for principal & interest
         final Money interestBroughtFowardDueToGrace = cumulatingInterestDueToGrace;
         final Money totalCumulativePrincipalToDate = totalCumulativePrincipal.plus(principalForThisInstallment);

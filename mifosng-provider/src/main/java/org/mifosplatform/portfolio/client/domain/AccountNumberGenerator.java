@@ -61,11 +61,19 @@ public class AccountNumberGenerator {
     public String generateCustomAccount(Client client, AccountNumberFormat accountNumberFormat){
         final Map<String,String> customMap = new HashMap<>();
         customMap.put(CustomAccountType.ENTITY_ID.getCode(), client.getId().toString());
-        if(client.getOffice().getExternalId() !=null){
+        
+        if (client.getOffice() != null && client.getOffice().getExternalId() != null) {
             customMap.put(CustomAccountType.OFFICE_EXTERNAL_ID.getCode(), client.getOffice().getExternalId());
         }
-        customMap.put(CustomAccountType.OFFICE_ID.getCode(),client.getOffice().getId().toString());
-        customMap.put(CustomAccountType.STAFF_ID.getCode(), client.getStaff().getId().toString());
+        
+        final String officeId = (client.getOffice() != null && client.getOffice().getId() != null) ? 
+        		client.getOffice().getId().toString() : "0";
+        final String staffId = (client.getStaff() != null && client.getStaff().getId() != null) ? 
+        		client.getStaff().getId().toString() : "0";
+        		
+        customMap.put(CustomAccountType.OFFICE_ID.getCode(), officeId);
+        customMap.put(CustomAccountType.STAFF_ID.getCode(), staffId);
+        
         return generateCustomAccountNumberWithMustacheTemplate(accountNumberFormat,customMap);
     }
 

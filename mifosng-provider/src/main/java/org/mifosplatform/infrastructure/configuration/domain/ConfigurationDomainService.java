@@ -29,6 +29,8 @@ public interface ConfigurationDomainService {
 
     Long retrievePenaltyWaitPeriod();
 
+    Long retrievePenaltyOnMaturityWaitPeriod();
+
     boolean isPasswordForcedResetEnable();
 
     Long retrievePasswordLiveTime();

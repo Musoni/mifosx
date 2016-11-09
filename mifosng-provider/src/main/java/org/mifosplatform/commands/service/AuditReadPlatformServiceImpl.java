@@ -117,10 +117,13 @@ public class AuditReadPlatformServiceImpl implements AuditReadPlatformService {
                     + "ck.username as checker, aud.checked_on_date as checkedOnDate, ev.enum_message_property as processingResult "
                     + commandAsJsonString + ", "
                     + " o.name as officeName, gl.level_name as groupLevelName, g.display_name as groupName, c.display_name as clientName, "
+                    + " cg.display_name as clientGroupName, "
                     + " l.account_no as loanAccountNo, s.account_no as savingsAccountNo,s.id as savingsId " + " from m_portfolio_command_source aud "
                     + " left join m_appuser mk on mk.id = aud.maker_id" + " left join m_appuser ck on ck.id = aud.checker_id"
                     + " left join m_office o on o.id = aud.office_id" + " left join m_group g on g.id = aud.group_id"
                     + " left join m_group_level gl on gl.id = g.level_id" + " left join m_client c on c.id = aud.client_id"
+                    + " left join m_group_client gc on gc.client_id = c.id"
+                    + " left join m_group cg on cg.id = gc.group_id"
                     + " left join m_loan l on l.id = aud.loan_id" + " left join m_savings_account s on s.id = aud.savings_account_id"
                     + " left join r_enum_value ev on ev.enum_name = 'processing_result_enum' and ev.enum_id = aud.processing_result_enum"
                     + " left join r_enum_value eve on eve.enum_name = 'loan_status_id' and eve.enum_id = l.loan_status_id "
@@ -169,6 +172,7 @@ public class AuditReadPlatformServiceImpl implements AuditReadPlatformService {
             final String groupLevelName = rs.getString("groupLevelName");
             final String groupName = rs.getString("groupName");
             final String clientName = rs.getString("clientName");
+            final String clientGroupName = rs.getString("clientGroupName");
             final String loanAccountNo = rs.getString("loanAccountNo");
             final String savingsAccountNo = rs.getString("savingsAccountNo");
             final Long savingsId  = JdbcSupport.getLong(rs, "savingsId");
@@ -176,7 +180,7 @@ public class AuditReadPlatformServiceImpl implements AuditReadPlatformService {
             return new AuditData(id, actionName, entityName, resourceId, subresourceId, maker, madeOnDate, checker, checkedOnDate,
                     processingResult, commandAsJson, officeName, groupLevelName, groupName, clientName, loanAccountNo, savingsAccountNo,
                     clientId, loanId, resourceGetUrl, disbursementAmount, disbursementDate, loanOutStanding, loanStatus, 
-                    savingOutStanding, savingStatus,savingsId);
+                    savingOutStanding, savingStatus,savingsId,clientGroupName);
         }
     }
 

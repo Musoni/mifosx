@@ -75,4 +75,6 @@ public final class ReportParameterUsage extends AbstractPersistable<Long> {
     public void updateParameterName(final String parameterName) {
         this.reportParameterName = parameterName;
     }
+
+    public String getReportParameterName() {return this.reportParameterName;}
 }

@@ -5,6 +5,7 @@
  */
 package org.mifosplatform.portfolio.loanaccount.service;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import org.mifosplatform.accounting.journalentry.exception.JournalEntryInvalidException;
 import org.mifosplatform.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.mifosplatform.infrastructure.core.data.ApiParameterError;
 import org.mifosplatform.infrastructure.core.exception.AbstractPlatformDomainRuleException;
@@ -20,7 +22,17 @@ import org.mifosplatform.infrastructure.core.service.ThreadLocalContextUtil;
 import org.mifosplatform.infrastructure.jobs.annotation.CronTarget;
 import org.mifosplatform.infrastructure.jobs.exception.JobExecutionException;
 import org.mifosplatform.infrastructure.jobs.service.JobName;
+import org.mifosplatform.portfolio.charge.domain.Charge;
+import org.mifosplatform.portfolio.charge.domain.ChargeCalculationType;
+import org.mifosplatform.portfolio.charge.domain.ChargePaymentMode;
+import org.mifosplatform.portfolio.charge.domain.ChargeTimeType;
+import org.mifosplatform.portfolio.common.BusinessEventNotificationConstants;
+import org.mifosplatform.portfolio.loanaccount.data.LoanAccountData;
+import org.mifosplatform.portfolio.loanaccount.domain.Loan;
+import org.mifosplatform.portfolio.loanaccount.domain.LoanCharge;
+import org.mifosplatform.portfolio.loanaccount.domain.LoanRepositoryWrapper;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.data.OverdueLoanScheduleData;
+import org.mifosplatform.portfolio.loanproduct.domain.LoanProduct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,13 +47,15 @@ public class LoanSchedularServiceImpl implements LoanSchedularService {
     private final ConfigurationDomainService configurationDomainService;
     private final LoanReadPlatformService loanReadPlatformService;
     private final LoanWritePlatformService loanWritePlatformService;
+	private final LoanAssembler loanAssembler;
 
     @Autowired
     public LoanSchedularServiceImpl(final ConfigurationDomainService configurationDomainService,
-            final LoanReadPlatformService loanReadPlatformService, final LoanWritePlatformService loanWritePlatformService) {
+            final LoanReadPlatformService loanReadPlatformService, final LoanWritePlatformService loanWritePlatformService,final LoanAssembler loanAssembler) {
         this.configurationDomainService = configurationDomainService;
         this.loanReadPlatformService = loanReadPlatformService;
         this.loanWritePlatformService = loanWritePlatformService;
+		this.loanAssembler = loanAssembler;
     }
 
     @Override
@@ -49,6 +63,8 @@ public class LoanSchedularServiceImpl implements LoanSchedularService {
     public void applyChargeForOverdueLoans() throws JobExecutionException {
 
         final Long penaltyWaitPeriodValue = this.configurationDomainService.retrievePenaltyWaitPeriod();
+		final Long penaltyOnMaturityWaitPeriodValue = this.configurationDomainService.retrievePenaltyOnMaturityWaitPeriod();
+
         final Boolean backdatePenalties = this.configurationDomainService.isBackdatePenaltiesEnabled();
         final Collection<OverdueLoanScheduleData> overdueLoanScheduledInstallments = this.loanReadPlatformService
                 .retrieveAllLoansWithOverdueInstallments(penaltyWaitPeriodValue,backdatePenalties);
@@ -99,6 +115,51 @@ public class LoanSchedularServiceImpl implements LoanSchedularService {
     }
 
 	@Override
+	@CronTarget(jobName = JobName.APPLY_CHARGE_TO_OVERDUE_ON_MATURITY_LOANS)
+	public void applyChargeForOverdueOnMaturityLoans() throws JobExecutionException {
+
+		final Long penaltyOnMaturityWaitPeriodValue = this.configurationDomainService.retrievePenaltyOnMaturityWaitPeriod();
+
+		final Collection<LoanAccountData> overdueLoans = this.loanReadPlatformService
+				.retrieveAllLoansOverdueOnMaturity(penaltyOnMaturityWaitPeriodValue);
+
+		if (!overdueLoans.isEmpty()) {
+			final StringBuilder sb = new StringBuilder();
+
+			for (final LoanAccountData loanAccountData : overdueLoans) {
+
+				final Loan overdueLoan = this.loanAssembler.assembleFrom(loanAccountData.getId());
+
+				//this.loanWritePlatformService.addLoanCharge()
+				final LoanProduct loanProduct = overdueLoan.getLoanProduct();
+				final Collection<Charge> loanProductCharges = loanProduct.getCharges();
+
+				for (Charge loanProductCharge : loanProductCharges) {
+					if (loanProductCharge.isOverdueOnMaturity()) {
+						final BigDecimal loanPrincipal = overdueLoan.getPrincpal().getAmount();
+						final BigDecimal chargeAmount = loanProductCharge.getAmount();
+						final ChargeTimeType chargeTimeType = ChargeTimeType.fromInt(loanProductCharge.getChargeTimeType());
+						final ChargeCalculationType chargeCalculationType = ChargeCalculationType.fromInt(loanProductCharge.getChargeCalculation());
+						final ChargePaymentMode chargePaymentMode = ChargePaymentMode.fromInt(loanProductCharge.getChargePaymentMode());
+
+						LoanCharge loanCharge = new LoanCharge(overdueLoan, loanProductCharge, loanPrincipal, chargeAmount,
+								chargeTimeType, chargeCalculationType,overdueLoan.getMaturityDate(), chargePaymentMode,null, BigDecimal.ZERO);
+//
+//						this.businessEventNotifierService.notifyBusinessEventToBeExecuted(BusinessEventNotificationConstants.BUSINESS_EVENTS.LOAN_ADD_CHARGE,
+//								constructEntityMap(BusinessEventNotificationConstants.BUSINESS_ENTITY.LOAN_CHARGE, loanCharge));
+
+						// add the loan charge to the loan
+						this.loanWritePlatformService.addLoanCharge(overdueLoan, loanProductCharge, null, loanCharge);
+					}
+				}
+
+			}
+
+			if (sb.length() > 0) { throw new JobExecutionException(sb.toString()); }
+		}
+	}
+
+	@Override
 	@CronTarget(jobName = JobName.RECALCULATE_INTEREST_FOR_LOAN)
 	public void recalculateInterest() throws JobExecutionException {
 		Integer maxNumberOfRetries = ThreadLocalContextUtil.getTenant()
@@ -115,9 +176,9 @@ public class LoanSchedularServiceImpl implements LoanSchedularService {
 				Integer numberOfRetries = 0;
 				while (numberOfRetries <= maxNumberOfRetries) {
 					try {
+						numberOfRetries++;
 						this.loanWritePlatformService
 								.recalculateInterest(loanId);
-						numberOfRetries = maxNumberOfRetries + 1;
 					} catch (CannotAcquireLockException
 							| ObjectOptimisticLockingFailureException exception) {
 						logger.info("Recalulate interest job has been retried  "
@@ -149,6 +210,13 @@ public class LoanSchedularServiceImpl implements LoanSchedularService {
 							sb.append("Interest recalculation for loans failed " + exception.getMessage()) ;
 							break;
 						}
+					} catch (JournalEntryInvalidException je) {
+						String exceptionMessage = je.getDefaultUserMessage();
+						
+						logger.error("Interest recalculation for loans failed for account:"	+ loanId + " with message - \""
+								+ exceptionMessage + "\"");
+						sb.append("Interest recalculation for loans failed for account:").append(loanId).append(" with message - \"")
+                        .append(exceptionMessage + "\"");
 					} catch (Exception e) {
 						Throwable realCause = e;
 						if (e.getCause() != null) {

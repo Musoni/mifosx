@@ -63,6 +63,7 @@ public final class LoanApplicationTerms {
     private BigDecimal annualNominalInterestRate;
     private final InterestCalculationPeriodMethod interestCalculationPeriodMethod;
     private final boolean allowPartialPeriodInterestCalcualtion;
+    private Money interestRoundingOverflow;
 
     private Money principal;
     private final LocalDate expectedDisbursementDate;
@@ -386,6 +387,7 @@ public final class LoanApplicationTerms {
         this.interestPaymentGrace = interestPaymentGrace;
         this.interestChargingGrace = interestChargingGrace;
         this.interestChargedFromDate = interestChargedFromDate;
+        this.interestRoundingOverflow = Money.zero(principal.getCurrency());
 
         this.inArrearsTolerance = inArrearsTolerance;
         this.multiDisburseLoan = multiDisburseLoan;
@@ -466,6 +468,10 @@ public final class LoanApplicationTerms {
             } else if (interestDifference.isGreaterThanZero()) {
                 adjusted = interestForThisPeriod.minus(interestDifference.abs());
             }
+            if(!this.interestRoundingOverflow.isZero()){
+                adjusted = interestForThisPeriod.plus(this.interestRoundingOverflow);
+                setInterestRoundingOverflow(Money.zero(interestForThisPeriod.getCurrency()));
+            }
         }
         if (adjusted.isLessThanZero()) {
             adjusted = adjusted.plus(adjusted);
@@ -508,7 +514,7 @@ public final class LoanApplicationTerms {
 
         switch (this.interestMethod) {
             case FLAT:
-                principalForInstallment = calculateTotalPrincipalPerPeriodWithoutGrace(mc, periodNumber);
+                principalForInstallment = calculateTotalPrincipalPerPeriodWithoutGrace(mc, periodNumber, interestForThisInstallment);
             break;
             case DECLINING_BALANCE:
                 switch (this.amortizationMethod) {
@@ -744,7 +750,7 @@ public final class LoanApplicationTerms {
         return totalInterestForLoanTerm.dividedBy(Long.valueOf(this.actualNumberOfRepayments), mc.getRoundingMode());
     }
 
-    private Money calculateTotalPrincipalPerPeriodWithoutGrace(final MathContext mc, final int periodNumber) {
+    private Money calculateTotalPrincipalPerPeriodWithoutGrace(final MathContext mc, final int periodNumber, Money interestForThisInstallment) {
         final int totalRepaymentsWithCapitalPayment = calculateNumberOfRepaymentsWithPrincipalPayment();
         Money principalPerPeriod = this.principal.dividedBy(totalRepaymentsWithCapitalPayment, mc.getRoundingMode()).plus(
                 this.adjustPrincipalForFlatLoans);
@@ -756,6 +762,12 @@ public final class LoanApplicationTerms {
                     currentPeriodFixedPrincipalAmount).dividedBy(this.actualNumberOfRepayments - periodNumber, mc.getRoundingMode()));
             principalPerPeriod = this.principal.zero().plus(currentPeriodFixedPrincipalAmount);
 
+        }
+        if(this.installmentAmountInMultiplesOf != null){
+            double installmentAmount = principalPerPeriod.plus(interestForThisInstallment).getAmount().doubleValue();
+            installmentAmount = Money.roundToMultiplesOf(installmentAmount, this.installmentAmountInMultiplesOf);
+            Money installmentMoney = Money.of(principalPerPeriod.getCurrency(),BigDecimal.valueOf(installmentAmount));
+            principalPerPeriod = installmentMoney.minus(interestForThisInstallment);
         }
         return principalPerPeriod;
     }
@@ -1357,6 +1369,10 @@ public final class LoanApplicationTerms {
         return this.preClosureInterestCalculationStrategy;
     }
 
+    public Integer getInstallmentAmountInMultiplesOf(){
+        return this.installmentAmountInMultiplesOf;
+    }
+
     public CalendarInstance getCompoundingCalendarInstance() {
         return this.compoundingCalendarInstance;
     }
@@ -1408,5 +1424,9 @@ public final class LoanApplicationTerms {
     public LocalDate getSeedDate() {
         return this.seedDate;
     }
+
+    public Money getInterestRoundingOverflow() { return this.interestRoundingOverflow; }
+
+    public void setInterestRoundingOverflow(Money interestRoundingOverflow){ this.interestRoundingOverflow = interestRoundingOverflow;}
 
 }

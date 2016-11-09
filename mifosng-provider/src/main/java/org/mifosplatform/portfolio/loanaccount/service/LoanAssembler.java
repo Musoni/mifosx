@@ -31,6 +31,8 @@ import org.mifosplatform.organisation.staff.exception.StaffRoleException;
 import org.mifosplatform.organisation.workingdays.domain.WorkingDays;
 import org.mifosplatform.organisation.workingdays.domain.WorkingDaysRepositoryWrapper;
 import org.mifosplatform.portfolio.accountdetails.service.AccountEnumerations;
+import org.mifosplatform.portfolio.charge.domain.Charge;
+import org.mifosplatform.portfolio.charge.exception.ChargeCannotBeOverriddenException;
 import org.mifosplatform.portfolio.client.domain.Client;
 import org.mifosplatform.portfolio.client.domain.ClientRepositoryWrapper;
 import org.mifosplatform.portfolio.client.exception.ClientNotActiveException;
@@ -211,6 +213,11 @@ public class LoanAssembler {
                     final String errorMessage = "one of the charges requires linked savings account for payment";
                     throw new LinkedAccountRequiredException("loanCharge", errorMessage);
                 }
+            }
+            final Charge charge = loanCharge.getCharge();
+            if(!charge.isAllowedToOverride() && loanCharge.amountOrPercentage().compareTo(charge.getAmount())!=0){
+                final String errorMessage = "Charge amounts for a " + charge.getName() + " cannot be overridden";
+                throw new ChargeCannotBeOverriddenException("error.msg.charge.amount.cannot.be.overridden", errorMessage);
             }
         }
 

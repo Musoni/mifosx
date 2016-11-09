@@ -64,6 +64,10 @@ public class ChargeEnumerations {
                 optionData = new EnumOptionData(ChargeTimeType.OVERDRAFT_FEE.getValue().longValue(), ChargeTimeType.OVERDRAFT_FEE.getCode(),
                         "Overdraft Fee");
             break;
+            case OVERDUE_ON_MATURITY:
+                optionData = new EnumOptionData(ChargeTimeType.OVERDUE_ON_MATURITY.getValue().longValue(), ChargeTimeType.OVERDUE_ON_MATURITY.getCode(),
+                        "Overdue on Maturity Fee");
+                break;
             case TRANCHE_DISBURSEMENT:
                 optionData = new EnumOptionData(ChargeTimeType.TRANCHE_DISBURSEMENT.getValue().longValue(),
                         ChargeTimeType.TRANCHE_DISBURSEMENT.getCode(), "Tranche Disbursement");

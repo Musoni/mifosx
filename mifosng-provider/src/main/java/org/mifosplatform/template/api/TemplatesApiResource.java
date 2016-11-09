@@ -7,6 +7,7 @@ package org.mifosplatform.template.api;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -176,7 +177,7 @@ public class TemplatesApiResource {
     @Path("{templateId}")
     @Produces({ MediaType.TEXT_HTML })
     public String mergeTemplate(@PathParam("templateId") final Long templateId, @Context final UriInfo uriInfo,
-            final String apiRequestBodyAsJson) throws MalformedURLException, IOException {
+            final String apiRequestBodyAsJson) throws MalformedURLException, IOException,ParseException {
 
         final Template template = this.templateService.findOneById(templateId);
 
