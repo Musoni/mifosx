@@ -1585,7 +1585,7 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
 
     @Override
     public GenericResultsetData retrieveDataTableGenericResultSet(final String dataTableName, final Long appTableId, final String order,
-            final Long id) {
+            final Long id, boolean dropdownValues) {
 
         final String appTable = queryForApplicationTableName(dataTableName);
 
@@ -1597,10 +1597,51 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
 
         // id only used for reading a specific entry in a one to many datatable
         // (when updating)
+
+        String fields ="";
+        boolean first = true;
+        String join=" ";
+        String fieldName="";
+        int counter=0;
+
+        for(ResultsetColumnHeaderData column: columnHeaders){
+
+             String Alias="";
+
+            if(column.isCodeLookupDisplayType() && dropdownValues){
+
+                counter++;
+
+                 Alias = "mcv"+counter;
+
+                join +=" left join m_code_value "+Alias+" on "+Alias+".id ="+column.getColumnName();
+
+                fieldName = Alias+".code_value as "+column.getColumnName();
+
+
+            }else{
+
+                fieldName = column.getColumnName();
+            }
+
+            if(first){
+
+                fields += fieldName;
+                first = false;
+
+            }else{
+
+                fields +=" , "+fieldName;
+            }
+
+
+
+        }
+
         if (id == null) {
-            sql = sql + "select * from `" + dataTableName + "` where " + getFKField(appTable) + " = " + appTableId;
+            sql = sql + "select "+fields+" from `" + dataTableName +"` "+ join + " where " + getFKField(appTable) + " = " + appTableId;
         } else {
-            sql = sql + "select * from `" + dataTableName + "` where id = " + id;
+            sql = sql + "select "+fields+" from `" + dataTableName+"` " + join +  " where id = " + id;
         }
 
         if (order != null) {

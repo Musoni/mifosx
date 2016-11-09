@@ -146,12 +146,12 @@ public class DatatablesApiResource {
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public String getDatatable(@PathParam("datatable") final String datatable, @PathParam("apptableId") final Long apptableId,
-            @QueryParam("order") final String order, @Context final UriInfo uriInfo) {
+            @QueryParam("order") final String order,@QueryParam("dropdownValues") final boolean dropdownValues, @Context final UriInfo uriInfo) {
 
         this.context.authenticatedUser().validateHasDatatableReadPermission(datatable);
 
         final GenericResultsetData results = this.readWriteNonCoreDataService.retrieveDataTableGenericResultSet(datatable, apptableId,
-                order, null);
+                order, null,dropdownValues);
 
         String json = "";
         final boolean genericResultSet = ApiParameterHelper.genericResultSet(uriInfo.getQueryParameters());
@@ -170,13 +170,13 @@ public class DatatablesApiResource {
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public String getDatatableManyEntry(@PathParam("datatable") final String datatable, @PathParam("apptableId") final Long apptableId,
-            @PathParam("datatableId") final Long datatableId, @QueryParam("order") final String order, @Context final UriInfo uriInfo) {
+            @PathParam("datatableId") final Long datatableId, @QueryParam("order") final String order,@QueryParam("dropdownValues") final boolean dropdownValues, @Context final UriInfo uriInfo) {
 
 
         this.context.authenticatedUser().validateHasDatatableReadPermission(datatable);
 
         final GenericResultsetData results = this.readWriteNonCoreDataService.retrieveDataTableGenericResultSet(datatable, apptableId,
-                order, datatableId);
+                order, datatableId,dropdownValues);
 
         String json = "";
         final boolean genericResultSet = ApiParameterHelper.genericResultSet(uriInfo.getQueryParameters());
