@@ -25,6 +25,7 @@ import org.mifosplatform.infrastructure.dataexport.api.DataExportApiConstants;
 import org.mifosplatform.infrastructure.dataexport.data.DataExportBaseEntity;
 import org.mifosplatform.infrastructure.dataexport.data.DataExportCoreColumn;
 import org.mifosplatform.infrastructure.dataexport.data.DataExportCoreDatatable;
+import org.mifosplatform.infrastructure.dataexport.data.DataExportCoreTable;
 import org.mifosplatform.infrastructure.dataexport.data.DataExportCreateRequestData;
 import org.mifosplatform.infrastructure.dataexport.data.DataExportEntityData;
 import org.mifosplatform.infrastructure.dataexport.data.EntityColumnMetaData;
@@ -208,20 +209,26 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
             	String foreignKeyIndexColumnName = coreColumn.getForeignKeyIndexColumnName();
             	String tableAlias = referencedTableName + referencedTableIndex++;
             	
+            	// variables initialized with null values
+            	String mClientTableAlias, mGroupTableAlias, mGroupClientTableAlias, mOfficeTableAlias;
+            	
             	switch (baseEntity) {
             		case CLIENT:
             			switch (coreColumn) {
             				case GROUP_NAME:
             				case GROUP_ID:
-            					String mGroupTableAlias = "m_group" + referencedTableIndex++;
-            					String mGroupClientTableAlias = "m_group_client" + referencedTableIndex++;
+            					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(referencedTableIndex++);
+            					mGroupClientTableAlias = DataExportCoreTable.M_GROUP_CLIENT.
+            							getAlias(referencedTableIndex++);
             					
             					sqlBuilder.SELECT("`" + mGroupTableAlias + "`.`" + referencedColumnName + "` as `"
                             			+ coreColumn.getLabel() + "`");
-                            	sqlBuilder.LEFT_OUTER_JOIN("`m_group_client` `" + mGroupClientTableAlias 
-                            			+ "` on `" + mGroupClientTableAlias + "`.`client_id` = `" + baseEntityName + "`.`id`");
-                            	sqlBuilder.LEFT_OUTER_JOIN("`m_group` `" + mGroupTableAlias 
-                            			+ "` on `" + mGroupTableAlias + "`.`id` = `" + mGroupClientTableAlias + "`.`group_id`");
+                            	sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_GROUP_CLIENT.getName()
+                            			+ "` `" + mGroupClientTableAlias + "` on `" + mGroupClientTableAlias
+                            					+ "`.`client_id` = `" + baseEntityName + "`.`id`");
+                            	sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_GROUP.getName() + "` `"
+                            			+ mGroupTableAlias + "` on `" + mGroupTableAlias + "`.`id` = `"
+                            					+ mGroupClientTableAlias + "`.`group_id`");
             					break;
             				case BRANCH_NAME:
             					sqlBuilder.SELECT("`" + tableAlias + "`.`" + referencedColumnName + "` as `"
@@ -236,10 +243,9 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
                             			+ coreColumn.getLabel() + "`");
             					break;
             				case GENDER:
-            					tableAlias = "mcv" + referencedTableIndex++;
-            	                
-            	                sqlBuilder.SELECT("`" + tableAlias + "`.`code_value` as `" + column.getLabel() + "`");
-            	                sqlBuilder.LEFT_OUTER_JOIN("`m_code_value` `" + tableAlias + "` on `"
+            					sqlBuilder.SELECT("`" + tableAlias + "`.`" + referencedColumnName + "` as `"
+                            			+ coreColumn.getLabel() + "`");
+            	                sqlBuilder.LEFT_OUTER_JOIN("`" + referencedTableName + "` `" + tableAlias + "` on `"
             	                        + tableAlias + "`.`id` = `" + baseEntityName + "`.`" + column.getName() + "`");
             					break;
             				case PHONE_NUMBER:
@@ -255,11 +261,6 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
             			
             		case GROUP:
             			switch (coreColumn) {
-	        				case GROUP_NAME:
-	        				case GROUP_ID:
-	        					sqlBuilder.SELECT("`" + baseEntityName + "`.`" + referencedColumnName + "` as `"
-                            			+ coreColumn.getLabel() + "`");
-	        					break;
 	        				case BRANCH_NAME:
 	        					sqlBuilder.SELECT("`" + tableAlias + "`.`" + referencedColumnName + "` as `"
 	                        			+ coreColumn.getLabel() + "`");
@@ -275,8 +276,6 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
             			
             		case LOAN:
             			switch (coreColumn) {
-	        				case GROUP_NAME:
-	        				case GROUP_ID:
 	        				case LOAN_OFFICER_NAME:
 	        				case CLIENT_NAME:
             				case CLIENT_ID:
@@ -286,23 +285,62 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	                        			+ "` on `" + tableAlias + "`.`id` = `" + baseEntityName + "`.`"
 	                        					+ foreignKeyIndexColumnName + "`");
 	        					break;
+            				case GROUP_NAME:
+	        				case GROUP_ID:
+	        					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(referencedTableIndex++);
+	        					mGroupClientTableAlias = DataExportCoreTable.M_GROUP_CLIENT.getAlias(referencedTableIndex++);
+	        					
+	        					sqlBuilder.SELECT("`" + mGroupTableAlias + "`.`" + referencedColumnName + "` as `"
+                            			+ coreColumn.getLabel() + "`");
+	        					sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_GROUP_CLIENT.getName() + "` `"
+            							+ mGroupClientTableAlias + "` on `" + mGroupClientTableAlias + "`.`client_id` = `"
+            									+ baseEntityName + "`.`client_id`");
+	        					sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_GROUP.getName() + "` `"
+                            			+ mGroupTableAlias + "` on `" + mGroupTableAlias + "`.`id` = case when "
+                            					+ "isnull(`" + baseEntityName + "`.`group_id`) then `"
+                            							+ mGroupClientTableAlias + "`.`group_id` else `"
+                            									+ baseEntityName + "`.`group_id` end");
+	        					break;
 	        				case BRANCH_NAME:
-	        					String mClientTableAlias = "m_client" + referencedTableIndex++;
-	        					String mGroupTableAlias = "m_group" + referencedTableIndex++;
-            					String mOfficeTableAlias = "m_office" + referencedTableIndex++;
+	        					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
+	        					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(referencedTableIndex++);
+            					mOfficeTableAlias = DataExportCoreTable.M_OFFICE.getAlias(referencedTableIndex++);
             					
             					sqlBuilder.SELECT("`" + mOfficeTableAlias + "`.`" + referencedColumnName + "` as `"
                             			+ coreColumn.getLabel() + "`");
-            					sqlBuilder.LEFT_OUTER_JOIN("`m_client` `" + mClientTableAlias 
-                            			+ "` on `" + mClientTableAlias + "`.`id` = `" + baseEntityName + "`.`client_id`");
-                            	sqlBuilder.LEFT_OUTER_JOIN("`m_group` `" + mGroupTableAlias 
-                            			+ "` on `" + mGroupTableAlias + "`.`id` = `" + baseEntityName + "`.`group_id`");
-                            	sqlBuilder.LEFT_OUTER_JOIN("`m_office` `" + mOfficeTableAlias 
-                            			+ "` on `" + mOfficeTableAlias + "`.`id` = case when isnull(`"
-                            					+ baseEntityName + "`.`group_id`) then `" + mClientTableAlias
-                            							+ "`.`office_id` else `" + mGroupTableAlias
-                            									+ "`.`office_id` end");
+            					sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_CLIENT.getName() + "` `"
+            							+ mClientTableAlias + "` on `" + mClientTableAlias + "`.`id` = `"
+            									+ baseEntityName + "`.`client_id`");
+                            	sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_GROUP.getName() + "` `"
+                            			+ mGroupTableAlias + "` on `" + mGroupTableAlias + "`.`id` = `"
+                            					+ baseEntityName + "`.`group_id`");
+                            	sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_OFFICE.getName() + "` `"
+                            			+ mOfficeTableAlias + "` on `" + mOfficeTableAlias + "`.`id` = case when "
+                            					+ "isnull(`" + baseEntityName + "`.`group_id`) then `"
+                            							+ mClientTableAlias + "`.`office_id` else `"
+                            									+ mGroupTableAlias + "`.`office_id` end");
 	        					break;
+	        				case DATE_OF_BIRTH:
+	        				case PHONE_NUMBER:
+	        					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
+	        					
+	        					sqlBuilder.SELECT("`" + mClientTableAlias + "`.`" + coreColumn.getName() + "` as `"
+                            			+ coreColumn.getLabel() + "`");
+	        					sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_CLIENT.getName() + "` `"
+            							+ mClientTableAlias + "` on `" + mClientTableAlias + "`.`id` = `"
+            									+ baseEntityName + "`.`client_id`");
+	        					break;
+	        				case GENDER:
+	        					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
+	        					
+            					sqlBuilder.SELECT("`" + tableAlias + "`.`" + referencedColumnName + "` as `"
+                            			+ coreColumn.getLabel() + "`");
+            					sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_CLIENT.getName() + "` `"
+            							+ mClientTableAlias + "` on `" + mClientTableAlias + "`.`id` = `"
+            									+ baseEntityName + "`.`client_id`");
+            	                sqlBuilder.LEFT_OUTER_JOIN("`" + referencedTableName + "` `" + tableAlias + "` on `"
+            	                        + tableAlias + "`.`id` = `" + mClientTableAlias + "`.`" + column.getName() + "`");
+            					break;
 	        				default:
 	        					sqlBuilder.SELECT("NULL as `" + column.getLabel() + "`");
 	        					break;
@@ -311,8 +349,6 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
             			
             		case SAVINGSACCOUNT:
             			switch (coreColumn) {
-	        				case GROUP_NAME:
-	        				case GROUP_ID:
 	        				case CLIENT_NAME:
 	        				case CLIENT_ID:
 	        					sqlBuilder.SELECT("`" + tableAlias + "`.`" + referencedColumnName + "` as `"
@@ -321,23 +357,62 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	                        			+ "` on `" + tableAlias + "`.`id` = `" + baseEntityName + "`.`"
 	                        					+ foreignKeyIndexColumnName + "`");
 	        					break;
+	        				case GROUP_NAME:
+	        				case GROUP_ID:
+	        					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(referencedTableIndex++);
+	        					mGroupClientTableAlias = DataExportCoreTable.M_GROUP_CLIENT.getAlias(referencedTableIndex++);
+	        					
+	        					sqlBuilder.SELECT("`" + mGroupTableAlias + "`.`" + referencedColumnName + "` as `"
+                            			+ coreColumn.getLabel() + "`");
+	        					sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_GROUP_CLIENT.getName() + "` `"
+            							+ mGroupClientTableAlias + "` on `" + mGroupClientTableAlias + "`.`client_id` = `"
+            									+ baseEntityName + "`.`client_id`");
+	        					sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_GROUP.getName() + "` `"
+                            			+ mGroupTableAlias + "` on `" + mGroupTableAlias + "`.`id` = case when "
+                            					+ "isnull(`" + baseEntityName + "`.`group_id`) then `"
+                            							+ mGroupClientTableAlias + "`.`group_id` else `"
+                            									+ baseEntityName + "`.`group_id` end");
+	        					break;
 	        				case BRANCH_NAME:
-	        					String mClientTableAlias = "m_client" + referencedTableIndex++;
-	        					String mGroupTableAlias = "m_group" + referencedTableIndex++;
-            					String mOfficeTableAlias = "m_office" + referencedTableIndex++;
+	        					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
+	        					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(referencedTableIndex++);
+            					mOfficeTableAlias = DataExportCoreTable.M_OFFICE.getAlias(referencedTableIndex++);
             					
             					sqlBuilder.SELECT("`" + mOfficeTableAlias + "`.`" + referencedColumnName + "` as `"
                             			+ coreColumn.getLabel() + "`");
-            					sqlBuilder.LEFT_OUTER_JOIN("`m_client` `" + mClientTableAlias 
-                            			+ "` on `" + mClientTableAlias + "`.`id` = `" + baseEntityName + "`.`client_id`");
-                            	sqlBuilder.LEFT_OUTER_JOIN("`m_group` `" + mGroupTableAlias 
-                            			+ "` on `" + mGroupTableAlias + "`.`id` = `" + baseEntityName + "`.`group_id`");
-                            	sqlBuilder.LEFT_OUTER_JOIN("`m_office` `" + mOfficeTableAlias 
-                            			+ "` on `" + mOfficeTableAlias + "`.`id` = case when isnull(`"
-                            					+ baseEntityName + "`.`group_id`) then `" + mClientTableAlias
-                            							+ "`.`office_id` else `" + mGroupTableAlias
-                            									+ "`.`office_id` end");
+            					sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_CLIENT.getName() + "` `"
+            							+ mClientTableAlias + "` on `" + mClientTableAlias + "`.`id` = `"
+            									+ baseEntityName + "`.`client_id`");
+                            	sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_GROUP.getName() + "` `"
+                            			+ mGroupTableAlias + "` on `" + mGroupTableAlias + "`.`id` = `"
+                            					+ baseEntityName + "`.`group_id`");
+                            	sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_OFFICE.getName() + "` `"
+                            			+ mOfficeTableAlias + "` on `" + mOfficeTableAlias + "`.`id` = case when "
+                            					+ "isnull(`" + baseEntityName + "`.`group_id`) then `"
+                            							+ mClientTableAlias + "`.`office_id` else `"
+                            									+ mGroupTableAlias + "`.`office_id` end");
 	        					break;
+	        				case DATE_OF_BIRTH:
+	        				case PHONE_NUMBER:
+	        					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
+	        					
+	        					sqlBuilder.SELECT("`" + mClientTableAlias + "`.`" + coreColumn.getName() + "` as `"
+                            			+ coreColumn.getLabel() + "`");
+	        					sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_CLIENT.getName() + "` `"
+            							+ mClientTableAlias + "` on `" + mClientTableAlias + "`.`id` = `"
+            									+ baseEntityName + "`.`client_id`");
+	        					break;
+	        				case GENDER:
+	        					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
+	        					
+            					sqlBuilder.SELECT("`" + tableAlias + "`.`" + referencedColumnName + "` as `"
+                            			+ coreColumn.getLabel() + "`");
+            					sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_CLIENT.getName() + "` `"
+            							+ mClientTableAlias + "` on `" + mClientTableAlias + "`.`id` = `"
+            									+ baseEntityName + "`.`client_id`");
+            	                sqlBuilder.LEFT_OUTER_JOIN("`" + referencedTableName + "` `" + tableAlias + "` on `"
+            	                        + tableAlias + "`.`id` = `" + mClientTableAlias + "`.`" + column.getName() + "`");
+            					break;
 	        				default:
 	        					sqlBuilder.SELECT("NULL as `" + column.getLabel() + "`");
 	        					break;
@@ -550,18 +625,21 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
                 String foreignKeyIndexColumnName = coreColumn.getForeignKeyIndexColumnName();
                 String tableAlias = referencedTableName + referencedTableIndex++;
                 
+                // variables initialized with null values
+            	String mClientTableAlias, mGroupTableAlias, mGroupClientTableAlias, mOfficeTableAlias;
+                
                 switch (baseEntity) {
                     case CLIENT:
                         switch (coreColumn) {
                             case GROUP_NAME:
                             case GROUP_ID:
-                                String mGroupTableAlias = "m_group" + referencedTableIndex++;
-                                String mGroupClientTableAlias = "m_group_client" + referencedTableIndex++;
+                                mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(referencedTableIndex++);
+                                mGroupClientTableAlias = DataExportCoreTable.M_GROUP_CLIENT.getAlias(referencedTableIndex++);
                                 
                                 sqlBuilder.WHERE("`" + mGroupTableAlias + "`.`" + referencedColumnName + "` " + filterValue);
-                                sqlBuilder.LEFT_OUTER_JOIN("`m_group_client` `" + mGroupClientTableAlias 
+                                sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_GROUP_CLIENT.getName() + "` `" + mGroupClientTableAlias 
                                         + "` on `" + mGroupClientTableAlias + "`.`client_id` = `" + baseEntityName + "`.`id`");
-                                sqlBuilder.LEFT_OUTER_JOIN("`m_group` `" + mGroupTableAlias 
+                                sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_GROUP.getName() + "` `" + mGroupTableAlias 
                                         + "` on `" + mGroupTableAlias + "`.`id` = `" + mGroupClientTableAlias + "`.`group_id`");
                                 break;
                             case BRANCH_NAME:
@@ -604,8 +682,6 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
                         
                     case LOAN:
                         switch (coreColumn) {
-                            case GROUP_NAME:
-                            case GROUP_ID:
                             case LOAN_OFFICER_NAME:
                             case CLIENT_NAME:
                             case CLIENT_ID:
@@ -614,10 +690,25 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
                                         + "` on `" + tableAlias + "`.`id` = `" + baseEntityName + "`.`"
                                                 + foreignKeyIndexColumnName + "`");
                                 break;
+                            case GROUP_NAME:
+	        				case GROUP_ID:
+	        					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(referencedTableIndex++);
+	        					mGroupClientTableAlias = DataExportCoreTable.M_GROUP_CLIENT.getAlias(referencedTableIndex++);
+	        					
+	        					sqlBuilder.WHERE("`" + mGroupTableAlias + "`.`" + referencedColumnName + "` " + filterValue);
+	        					sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_GROUP_CLIENT.getName() + "` `"
+            							+ mGroupClientTableAlias + "` on `" + mGroupClientTableAlias + "`.`client_id` = `"
+            									+ baseEntityName + "`.`client_id`");
+	        					sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_GROUP.getName() + "` `"
+                            			+ mGroupTableAlias + "` on `" + mGroupTableAlias + "`.`id` = case when "
+                            					+ "isnull(`" + baseEntityName + "`.`group_id`) then `"
+                            							+ mGroupClientTableAlias + "`.`group_id` else `"
+                            									+ baseEntityName + "`.`group_id` end");
+	        					break;
                             case BRANCH_NAME:
-                                String mClientTableAlias = "m_client" + referencedTableIndex++;
-                                String mGroupTableAlias = "m_group" + referencedTableIndex++;
-                                String mOfficeTableAlias = "m_office" + referencedTableIndex++;
+                                mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
+                                mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(referencedTableIndex++);
+                                mOfficeTableAlias = DataExportCoreTable.M_OFFICE.getAlias(referencedTableIndex++);
                                 
                                 sqlBuilder.WHERE("`" + mOfficeTableAlias + "`.`" + referencedColumnName + "` " + filterValue);
                                 sqlBuilder.LEFT_OUTER_JOIN("`m_client` `" + mClientTableAlias 
@@ -629,6 +720,23 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
                                                 + baseEntityName + "`.`group_id`) then `" + mClientTableAlias
                                                         + "`.`office_id` else `" + mGroupTableAlias
                                                                 + "`.`office_id` end");
+                                break;
+                            case DATE_OF_BIRTH:
+                            case PHONE_NUMBER:
+                                mClientTableAlias = "m_client" + referencedTableIndex++;
+                                
+                                sqlBuilder.WHERE("`" + mClientTableAlias + "`.`" + coreColumn.getName() + "` " + filterValue);
+                                sqlBuilder.LEFT_OUTER_JOIN("`m_client` `" + mClientTableAlias 
+                                        + "` on `" + mClientTableAlias + "`.`id` = `" + baseEntityName + "`.`client_id`");
+                                break;
+                            case GENDER:
+                                mClientTableAlias = "m_client" + referencedTableIndex++;
+                                
+                                sqlBuilder.WHERE("`" + tableAlias + "`.`" + referencedColumnName + "` " + filterValue);
+                                sqlBuilder.LEFT_OUTER_JOIN("`m_client` `" + mClientTableAlias 
+                                        + "` on `" + mClientTableAlias + "`.`id` = `" + baseEntityName + "`.`client_id`");
+                                sqlBuilder.LEFT_OUTER_JOIN("`" + referencedTableName + "` `" + tableAlias + "` on `"
+                                        + tableAlias + "`.`id` = `" + mClientTableAlias + "`.`" + coreColumn.getName() + "`");
                                 break;
                             default:
                                 break;
@@ -637,8 +745,6 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
                         
                     case SAVINGSACCOUNT:
                         switch (coreColumn) {
-                            case GROUP_NAME:
-                            case GROUP_ID:
                             case CLIENT_NAME:
                             case CLIENT_ID:
                                 sqlBuilder.WHERE("`" + tableAlias + "`.`" + referencedColumnName + "` " + filterValue);
@@ -646,10 +752,25 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
                                         + "` on `" + tableAlias + "`.`id` = `" + baseEntityName + "`.`"
                                                 + foreignKeyIndexColumnName + "`");
                                 break;
+                            case GROUP_NAME:
+	        				case GROUP_ID:
+	        					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(referencedTableIndex++);
+	        					mGroupClientTableAlias = DataExportCoreTable.M_GROUP_CLIENT.getAlias(referencedTableIndex++);
+	        					
+	        					sqlBuilder.WHERE("`" + mGroupTableAlias + "`.`" + referencedColumnName + "` " + filterValue);
+	        					sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_GROUP_CLIENT.getName() + "` `"
+            							+ mGroupClientTableAlias + "` on `" + mGroupClientTableAlias + "`.`client_id` = `"
+            									+ baseEntityName + "`.`client_id`");
+	        					sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_GROUP.getName() + "` `"
+                            			+ mGroupTableAlias + "` on `" + mGroupTableAlias + "`.`id` = case when "
+                            					+ "isnull(`" + baseEntityName + "`.`group_id`) then `"
+                            							+ mGroupClientTableAlias + "`.`group_id` else `"
+                            									+ baseEntityName + "`.`group_id` end");
+	        					break;
                             case BRANCH_NAME:
-                                String mClientTableAlias = "m_client" + referencedTableIndex++;
-                                String mGroupTableAlias = "m_group" + referencedTableIndex++;
-                                String mOfficeTableAlias = "m_office" + referencedTableIndex++;
+                                mClientTableAlias = "m_client" + referencedTableIndex++;
+                                mGroupTableAlias = "m_group" + referencedTableIndex++;
+                                mOfficeTableAlias = "m_office" + referencedTableIndex++;
                                 
                                 sqlBuilder.WHERE("`" + mOfficeTableAlias + "`.`" + referencedColumnName + "` " + filterValue);
                                 sqlBuilder.LEFT_OUTER_JOIN("`m_client` `" + mClientTableAlias 
@@ -661,6 +782,23 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
                                                 + baseEntityName + "`.`group_id`) then `" + mClientTableAlias
                                                         + "`.`office_id` else `" + mGroupTableAlias
                                                                 + "`.`office_id` end");
+                                break;
+                            case DATE_OF_BIRTH:
+                            case PHONE_NUMBER:
+                                mClientTableAlias = "m_client" + referencedTableIndex++;
+                                
+                                sqlBuilder.WHERE("`" + mClientTableAlias + "`.`" + coreColumn.getName() + "` " + filterValue);
+                                sqlBuilder.LEFT_OUTER_JOIN("`m_client` `" + mClientTableAlias 
+                                        + "` on `" + mClientTableAlias + "`.`id` = `" + baseEntityName + "`.`client_id`");
+                                break;
+                            case GENDER:
+                                mClientTableAlias = "m_client" + referencedTableIndex++;
+                                
+                                sqlBuilder.WHERE("`" + tableAlias + "`.`" + referencedColumnName + "` " + filterValue);
+                                sqlBuilder.LEFT_OUTER_JOIN("`m_client` `" + mClientTableAlias 
+                                        + "` on `" + mClientTableAlias + "`.`id` = `" + baseEntityName + "`.`client_id`");
+                                sqlBuilder.LEFT_OUTER_JOIN("`" + referencedTableName + "` `" + tableAlias + "` on `"
+                                        + tableAlias + "`.`id` = `" + mClientTableAlias + "`.`" + coreColumn.getName() + "`");
                                 break;
                             default:
                                 break;
