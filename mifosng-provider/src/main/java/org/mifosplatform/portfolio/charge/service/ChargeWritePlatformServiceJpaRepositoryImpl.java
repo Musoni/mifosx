@@ -122,15 +122,20 @@ public class ChargeWritePlatformServiceJpaRepositoryImpl implements ChargeWriteP
                 // have been filtered), so check current state:
                 if (!chargeForUpdate.isActive()) {
                     // TODO: Change this function to only check the mappings!!!
-                    final Boolean isChargeExistWithLoans = isAnyLoanProductsAssociateWithThisCharge(chargeId);
-                    final Boolean isChargeExistWithSavings = isAnySavingsProductsAssociateWithThisCharge(chargeId);
+                    final Boolean isChargeExistWithLoansProduct = isAnyLoanProductsAssociateWithThisCharge(chargeId);
+                    final Boolean isChargeExistWithLoans = isAnyLoansAssociateWithThisCharge(chargeId);
+                    final Boolean isChargeExistWithSavingsProduct = isAnySavingsProductsAssociateWithThisCharge(chargeId);
+                    final Boolean isChargeExistWithSavings = isAnySavingsAssociateWithThisCharge(chargeId);
 
-                    if (isChargeExistWithLoans || isChargeExistWithSavings) { throw new ChargeCannotBeUpdatedException(
+                    if (isChargeExistWithLoans || isChargeExistWithLoansProduct) { throw new ChargeCannotBeUpdatedException(
                             "error.msg.charge.cannot.be.updated.it.is.used.in.loan", "This charge cannot be updated, it is used in loan"); }
+                    if(isChargeExistWithSavings || isChargeExistWithSavingsProduct) { throw new ChargeCannotBeUpdatedException(
+                            "error.msg.charge.cannot.be.updated.it.is.used.in.savings", "This charge cannot be updated, it is used in savings"); }
                 }
             } else if ((changes.containsKey("feeFrequency") || changes.containsKey("feeInterval")) && chargeForUpdate.isLoanCharge()) {
-                final Boolean isChargeExistWithLoans = isAnyLoanProductsAssociateWithThisCharge(chargeId);
-                if (isChargeExistWithLoans) { throw new ChargeCannotBeUpdatedException(
+                final Boolean isChargeExistWithLoansProduct = isAnyLoanProductsAssociateWithThisCharge(chargeId);
+                final Boolean isChargeExistWithLoans = isAnyLoansAssociateWithThisCharge(chargeId);
+                if (isChargeExistWithLoans || isChargeExistWithLoansProduct) { throw new ChargeCannotBeUpdatedException(
                         "error.msg.charge.frequency.cannot.be.updated.it.is.used.in.loan",
                         "This charge frequency cannot be updated, it is used in loan"); }
             } 

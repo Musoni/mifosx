@@ -363,10 +363,6 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
         final Integer installmentAmountInMultiplesOf = command.integerValueOfParameterNamed("installmentAmountInMultiplesOf");
 
         if(inMultiplesOf != null && installmentAmountInMultiplesOf != null){
-            if(inMultiplesOf > installmentAmountInMultiplesOf){
-                throw new InvalidInstallmentAmountInMultiplesOfException("Loan product Installment Amount In Multiples Of value must be equal to or larger than In Multiples Of value",
-                        inMultiplesOf.toString(), installmentAmountInMultiplesOf.toString());
-            }
             if((installmentAmountInMultiplesOf % inMultiplesOf) != 0){
                 throw new InvalidInstallmentAmountInMultiplesOfException("Loan product Installment Amount In Multiples Of value must be divisible by In Multiples Of value",
                         inMultiplesOf.toString(), installmentAmountInMultiplesOf.toString());

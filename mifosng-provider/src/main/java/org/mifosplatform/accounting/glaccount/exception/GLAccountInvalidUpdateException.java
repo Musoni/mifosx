@@ -15,15 +15,18 @@ public class GLAccountInvalidUpdateException extends AbstractPlatformDomainRuleE
 
     /*** Enum of reasons for invalid delete **/
     public static enum GL_ACCOUNT_INVALID_UPDATE_REASON {
-        TRANSANCTIONS_LOGGED;
+        TRANSANCTIONS_LOGGED,
+        DISABLED_IN_USE;
 
         public String errorMessage() {
             if (name().toString().equalsIgnoreCase("TRANSANCTIONS_LOGGED")) { return "This Usage of this (detail) GL Account as it already has transactions logged against it"; }
+            if (name().toString().equalsIgnoreCase("DISABLED_IN_USE")) { return "This GL Account cannot be disabled as it is still used in products"; }
             return name().toString();
         }
 
         public String errorCode() {
             if (name().toString().equalsIgnoreCase("TRANSANCTIONS_LOGGED")) { return "error.msg.glaccount.glcode.invalid.update.transactions.logged"; }
+            if (name().toString().equalsIgnoreCase("DISABLED_IN_USE")) { return "error.msg.glaccount.disabled.invalid.update.in.use"; }
             return name().toString();
         }
     }

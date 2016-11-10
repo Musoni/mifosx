@@ -115,6 +115,13 @@ public class GLAccountWritePlatformServiceJpaRepositoryImpl implements GLAccount
 
             final Map<String, Object> changesOnly = glAccount.update(command);
 
+            if(changesOnly.containsKey("disabled") && glAccount.isDisabled()){
+                final List<ProductToGLAccountMapping> productToAccountMappings = this.productToGLAccountMappingRepository.findAllProductsToGLAccountMappings(glAccount);
+                if(productToAccountMappings != null && productToAccountMappings.size()>0){
+                    throw new GLAccountInvalidUpdateException(GL_ACCOUNT_INVALID_UPDATE_REASON.DISABLED_IN_USE,glAccountId);
+                }
+            }
+
             // is the new parent valid
             if (changesOnly.containsKey(GLAccountJsonInputParams.PARENT_ID.getValue())) {
                 final GLAccount parentAccount = validateParentGLAccount(parentId);
