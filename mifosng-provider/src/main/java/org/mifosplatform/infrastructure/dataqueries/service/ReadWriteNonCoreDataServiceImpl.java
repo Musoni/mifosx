@@ -1614,14 +1614,14 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
 
                  Alias = "mcv"+counter;
 
-                join +=" left join m_code_value "+Alias+" on "+Alias+".id ="+column.getColumnName();
+                join +=" left join m_code_value "+Alias+" on "+Alias+".id =`"+column.getColumnName()+"`";
 
-                fieldName = Alias+".code_value as "+column.getColumnName();
+                fieldName = Alias+".code_value as `"+column.getColumnName()+"`";
 
 
             }else{
 
-                fieldName = column.getColumnName();
+                fieldName = "`"+column.getColumnName()+"`";
             }
 
             if(first){
