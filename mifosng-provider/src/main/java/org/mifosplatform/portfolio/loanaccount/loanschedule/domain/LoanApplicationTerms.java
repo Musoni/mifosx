@@ -888,7 +888,10 @@ public final class LoanApplicationTerms {
 
     private BigDecimal calculateLoanTermFrequency(final LocalDate periodStartDate, final LocalDate periodEndDate) {
         BigDecimal loanTermFrequencyBigDecimal = BigDecimal.valueOf(this.repaymentEvery);
-        if (this.interestCalculationPeriodMethod.isDaily() || this.allowPartialPeriodInterestCalcualtion) {
+        
+        // removed the "this.interestCalculationPeriodMethod.isDaily()" check from the if statement below, 
+        // so the system uses the value of the "repaymentEvery" property for daily interestCalculationPeriodMethod
+        if (this.allowPartialPeriodInterestCalcualtion) {
             loanTermFrequencyBigDecimal = calculatePeriodsBetweenDates(periodStartDate, periodEndDate);
         }
         return loanTermFrequencyBigDecimal;
