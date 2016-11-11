@@ -98,14 +98,25 @@ public class AccountNumberGenerator {
     public String generateCustomAccount(final Loan loan, final AccountNumberFormat accountNumberFormat){
         final Map<String,String> customMap = new HashMap<>();
         customMap.put(CustomAccountType.ENTITY_ID.getCode(),loan.getId().toString());
-        customMap.put(CustomAccountType.OFFICE_ID.getCode(),loan.getClient().getOffice().getId().toString());
-        if(loan.getClient().getOffice().getExternalId() !=null){
-            customMap.put(CustomAccountType.OFFICE_EXTERNAL_ID.getCode(),loan.getClient().getOffice().getExternalId());
+
+        if(loan.isIndividualLoan()){
+            customMap.put(CustomAccountType.OFFICE_ID.getCode(),loan.getClient().getOffice().getId().toString());
+            if(loan.getClient().getOffice().getExternalId() !=null){
+                customMap.put(CustomAccountType.OFFICE_EXTERNAL_ID.getCode(),loan.getClient().getOffice().getExternalId());
+            }
+            customMap.put(CustomAccountType.CLIENT_ID.getCode(),loan.getClient().getId().toString());
+        }else{
+            /**  this is a group loan get group office  **/
+            customMap.put(CustomAccountType.OFFICE_ID.getCode(),loan.group().getOffice().getId().toString());
+            if(loan.group().getOffice().getExternalId() !=null){
+                customMap.put(CustomAccountType.OFFICE_EXTERNAL_ID.getCode(),loan.group().getOffice().getExternalId());
+            }
+            customMap.put(CustomAccountType.GROUP_ID.getCode(),loan.group().getId().toString());
         }
+
         customMap.put(CustomAccountType.LOAN_PRODUCT.getCode(),loan.getLoanProduct().getId().toString());
         customMap.put(CustomAccountType.LOAN_PRODUCT_SHORT_NAME.getCode(),loan.getLoanProduct().getShortName());
         customMap.put(CustomAccountType.STAFF_ID.getCode(),loan.getLoanOfficer().getId().toString());
-        customMap.put(CustomAccountType.CLIENT_ID.getCode(),loan.getClient().getId().toString());
         return generateCustomAccountNumberWithMustacheTemplate(accountNumberFormat,customMap);
     }
 
@@ -125,13 +136,27 @@ public class AccountNumberGenerator {
 
     public String generateCustomAccount(SavingsAccount savingsAccount,AccountNumberFormat accountNumberFormat){
         final Map<String,String> customMap = new HashMap<>();
+
+        if(savingsAccount.isIndividualSavings()){
+            customMap.put(CustomAccountType.CLIENT_ID.getCode(), savingsAccount.getClient().getId().toString());
+            customMap.put(CustomAccountType.OFFICE_ID.getCode(),savingsAccount.getClient().getOffice().getId().toString());
+            if(savingsAccount.getClient().getOffice().getExternalId() !=null){
+                customMap.put(CustomAccountType.OFFICE_EXTERNAL_ID.getCode(), savingsAccount.getClient().getOffice().getExternalId());
+            }
+        }else{
+            /** group savings get group savings info**/
+            customMap.put(CustomAccountType.OFFICE_ID.getCode(),savingsAccount.group().getOffice().getId().toString());
+            if(savingsAccount.group().getOffice().getExternalId() !=null){
+                customMap.put(CustomAccountType.OFFICE_EXTERNAL_ID.getCode(), savingsAccount.group().getOffice().getExternalId());
+            }
+            customMap.put(CustomAccountType.GROUP_ID.getCode(), savingsAccount.group().getId().toString());
+
+
+        }
         customMap.put(CustomAccountType.ENTITY_ID.getCode(), savingsAccount.getId().toString());
-        customMap.put(CustomAccountType.OFFICE_ID.getCode(),savingsAccount.getClient().getOffice().getId().toString());
-        customMap.put(CustomAccountType.OFFICE_EXTERNAL_ID.getCode(), savingsAccount.getClient().getOffice().getExternalId());
         customMap.put(CustomAccountType.SAVING_PRODUCT_SHORT_NAME.getCode(),savingsAccount.savingsProduct().getShortName());
         customMap.put(CustomAccountType.SAVINGS_PRODUCT.getCode(),savingsAccount.savingsProduct().getId().toString());
         customMap.put(CustomAccountType.STAFF_ID.getCode(), savingsAccount.getSavingsOfficer().getId().toString());
-        customMap.put(CustomAccountType.CLIENT_ID.getCode(), savingsAccount.getClient().getId().toString());
         return generateCustomAccountNumberWithMustacheTemplate(accountNumberFormat,customMap);
     }
 

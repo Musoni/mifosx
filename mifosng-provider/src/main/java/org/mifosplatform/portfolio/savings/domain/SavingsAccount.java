@@ -2705,4 +2705,6 @@ public class SavingsAccount extends AbstractPersistable<Long> {
     public BigDecimal getWithdrawableBalance() {
         return getAccountBalance().subtract(minRequiredBalanceDerived(getCurrency()).getAmount()).subtract(this.getOnHoldFunds());
     }
+
+    public boolean isIndividualSavings(){return AccountType.fromInt(this.accountType).isIndividualAccount();}
 }
