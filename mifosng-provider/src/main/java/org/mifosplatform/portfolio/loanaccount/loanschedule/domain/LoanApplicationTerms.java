@@ -694,8 +694,12 @@ public final class LoanApplicationTerms {
             case INVALID:
             break;
             case SAME_AS_REPAYMENT_PERIOD:
-                LocalDate startDate = getExpectedDisbursementDate();
-                periodsInLoanTerm = calculatePeriodsBetweenDates(startDate, this.loanEndDate);
+            	// only calculate the periods between the start and end dates if the 
+            	// "allowPartialPeriodInterestCalcualtion" is set to true
+            	if (this.allowPartialPeriodInterestCalcualtion) {
+            		LocalDate startDate = getExpectedDisbursementDate();
+                    periodsInLoanTerm = calculatePeriodsBetweenDates(startDate, this.loanEndDate);
+            	}
             break;
         }
 
