@@ -389,11 +389,15 @@ public class ReadReportingServiceImpl implements ReadReportingService {
             // and
             // data scoping
             final Connection connection = this.dataSource.getConnection();
+
+            final MifosPlatformTenant tenant = ThreadLocalContextUtil.getTenant();
+            final MifosPlatformTenantConnection tenantConnection = tenant.getConnection();
+
             String tenantUrl;
             String tenantdb;
             try {
-                tenantUrl = connection.getMetaData().getURL();
-                tenantdb = connection.getCatalog();
+                tenantUrl = tenantConnection.databaseURL();
+                tenantdb = tenantConnection.getSchemaName();
             } finally {
                 connection.close();
             }
@@ -409,9 +413,6 @@ public class ReadReportingServiceImpl implements ReadReportingService {
             final Long userid = runReportAsUser.getId();
             logger.info("db URL:" + tenantUrl + "      userid:" + userid);
             rptParamValues.put("userid", userid);
-
-            final MifosPlatformTenant tenant = ThreadLocalContextUtil.getTenant();
-            final MifosPlatformTenantConnection tenantConnection = tenant.getConnection();
 
             rptParamValues.put("tenantUrl", tenantUrl);
             rptParamValues.put("username", tenantConnection.getSchemaUsername());
