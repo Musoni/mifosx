@@ -10,9 +10,11 @@ import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.dataqueries.data.DatatableCategoryData;
 import org.mifosplatform.infrastructure.dataqueries.data.DatatableData;
 import org.mifosplatform.infrastructure.dataqueries.data.GenericResultsetData;
+import org.mifosplatform.infrastructure.dataqueries.domain.RegisteredTable;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
+import java.util.Map;
 
 public interface ReadWriteNonCoreDataService {
 
@@ -34,6 +36,8 @@ public interface ReadWriteNonCoreDataService {
     void deregisterDatatable(String datatable);
 
     GenericResultsetData retrieveDataTableGenericResultSet(String datatable, Long appTableId, String order, Long id);
+
+    Map<String, GenericResultsetData> retrieveAllEntityResultSets (String appTable, Long entityId);
 
     CommandProcessingResult createDatatable(JsonCommand command);
 

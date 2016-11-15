@@ -16,6 +16,7 @@ public class GroupingTypesApiConstants {
     public static final String CENTER_RESOURCE_NAME = "center";
     public static final String GROUP_RESOURCE_NAME = "group";
     public static final String COMMUNAL_BANK_RESOURCE_NAME = "communalbank";
+    public static final String GROUP_TABLE_NAME = "m_group";
 
     // group roles
     public static final String GROUP_ROLE_RESOURCE_NAME = "grouprole";

@@ -11,6 +11,8 @@ import java.util.Set;
 
 public interface LoanApiConstants {
 
+    public static final String loansEntityName = "loan";
+    public static final String loansTableName = "m_loan";
     public static final String emiAmountParameterName = "fixedEmiAmount";
     public static final String maxOutstandingBalanceParameterName = "maxOutstandingLoanBalance";
     public static final String disbursementDataParameterName = "disbursementData";

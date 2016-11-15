@@ -15,6 +15,7 @@ public class ClientApiConstants {
 
     public static final String CLIENT_RESOURCE_NAME = "client";
     public static final String CLIENT_CHARGES_RESOURCE_NAME = "CLIENTCHARGE";
+    public static final String CLIENT_TABLE_NAME = "m_client";
 
     // Client Charge Action Names
     public static final String CLIENT_CHARGE_ACTION_CREATE = "CREATE";

@@ -19,6 +19,7 @@ public class SavingsApiConstants {
     public static final String SAVINGS_ACCOUNT_RESOURCE_NAME = "savingsaccount";
     public static final String SAVINGS_ACCOUNT_TRANSACTION_RESOURCE_NAME = "savingsaccount.transaction";
     public static final String SAVINGS_ACCOUNT_CHARGE_RESOURCE_NAME = "savingsaccountcharge";
+    public static final String SAVINGS_PRODUCT_TABLE_NAME = "m_savings_product";
 
     // actions
     public static String summitalAction = ".summital";

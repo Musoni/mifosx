@@ -47,6 +47,8 @@ import org.mifosplatform.infrastructure.core.serialization.DefaultToApiJsonSeria
 import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
 import org.mifosplatform.infrastructure.core.service.Page;
 import org.mifosplatform.infrastructure.core.service.SearchParameters;
+import org.mifosplatform.infrastructure.dataqueries.data.GenericResultsetData;
+import org.mifosplatform.infrastructure.dataqueries.service.ReadWriteNonCoreDataService;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.organisation.monetary.data.CurrencyData;
 import org.mifosplatform.organisation.staff.data.StaffData;
@@ -159,6 +161,7 @@ public class LoansApiResource {
     private final LoanScheduleHistoryReadPlatformService loanScheduleHistoryReadPlatformService;
     private final LoanCreditCheckReadPlatformService loanCreditCheckReadPlatformService;
     private final GroupLoanMembersAllocationReadPlatformService groupLoanMembersAllocationReadPlatformService;
+    private final ReadWriteNonCoreDataService readWriteNonCoreDataService;
 
     @Autowired
     public LoansApiResource(final PlatformSecurityContext context, final LoanReadPlatformService loanReadPlatformService,
@@ -179,7 +182,8 @@ public class LoansApiResource {
             final AccountAssociationsReadPlatformService accountAssociationsReadPlatformService,
             final LoanScheduleHistoryReadPlatformService loanScheduleHistoryReadPlatformService,
             final LoanCreditCheckReadPlatformService loanCreditCheckReadPlatformService, 
-            final GroupLoanMembersAllocationReadPlatformService groupLoanMembersAllocationReadPlatformService) {
+            final GroupLoanMembersAllocationReadPlatformService groupLoanMembersAllocationReadPlatformService,
+            final ReadWriteNonCoreDataService readWriteNonCoreDataService) {
         this.context = context;
         this.loanReadPlatformService = loanReadPlatformService;
         this.loanProductReadPlatformService = loanProductReadPlatformService;
@@ -205,6 +209,7 @@ public class LoansApiResource {
         this.loanScheduleHistoryReadPlatformService = loanScheduleHistoryReadPlatformService;
         this.loanCreditCheckReadPlatformService = loanCreditCheckReadPlatformService;
         this.groupLoanMembersAllocationReadPlatformService = groupLoanMembersAllocationReadPlatformService;
+        this.readWriteNonCoreDataService = readWriteNonCoreDataService;
     }
 
     /*
@@ -624,6 +629,19 @@ public class LoansApiResource {
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.toApiJsonSerializer.serialize(settings, loanBasicDetails, this.LOAN_DATA_PARAMETERS);
+    }
+
+    @GET
+    @Path("{loanId}/datatables")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String retrieveAllLoanDataTableData(@Context final UriInfo uriInfo, @PathParam("loanId") final Long loanId){
+
+        this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
+
+        Map<String,GenericResultsetData> resultsetData = this.readWriteNonCoreDataService.retrieveAllEntityResultSets(LoanApiConstants.loansTableName,loanId);
+
+        return this.toApiJsonSerializer.serialize(resultsetData);
     }
 
     @POST
