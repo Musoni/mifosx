@@ -9,6 +9,9 @@ import org.mifosplatform.infrastructure.codes.exception.CodeValueNotFoundExcepti
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
 /**
  * <p>
  * Wrapper for {@link CodeValueRepository} that is responsible for checking if
@@ -47,6 +50,27 @@ public class CodeValueRepositoryWrapper {
     public CodeValue findOneByCodeNameAndLabelWithNotFoundDetection(final String codeName, final String label) {
         final CodeValue codeValue = this.repository.findByCodeNameAndLabel(codeName, label);
         if (codeValue == null || codeValue.isDeleted()) { throw new CodeValueNotFoundException(codeName, label); }
+        return codeValue;
+    }
+
+    public Collection<CodeValue> findAllByCodeNameAndIsMandatoryWithNotFoundDetection(final String codeName, final Boolean isMandatory) {
+        final Collection<CodeValue> codeValues = this.repository.findAllByCodeNameAndIsMandatory(codeName, isMandatory);
+        final Collection<CodeValue> codeValue = new ArrayList<>();
+
+        if (codeValues == null || codeValues.size() == 0) {
+            throw new CodeValueNotFoundException(codeName, isMandatory);
+        }
+
+        for(CodeValue value : codeValues){
+            if(value != null && value.isActive() && !value.isDeleted() && value.isMandatory()){
+                codeValue.add(value);
+            }
+        }
+
+        if(codeValue == null || codeValue.size() == 0){
+            throw new CodeValueNotFoundException(codeName, isMandatory);
+        }
+
         return codeValue;
     }
     

@@ -163,5 +163,10 @@ public class CodeValue extends AbstractPersistable<Long> {
     public boolean isActive() {
         return this.isActive;
     }
+
+    /**
+     * @return true if the isMandatory property is true
+     */
+    public boolean isMandatory() { return this.isMandatory; }
 }
 

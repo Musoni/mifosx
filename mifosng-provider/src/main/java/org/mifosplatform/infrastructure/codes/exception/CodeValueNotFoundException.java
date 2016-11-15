@@ -25,4 +25,9 @@ public class CodeValueNotFoundException extends AbstractPlatformResourceNotFound
         super("error.msg.codevalue.codename.id.combination.invalid", "Code value with label " + label
                 + " does not exist for a code with name " + codeName, label, codeName);
     }
+
+    public CodeValueNotFoundException(final String codeName, final Boolean isMandatory){
+        super("error.msg.codevalue.codename.id.combination.invalid", "Code with name " + codeName
+                + " that is " + (isMandatory ? "" : "not" ) + " mandatory does not exist");
+    }
 }

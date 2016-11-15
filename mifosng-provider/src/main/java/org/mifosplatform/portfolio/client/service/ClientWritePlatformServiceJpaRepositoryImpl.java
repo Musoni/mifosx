@@ -5,10 +5,7 @@
  */
 package org.mifosplatform.portfolio.client.service;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 
 import org.joda.time.LocalDate;
@@ -39,18 +36,8 @@ import org.mifosplatform.organisation.staff.domain.Staff;
 import org.mifosplatform.organisation.staff.domain.StaffRepositoryWrapper;
 import org.mifosplatform.portfolio.client.api.ClientApiConstants;
 import org.mifosplatform.portfolio.client.data.ClientDataValidator;
-import org.mifosplatform.portfolio.client.domain.AccountNumberGenerator;
-import org.mifosplatform.portfolio.client.domain.Client;
-import org.mifosplatform.portfolio.client.domain.ClientNonPerson;
-import org.mifosplatform.portfolio.client.domain.ClientNonPersonRepositoryWrapper;
-import org.mifosplatform.portfolio.client.domain.ClientRepositoryWrapper;
-import org.mifosplatform.portfolio.client.domain.ClientStatus;
-import org.mifosplatform.portfolio.client.domain.LegalForm;
-import org.mifosplatform.portfolio.client.exception.ClientActiveForUpdateException;
-import org.mifosplatform.portfolio.client.exception.ClientHasNoStaffException;
-import org.mifosplatform.portfolio.client.exception.ClientMustBePendingToBeDeletedException;
-import org.mifosplatform.portfolio.client.exception.InvalidClientSavingProductException;
-import org.mifosplatform.portfolio.client.exception.InvalidClientStateTransitionException;
+import org.mifosplatform.portfolio.client.domain.*;
+import org.mifosplatform.portfolio.client.exception.*;
 import org.mifosplatform.portfolio.group.domain.Group;
 import org.mifosplatform.portfolio.group.domain.GroupRepository;
 import org.mifosplatform.portfolio.group.exception.GroupMemberCountNotInPermissibleRangeException;
@@ -85,6 +72,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
     private final PlatformSecurityContext context;
     private final ClientRepositoryWrapper clientRepository;
     private final ClientNonPersonRepositoryWrapper clientNonPersonRepository;
+    private final ClientIdentifierRepository clientIdentifierRepository;
     private final OfficeRepository officeRepository;
     private final NoteRepository noteRepository;
     private final GroupRepository groupRepository;
@@ -112,10 +100,11 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
             final SavingsApplicationProcessWritePlatformService savingsApplicationProcessWritePlatformService,
             final CommandProcessingService commandProcessingService, final ConfigurationDomainService configurationDomainService,
             final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository, final FromJsonHelper fromApiJsonHelper, 
-            final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService) {
+            final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService, final ClientIdentifierRepository clientIdentifierRepository) {
         this.context = context;
         this.clientRepository = clientRepository;
         this.clientNonPersonRepository = clientNonPersonRepository;
+        this.clientIdentifierRepository = clientIdentifierRepository;
         this.officeRepository = officeRepository;
         this.noteRepository = noteRepository;
         this.fromApiJsonDeserializer = fromApiJsonDeserializer;
@@ -493,6 +482,7 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
 
             final Client client = this.clientRepository.findOneWithNotFoundDetection(clientId);
             validateParentGroupRulesBeforeClientActivation(client);
+            validateClientIdentifiers(client);
 
             final Locale locale = command.extractLocale();
             final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat()).withLocale(locale);
@@ -803,6 +793,9 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
         this.fromApiJsonDeserializer.validateReactivate(command);
 
         final Client client = this.clientRepository.findOneWithNotFoundDetection(entityId);
+
+        validateClientIdentifiers(client);
+
         final LocalDate reactivateDate = command.localDateValueOfParameterNamed(ClientApiConstants.reactivationDateParamName);
 
         client.validateReactivation(reactivateDate);
@@ -815,5 +808,31 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
                 .withClientId(entityId) //
                 .withEntityId(entityId) //
                 .build();
+    }
+
+    /**
+     * validates if the client has all the required client identifiers
+     * @param client
+     */
+    private void validateClientIdentifiers(Client client){
+        final Collection<CodeValue> mandatoryClientIdentifiers = this.codeValueRepository.findAllByCodeNameAndIsMandatoryWithNotFoundDetection(ClientApiConstants.CUSTOMER_IDENTIFIER,true);
+        final Collection<ClientIdentifier> clientIdentifiers = this.clientIdentifierRepository.findAllByClientId(client.getId());
+
+        if(mandatoryClientIdentifiers != null && mandatoryClientIdentifiers.size()>0 && clientIdentifiers != null && clientIdentifiers.size()>0) {
+            for (CodeValue mandatoryClientIdentifier : mandatoryClientIdentifiers) {
+                boolean identifierPresent = false;
+                for (ClientIdentifier identifier : clientIdentifiers) {
+                    if (identifier.getDocumentType().equals(mandatoryClientIdentifier)) {
+                        identifierPresent = true;
+                        break;
+                    }
+                }
+                if (!identifierPresent) {
+                    throw new MandatoryClientIdentifierNotFoundException(mandatoryClientIdentifier.label());
+                }
+            }
+        }else if(mandatoryClientIdentifiers != null && mandatoryClientIdentifiers.size()>0 && (clientIdentifiers == null || clientIdentifiers.size() == 0)){
+            throw new MandatoryClientIdentifierNotFoundException();
+        }
     }
 }

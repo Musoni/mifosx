@@ -48,6 +48,7 @@ public class ClientApiConstants {
     public static final String GENDER = "Gender";
     public static final String CLIENT_TYPE = "ClientType";
     public static final String CLIENT_CLASSIFICATION = "ClientClassification";
+    public static final String CUSTOMER_IDENTIFIER = "Customer Identifier";
     
     public static final String CLIENT_NON_PERSON_CONSTITUTION = "Constitution";
     public static final String CLIENT_NON_PERSON_MAIN_BUSINESS_LINE = "Main Business Line";
