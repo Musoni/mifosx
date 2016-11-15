@@ -24,6 +24,8 @@ import java.util.Map;
  **/
 public class FileHelper {
     private final static Logger logger = LoggerFactory.getLogger(FileHelper.class);
+    public static final String ILLEGAL_FILE_NAME_CHAR_REGEX = "\\\\|/|\\||:|\\?|\\*|\"|<|>|\\p{Cntrl}";
+    public static final String ILLEGAL_DIR_NAME_CHAR_REGEX = "\\.|\\\\|/|\\||:|\\?|\\*|\"|<|>|\\p{Cntrl}";
     
     /** 
      * Creates a directory by creating all nonexistent parent directories first
@@ -161,5 +163,26 @@ public class FileHelper {
         }
 
         return dataExportFileData;
+    }
+    
+    /**
+	 * Sanitizes a filename from certain chars.<br />
+	 * 
+	 * This method enforces the <code>forceSingleExtension</code> property and
+	 * then replaces all occurrences of \, /, |, :, ?, *, &quot;, &lt;, &gt;,
+	 * control chars by _ (underscore).
+	 * 
+	 * @param filename a potentially 'malicious' filename
+	 * @return sanitized filename
+	 */
+    public static String sanitizeFilename(final String filename) {
+    	String sanitizedFilename = filename;
+    	
+    	if (StringUtils.isNotBlank(filename)) {
+    		sanitizedFilename = filename.replaceAll(ILLEGAL_FILE_NAME_CHAR_REGEX, "_");
+    		sanitizedFilename = sanitizedFilename.replaceAll(" ", "_");
+    	}
+    	
+    	return sanitizedFilename;
     }
 }

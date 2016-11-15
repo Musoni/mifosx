@@ -34,6 +34,7 @@ import org.mifosplatform.infrastructure.dataexport.domain.DataExport;
 import org.mifosplatform.infrastructure.dataexport.domain.DataExportRepository;
 import org.mifosplatform.infrastructure.dataexport.exception.DataExportNotFoundException;
 import org.mifosplatform.infrastructure.dataexport.helper.DataExportUtils;
+import org.mifosplatform.infrastructure.dataexport.helper.FileHelper;
 import org.mifosplatform.infrastructure.dataexport.jdbc.SQL;
 import org.mifosplatform.infrastructure.dataqueries.data.DatatableData;
 import org.mifosplatform.infrastructure.dataqueries.domain.RegisteredTableMetaData;
@@ -131,7 +132,7 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
             final LocalDateTime currentDataTime = new LocalDateTime();
             final String dateTimeString = currentDataTime.toString(
             		DataExportApiConstants.DATA_EXPORT_FILENAME_DATETIME_FORMAT_PATTERN);
-            final String filename = name + "_" + dateTimeString;
+            final String filename = FileHelper.sanitizeFilename(name) + "_" + dateTimeString;
             
             dataExport.updateFilename(filename);
             
