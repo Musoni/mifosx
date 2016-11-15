@@ -19,6 +19,7 @@ import org.mifosplatform.infrastructure.accountnumberformat.domain.AccountNumber
 import org.mifosplatform.infrastructure.accountnumberformat.domain.EntityAccountType;
 import org.mifosplatform.infrastructure.codes.domain.CodeValue;
 import org.mifosplatform.infrastructure.codes.domain.CodeValueRepositoryWrapper;
+import org.mifosplatform.infrastructure.codes.exception.CodeValueNotFoundException;
 import org.mifosplatform.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
@@ -815,24 +816,26 @@ public class ClientWritePlatformServiceJpaRepositoryImpl implements ClientWriteP
      * @param client
      */
     private void validateClientIdentifiers(Client client){
-        final Collection<CodeValue> mandatoryClientIdentifiers = this.codeValueRepository.findAllByCodeNameAndIsMandatoryWithNotFoundDetection(ClientApiConstants.CUSTOMER_IDENTIFIER,true);
-        final Collection<ClientIdentifier> clientIdentifiers = this.clientIdentifierRepository.findAllByClientId(client.getId());
+        try {
+            final Collection<CodeValue> mandatoryClientIdentifiers = this.codeValueRepository.findAllByCodeNameAndIsMandatoryWithNotFoundDetection(ClientApiConstants.CUSTOMER_IDENTIFIER, true);
+            final Collection<ClientIdentifier> clientIdentifiers = this.clientIdentifierRepository.findAllByClientId(client.getId());
 
-        if(mandatoryClientIdentifiers != null && mandatoryClientIdentifiers.size()>0 && clientIdentifiers != null && clientIdentifiers.size()>0) {
-            for (CodeValue mandatoryClientIdentifier : mandatoryClientIdentifiers) {
-                boolean identifierPresent = false;
-                for (ClientIdentifier identifier : clientIdentifiers) {
-                    if (identifier.getDocumentType().equals(mandatoryClientIdentifier)) {
-                        identifierPresent = true;
-                        break;
+            if (mandatoryClientIdentifiers != null && mandatoryClientIdentifiers.size() > 0 && clientIdentifiers != null && clientIdentifiers.size() > 0) {
+                for (CodeValue mandatoryClientIdentifier : mandatoryClientIdentifiers) {
+                    boolean identifierPresent = false;
+                    for (ClientIdentifier identifier : clientIdentifiers) {
+                        if (identifier.getDocumentType().equals(mandatoryClientIdentifier)) {
+                            identifierPresent = true;
+                            break;
+                        }
+                    }
+                    if (!identifierPresent) {
+                        throw new MandatoryClientIdentifierNotFoundException(mandatoryClientIdentifier.label());
                     }
                 }
-                if (!identifierPresent) {
-                    throw new MandatoryClientIdentifierNotFoundException(mandatoryClientIdentifier.label());
-                }
+            } else if (mandatoryClientIdentifiers != null && mandatoryClientIdentifiers.size() > 0 && (clientIdentifiers == null || clientIdentifiers.size() == 0)) {
+                throw new MandatoryClientIdentifierNotFoundException();
             }
-        }else if(mandatoryClientIdentifiers != null && mandatoryClientIdentifiers.size()>0 && (clientIdentifiers == null || clientIdentifiers.size() == 0)){
-            throw new MandatoryClientIdentifierNotFoundException();
-        }
+        } catch (CodeValueNotFoundException cvnfe){}
     }
 }
