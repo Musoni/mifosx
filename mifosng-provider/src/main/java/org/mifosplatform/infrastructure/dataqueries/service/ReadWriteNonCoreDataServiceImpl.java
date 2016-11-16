@@ -1627,6 +1627,18 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
         return new GenericResultsetData(columnHeaders, result);
     }
 
+    public Map<String, GenericResultsetData> retrieveAllEntityResultSets (String appTable, Long entityId){
+        final Map<String,GenericResultsetData> resultsetData = new HashMap<>();
+        final Collection<RegisteredTable> tables = this.registeredTableRepository.findAllByApplicationTableName(appTable);
+
+        for(RegisteredTable table : tables){
+            final GenericResultsetData data = retrieveDataTableGenericResultSet(table.getRegisteredTableName(), entityId, null, null);
+            resultsetData.put(table.getRegisteredTableName(),data);
+        }
+
+        return resultsetData;
+    }
+
     private GenericResultsetData retrieveDataTableGenericResultSetForUpdate(final String appTable, final String dataTableName,
             final Long appTableId, final Long id) {
 

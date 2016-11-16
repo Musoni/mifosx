@@ -47,7 +47,7 @@ public enum DataExportBaseEntity {
     /**
      * Creates a new {@link DataExportBaseEntity} object
      * 
-     * @param entityName
+     * @param tableName
      * @return {@link DataExportBaseEntity} object
      */
     public static DataExportBaseEntity fromTableName(final String tableName) {
