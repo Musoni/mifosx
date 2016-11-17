@@ -142,23 +142,7 @@ public class LoanInstallmentCharge extends AbstractPersistable<Long> {
     }
 
     public boolean isPending() {
-
-        if(!(isPaid() || isWaived()))
-        {
-            return true;
-        }
-
-        return false;
-    }
-
-    public boolean isPendingIncludePartialWaivers() {
-
-        if(!(isPaid() || isWaived()) || (isWaived() && this.amount != this.amountWaived))
-        {
-            return true;
-        }
-
-        return false;
+        return !(isPaid() || isWaived());
     }
 
     public boolean isChargeAmountpaid(MonetaryCurrency currency) {
@@ -199,8 +183,7 @@ public class LoanInstallmentCharge extends AbstractPersistable<Long> {
             Money waivedAmount = getAmountWaived(incrementBy.getCurrency());
             if (waivedAmount.isGreaterThanZero()) {
                 this.waived = true;
-            }
-            if(this.amountOutstanding.equals(BigDecimal.ZERO)) {
+            } else {
                 this.paid = true;
             }
         }
