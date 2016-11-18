@@ -79,7 +79,7 @@ public class JournalEntriesApiResource {
             @QueryParam("runningBalance") final boolean runningBalance, 
             @QueryParam("transactionDetails") final boolean transactionDetails,
             @QueryParam("paymentDetails") final boolean paymentDetails,
-            @QueryParam("isReconciled") final Integer isReconciled) {
+            @QueryParam("isReconciled") final Integer isReconciled,@QueryParam("tellerId") final Long tellerId) {
 
         this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermission);
 
@@ -93,7 +93,7 @@ public class JournalEntriesApiResource {
         }
 
         final SearchParameters searchParameters = SearchParameters.forJournalEntries(officeId, offset, limit, orderBy, sortOrder, loanId,
-                savingsId);
+                savingsId,tellerId);
         JournalEntryAssociationParametersData associationParametersData = new JournalEntryAssociationParametersData(transactionDetails,
                 runningBalance, paymentDetails,false,false);
 

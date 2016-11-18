@@ -110,8 +110,8 @@ public final class TellerCommandFromApiJsonDeserializer {
         final LocalDate startDate = this.fromApiJsonHelper.extractLocalDateNamed("startDate", element);
         baseDataValidator.reset().parameter("startDate").value(startDate).notNull();
 
-        final LocalDate endDate = this.fromApiJsonHelper.extractLocalDateNamed("endDate", element);
-        baseDataValidator.reset().parameter("endDate").value(endDate).notNull();
+//        final LocalDate endDate = this.fromApiJsonHelper.extractLocalDateNamed("endDate", element);
+//        baseDataValidator.reset().parameter("endDate").value(endDate).notNull();
 
         final Boolean isFullDay = this.fromApiJsonHelper.extractBooleanNamed("isFullDay", element);
         baseDataValidator.reset().parameter("isFullDay").value(isFullDay).notNull();
@@ -121,12 +121,36 @@ public final class TellerCommandFromApiJsonDeserializer {
             baseDataValidator.reset().parameter("startTime").value(hourStartTime).notBlank();
             final String minStartTime = this.fromApiJsonHelper.extractStringNamed("minStartTime", element);
             baseDataValidator.reset().parameter("startTime").value(minStartTime).notBlank();
-            final String hourEndTime = this.fromApiJsonHelper.extractStringNamed("hourEndTime", element);
-            baseDataValidator.reset().parameter("hourEndTime").value(hourEndTime).notBlank();
-            final String minEndTime = this.fromApiJsonHelper.extractStringNamed("minEndTime", element);
-            baseDataValidator.reset().parameter("minEndTime").value(minEndTime).notBlank();
+//            final String hourEndTime = this.fromApiJsonHelper.extractStringNamed("hourEndTime", element);
+//            baseDataValidator.reset().parameter("hourEndTime").value(hourEndTime).notBlank();
+//            final String minEndTime = this.fromApiJsonHelper.extractStringNamed("minEndTime", element);
+//            baseDataValidator.reset().parameter("minEndTime").value(minEndTime).notBlank();
 
         }
+
+        throwExceptionIfValidationWarningsExist(dataValidationErrors);
+    }
+
+    public void validateForUnassignCashier(final String json) {
+        if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
+
+        final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
+        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json, this.supportedParameters);
+
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("teller");
+
+        final JsonElement element = this.fromApiJsonHelper.parse(json);
+
+        final LocalDate startDate = this.fromApiJsonHelper.extractLocalDateNamed("endDate", element);
+        baseDataValidator.reset().parameter("endDate").value(startDate).notNull();
+
+        final String hourEndTime = this.fromApiJsonHelper.extractStringNamed("hourEndTime", element);
+        baseDataValidator.reset().parameter("hourEndTime").value(hourEndTime).notBlank();
+        final String minEndTime = this.fromApiJsonHelper.extractStringNamed("minEndTime", element);
+        baseDataValidator.reset().parameter("minEndTime").value(minEndTime).notBlank();
+
+
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
@@ -153,5 +177,33 @@ public final class TellerCommandFromApiJsonDeserializer {
 
         final String currencyCode = this.fromApiJsonHelper.extractStringNamed("currencyCode", element);
         baseDataValidator.reset().parameter("currencyCode").value(currencyCode).notExceedingLengthOf(3);
+
+        throwExceptionIfValidationWarningsExist(dataValidationErrors);
+    }
+
+    public void validateForCashSettleTxnForCashier(final String json,BigDecimal balance) {
+        if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
+
+        final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
+        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json, this.supportedParameters);
+
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("teller");
+
+        final JsonElement element = this.fromApiJsonHelper.parse(json);
+
+        final BigDecimal txnAmount = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed("txnAmount", element);
+        baseDataValidator.reset().parameter("txnAmount").value(txnAmount).notNull().notGreaterThanMax(balance);
+
+        final LocalDate txnDate = this.fromApiJsonHelper.extractLocalDateNamed("txnDate", element);
+        baseDataValidator.reset().parameter("txnDate").value(txnDate).notNull();
+
+        final String txnNote = this.fromApiJsonHelper.extractStringNamed("txnNote", element);
+        baseDataValidator.reset().parameter("txnNote").value(txnNote).notExceedingLengthOf(200);
+
+        final String currencyCode = this.fromApiJsonHelper.extractStringNamed("currencyCode", element);
+        baseDataValidator.reset().parameter("currencyCode").value(currencyCode).notExceedingLengthOf(3);
+
+        throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
 }

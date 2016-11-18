@@ -5,6 +5,7 @@
  */
 package org.mifosplatform.organisation.teller.domain;
 
+import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.organisation.office.domain.Office;
@@ -62,6 +63,20 @@ public class Cashier extends AbstractPersistable<Long> {
     @Column(name = "end_time", nullable = true, length = 10)
     private String endTime;
 
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive;
+
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "started_at", nullable = false,columnDefinition="DATETIME")
+    private Date startedAt;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "ended_at", nullable = true,columnDefinition="DATETIME")
+    private Date endedAt;
+
+
+
     /**
      * Creates a new cashier.
      */
@@ -92,11 +107,15 @@ public class Cashier extends AbstractPersistable<Long> {
         this.teller = teller;
         this.staff = staff;
         this.description = description;
-        this.startDate = startDate.toDate();
-        this.endDate = endDate.toDate();
+        this.startDate = startDate!=null ? startDate.toDate() : null;
+        this.endDate = endDate!=null ? endDate.toDate() : null;
         this.isFullDay = isFullDay;
         this.startTime = startTime;
         this.endTime = endTime;
+        this.isActive = false;
+        this.startedAt = new Date();
+        this.endedAt = null;
+
     }
 
     public Map<String, Object> update(final JsonCommand command) {
@@ -459,5 +478,27 @@ public class Cashier extends AbstractPersistable<Long> {
      */
     public void setEndTime(String endTime) {
         this.endTime = endTime;
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
+    }
+
+    public void assign(){
+        this.setIsActive(true);
+    }
+
+    public void unassign(){
+
+        this.setIsActive(false);
+        this.setEndedAt(new Date());
+    }
+
+    public void setEndedAt(Date endedAt) {
+        this.endedAt = endedAt;
     }
 }
