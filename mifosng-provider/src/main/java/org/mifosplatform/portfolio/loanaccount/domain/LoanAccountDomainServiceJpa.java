@@ -6,13 +6,7 @@
 package org.mifosplatform.portfolio.loanaccount.domain;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
@@ -151,7 +145,8 @@ public class LoanAccountDomainServiceJpa implements LoanAccountDomainService {
 
         final Money repaymentAmount = Money.of(loan.getCurrency(), transactionAmount);
         LoanTransaction newRepaymentTransaction = null;
-        final LocalDateTime currentDateTime = DateUtils.getLocalDateTimeOfTenant();
+        final LocalDateTime currentDateTime = new LocalDateTime();
+
         if (isRecoveryRepayment) {
             newRepaymentTransaction = LoanTransaction.recoveryRepayment(loan.getOffice(), repaymentAmount, paymentDetail, transactionDate,
                     txnExternalId, currentDateTime, currentUser);

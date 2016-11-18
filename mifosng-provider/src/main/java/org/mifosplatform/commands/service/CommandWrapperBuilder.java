@@ -2494,6 +2494,25 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder assignCashierToTeller(final Long tellerId, final Long cashierId) {
+        this.actionName = "ASSIGNCASHIERTOTELLER";
+        this.entityName = "TELLER";
+        this.entityId = tellerId;
+        this.subentityId = cashierId;
+        this.href = "/tellers/" + tellerId + "/cashiers/" + cashierId;
+        return this;
+    }
+
+    public CommandWrapperBuilder unassignCashierToTeller(final Long tellerId, final Long cashierId) {
+        this.actionName = "UNASSIGNCASHIERTOTELLER";
+        this.entityName = "TELLER";
+        this.entityId = tellerId;
+        this.subentityId = cashierId;
+        this.href = "/tellers/" + tellerId + "/cashiers/" + cashierId;
+        return this;
+    }
+
+
     public CommandWrapperBuilder deleteAllocationTeller(final Long tellerId, final Long cashierId) {
         this.actionName = "DELETECASHIERALLOCATION";
         this.entityName = "TELLER";

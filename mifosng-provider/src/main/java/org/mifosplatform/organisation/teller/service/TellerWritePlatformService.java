@@ -73,4 +73,10 @@ public interface TellerWritePlatformService {
 
 	CommandProcessingResult settleCashFromCashier(Long cashierId,
 			JsonCommand command);
+
+    CommandProcessingResult assignCashierToTeller(Long tellerId, Long cashierId,
+                                                    JsonCommand command);
+
+    CommandProcessingResult unassignCashierToTeller(Long tellerId, Long cashierId,
+                                                  JsonCommand command);
 }
