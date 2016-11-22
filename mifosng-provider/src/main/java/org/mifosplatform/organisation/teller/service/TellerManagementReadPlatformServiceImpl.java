@@ -6,6 +6,7 @@
 package org.mifosplatform.organisation.teller.service;
 
 import java.math.BigDecimal;
+import java.security.Timestamp;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
@@ -489,7 +490,7 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
         if (includeAllTellers) {
             hierarchySearchString = "." + "%";
         } else {
-            hierarchySearchString = hierarchy;
+            hierarchySearchString = hierarchy+"%";
         }
 
         final CashierTransactionMapper ctm = new CashierTransactionMapper();
@@ -580,7 +581,7 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             final StringBuilder sqlBuilder = new StringBuilder(400);
 
             sqlBuilder.append(" sav_txn.id as txn_id, null as cashier_id, ");
-            sqlBuilder.append(" sav.currency_code as txn_currency_code, ");
+
             sqlBuilder.append(" case ");
             sqlBuilder.append(" 	when renum.enum_value in ('deposit','withdrawal fee', 'Pay Charge') ");
             sqlBuilder.append(" 		then 103 ");
@@ -589,6 +590,7 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             sqlBuilder.append(" 	else ");
             sqlBuilder.append(" 		105 ");
             sqlBuilder.append(" end as txn_type, ");
+            sqlBuilder.append(" sav.currency_code as txn_currency_code, ");
             sqlBuilder.append(" sav_txn.amount as txn_amount, sav_txn.transaction_date as txn_date, ");
             sqlBuilder
                     .append(" concat (renum.enum_value, ', Sav:', sav.id, '-', sav.account_no, ',Client:', cl.id, '-',cl.display_name) as txn_note, ");
@@ -600,7 +602,8 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
                     .append(" left join r_enum_value renum on sav_txn.transaction_type_enum = renum.enum_id and renum.enum_name = 'savings_transaction_type_enum' ");
             sqlBuilder.append(" left join m_savings_account sav on sav_txn.savings_account_id = sav.id ");
             sqlBuilder.append(" left join m_client cl on sav.client_id = cl.id ");
-            sqlBuilder.append(" left join m_office o on cl.office_id = o.id ");
+            sqlBuilder.append(" left join m_group mc on sav.group_id = mc.id ");
+            sqlBuilder.append(" left join m_office o on CASE WHEN  cl.office_id IS NULL THEN mc.office_id ELSE cl.office_id END = o.id ");
             sqlBuilder.append(" left join m_appuser user on sav_txn.appuser_id = user.id ");
             sqlBuilder.append(" left join m_staff staff on user.staff_id = staff.id ");
             sqlBuilder.append(" left join m_cashiers c on c.staff_id = staff.id ");
@@ -613,7 +616,7 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             final StringBuilder sqlBuilder = new StringBuilder(400);
 
             sqlBuilder.append(" loan_txn.id as txn_id, c.id as cashier_id, ");
-            sqlBuilder.append(" loan.currency_code as txn_currency_code, ");
+
             sqlBuilder.append(" case ");
             sqlBuilder.append(" 	when renum.enum_value in ('Repayment At Disbursement','Repayment', 'Recovery Payment') ");
             sqlBuilder.append(" 		then 103 ");
@@ -622,6 +625,7 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             sqlBuilder.append(" 	else ");
             sqlBuilder.append(" 		105 ");
             sqlBuilder.append(" end as cash_txn_type, ");
+            sqlBuilder.append(" loan.currency_code as txn_currency_code, ");
             sqlBuilder.append(" loan_txn.amount as txn_amount, loan_txn.transaction_date as txn_date, ");
             sqlBuilder
                     .append(" concat (renum.enum_value, ', Loan:', loan.id, '-', loan.account_no, ',Client:', cl.id, '-',cl.display_name) as txn_note, ");
@@ -633,7 +637,8 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
                     .append(" left join r_enum_value renum on loan_txn.transaction_type_enum = renum.enum_id and renum.enum_name = 'transaction_type_enum' ");
             sqlBuilder.append(" left join m_loan loan on loan_txn.loan_id = loan.id ");
             sqlBuilder.append(" left join m_client cl on loan.client_id = cl.id ");
-            sqlBuilder.append(" left join m_office o on cl.office_id = o.id ");
+            sqlBuilder.append(" left join m_group mc on loan.group_id = mc.id ");
+            sqlBuilder.append(" left join m_office o on CASE WHEN  cl.office_id IS NULL THEN mc.office_id ELSE cl.office_id END = o.id ");
             sqlBuilder.append(" left join m_appuser user on loan_txn.appuser_id = user.id ");
             sqlBuilder.append(" left join m_staff staff on user.staff_id = staff.id ");
             sqlBuilder.append(" left join m_cashiers c on c.staff_id = staff.id ");
@@ -653,7 +658,7 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             final String txnNote = rs.getString("txn_note");
             final String entityType = rs.getString("entity_type");
             final Long entityId = rs.getLong("entity_id");
-            final LocalDate createdLocalDate = JdbcSupport.getLocalDate(rs, "created_date");
+            final java.sql.Timestamp createdLocalDate = rs.getTimestamp("created_date");
             final String currencyCode = rs.getString("txn_currency_code");
 
             Date txnDate = null;
@@ -662,7 +667,9 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             }
             Date createdDate = null;
             if (createdLocalDate != null) {
-                createdDate = createdLocalDate.toDate();
+
+                createdDate =  new java.util.Date(createdLocalDate.getTime());
+
             }
 
             final Long officeId = rs.getLong("office_id");
