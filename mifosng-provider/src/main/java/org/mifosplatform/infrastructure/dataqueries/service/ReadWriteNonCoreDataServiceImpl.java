@@ -1627,13 +1627,73 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
         return new GenericResultsetData(columnHeaders, result);
     }
 
-    public Map<String, GenericResultsetData> retrieveAllEntityResultSets (String appTable, Long entityId){
+    public Map<String, GenericResultsetData> retrieveAllEntityResultSets (final String appTable, final Long entityId, final Boolean ppi){
+
+        checkMainResourceExistsWithinScope(appTable, entityId);
+
         final Map<String,GenericResultsetData> resultsetData = new HashMap<>();
         final Collection<RegisteredTable> tables = this.registeredTableRepository.findAllByApplicationTableName(appTable);
+        final Collection<RegisteredTable> registeredTables = new ArrayList<>();
+        final String FKField = getFKField(appTable);
+        final Map<String,List<ResultsetColumnHeaderData>> columnHeaders = new HashMap<>();
+        String sql = "select " + appTable + ".id";
+        String from = " from " + appTable + " ";
+        Map<String,List<String>> tableValueMap = new HashMap<>();
+        Map<String,Map<String,String>> tableNameValueMap = new HashMap<>();
 
         for(RegisteredTable table : tables){
-            final GenericResultsetData data = retrieveDataTableGenericResultSet(table.getRegisteredTableName(), entityId, null, null);
-            resultsetData.put(table.getDisplayName(),data);
+
+            final String tableName = table.getRegisteredTableName().toLowerCase();
+
+            if((ppi && tableName.startsWith("ppi")) || (!ppi && !tableName.startsWith("ppi"))) {
+                final List<String> values = new ArrayList<>();
+                final Map<String, String> nameAndValue = new HashMap<>();
+                registeredTables.add(table);
+
+                tableValueMap.put(tableName, values);
+                tableNameValueMap.put(tableName, nameAndValue);
+
+                final List<ResultsetColumnHeaderData> columnHeadersList = this.genericDataService.fillResultsetColumnHeaders(tableName);
+
+                columnHeaders.put(tableName, columnHeadersList);
+
+                sql += ", " + tableName + ".*";
+                from += "left join " + tableName + " on " + appTable + ".id = " + tableName + "." + FKField + " ";
+            }
+        }
+
+        sql = sql + from + "where " + appTable + ".id = " + entityId;
+
+        SqlRowSet rs = this.jdbcTemplate.queryForRowSet(sql);
+
+        SqlRowSetMetaData rsmd = rs.getMetaData();
+
+        while(rs.next()) {
+            for (int i = 0; i < rsmd.getColumnCount(); i++) {
+                final String columnName = rsmd.getColumnName(i + 1);
+                final String columnValue = rs.getString(columnName);
+                final String tableName = rsmd.getTableName(i + 1);
+
+                if(tableName != null && tableValueMap.containsKey(tableName) && tableNameValueMap.containsKey(tableName)) {
+                    final List<String> columnValues = tableValueMap.get(tableName);
+                    final Map<String, String> columnNameAndValue = tableNameValueMap.get(tableName);
+                    columnNameAndValue.put(columnName, columnValue);
+                    columnValues.add(columnValue);
+                    tableValueMap.put(tableName, columnValues);
+                    tableNameValueMap.put(tableName, columnNameAndValue);
+                }
+            }
+
+            for (RegisteredTable table : registeredTables) {
+                final List<ResultsetRowData> resultsetDataRows = new ArrayList<>();
+                final String tableName = table.getRegisteredTableName().toLowerCase();
+                final List<String> columnValues = tableValueMap.get(tableName);
+                final Map<String, String> columnNameAndValue = tableNameValueMap.get(tableName);
+                final ResultsetRowData resultsetDataRow = ResultsetRowData.createWithColumnName(columnValues, columnNameAndValue);
+                resultsetDataRows.add(resultsetDataRow);
+                GenericResultsetData genericResultsetData = new GenericResultsetData(columnHeaders.get(tableName), resultsetDataRows);
+                resultsetData.put(table.getDisplayName(), genericResultsetData);
+            }
         }
 
         return resultsetData;

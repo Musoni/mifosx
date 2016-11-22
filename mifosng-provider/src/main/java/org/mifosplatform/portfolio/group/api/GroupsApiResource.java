@@ -433,11 +433,12 @@ public class GroupsApiResource {
     @Path("{groupId}/datatables")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String retrieveAllGroupDataTableData(@Context final UriInfo uriInfo, @PathParam("groupId") final Long groupId){
+    public String retrieveAllGroupDataTableData(@Context final UriInfo uriInfo, @PathParam("groupId") final Long groupId,
+                                                @QueryParam("ppi") final Boolean ppi){
 
         this.context.authenticatedUser().validateHasReadPermission(GroupingTypesApiConstants.GROUP_RESOURCE_NAME);
 
-        Map<String,GenericResultsetData> resultsetData = this.readWriteNonCoreDataService.retrieveAllEntityResultSets(GroupingTypesApiConstants.GROUP_TABLE_NAME,groupId);
+        Map<String,GenericResultsetData> resultsetData = this.readWriteNonCoreDataService.retrieveAllEntityResultSets(GroupingTypesApiConstants.GROUP_TABLE_NAME,groupId,ppi);
 
         return this.toApiJsonSerializer.serialize(resultsetData);
     }

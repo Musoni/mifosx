@@ -37,7 +37,7 @@ public interface ReadWriteNonCoreDataService {
 
     GenericResultsetData retrieveDataTableGenericResultSet(String datatable, Long appTableId, String order, Long id);
 
-    Map<String, GenericResultsetData> retrieveAllEntityResultSets (String appTable, Long entityId);
+    Map<String, GenericResultsetData> retrieveAllEntityResultSets (String appTable, Long entityId, Boolean ppi);
 
     CommandProcessingResult createDatatable(JsonCommand command);
 

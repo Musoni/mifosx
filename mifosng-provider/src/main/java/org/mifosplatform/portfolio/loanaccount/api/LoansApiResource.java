@@ -635,11 +635,12 @@ public class LoansApiResource {
     @Path("{loanId}/datatables")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String retrieveAllLoanDataTableData(@Context final UriInfo uriInfo, @PathParam("loanId") final Long loanId){
+    public String retrieveAllLoanDataTableData(@Context final UriInfo uriInfo, @PathParam("loanId") final Long loanId,
+                                               @QueryParam("ppi") final Boolean ppi){
 
         this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
 
-        Map<String,GenericResultsetData> resultsetData = this.readWriteNonCoreDataService.retrieveAllEntityResultSets(LoanApiConstants.loansTableName,loanId);
+        Map<String,GenericResultsetData> resultsetData = this.readWriteNonCoreDataService.retrieveAllEntityResultSets(LoanApiConstants.loansTableName,loanId,ppi);
 
         return this.toApiJsonSerializer.serialize(resultsetData);
     }

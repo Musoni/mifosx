@@ -22,6 +22,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.StopWatch;
 import org.mifosplatform.commands.domain.CommandWrapper;
 import org.mifosplatform.commands.service.CommandWrapperBuilder;
 import org.mifosplatform.commands.service.PortfolioCommandSourceWritePlatformService;
@@ -301,11 +302,12 @@ public class ClientsApiResource {
     @Path("{clientId}/datatables")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String retrieveAllClientDataTableData(@Context final UriInfo uriInfo, @PathParam("clientId") final Long clientId){
+    public String retrieveAllClientDataTableData(@Context final UriInfo uriInfo, @PathParam("clientId") final Long clientId,
+                                                 @QueryParam("ppi") final Boolean ppi){
 
         this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants.CLIENT_RESOURCE_NAME);
 
-        Map<String,GenericResultsetData> resultsetData = this.readWriteNonCoreDataService.retrieveAllEntityResultSets(ClientApiConstants.CLIENT_TABLE_NAME,clientId);
+        Map<String,GenericResultsetData> resultsetData = this.readWriteNonCoreDataService.retrieveAllEntityResultSets(ClientApiConstants.CLIENT_TABLE_NAME,clientId, ppi);
 
         return this.toApiJsonSerializer.serialize(resultsetData);
     }

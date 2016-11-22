@@ -301,12 +301,13 @@ public class SavingsAccountsApiResource {
     @Path("{accountId}/datatables")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String retrieveAllSavingsDataTableData(@Context final UriInfo uriInfo, @PathParam("accountId") final Long accountId){
+    public String retrieveAllSavingsDataTableData(@Context final UriInfo uriInfo, @PathParam("accountId") final Long accountId,
+                                                  @QueryParam("ppi") final Boolean ppi){
 
         this.context.authenticatedUser().validateHasReadPermission(SavingsApiConstants.SAVINGS_PRODUCT_RESOURCE_NAME);
 
         Long productId = this.savingsAccountReadPlatformService.retrieveOne(accountId).productId();
-        Map<String,GenericResultsetData> resultsetData = this.readWriteNonCoreDataService.retrieveAllEntityResultSets(SavingsApiConstants.SAVINGS_PRODUCT_TABLE_NAME,productId);
+        Map<String,GenericResultsetData> resultsetData = this.readWriteNonCoreDataService.retrieveAllEntityResultSets(SavingsApiConstants.SAVINGS_PRODUCT_TABLE_NAME,productId,ppi);
 
         return this.toApiJsonSerializer.serialize(resultsetData);
     }
