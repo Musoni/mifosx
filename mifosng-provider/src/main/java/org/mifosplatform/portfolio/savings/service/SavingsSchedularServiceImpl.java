@@ -5,8 +5,10 @@
  */
 package org.mifosplatform.portfolio.savings.service;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import org.joda.time.LocalDate;
 import org.mifosplatform.infrastructure.jobs.annotation.CronTarget;
 import org.mifosplatform.infrastructure.jobs.exception.JobExecutionException;
 import org.mifosplatform.infrastructure.jobs.service.JobName;
@@ -36,13 +38,16 @@ public class SavingsSchedularServiceImpl implements SavingsSchedularService {
     @CronTarget(jobName = JobName.POST_INTEREST_FOR_SAVINGS)
     @Override
     public void postInterestForAccounts() throws JobExecutionException {
+        final List<SavingsAccount> accounts = new ArrayList<>();
         final List<SavingsAccount> savingsAccounts = this.savingAccountRepository.findSavingAccountByStatus(SavingsAccountStatusType.ACTIVE
                 .getValue());
         StringBuffer sb = new StringBuffer();
         for (final SavingsAccount savingsAccount : savingsAccounts) {
             try {
                 this.savingAccountAssembler.assignSavingAccountHelpers(savingsAccount);
-                this.savingsAccountWritePlatformService.postInterest(savingsAccount, false);
+                boolean postInterestAsOn = false;
+                LocalDate transactionDate = null;
+                this.savingsAccountWritePlatformService.postInterest(savingsAccount,postInterestAsOn,transactionDate);
             } catch (Exception e) {
                 Throwable realCause = e;
                 if (e.getCause() != null) {

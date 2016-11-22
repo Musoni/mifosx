@@ -26,9 +26,9 @@ public interface SavingsAccountWritePlatformService {
 
     CommandProcessingResult applyAnnualFee(final Long savingsAccountChargeId, final Long accountId);
 
-    CommandProcessingResult calculateInterest(Long savingsId);
+    CommandProcessingResult calculateInterest(Long savings);
 
-    CommandProcessingResult postInterest(Long savingsId);
+    CommandProcessingResult postInterest(final JsonCommand command);
 
     CommandProcessingResult undoTransaction(Long savingsId, Long transactionId, boolean allowAccountTransferModification);
 
@@ -65,5 +65,5 @@ public interface SavingsAccountWritePlatformService {
     void processPostActiveActions(SavingsAccount account, DateTimeFormatter fmt, Set<Long> existingTransactionIds,
             Set<Long> existingReversedTransactionIds);
 
-    void postInterest(SavingsAccount account, Boolean isManualPosting);
+    void postInterest(SavingsAccount account, boolean postInterestAs, LocalDate transactionDate);
 }

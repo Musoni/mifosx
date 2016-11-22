@@ -104,6 +104,11 @@ public enum SavingsAccountTransactionType {
         return this.value.equals(SavingsAccountTransactionType.INTEREST_POSTING.getValue());
     }
 
+    public boolean isOverDraftInterestPosting() {
+        return this.value.equals(SavingsAccountTransactionType.OVERDRAFT_INTEREST.getValue());
+    }
+
+
     public boolean isWithdrawalFee() {
         return this.value.equals(SavingsAccountTransactionType.WITHDRAWAL_FEE.getValue());
     }

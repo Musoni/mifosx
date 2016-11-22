@@ -274,6 +274,13 @@ public final class SavingsAccountTransaction extends AbstractPersistable<Long> {
         return SavingsAccountTransactionType.fromInt(this.typeOf).isWithdrawalFee() && isNotReversed();
     }
 
+
+
+    public boolean isInterestPosting() {
+        return SavingsAccountTransactionType.fromInt(this.typeOf).isInterestPosting()
+                || SavingsAccountTransactionType.fromInt(this.typeOf).isOverDraftInterestPosting();
+    }
+
     public boolean isWithdrawalFee() {
         return SavingsAccountTransactionType.fromInt(this.typeOf).isWithdrawalFee();
     }
@@ -342,7 +349,7 @@ public final class SavingsAccountTransaction extends AbstractPersistable<Long> {
         this.cumulativeBalance = Money.of(currency, this.runningBalance).multipliedBy(this.balanceNumberOfDays).getAmount();
     }
 
-    private LocalDate getTransactionLocalDate() {
+    public LocalDate getTransactionLocalDate() {
         return new LocalDate(this.dateOf);
     }
 
@@ -409,6 +416,11 @@ public final class SavingsAccountTransaction extends AbstractPersistable<Long> {
 
     public boolean isAfter(final LocalDate transactionDate) {
         return getTransactionLocalDate().isAfter(transactionDate);
+    }
+
+
+    public boolean isManualTransaction() {
+        return this.manuallyAdjustedOrReversed;
     }
 
     public EndOfDayBalance toEndOfDayBalance(final LocalDateInterval periodInterval, final MonetaryCurrency currency) {
@@ -634,6 +646,10 @@ public final class SavingsAccountTransaction extends AbstractPersistable<Long> {
 
     public BigDecimal getAmount() {
         return this.amount;
+    }
+
+    public Date getDateOf() {
+        return this.dateOf;
     }
     
     public PaymentDetail getPaymentDetail() {
