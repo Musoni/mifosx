@@ -1692,7 +1692,7 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
                 final ResultsetRowData resultsetDataRow = ResultsetRowData.createWithColumnName(columnValues, columnNameAndValue);
                 resultsetDataRows.add(resultsetDataRow);
                 GenericResultsetData genericResultsetData = new GenericResultsetData(columnHeaders.get(tableName), resultsetDataRows);
-                resultsetData.put(table.getDisplayName(), genericResultsetData);
+                resultsetData.put(table.getRegisteredTableName().toLowerCase(), genericResultsetData);
             }
         }
 
