@@ -7,7 +7,9 @@ package org.mifosplatform.organisation.teller.domain;
 
 
 import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
+import org.mifosplatform.infrastructure.core.service.DateUtils;
 import org.mifosplatform.organisation.office.domain.Office;
 import org.springframework.data.jpa.domain.AbstractPersistable;
 
@@ -93,7 +95,9 @@ public class CashierTransaction extends AbstractPersistable<Long> {
     	this.entityType = entityType;
     	this.entityId = entityId;
     	this.txnNote = txnNote;
-    	this.createdDate = new Date(); 
+
+        final LocalDateTime currentDateTime = DateUtils.getLocalDateTimeOfTenant();
+    	this.createdDate = currentDateTime.toDate();
     	this.currencyCode = currencyCode;
     }
     
