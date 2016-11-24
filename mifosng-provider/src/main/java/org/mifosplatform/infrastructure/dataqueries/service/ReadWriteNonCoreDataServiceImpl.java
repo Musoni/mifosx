@@ -96,7 +96,7 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
         {
             put("string", "VARCHAR");
             put("checkbox", "VARCHAR");
-            put("number", "INT");
+            put("number", "BIGINT");
             put("boolean", "BIT");
             put("decimal", "DECIMAL");
             put("date", "DATE");

@@ -136,7 +136,7 @@ public class GenericDataServiceImpl implements GenericDataService {
                 writer.append(doubleQuote + columnHeaders.get(j).getColumnName() + doubleQuote + ": ");
                 currColType = columnHeaders.get(j).getColumnDisplayType();
                 final String colType = columnHeaders.get(j).getColumnType();
-                if (currColType == null && colType.equalsIgnoreCase("INT")) {
+                if (currColType == null && (colType.equalsIgnoreCase("INT") || colType.equalsIgnoreCase("BIGINT"))) {
                     currColType = "INTEGER";
                 }
                 if (currColType == null && colType.equalsIgnoreCase("VARCHAR")) {
