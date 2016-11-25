@@ -344,7 +344,7 @@ public class RecurringDepositAccount extends SavingsAccount {
                 if (installment.isPrincipalNotCompleted(getCurrency())) {
                     final SavingsAccountTransaction transaction = SavingsAccountTransaction.deposit(null, office(), null,
                             installment.dueDate(), installment.getDepositAmountOutstanding(getCurrency()), installment.dueDate().toDate(),
-                            null);
+                            null,false);
                     allTransactions.add(transaction);
                 }
             }
@@ -482,7 +482,7 @@ public class RecurringDepositAccount extends SavingsAccount {
         final Money minRequiredOpeningBalance = Money.of(this.currency, this.minRequiredOpeningBalance);
         if (minRequiredOpeningBalance.isGreaterThanZero()) {
             final SavingsAccountTransactionDTO transactionDTO = new SavingsAccountTransactionDTO(fmt, getActivationLocalDate(),
-                    minRequiredOpeningBalance.getAmount(), null, new Date(), user);
+                    minRequiredOpeningBalance.getAmount(), null, new Date(), user,false);
             deposit(transactionDTO);
 
             // update existing transactions so derived balance fields are

@@ -688,11 +688,11 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
         SavingsAccountTransaction transaction = null;
         if (savingsAccountTransaction.isDeposit()) {
             final SavingsAccountTransactionDTO transactionDTO = new SavingsAccountTransactionDTO(fmt, transactionDate, transactionAmount,
-                    paymentDetail, savingsAccountTransaction.createdDate(), user);
+                    paymentDetail, savingsAccountTransaction.createdDate(), user,false);
             transaction = account.deposit(transactionDTO);
         } else {
             final SavingsAccountTransactionDTO transactionDTO = new SavingsAccountTransactionDTO(fmt, transactionDate, transactionAmount,
-                    paymentDetail, savingsAccountTransaction.createdDate(), user);
+                    paymentDetail, savingsAccountTransaction.createdDate(), user,false);
             transaction = account.withdraw(transactionDTO, true);
         }
         final Long newtransactionId = saveTransactionToGenerateTransactionId(transaction);

@@ -154,4 +154,21 @@ public class GuarantorFundingDetails extends AbstractPersistable<Long> {
         
         return shareOfInterestIncome;
     }
+
+
+    public BigDecimal calculateShareOfPartialLoanInterestIncome(final Loan loan,final BigDecimal interestAccumulated){
+        BigDecimal shareOfInterestIncome = BigDecimal.ZERO;
+
+        if (loan != null) {
+            final BigDecimal principalAmount = loan.getPrincpal().getAmount();
+            final BigDecimal percent = new BigDecimal(100);
+            final RoundingMode roundingMode = RoundingMode.HALF_EVEN;
+            final MathContext mathContext = new MathContext(8, roundingMode);
+
+            BigDecimal percentageGuaranteed = this.amount.multiply(percent).divide(principalAmount, mathContext);
+            shareOfInterestIncome = percentageGuaranteed.divide(percent, mathContext).multiply(interestAccumulated);
+        }
+
+        return shareOfInterestIncome;
+    }
 }
