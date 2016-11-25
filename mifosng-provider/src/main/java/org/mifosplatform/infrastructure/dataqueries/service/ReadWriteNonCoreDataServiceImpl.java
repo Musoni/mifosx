@@ -7,6 +7,7 @@ package org.mifosplatform.infrastructure.dataqueries.service;
 
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.util.ArrayList;
@@ -2191,15 +2192,25 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
                             pObjectValue = queryParams.get(key);
 
                             if(queryParams.get(key) != null) {
-                                if (columnHeader.isIntegerDisplayType()) {
+                                if (columnHeader.isIntegerDisplayType() && !columnHeader.isBigInt()) {
                                     Integer intValue = new Integer(0);
                                     if (!queryParams.get(key).toString().isEmpty()) {
+
                                         intValue = this.helper.convertToInteger(pObjectValue.toString(), columnHeader.getColumnName(), clientApplicationLocale);
                                     }
 
                                     affectedColumns.put(columnHeader.getColumnName(), intValue);
 
-                                } else if (columnHeader.isDecimalDisplayType()) {
+                                }else if(columnHeader.isIntegerDisplayType() && columnHeader.isBigInt()){
+
+                                    Long intValue = null;
+                                    if (!queryParams.get(key).toString().isEmpty()) {
+
+                                        intValue = Long.parseLong(queryParams.get(key).toString());
+                                    }
+                                    affectedColumns.put(columnHeader.getColumnName(), intValue);
+                                }
+                                else if (columnHeader.isDecimalDisplayType()) {
 
                                     Double dValue = new Double("0");
                                     if (!queryParams.get(key).toString().isEmpty()) {

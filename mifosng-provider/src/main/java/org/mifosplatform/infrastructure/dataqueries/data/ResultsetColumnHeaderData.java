@@ -178,7 +178,7 @@ public final class ResultsetColumnHeaderData {
         return "mediumint".equalsIgnoreCase(this.columnType);
     }
 
-    private boolean isBigInt() {
+    public boolean isBigInt() {
         return "bigint".equalsIgnoreCase(this.columnType);
     }
 
