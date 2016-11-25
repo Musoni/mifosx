@@ -31,23 +31,41 @@ public final class SavingsHelper {
 
     public List<LocalDateInterval> determineInterestPostingPeriods(final LocalDate startInterestCalculationLocalDate,
             final LocalDate interestPostingUpToDate, final SavingsPostingInterestPeriodType postingPeriodType,
-            final Integer financialYearBeginningMonth) {
-
+            final Integer financialYearBeginningMonth,List<LocalDate> postInterestAsOn) {
         final List<LocalDateInterval> postingPeriods = new ArrayList<>();
-
         LocalDate periodStartDate = startInterestCalculationLocalDate;
         LocalDate periodEndDate = periodStartDate;
+        LocalDate actualPeriodStartDate = periodStartDate;
 
         while (!periodStartDate.isAfter(interestPostingUpToDate) && !periodEndDate.isAfter(interestPostingUpToDate)) {
 
-            final LocalDate interestPostingLocalDate = determineInterestPostingPeriodEndDateFrom(periodStartDate, postingPeriodType,
+            final  LocalDate  interestPostingLocalDate = determineInterestPostingPeriodEndDateFrom(periodStartDate, postingPeriodType,
                     interestPostingUpToDate, financialYearBeginningMonth);
+
             periodEndDate = interestPostingLocalDate.minusDays(1);
+
+            if (!postInterestAsOn.isEmpty()) {
+                for (LocalDate transactiondate : postInterestAsOn) {
+                    if (periodStartDate.isBefore(transactiondate)
+                            && (periodEndDate.isAfter(transactiondate) || periodEndDate
+                            .isEqual(transactiondate))) {
+                        periodEndDate = transactiondate.minusDays(1);
+                        actualPeriodStartDate = periodEndDate;
+                        break;
+                    }
+                }
+            }
 
             postingPeriods.add(LocalDateInterval.create(periodStartDate, periodEndDate));
 
-            periodEndDate = interestPostingLocalDate;
-            periodStartDate = interestPostingLocalDate;
+            if (actualPeriodStartDate.isEqual(periodEndDate))
+            {
+                periodEndDate = actualPeriodStartDate.plusDays(1);
+                periodStartDate = actualPeriodStartDate.plusDays(1);
+            }else{
+                periodEndDate = interestPostingLocalDate;
+                periodStartDate = interestPostingLocalDate;
+            }
         }
 
         return postingPeriods;

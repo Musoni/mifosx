@@ -365,7 +365,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
             } else {
                 fromSavingsAccount = accountTransferDetails.fromSavingsAccount();
                 this.savingsAccountAssembler.setHelpers(fromSavingsAccount);
-                toLoanAccount = accountTransferDetails.toLoanAccount();
+                toLoanAccount = this.loanAccountAssembler.assembleFrom(accountTransferDetails.toLoanAccount().getId());
                 this.loanAccountAssembler.setHelpers(toLoanAccount);
             }
 

@@ -51,9 +51,9 @@ public final class LoanRescheduleModelRepaymentPeriod implements LoanRescheduleM
 
     @Override
     public LoanSchedulePeriodData toData() {
-        return LoanSchedulePeriodData.repaymentOnlyPeriod(this.periodNumber, this.fromDate, this.dueDate, this.principalDue.getAmount(),
-                this.outstandingLoanBalance.getAmount(), this.interestDue.getAmount(), this.feeChargesDue.getAmount(),
-                this.penaltyChargesDue.getAmount(), this.totalDue.getAmount(), this.principalDue.plus(this.interestDue).getAmount());
+    	return LoanSchedulePeriodData.repaymentOnlyPeriod(this.periodNumber, this.fromDate, this.dueDate, this.principalDue(),
+                this.outstandingLoanBalance(), this.interestDue(), this.feeChargesDue(),
+                this.penaltyChargesDue(), this.totalDue(), this.totalInstallmentAmountForPeriod());
     }
 
     @Override
@@ -187,5 +187,15 @@ public final class LoanRescheduleModelRepaymentPeriod implements LoanRescheduleM
         }
 
         return value;
+    }
+    
+    public BigDecimal totalInstallmentAmountForPeriod() {
+    	BigDecimal value = this.principalDue();
+    	
+    	if (this.principalDue != null && this.interestDue != null) {
+    		value = this.principalDue.plus(this.interestDue).getAmount();
+    	}
+    	
+    	return value;
     }
 }

@@ -128,11 +128,13 @@ public class DecliningBalanceInterestLoanScheduleGenerator extends AbstractLoanS
             }
         }
 
-        final PrincipalInterest result = loanApplicationTerms.calculateTotalInterestForPeriod(calculator,
-                interestCalculationGraceOnRepaymentPeriodFraction, periodNumber, mc, cumulatingInterestDueToGrace,
-                balanceForInterestCalculation, interestStartDate, periodEndDate);
-        interestForThisInstallment = interestForThisInstallment.plus(result.interest());
-        cumulatingInterestDueToGrace = result.interestPaymentDueToGrace();
+        if (interestForThisInstallment == null || interestForThisInstallment.isZero() || interestForThisInstallment.isLessThanZero()) {
+	        final PrincipalInterest result = loanApplicationTerms.calculateTotalInterestForPeriod(calculator,
+	                interestCalculationGraceOnRepaymentPeriodFraction, periodNumber, mc, cumulatingInterestDueToGrace,
+	                balanceForInterestCalculation, interestStartDate, periodEndDate);
+	        interestForThisInstallment = interestForThisInstallment.plus(result.interest());
+	        cumulatingInterestDueToGrace = result.interestPaymentDueToGrace();
+        }
 
         Money interestForPeriod = interestForThisInstallment;
         if (interestForPeriod.isGreaterThanZero()) {

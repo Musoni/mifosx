@@ -112,7 +112,7 @@ public class AuditReadPlatformServiceImpl implements AuditReadPlatformService {
                     + " aud.resource_id as resourceId, aud.subresource_id as subresourceId,aud.client_id as clientId, aud.loan_id as loanId,"
                     + " mk.username as maker, aud.made_on_date as madeOnDate, " + " aud.api_get_url as resourceGetUrl, "
                     + " l.principal_amount as disbursementAmount, l.disbursedon_date as disbursementDate,"
-                    + " l.total_repayment_derived as loanOutStanding, eve.enum_message_property as loanStatus, "
+                    + " l.total_outstanding_derived as loanOutStanding, eve.enum_message_property as loanStatus, "
                     + " s.account_balance_derived as savingOutStanding, evee.enum_message_property as savingStatus, "
                     + "ck.username as checker, aud.checked_on_date as checkedOnDate, ev.enum_message_property as processingResult "
                     + commandAsJsonString + ", "

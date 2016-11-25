@@ -33,7 +33,7 @@ public interface ReadWriteNonCoreDataService {
     @PreAuthorize(value = "hasAnyRole('ALL_FUNCTIONS', 'DEREGISTER_DATATABLE')")
     void deregisterDatatable(String datatable);
 
-    GenericResultsetData retrieveDataTableGenericResultSet(String datatable, Long appTableId, String order, Long id);
+    GenericResultsetData retrieveDataTableGenericResultSet(String datatable, Long appTableId, String order, Long id,boolean dropdownValues);
 
     CommandProcessingResult createDatatable(JsonCommand command);
 

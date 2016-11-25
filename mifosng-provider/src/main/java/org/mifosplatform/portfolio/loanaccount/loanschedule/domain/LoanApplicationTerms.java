@@ -694,8 +694,12 @@ public final class LoanApplicationTerms {
             case INVALID:
             break;
             case SAME_AS_REPAYMENT_PERIOD:
-                LocalDate startDate = getExpectedDisbursementDate();
-                periodsInLoanTerm = calculatePeriodsBetweenDates(startDate, this.loanEndDate);
+            	// only calculate the periods between the start and end dates if the 
+            	// "allowPartialPeriodInterestCalcualtion" is set to true
+            	if (this.allowPartialPeriodInterestCalcualtion) {
+            		LocalDate startDate = getExpectedDisbursementDate();
+                    periodsInLoanTerm = calculatePeriodsBetweenDates(startDate, this.loanEndDate);
+            	}
             break;
         }
 
@@ -888,7 +892,10 @@ public final class LoanApplicationTerms {
 
     private BigDecimal calculateLoanTermFrequency(final LocalDate periodStartDate, final LocalDate periodEndDate) {
         BigDecimal loanTermFrequencyBigDecimal = BigDecimal.valueOf(this.repaymentEvery);
-        if (this.interestCalculationPeriodMethod.isDaily() || this.allowPartialPeriodInterestCalcualtion) {
+        
+        // removed the "this.interestCalculationPeriodMethod.isDaily()" check from the if statement below, 
+        // so the system uses the value of the "repaymentEvery" property for daily interestCalculationPeriodMethod
+        if (this.allowPartialPeriodInterestCalcualtion) {
             loanTermFrequencyBigDecimal = calculatePeriodsBetweenDates(periodStartDate, periodEndDate);
         }
         return loanTermFrequencyBigDecimal;

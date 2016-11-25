@@ -37,11 +37,11 @@ public class AccountNumberFormatEnumerations {
     ));
 
     public final static Set<String> customAccountNumberPrefixesForLoanAccounts = new HashSet<>(Arrays.asList(
-            "{{officeId}}","{{officeExternalId}}","{{staffId}}","{{loanProductShortName}}","{{loanProduct}}","{{clientId}}","{{entityId}}"
+            "{{officeId}}","{{officeExternalId}}","{{staffId}}","{{loanProductShortName}}","{{loanProduct}}","{{clientId}}","{{groupId}}","{{entityId}}"
     ));
 
     public final static Set<String> customAccountNumberPrefixesForSavingsAccounts = new HashSet<>(Arrays.asList(
-            "{{officeId}}","{{officeExternalId}}","{{staffId}}","{{savingsProductShortName}}","{{savingsProduct}}","{{clientId}}","{{entityId}}"
+            "{{officeId}}","{{groupId}}","{{officeExternalId}}","{{staffId}}","{{savingsProductShortName}}","{{savingsProduct}}","{{clientId}}","{{entityId}}"
     ));
 
     public final static Set<String> customAccountPrefixesForGroupExternalId = new HashSet<>(Arrays.asList(
