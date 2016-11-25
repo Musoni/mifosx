@@ -204,6 +204,15 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder splitInterestAmongGuarantors(final Long loanId) {
+        this.actionName = "SPLITINTERESTAMONGGUARANTORS";
+        this.entityName = "LOAN";
+        this.entityId = loanId;
+        this.loanId = loanId;
+        this.href = "/loans/" + loanId + "?command=splitInterestAmongGuarantors";
+        return this;
+    }
+
     public CommandWrapperBuilder updateGuarantor(final Long loanId, final Long guarantorId) {
         this.actionName = "UPDATE";
         this.entityName = "GUARANTOR";

@@ -731,6 +731,9 @@ public class LoansApiResource {
         }else if(is(commandParam,"undowithdraw")){
             final CommandWrapper commandRequest = builder.undoLoanWithdrawnByApplicant(loanId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        }else if(is(commandParam,"splitinterestamongguarantors")){
+            final CommandWrapper commandRequest =  new CommandWrapperBuilder().splitInterestAmongGuarantors(loanId).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         }
 
         if (result == null) { throw new UnrecognizedQueryParamException("command", commandParam); }

@@ -97,4 +97,7 @@ public interface LoanWritePlatformService {
 	CommandProcessingResult undoLastLoanDisbursal(Long loanId, JsonCommand command);
 	
 	LoanCharge addLoanCharge(Loan loan, Charge charge, JsonCommand command, LoanCharge loanCharge);
+
+    CommandProcessingResult splitInterestAmongGuarantors(Long loanId);
+
 }
