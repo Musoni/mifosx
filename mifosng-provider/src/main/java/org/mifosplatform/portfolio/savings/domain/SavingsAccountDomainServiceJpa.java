@@ -75,8 +75,9 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         final Set<Long> existingReversedTransactionIds = new HashSet<>();
         final LocalDate postInterestOnDate = null;
         updateExistingTransactionsDetails(account, existingTransactionIds, existingReversedTransactionIds);
+        final boolean isGuarantInterestDeposit = false;
         final SavingsAccountTransactionDTO transactionDTO = new SavingsAccountTransactionDTO(fmt, transactionDate, transactionAmount,
-                paymentDetail, new Date(), user);
+                paymentDetail, new Date(), user,isGuarantInterestDeposit);
         final SavingsAccountTransaction withdrawal = account.withdraw(transactionDTO, transactionBooleanValues.isApplyWithdrawFee());
 
         final MathContext mc = MathContext.DECIMAL64;
@@ -114,7 +115,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
     @Override
     public SavingsAccountTransaction handleDeposit(final SavingsAccount account, final DateTimeFormatter fmt,
             final LocalDate transactionDate, final BigDecimal transactionAmount, final PaymentDetail paymentDetail,
-            final boolean isAccountTransfer, final boolean isRegularTransaction) {
+            final boolean isAccountTransfer, final boolean isRegularTransaction,final boolean isGuarantorInterestDeposit) {
 
         AppUser user = getAppUserIfPresent();
         final boolean isSavingsInterestPostingAtCurrentPeriodEnd = this.configurationDomainService
@@ -129,7 +130,7 @@ public class SavingsAccountDomainServiceJpa implements SavingsAccountDomainServi
         final Set<Long> existingReversedTransactionIds = new HashSet<>();
         updateExistingTransactionsDetails(account, existingTransactionIds, existingReversedTransactionIds);
         final SavingsAccountTransactionDTO transactionDTO = new SavingsAccountTransactionDTO(fmt, transactionDate, transactionAmount,
-                paymentDetail, new Date(), user);
+                paymentDetail, new Date(), user,isGuarantorInterestDeposit);
         final SavingsAccountTransaction deposit = account.deposit(transactionDTO);
         final LocalDate postInterestOnDate = null;
         final MathContext mc = MathContext.DECIMAL64;

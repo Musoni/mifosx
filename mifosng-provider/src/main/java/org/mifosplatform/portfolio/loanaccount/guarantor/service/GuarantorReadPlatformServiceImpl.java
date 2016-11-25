@@ -28,7 +28,9 @@ import org.mifosplatform.portfolio.loanaccount.domain.LoanRepository;
 import org.mifosplatform.portfolio.loanaccount.exception.LoanNotFoundException;
 import org.mifosplatform.portfolio.loanaccount.guarantor.data.GuarantorData;
 import org.mifosplatform.portfolio.loanaccount.guarantor.data.GuarantorFundingData;
+import org.mifosplatform.portfolio.loanaccount.guarantor.data.GuarantorInterestAllocationData;
 import org.mifosplatform.portfolio.loanaccount.guarantor.data.GuarantorTransactionData;
+import org.mifosplatform.portfolio.loanaccount.guarantor.domain.*;
 import org.mifosplatform.portfolio.savings.data.DepositAccountOnHoldTransactionData;
 import org.mifosplatform.portfolio.savings.service.SavingsEnumerations;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,14 +45,17 @@ public class GuarantorReadPlatformServiceImpl implements GuarantorReadPlatformSe
     private final ClientReadPlatformService clientReadPlatformService;
     private final StaffReadPlatformService staffReadPlatformService;
     private final LoanRepository loanRepository;
+    private final GuarantorInterestPaymentRepository guarantorInterestPaymentRepository;
 
     @Autowired
     public GuarantorReadPlatformServiceImpl(final RoutingDataSource dataSource, final ClientReadPlatformService clientReadPlatformService,
-            final StaffReadPlatformService staffReadPlatformService, final LoanRepository loanRepository) {
+            final StaffReadPlatformService staffReadPlatformService, final LoanRepository loanRepository,
+            final GuarantorInterestPaymentRepository guarantorInterestPaymentRepository) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
         this.clientReadPlatformService = clientReadPlatformService;
         this.staffReadPlatformService = staffReadPlatformService;
         this.loanRepository = loanRepository;
+        this.guarantorInterestPaymentRepository = guarantorInterestPaymentRepository;
     }
 
     @Override
@@ -98,7 +103,7 @@ public class GuarantorReadPlatformServiceImpl implements GuarantorReadPlatformSe
                 " g.id as id, g.loan_id as loanId, g.client_reln_cv_id clientRelationshipTypeId, g.entity_id as entityId, g.type_enum guarantorType ,g.firstname as firstname, g.lastname as lastname, g.dob as dateOfBirth, g.address_line_1 as addressLine1, g.address_line_2 as addressLine2, g.city as city, g.state as state, g.country as country, g.zip as zip, g.house_phone_number as housePhoneNumber, g.mobile_number as mobilePhoneNumber, g.comment as comment, ")
                 .append(" g.is_active as guarantorStatus,")//
                 .append(" cv.code_value as typeName, cv.is_active as typeIsActive, ")//
-                .append("gfd.amount,")//
+                //.append("gfd.amount,mgl.id as allocationId, mgl.deposited_amount as allocatedInterest, mgl.savings_account_id as savingsAccount, mgl.submitted_on_date as allocatedOnDate,")//
                 .append(this.guarantorFundingMapper.schema())//
                 .append(",")//
                 .append(this.guarantorTransactionMapper.schema())//
@@ -109,6 +114,7 @@ public class GuarantorReadPlatformServiceImpl implements GuarantorReadPlatformSe
                 .append(" left JOIN m_savings_account sa on sa.id = aa.linked_savings_account_id ")//
                 .append(" left join m_guarantor_transaction gt on gt.guarantor_fund_detail_id = gfd.id") //
                 .append(" left join m_deposit_account_on_hold_transaction oht on oht.id = gt.deposit_on_hold_transaction_id");
+              //  .append(" left join m_guarantor_loan_interest_payment mgl on mgl.guarantor_id = g.id and mgl.is_reversed is false");
 
         public String schema() {
             return this.sqlBuilder.toString();
@@ -166,7 +172,7 @@ public class GuarantorReadPlatformServiceImpl implements GuarantorReadPlatformSe
 
             return new GuarantorData(id, loanId, clientRelationshipType, entityId, guarantorType, firstname, lastname, dob, addressLine1,
                     addressLine2, city, state, zip, country, mobileNumber, housePhoneNumber, comment, null, null, null, status,
-                    guarantorFundingDetails, null, null, accountLinkingOptions);
+                    guarantorFundingDetails, null, null, accountLinkingOptions,null);
         }
     }
 
@@ -271,12 +277,29 @@ public class GuarantorReadPlatformServiceImpl implements GuarantorReadPlatformSe
     private GuarantorData mergeDetailsForClientOrStaffGuarantor(final GuarantorData guarantorData) {
         if (guarantorData.isExistingClient()) {
             final ClientData clientData = this.clientReadPlatformService.retrieveOne(guarantorData.getEntityId());
-            return GuarantorData.mergeClientData(clientData, guarantorData);
+            final Collection<GuarantorInterestAllocationData> interestAllocationDatas = this.retrieveInterestAllocationData(guarantorData);
+            return GuarantorData.mergeClientData(clientData, guarantorData, interestAllocationDatas);
         } else if (guarantorData.isStaffMember()) {
             final StaffData staffData = this.staffReadPlatformService.retrieveStaff(guarantorData.getEntityId());
-            return GuarantorData.mergeStaffData(staffData, guarantorData);
+            final Collection<GuarantorInterestAllocationData> interestAllocationDatas = this.retrieveInterestAllocationData(guarantorData);
+            return GuarantorData.mergeStaffData(staffData, guarantorData,interestAllocationDatas);
         }
         return guarantorData;
+    }
+
+    private Collection<GuarantorInterestAllocationData> retrieveInterestAllocationData(final GuarantorData guarantorData){
+        final Collection<GuarantorInterestAllocationData> interestAllocationData =  new ArrayList<>();
+        if(guarantorData.isExistingClient()){
+            final Collection<GuarantorInterestPayment> guarantorInterestPayments = this.guarantorInterestPaymentRepository.
+                    findByLoanAndReverseFalse(guarantorData.getLoanId(),guarantorData.getId());
+
+            for(final GuarantorInterestPayment guarantorInterestPayment : guarantorInterestPayments){
+                final GuarantorInterestAllocationData allocationData = GuarantorInterestAllocationData.createNew(guarantorInterestPayment.getId(),
+                        guarantorInterestPayment.getDepositedAmount(),guarantorInterestPayment.getSavingsAccount().getId(),guarantorInterestPayment.getSubmittedOnDate());
+                interestAllocationData.add(allocationData);
+            }
+        }
+        return interestAllocationData;
     }
 
 }

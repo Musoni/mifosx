@@ -222,8 +222,9 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         boolean isRegularTransaction = false;
         if (amountForDeposit.isGreaterThanZero()) {
             boolean isAccountTransfer = false;
+            boolean isGuarantorInterestDeposit = false;
             this.savingsAccountDomainService.handleDeposit(account, fmt, account.getActivationLocalDate(), amountForDeposit.getAmount(),
-                    null, isAccountTransfer, isRegularTransaction);
+                    null, isAccountTransfer, isRegularTransaction,isGuarantorInterestDeposit);
             updateExistingTransactionsDetails(account, existingTransactionIds, existingReversedTransactionIds);
         }
         account.processAccountUponActivation(isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, user);
@@ -255,8 +256,9 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final PaymentDetail paymentDetail = this.paymentDetailWritePlatformService.createAndPersistPaymentDetail(command, changes);
         boolean isAccountTransfer = false;
         boolean isRegularTransaction = true;
+        boolean isGuarantorInterest = false;
         final SavingsAccountTransaction deposit = this.savingsAccountDomainService.handleDeposit(account, fmt, transactionDate,
-                transactionAmount, paymentDetail, isAccountTransfer, isRegularTransaction);
+                transactionAmount, paymentDetail, isAccountTransfer, isRegularTransaction,isGuarantorInterest);
         
         changes.put("transactionDate", command.stringValueOfParameterNamed("transactionDate"));
         changes.put("transactionAmount", command.stringValueOfParameterNamed("transactionAmount"));
@@ -458,6 +460,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 .findOneByIdAndSavingsAccountId(transactionId, savingsId);
         if (savingsAccountTransaction == null) { throw new SavingsAccountTransactionNotFoundException(savingsId, transactionId); }
 
+        if(savingsAccountTransaction.isGuarantorInterestDeposit()){ throw new SavingsTransferTransactionsCannotBeUndoneException(transactionId);}
+
         if (!allowAccountTransferModification
                 && this.accountTransfersReadPlatformService
                         .isAccountTransfer(transactionId,
@@ -570,8 +574,9 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 
         SavingsAccountTransaction transaction = null;
         boolean isInterestTransfer = false;
+        boolean isGuarantorInterestDeposit = false;
         final SavingsAccountTransactionDTO transactionDTO = new SavingsAccountTransactionDTO(fmt, transactionDate, transactionAmount,
-                paymentDetail, savingsAccountTransaction.createdDate(), user);
+                paymentDetail, savingsAccountTransaction.createdDate(), user,isGuarantorInterestDeposit);
         if (savingsAccountTransaction.isDeposit()) {
             transaction = account.deposit(transactionDTO);
         } else {

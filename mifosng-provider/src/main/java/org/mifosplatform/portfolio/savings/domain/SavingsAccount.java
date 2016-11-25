@@ -812,7 +812,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         final Money amount = Money.of(this.currency, transactionDTO.getTransactionAmount());
 
         final SavingsAccountTransaction transaction = SavingsAccountTransaction.deposit(this, office(), transactionDTO.getPaymentDetail(),
-                transactionDTO.getTransactionDate(), amount, transactionDTO.getCreatedDate(), transactionDTO.getAppUser());
+                transactionDTO.getTransactionDate(), amount, transactionDTO.getCreatedDate(), transactionDTO.getAppUser(),transactionDTO.isGuarantorInterestDeposit());
         this.transactions.add(transaction);
 
         this.summary.updateSummary(this.currency, this.savingsAccountTransactionSummaryWrapper, this.transactions);
