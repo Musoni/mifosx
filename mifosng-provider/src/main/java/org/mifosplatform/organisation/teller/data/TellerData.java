@@ -40,6 +40,9 @@ public final class TellerData implements Serializable {
     private final Boolean hasMappedCashiers;
     
     private String officeName;
+
+    private String activeCashierName;
+    private Long activeCashierId;
     
     private final Collection<OfficeData> officeOptions;
     private final Collection<StaffData> staffOptions;
@@ -49,7 +52,7 @@ public final class TellerData implements Serializable {
      */
     private TellerData(final Long id, final Long officeId, final Long debitAccountId, final Long creditAccountId,
                        final String name, final String description, final LocalDate startDate, final LocalDate endDate,
-                       final TellerStatus status, final Boolean hasTransactions, final Boolean hasMappedCashiers) {
+                       final TellerStatus status, final Boolean hasTransactions, final Boolean hasMappedCashiers,final String activeCashierName,final Long activeCashierId) {
         super();
         this.id = id;
         this.officeId = officeId;
@@ -64,6 +67,8 @@ public final class TellerData implements Serializable {
         this.hasMappedCashiers = hasMappedCashiers;
         this.officeOptions = null;
         this.staffOptions = null;
+        this.activeCashierId = activeCashierId;
+        this.activeCashierName =activeCashierName;
     }
 
     /**
@@ -86,15 +91,15 @@ public final class TellerData implements Serializable {
                                       final Long creditAccountId, final String name, final String description,
                                       final LocalDate startDate, final LocalDate endDate, final TellerStatus status,
                                       final String officeName,
-                                      final Boolean hasTransactions, final Boolean hasMappedCashiers) {
+                                      final Boolean hasTransactions, final Boolean hasMappedCashiers,final String activeCashierName,final Long activeCashierId) {
         TellerData tellerData = new TellerData(id, officeId, debitAccountId, creditAccountId, name, description, startDate, endDate,
-                status, hasTransactions, hasMappedCashiers);
+                status, hasTransactions, hasMappedCashiers,activeCashierName,activeCashierId);
         tellerData.officeName = officeName;
         return tellerData;
     }
     
     public static TellerData lookup(final Long id, final String name) {
-        return new TellerData(id, null, null, null, name, null, null, null, null, null, null);
+        return new TellerData(id, null, null, null, name, null, null, null, null, null, null,null,null);
     }
 
     public Long getId() {
@@ -143,5 +148,13 @@ public final class TellerData implements Serializable {
 
     public Boolean hasMappedCashiers() {
         return this.hasMappedCashiers;
+    }
+
+    public String getActiveCashierName() {
+        return activeCashierName;
+    }
+
+    public Long getActiveCashierId() {
+        return activeCashierId;
     }
 }

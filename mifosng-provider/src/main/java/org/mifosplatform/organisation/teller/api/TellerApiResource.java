@@ -19,6 +19,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
+import org.apache.commons.lang.StringUtils;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 import org.mifosplatform.commands.domain.CommandWrapper;
@@ -179,11 +180,30 @@ public class TellerApiResource {
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces(MediaType.APPLICATION_JSON)
     public String updateCashier(@PathParam("tellerId") final Long tellerId, @PathParam("cashierId") final Long cashierId,
-            final String cashierDate) {
-        final CommandWrapper request = new CommandWrapperBuilder().updateAllocationTeller(tellerId, cashierId).withJson(cashierDate)
-                .build();
+            final String cashierDate, @QueryParam("command") final String commandParam) {
 
-        final CommandProcessingResult result = this.commandWritePlatformService.logCommandSource(request);
+        CommandProcessingResult result = null;
+
+        if (is(commandParam, "assign")) {
+
+            final CommandWrapper request = new CommandWrapperBuilder().assignCashierToTeller(tellerId, cashierId).withJson(cashierDate)
+                    .build();
+            result = this.commandWritePlatformService.logCommandSource(request);
+
+        } else if (is(commandParam, "unassign")) {
+
+            final CommandWrapper request = new CommandWrapperBuilder().unassignCashierToTeller(tellerId, cashierId).withJson(cashierDate)
+                    .build();
+            result = this.commandWritePlatformService.logCommandSource(request);
+
+        } else {
+
+            final CommandWrapper request = new CommandWrapperBuilder().updateAllocationTeller(tellerId, cashierId).withJson(cashierDate)
+                    .build();
+            result = this.commandWritePlatformService.logCommandSource(request);
+        }
+
+
 
         return this.jsonSerializer.serialize(result);
     }
@@ -322,5 +342,10 @@ public class TellerApiResource {
         public String officeName;
         public Collection<CashierData> cashiers;
 
+
+    }
+
+    private boolean is(final String commandParam, final String commandValue) {
+        return StringUtils.isNotBlank(commandParam) && commandParam.trim().equalsIgnoreCase(commandValue);
     }
 }

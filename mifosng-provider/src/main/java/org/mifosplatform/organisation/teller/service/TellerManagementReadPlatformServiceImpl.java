@@ -74,9 +74,12 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
 
             sqlBuilder.append("t.id as id,t.office_id as office_id, t.name as teller_name, t.description as description, ");
             sqlBuilder.append("t.valid_from as start_date, t.valid_to as end_date, t.state as status, o.name as office_name, ");
-            sqlBuilder.append("t.debit_account_id as debit_account_id, t.credit_account_id as credit_account_id ");
+            sqlBuilder.append("t.debit_account_id as debit_account_id, t.credit_account_id as credit_account_id, ");
+            sqlBuilder.append("c.id as cashier_id, st.display_name as cashier_name ");
             sqlBuilder.append("from m_tellers t ");
             sqlBuilder.append("join m_office o on o.id = t.office_id ");
+            sqlBuilder.append("left join m_cashiers c on c.teller_id = t.id and is_active = 1 ");
+            sqlBuilder.append("left join m_staff st on st.id = c.staff_id ");
 
             return sqlBuilder.toString();
         }
@@ -100,8 +103,11 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             final LocalDate startDate = JdbcSupport.getLocalDate(rs, "start_date");
             final LocalDate endDate = JdbcSupport.getLocalDate(rs, "end_date");
 
+            final String activeCashierName = rs.getString("cashier_name");
+            final Long activeCashierId = rs.getLong("cashier_id");
+
             return TellerData.instance(id, officeId, debitAccountId, creditAccountId, tellerName, description, startDate, endDate,
-                    tellerStatus, officeName, null, null);
+                    tellerStatus, officeName, null, null,activeCashierName,activeCashierId);
         }
     }
 
@@ -143,7 +149,7 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             final LocalDate endDate = JdbcSupport.getLocalDate(rs, "end_date");
 
             return TellerData.instance(id, officeId, debitAccountId, creditAccountId, tellerName, description, startDate, endDate,
-                    tellerStatus, officeName, null, null);
+                    tellerStatus, officeName, null, null,null,null);
 
         }
     }
@@ -520,7 +526,8 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             sqlBuilder.append("c.id as id,c.teller_id as teller_id, t.name as teller_name, c.description as description, ");
             sqlBuilder.append("c.staff_id as staff_id, s.display_name as staff_name,  ");
             sqlBuilder.append("c.start_date as start_date, c.end_date as end_date,  ");
-            sqlBuilder.append("c.full_day as full_day, c.start_time as start_time, c.end_time as end_time ");
+            sqlBuilder.append("c.full_day as full_day, c.start_time as start_time, c.end_time as end_time, ");
+            sqlBuilder.append("c.is_active as is_active ");
             sqlBuilder.append("from m_cashiers c ");
             sqlBuilder.append("join m_tellers t on t.id = c.teller_id ");
             sqlBuilder.append("join m_staff s on s.id = c.staff_id ");
@@ -541,6 +548,8 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             final LocalDate startDate = JdbcSupport.getLocalDate(rs, "start_date");
             final LocalDate endDate = JdbcSupport.getLocalDate(rs, "end_date");
             final Integer fullDayFromDB = rs.getInt("full_day");
+            final Boolean isActive = rs.getBoolean("is_active");
+
             Boolean fullDay = false;
             if (fullDayFromDB == 1) {
                 fullDay = true;
@@ -549,7 +558,7 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             final String endTime = rs.getString("end_time");
 
             return CashierData.instance(id, null, null, staffId, staffName, tellerId, tellerName, description, startDate.toDate(),
-                    endDate.toDate(), fullDay, startTime, endTime);
+                    endDate.toDate(), fullDay, startTime, endTime,isActive);
         }
     }
 
