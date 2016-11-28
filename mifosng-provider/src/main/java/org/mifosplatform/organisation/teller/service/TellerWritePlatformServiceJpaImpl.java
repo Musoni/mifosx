@@ -5,6 +5,8 @@
  */
 package org.mifosplatform.organisation.teller.service;
 
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -35,9 +37,7 @@ import org.mifosplatform.organisation.teller.domain.CashierTxnType;
 import org.mifosplatform.organisation.teller.domain.Teller;
 import org.mifosplatform.organisation.teller.domain.TellerRepository;
 import org.mifosplatform.organisation.teller.domain.TellerRepositoryWrapper;
-import org.mifosplatform.organisation.teller.exception.CashierExistForTellerException;
-import org.mifosplatform.organisation.teller.exception.CashierNotFoundException;
-import org.mifosplatform.organisation.teller.exception.TellerNotFoundException;
+import org.mifosplatform.organisation.teller.exception.*;
 import org.mifosplatform.organisation.teller.serialization.TellerCommandFromApiJsonDeserializer;
 import org.mifosplatform.portfolio.client.domain.ClientTransaction;
 import org.mifosplatform.useradministration.domain.AppUser;
@@ -304,6 +304,87 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
         final Cashier cashierToReturn = this.cashierRepository.findOne(cashierId);
 
         return cashierToReturn;
+    }
+    @Override
+    @Transactional
+    public CommandProcessingResult assignCashierToTeller(Long tellerId, Long cashierId,JsonCommand command){
+
+        try {
+
+            final AppUser currentUser = this.context.authenticatedUser();
+
+            // make sure this teller does not yet have an active cashier
+
+            List<Cashier> activeTellerCashier = this.cashierRepository.getActiveTellerCashier(tellerId);
+
+            if(!activeTellerCashier.isEmpty()){
+
+               throw new NoMoreThanOneActiveCashierPerTellerException(tellerId);
+            }
+
+
+            // make sure this cashier is not yet active in another teller
+
+            List<Cashier> activeCashiers = this.cashierRepository.getActiveCashier(cashierId,tellerId);
+
+            if(!activeCashiers.isEmpty()){
+
+                throw new CashierAlreadyActiveInAnotherTellerException(cashierId);
+            }
+
+
+            final Cashier cashier = validateUserPriviledgeOnCashierAndRetrieve(currentUser, tellerId, cashierId);
+
+            cashier.assign();
+
+            final Map<String, Object> changes = new LinkedHashMap<>(7);
+            changes.put("active",true);
+
+            this.cashierRepository.saveAndFlush(cashier);
+
+
+            return new CommandProcessingResultBuilder() //
+                    .withCommandId(command.commandId()) //
+                    .withEntityId(cashier.getTeller().getId()) //
+                    .withSubEntityId(cashier.getId()) //
+                    .with(changes) //
+                    .build();
+        } catch (final DataIntegrityViolationException dve) {
+            handleTellerDataIntegrityIssues(command, dve);
+            return CommandProcessingResult.empty();
+        }
+
+    }
+
+    @Override
+    @Transactional
+    public CommandProcessingResult unassignCashierToTeller(Long tellerId, Long cashierId,JsonCommand command){
+
+        try {
+
+            final AppUser currentUser = this.context.authenticatedUser();
+
+             final Cashier cashier = validateUserPriviledgeOnCashierAndRetrieve(currentUser, tellerId, cashierId);
+
+            cashier.unassign();
+
+            final Map<String, Object> changes = new LinkedHashMap<>(7);
+            changes.put("active",false);
+
+            this.cashierRepository.saveAndFlush(cashier);
+
+
+            return new CommandProcessingResultBuilder() //
+                    .withCommandId(command.commandId()) //
+                    .withEntityId(cashier.getTeller().getId()) //
+                    .withSubEntityId(cashier.getId()) //
+                    .with(changes) //
+                    .build();
+        } catch (final DataIntegrityViolationException dve) {
+            handleTellerDataIntegrityIssues(command, dve);
+            return CommandProcessingResult.empty();
+        }
+
     }
 
     @Override

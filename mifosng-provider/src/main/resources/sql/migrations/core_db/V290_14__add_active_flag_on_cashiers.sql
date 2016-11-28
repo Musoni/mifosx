@@ -1,0 +1,1 @@
+ALTER TABLE `m_cashiers` ADD COLUMN `is_active` INT(4) DEFAULT 0 NOT NULL;
