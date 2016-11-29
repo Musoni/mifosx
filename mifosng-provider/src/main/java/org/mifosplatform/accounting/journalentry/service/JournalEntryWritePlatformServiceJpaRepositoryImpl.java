@@ -15,10 +15,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import edu.emory.mathcs.backport.java.util.Arrays;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
+import org.mifosplatform.accounting.closure.bookoffincomeandexpense.data.SingleDebitOrCreditEntry;
 import org.mifosplatform.accounting.closure.domain.GLClosure;
 import org.mifosplatform.accounting.closure.domain.GLClosureRepository;
+import org.mifosplatform.accounting.common.AccountingConstants;
 import org.mifosplatform.accounting.financialactivityaccount.domain.FinancialActivityAccount;
 import org.mifosplatform.accounting.financialactivityaccount.domain.FinancialActivityAccountRepositoryWrapper;
 import org.mifosplatform.accounting.glaccount.data.GLAccountDataForLookup;
@@ -124,85 +127,222 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
     @Override
     public CommandProcessingResult createJournalEntry(final JsonCommand command) {
         try {
-            final JournalEntryCommand journalEntryCommand = this.fromApiJsonDeserializer.commandFromApiJson(command.json());
-            journalEntryCommand.validateForCreate();
-
-            // check office is valid
-            final Long officeId = command.longValueOfParameterNamed(JournalEntryJsonInputParams.OFFICE_ID.getValue());
-            final Office office = this.officeRepository.findOne(officeId);
-            if (office == null) { throw new OfficeNotFoundException(officeId); }
-
+            final JournalEntryCommand jec = this.fromApiJsonDeserializer.commandFromApiJson(command.json());
+            jec.validateForCreate();
+            final Boolean multipleCreditOffices = jec.hasMultipleOffices(JournalEntryJsonInputParams.CREDITS.getValue());
+            final Boolean multipleDebitOffices = jec.hasMultipleOffices(JournalEntryJsonInputParams.DEBITS.getValue());
             final Long accountRuleId = command.longValueOfParameterNamed(JournalEntryJsonInputParams.ACCOUNTING_RULE.getValue());
             final String currencyCode = command.stringValueOfParameterNamed(JournalEntryJsonInputParams.CURRENCY_CODE.getValue());
+            final Date transactionDate = command.DateValueOfParameterNamed(JournalEntryJsonInputParams.TRANSACTION_DATE.getValue());
+            final String referenceNumber = command.stringValueOfParameterNamed(JournalEntryJsonInputParams.REFERENCE_NUMBER.getValue());
 
-            validateBusinessRulesForJournalEntries(journalEntryCommand);
+            if(multipleCreditOffices && multipleDebitOffices){
+                throw new JournalEntryInvalidException(GL_JOURNAL_ENTRY_INVALID_REASON.INVALID_DEBIT_OR_CREDIT_OFFICES);
+            }
 
             /** Capture payment details **/
             final Map<String, Object> changes = new LinkedHashMap<>();
             final PaymentDetail paymentDetail = this.paymentDetailWritePlatformService.createAndPersistPaymentDetail(command, changes);
 
-            /** Set a transaction Id and save these Journal entries **/
-            final Date transactionDate = command.DateValueOfParameterNamed(JournalEntryJsonInputParams.TRANSACTION_DATE.getValue());
-            final String transactionId = generateTransactionId(officeId);
-            final String referenceNumber = command.stringValueOfParameterNamed(JournalEntryJsonInputParams.REFERENCE_NUMBER.getValue());
+            if(jec.isInterBranch()){
+                // if journal entry command involves multiple offices, retrieve control account and split up into multiple journal entries
+                FinancialActivityAccount controlAccount =
+                        this.financialActivityAccountRepositoryWrapper.findByFinancialActivityTypeWithNotFoundDetection(AccountingConstants.FINANCIAL_ACTIVITY.INTERBRANCH_CONTROL.getValue());
+                final List<SingleDebitOrCreditEntryCommand> finalCreditList = new ArrayList<>();
+                final List<SingleDebitOrCreditEntryCommand> finalDebitList = new ArrayList<>();
 
-            if (accountRuleId != null) {
+                if(multipleCreditOffices){
+                    final Long officeId = jec.getDebits()[0].getOfficeId();
+                    final Office office = this.officeRepository.findOne(officeId);
+                    if(office == null){ throw new OfficeNotFoundException(officeId); }
+                    final String transactionId = generateTransactionId(officeId);
+                    final Map<Long,List<SingleDebitOrCreditEntryCommand>> creditOfficeMap = new HashMap<>();
+                    finalDebitList.addAll(Arrays.asList(jec.getDebits()));
+                    BigDecimal creditControlAmount = BigDecimal.ZERO;
 
-                final AccountingRule accountingRule = this.accountingRuleRepository.findOne(accountRuleId);
-                if (accountingRule == null) { throw new AccountingRuleNotFoundException(accountRuleId); }
-
-                if (accountingRule.getAccountToCredit() == null) {
-                    if (journalEntryCommand.getCredits() == null) { throw new JournalEntryInvalidException(
-                            GL_JOURNAL_ENTRY_INVALID_REASON.NO_DEBITS_OR_CREDITS, null, null, null); }
-                    if (journalEntryCommand.getDebits() != null) {
-                        checkDebitOrCreditAccountsAreValid(accountingRule, journalEntryCommand.getCredits(),
-                                journalEntryCommand.getDebits());
-                        checkDebitAndCreditAmounts(journalEntryCommand.getCredits(), journalEntryCommand.getDebits());
+                    for(SingleDebitOrCreditEntryCommand credit: jec.getCredits()){
+                        final List<SingleDebitOrCreditEntryCommand> differentOfficeCredits;
+                        if(creditOfficeMap.containsKey(credit.getOfficeId())){
+                            differentOfficeCredits = creditOfficeMap.get(credit.getOfficeId());
+                        }else{
+                            differentOfficeCredits = new ArrayList<>();
+                        }
+                        differentOfficeCredits.add(credit);
+                        creditOfficeMap.put(credit.getOfficeId(),differentOfficeCredits);
                     }
 
-                    saveAllDebitOrCreditEntries(journalEntryCommand, office, paymentDetail, currencyCode, transactionDate,
-                            journalEntryCommand.getCredits(), transactionId, JournalEntryType.CREDIT, referenceNumber);
-                } else {
-                    final GLAccount creditAccountHead = accountingRule.getAccountToCredit();
-                    validateGLAccountForTransaction(creditAccountHead);
-                    validateDebitOrCreditArrayForExistingGLAccount(creditAccountHead, journalEntryCommand.getCredits());
-                    saveAllDebitOrCreditEntries(journalEntryCommand, office, paymentDetail, currencyCode, transactionDate,
-                            journalEntryCommand.getCredits(), transactionId, JournalEntryType.CREDIT, referenceNumber);
-                }
+                    for(Map.Entry<Long,List<SingleDebitOrCreditEntryCommand>> entry : creditOfficeMap.entrySet()){
+                        if(entry.getKey().equals(officeId)){
+                            finalCreditList.addAll(entry.getValue());
+                        }else{
+                            BigDecimal amount = BigDecimal.ZERO;
 
-                if (accountingRule.getAccountToDebit() == null) {
-                    if (journalEntryCommand.getDebits() == null) { throw new JournalEntryInvalidException(
-                            GL_JOURNAL_ENTRY_INVALID_REASON.NO_DEBITS_OR_CREDITS, null, null, null); }
-                    if (journalEntryCommand.getCredits() != null) {
-                        checkDebitOrCreditAccountsAreValid(accountingRule, journalEntryCommand.getCredits(),
-                                journalEntryCommand.getDebits());
-                        checkDebitAndCreditAmounts(journalEntryCommand.getCredits(), journalEntryCommand.getDebits());
+                            for(SingleDebitOrCreditEntryCommand creditEntryCommand : entry.getValue()){
+                                amount = amount.add(creditEntryCommand.getAmount());
+                                creditControlAmount = creditControlAmount.add(creditEntryCommand.getAmount());
+                            }
+
+                            final SingleDebitOrCreditEntryCommand controlDebit =
+                                    new SingleDebitOrCreditEntryCommand(null,controlAccount.getGlAccount().getId(),amount,null,entry.getKey());
+
+                            finalCreditList.addAll(entry.getValue());
+                            finalDebitList.add(controlDebit);
+                        }
                     }
 
-                    saveAllDebitOrCreditEntries(journalEntryCommand, office, paymentDetail, currencyCode, transactionDate,
-                            journalEntryCommand.getDebits(), transactionId, JournalEntryType.DEBIT, referenceNumber);
-                } else {
-                    final GLAccount debitAccountHead = accountingRule.getAccountToDebit();
-                    validateGLAccountForTransaction(debitAccountHead);
-                    validateDebitOrCreditArrayForExistingGLAccount(debitAccountHead, journalEntryCommand.getDebits());
-                    saveAllDebitOrCreditEntries(journalEntryCommand, office, paymentDetail, currencyCode, transactionDate,
-                            journalEntryCommand.getDebits(), transactionId, JournalEntryType.DEBIT, referenceNumber);
+                    final SingleDebitOrCreditEntryCommand controlCredit =
+                            new SingleDebitOrCreditEntryCommand(null,controlAccount.getGlAccount().getId(),creditControlAmount,null,officeId);
+                    finalCreditList.add(controlCredit);
+
+                    SingleDebitOrCreditEntryCommand[] finalCredits = finalCreditList.toArray(new SingleDebitOrCreditEntryCommand[finalCreditList.size()]);
+                    SingleDebitOrCreditEntryCommand[] finalDebits = finalDebitList.toArray(new SingleDebitOrCreditEntryCommand[finalDebitList.size()]);
+
+                    final JournalEntryCommand journalEntryCommand = new JournalEntryCommand(jec.getCurrencyCode(),jec.getTransactionDate(),jec.getComments(),
+                            finalCredits,finalDebits,jec.getReferenceNumber(),jec.getAccountingRuleId(),jec.getAmount(),jec.getPaymentTypeId(),
+                            jec.getAccountNumber(),jec.getCheckNumber(),jec.getReceiptNumber(),jec.getBankNumber(),jec.getRoutingCode());
+
+                    createJournalEntryForSingleOffice(journalEntryCommand,accountRuleId,currencyCode,transactionDate,referenceNumber,paymentDetail,transactionId);
+
+                    return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withTransactionId(transactionId).build();
+                }else{
+                    final Long officeId = jec.getCredits()[0].getOfficeId();
+                    final Office office = this.officeRepository.findOne(officeId);
+                    if(office == null){ throw new OfficeNotFoundException(officeId); }
+                    final String transactionId = generateTransactionId(officeId);
+                    final Map<Long,List<SingleDebitOrCreditEntryCommand>> debitOfficeMap = new HashMap<>();
+                    finalCreditList.addAll(Arrays.asList(jec.getCredits()));
+                    BigDecimal debitControlAmount = BigDecimal.ZERO;
+
+                    for(SingleDebitOrCreditEntryCommand debit: jec.getDebits()){
+                        final List<SingleDebitOrCreditEntryCommand> differentOfficeDebits;
+                        if(debitOfficeMap.containsKey(debit.getOfficeId())){
+                            differentOfficeDebits = debitOfficeMap.get(debit.getOfficeId());
+                        }else{
+                            differentOfficeDebits = new ArrayList<>();
+                        }
+                        differentOfficeDebits.add(debit);
+                        debitOfficeMap.put(debit.getOfficeId(),differentOfficeDebits);
+                    }
+
+                    for(Map.Entry<Long,List<SingleDebitOrCreditEntryCommand>> entry : debitOfficeMap.entrySet()){
+                        if(entry.getKey().equals(officeId)){
+                            finalDebitList.addAll(entry.getValue());
+                        }else{
+                            BigDecimal amount = BigDecimal.ZERO;
+
+                            for(SingleDebitOrCreditEntryCommand debitEntryCommand : entry.getValue()){
+                                amount = amount.add(debitEntryCommand.getAmount());
+                                debitControlAmount = debitControlAmount.add(debitEntryCommand.getAmount());
+                            }
+
+                            final SingleDebitOrCreditEntryCommand controlCredit =
+                                    new SingleDebitOrCreditEntryCommand(null,controlAccount.getGlAccount().getId(),amount,null,entry.getKey());
+
+                            finalDebitList.addAll(entry.getValue());
+                            finalCreditList.add(controlCredit);
+                        }
+                    }
+
+                    final SingleDebitOrCreditEntryCommand controlDebit =
+                            new SingleDebitOrCreditEntryCommand(null,controlAccount.getGlAccount().getId(),debitControlAmount,null,officeId);
+                    finalDebitList.add(controlDebit);
+
+                    SingleDebitOrCreditEntryCommand[] finalCredits = finalCreditList.toArray(new SingleDebitOrCreditEntryCommand[finalCreditList.size()]);
+                    SingleDebitOrCreditEntryCommand[] finalDebits = finalDebitList.toArray(new SingleDebitOrCreditEntryCommand[finalDebitList.size()]);
+
+                    final JournalEntryCommand journalEntryCommand = new JournalEntryCommand(jec.getCurrencyCode(),jec.getTransactionDate(),jec.getComments(),
+                            finalCredits,finalDebits,jec.getReferenceNumber(),jec.getAccountingRuleId(),jec.getAmount(),jec.getPaymentTypeId(),
+                            jec.getAccountNumber(),jec.getCheckNumber(),jec.getReceiptNumber(),jec.getBankNumber(),jec.getRoutingCode());
+
+                    createJournalEntryForSingleOffice(journalEntryCommand,accountRuleId,currencyCode,transactionDate,referenceNumber,paymentDetail,transactionId);
+
+                    return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withTransactionId(transactionId).build();
                 }
-            } else {
+            }else {
+                // check office is valid and set transaction id
+                final Long officeId = jec.getCredits()[0].getOfficeId();
 
-                saveAllDebitOrCreditEntries(journalEntryCommand, office, paymentDetail, currencyCode, transactionDate,
-                        journalEntryCommand.getDebits(), transactionId, JournalEntryType.DEBIT, referenceNumber);
+                final Office office = this.officeRepository.findOne(officeId);
+                if (office == null) {
+                    throw new OfficeNotFoundException(officeId);
+                }
+                final String transactionId = generateTransactionId(officeId);
 
-                saveAllDebitOrCreditEntries(journalEntryCommand, office, paymentDetail, currencyCode, transactionDate,
-                        journalEntryCommand.getCredits(), transactionId, JournalEntryType.CREDIT, referenceNumber);
+                createJournalEntryForSingleOffice(jec,accountRuleId,currencyCode,transactionDate,referenceNumber,paymentDetail,transactionId);
 
+                return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withOfficeId(officeId)
+                        .withTransactionId(transactionId).build();
             }
-
-            return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withOfficeId(officeId)
-                    .withTransactionId(transactionId).build();
         } catch (final DataIntegrityViolationException dve) {
             handleJournalEntryDataIntegrityIssues(dve);
             return null;
+        }
+    }
+
+    private void createJournalEntryForSingleOffice(final JournalEntryCommand journalEntryCommand, final Long accountRuleId,
+                                                   final String currencyCode, final Date transactionDate, final String referenceNumber,
+                                                   final PaymentDetail paymentDetail, final String transactionId){
+
+        validateBusinessRulesForJournalEntries(journalEntryCommand);
+
+        /** Save these Journal entries **/
+
+        if (accountRuleId != null) {
+
+            final AccountingRule accountingRule = this.accountingRuleRepository.findOne(accountRuleId);
+            if (accountingRule == null) {
+                throw new AccountingRuleNotFoundException(accountRuleId);
+            }
+
+            if (accountingRule.getAccountToCredit() == null) {
+                if (journalEntryCommand.getCredits() == null) {
+                    throw new JournalEntryInvalidException(
+                            GL_JOURNAL_ENTRY_INVALID_REASON.NO_DEBITS_OR_CREDITS, null, null, null);
+                }
+                if (journalEntryCommand.getDebits() != null) {
+                    checkDebitOrCreditAccountsAreValid(accountingRule, journalEntryCommand.getCredits(),
+                            journalEntryCommand.getDebits());
+                    checkDebitAndCreditAmounts(journalEntryCommand.getCredits(), journalEntryCommand.getDebits());
+                }
+
+                saveAllDebitOrCreditEntries(journalEntryCommand, paymentDetail, currencyCode, transactionDate,
+                        journalEntryCommand.getCredits(), JournalEntryType.CREDIT, referenceNumber, transactionId);
+            } else {
+                final GLAccount creditAccountHead = accountingRule.getAccountToCredit();
+                validateGLAccountForTransaction(creditAccountHead);
+                validateDebitOrCreditArrayForExistingGLAccount(creditAccountHead, journalEntryCommand.getCredits());
+                saveAllDebitOrCreditEntries(journalEntryCommand, paymentDetail, currencyCode, transactionDate,
+                        journalEntryCommand.getCredits(), JournalEntryType.CREDIT, referenceNumber, transactionId);
+            }
+
+            if (accountingRule.getAccountToDebit() == null) {
+                if (journalEntryCommand.getDebits() == null) {
+                    throw new JournalEntryInvalidException(
+                            GL_JOURNAL_ENTRY_INVALID_REASON.NO_DEBITS_OR_CREDITS, null, null, null);
+                }
+                if (journalEntryCommand.getCredits() != null) {
+                    checkDebitOrCreditAccountsAreValid(accountingRule, journalEntryCommand.getCredits(),
+                            journalEntryCommand.getDebits());
+                    checkDebitAndCreditAmounts(journalEntryCommand.getCredits(), journalEntryCommand.getDebits());
+                }
+
+                saveAllDebitOrCreditEntries(journalEntryCommand, paymentDetail, currencyCode, transactionDate,
+                        journalEntryCommand.getDebits(), JournalEntryType.DEBIT, referenceNumber, transactionId);
+            } else {
+                final GLAccount debitAccountHead = accountingRule.getAccountToDebit();
+                validateGLAccountForTransaction(debitAccountHead);
+                validateDebitOrCreditArrayForExistingGLAccount(debitAccountHead, journalEntryCommand.getDebits());
+                saveAllDebitOrCreditEntries(journalEntryCommand, paymentDetail, currencyCode, transactionDate,
+                        journalEntryCommand.getDebits(), JournalEntryType.DEBIT, referenceNumber, transactionId);
+            }
+        } else {
+
+            saveAllDebitOrCreditEntries(journalEntryCommand, paymentDetail, currencyCode, transactionDate,
+                    journalEntryCommand.getDebits(), JournalEntryType.DEBIT, referenceNumber, transactionId);
+
+            saveAllDebitOrCreditEntries(journalEntryCommand, paymentDetail, currencyCode, transactionDate,
+                    journalEntryCommand.getCredits(), JournalEntryType.CREDIT, referenceNumber, transactionId);
+
         }
     }
 
@@ -293,6 +433,8 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
     @Override
     public CommandProcessingResult revertJournalEntry(final JsonCommand command) {
         // is the transaction Id valid
+        //final List<JournalEntry> journalEntryList = this.glJournalEntryRepository.findAll();
+
         final List<JournalEntry> journalEntries = this.glJournalEntryRepository.findUnReversedManualJournalEntriesByTransactionId(command
                 .getTransactionId());
         
@@ -536,7 +678,7 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
         if (transactionDate.after(todaysDate)) { throw new JournalEntryInvalidException(GL_JOURNAL_ENTRY_INVALID_REASON.FUTURE_DATE,
                 transactionDate, null, null); }
         // shouldn't be before an accounting closure
-        final GLClosure latestGLClosure = this.glClosureRepository.getLatestGLClosureByBranch(command.getOfficeId());
+        final GLClosure latestGLClosure = command.getOfficeId()!= null ? this.glClosureRepository.getLatestGLClosureByBranch(command.getOfficeId()) : null;
         if (latestGLClosure != null) {
             if (latestGLClosure.getClosingDate().after(transactionDate) || latestGLClosure.getClosingDate().equals(transactionDate)) { throw new JournalEntryInvalidException(
                     GL_JOURNAL_ENTRY_INVALID_REASON.ACCOUNTING_CLOSED, latestGLClosure.getClosingDate(), null, null); }
@@ -553,14 +695,17 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
         checkDebitAndCreditAmounts(credits, debits);
     }
 
-    private void saveAllDebitOrCreditEntries(final JournalEntryCommand command, final Office office, final PaymentDetail paymentDetail,
-            final String currencyCode, final Date transactionDate,
-            final SingleDebitOrCreditEntryCommand[] singleDebitOrCreditEntryCommands, final String transactionId,
-            final JournalEntryType type, final String referenceNumber) {
+    private void saveAllDebitOrCreditEntries(final JournalEntryCommand command, final PaymentDetail paymentDetail,
+            final String currencyCode, final Date transactionDate, final SingleDebitOrCreditEntryCommand[] singleDebitOrCreditEntryCommands,
+            final JournalEntryType type, final String referenceNumber, final String transactionId) {
         final boolean manualEntry = true;
+
         for (final SingleDebitOrCreditEntryCommand singleDebitOrCreditEntryCommand : singleDebitOrCreditEntryCommands) {
             final GLAccount glAccount = this.glAccountRepository.findOne(singleDebitOrCreditEntryCommand.getGlAccountId());
             if (glAccount == null) { throw new GLAccountNotFoundException(singleDebitOrCreditEntryCommand.getGlAccountId()); }
+            final Long officeId = singleDebitOrCreditEntryCommand.getOfficeId();
+            final Office office = this.officeRepository.findOne(officeId);
+            if(office == null){ throw new OfficeNotFoundException(officeId); }
 
             validateGLAccountForTransaction(glAccount);
 
@@ -687,7 +832,7 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
             journalEntryCommand.validateForCreate();
 
             // check office is valid
-            final Long officeId = journalEntryCommand.getOfficeId();
+            final Long officeId = journalEntryCommand.getCredits()[0].getOfficeId();
             final Office office = this.officeRepository.findOne(officeId);
             if (office == null) { throw new OfficeNotFoundException(officeId); }
 

@@ -89,12 +89,11 @@ public final class JournalEntryCommandFromApiJsonDeserializer extends AbstractFr
                 debits = populateCreditsOrDebitsArray(topLevelJsonElement, locale, debits, JournalEntryJsonInputParams.DEBITS.getValue());
             }
         }
-        return new JournalEntryCommand(officeId, currencyCode, transactionDate, comments, credits, debits, referenceNumber,
+        return new JournalEntryCommand(currencyCode, transactionDate, comments, credits, debits, referenceNumber,
                 accountingRuleId, amount, paymentTypeId, accountNumber, checkNumber, receiptNumber, bankNumber, routingCode);
     }
 
     /**
-     * @param comments
      * @param topLevelJsonElement
      * @param locale
      */
@@ -110,8 +109,9 @@ public final class JournalEntryCommandFromApiJsonDeserializer extends AbstractFr
             final Long glAccountId = this.fromApiJsonHelper.extractLongNamed("glAccountId", creditElement);
             final String comments = this.fromApiJsonHelper.extractStringNamed("comments", creditElement);
             final BigDecimal amount = this.fromApiJsonHelper.extractBigDecimalNamed("amount", creditElement, locale);
+            final Long officeId = this.fromApiJsonHelper.extractLongNamed("officeId",creditElement);
 
-            debitOrCredits[i] = new SingleDebitOrCreditEntryCommand(parametersPassedInForCreditsCommand, glAccountId, amount, comments);
+            debitOrCredits[i] = new SingleDebitOrCreditEntryCommand(parametersPassedInForCreditsCommand, glAccountId, amount, comments, officeId);
         }
         return debitOrCredits;
     }

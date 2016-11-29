@@ -30,10 +30,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 @Path("/journalentries")
 @Component
@@ -127,6 +124,7 @@ public class JournalEntriesApiResource {
     public String createGLJournalEntry(final String jsonRequestBody, @QueryParam("command") final String commandParam) {
 
         CommandProcessingResult result = null;
+
         if (is(commandParam, "updateRunningBalance")) {
             final CommandWrapper commandRequest = new CommandWrapperBuilder().updateRunningBalanceForJournalEntry()
                     .withJson(jsonRequestBody).build();
