@@ -12,6 +12,7 @@ import org.mifosplatform.infrastructure.core.data.DataValidatorBuilder;
 import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidationException;
 
 import java.math.BigDecimal;
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,11 +43,10 @@ public class JournalEntryCommand {
     private final SingleDebitOrCreditEntryCommand[] credits;
     private final SingleDebitOrCreditEntryCommand[] debits;
 
-    public JournalEntryCommand(final Long officeId, final String currencyCode, final LocalDate transactionDate, final String comments,
+    public JournalEntryCommand(final String currencyCode, final LocalDate transactionDate, final String comments,
             final SingleDebitOrCreditEntryCommand[] credits, final SingleDebitOrCreditEntryCommand[] debits, final String referenceNumber,
             final Long accountingRuleId, final BigDecimal amount, final Long paymentTypeId, final String accountNumber,
             final String checkNumber, final String receiptNumber, final String bankNumber, final String routingCode) {
-        this.officeId = officeId;
         this.currencyCode = currencyCode;
         this.transactionDate = transactionDate;
         this.comments = comments;
@@ -61,7 +61,11 @@ public class JournalEntryCommand {
         this.receiptNumber = receiptNumber;
         this.bankNumber = bankNumber;
         this.routingCode = routingCode;
-
+        if(hasMultipleOffices("credits") || hasMultipleOffices("debits")){
+            this.officeId = null;
+        }else{
+            this.officeId = this.credits[0].getOfficeId();
+        }
     }
 
     public void validateForCreate() {
@@ -72,7 +76,7 @@ public class JournalEntryCommand {
 
         baseDataValidator.reset().parameter("transactionDate").value(this.transactionDate).notBlank();
 
-        baseDataValidator.reset().parameter("officeId").value(this.officeId).notNull().integerGreaterThanZero();
+        baseDataValidator.reset().parameter("officeId").value(this.officeId).ignoreIfNull().integerGreaterThanZero();
 
         baseDataValidator.reset().parameter(JournalEntryJsonInputParams.CURRENCY_CODE.getValue()).value(this.currencyCode).notBlank();
 
@@ -87,7 +91,7 @@ public class JournalEntryCommand {
         // validation for credit array elements
         if (this.credits != null) {
             if (this.credits.length == 0) {
-                validateSingleDebitOrCredit(baseDataValidator, "credits", 0, new SingleDebitOrCreditEntryCommand(null, null, null, null));
+                validateSingleDebitOrCredit(baseDataValidator, "credits", 0, new SingleDebitOrCreditEntryCommand(null, null, null, null, null));
             } else {
                 int i = 0;
                 for (final SingleDebitOrCreditEntryCommand credit : this.credits) {
@@ -100,7 +104,7 @@ public class JournalEntryCommand {
         // validation for debit array elements
         if (this.debits != null) {
             if (this.debits.length == 0) {
-                validateSingleDebitOrCredit(baseDataValidator, "debits", 0, new SingleDebitOrCreditEntryCommand(null, null, null, null));
+                validateSingleDebitOrCredit(baseDataValidator, "debits", 0, new SingleDebitOrCreditEntryCommand(null, null, null, null, null));
             } else {
                 int i = 0;
                 for (final SingleDebitOrCreditEntryCommand debit : this.debits) {
@@ -117,15 +121,45 @@ public class JournalEntryCommand {
 
     /**
      * @param baseDataValidator
-     * @param i
+     * @param arrayPos
      * @param credit
      */
     private void validateSingleDebitOrCredit(final DataValidatorBuilder baseDataValidator, final String paramSuffix, final int arrayPos,
             final SingleDebitOrCreditEntryCommand credit) {
         baseDataValidator.reset().parameter(paramSuffix + "[" + arrayPos + "].glAccountId").value(credit.getGlAccountId()).notNull()
                 .integerGreaterThanZero();
+        baseDataValidator.reset().parameter(paramSuffix + "[" + arrayPos + "].officeId").value(credit.getOfficeId()).notNull()
+                .integerGreaterThanZero();
         baseDataValidator.reset().parameter(paramSuffix + "[" + arrayPos + "].amount").value(credit.getAmount()).notNull()
                 .zeroOrPositiveAmount();
+    }
+
+    public boolean hasMultipleOffices(final String paramSuffix){
+        return getDebitOrCreditEntryCommandOfficeIds(paramSuffix).size() > 1;
+    }
+
+    public List<Long> getDebitOrCreditEntryCommandOfficeIds(final String paramSuffix){
+        final List<Long> officeIds = new ArrayList<>();
+        final SingleDebitOrCreditEntryCommand[] debitsOrCredits;
+
+        if(paramSuffix.equals("credits")){
+            debitsOrCredits = this.credits;
+        }else if(paramSuffix.equals("debits")){
+            debitsOrCredits = this.debits;
+        }else{
+            throw new InvalidParameterException(paramSuffix + " is not a valid parameter name. Accepted parameters are 'credits' or 'debits'");
+        }
+
+        if(debitsOrCredits != null && debitsOrCredits.length > 0){
+            for(SingleDebitOrCreditEntryCommand debitOrCredit : debitsOrCredits){
+                final Long officeId = debitOrCredit.getOfficeId();
+                if(!officeIds.contains(officeId)){
+                    officeIds.add(officeId);
+                }
+            }
+        }
+
+        return officeIds;
     }
 
     public Long getOfficeId() {
@@ -157,4 +191,32 @@ public class JournalEntryCommand {
     }
 
     public String getCurrencyCode() {return this.currencyCode;}
+
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public Long getPaymentTypeId() {
+        return paymentTypeId;
+    }
+
+    public String getAccountNumber() {
+        return accountNumber;
+    }
+
+    public String getCheckNumber() {
+        return checkNumber;
+    }
+
+    public String getReceiptNumber() {
+        return receiptNumber;
+    }
+
+    public String getBankNumber() {
+        return bankNumber;
+    }
+
+    public String getRoutingCode() {
+        return routingCode;
+    }
 }
