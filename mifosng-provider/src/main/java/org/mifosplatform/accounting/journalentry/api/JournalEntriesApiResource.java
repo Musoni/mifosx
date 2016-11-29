@@ -30,10 +30,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 @Path("/journalentries")
 @Component
@@ -127,23 +124,27 @@ public class JournalEntriesApiResource {
     public String createGLJournalEntry(final String jsonRequestBody, @QueryParam("command") final String commandParam) {
 
         CommandProcessingResult result = null;
+        List<CommandProcessingResult> resultList = new ArrayList<>();
         if (is(commandParam, "updateRunningBalance")) {
             final CommandWrapper commandRequest = new CommandWrapperBuilder().updateRunningBalanceForJournalEntry()
                     .withJson(jsonRequestBody).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+            resultList.add(result);
         } else if (is(commandParam, "defineOpeningBalance")) {
             final CommandWrapper commandRequest = new CommandWrapperBuilder().defineOpeningBalanceForJournalEntry()
                     .withJson(jsonRequestBody).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+            resultList.add(result);
         }else if(is(commandParam, "batchReconcile")){
             final CommandWrapper commandRequest = new CommandWrapperBuilder().batchReconciliationJournalEntry().withJson(jsonRequestBody).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+            resultList.add(result);
         }
         else {
             final CommandWrapper commandRequest = new CommandWrapperBuilder().createJournalEntry().withJson(jsonRequestBody).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         }
-        return this.apiJsonSerializerService.serialize(result);
+        return this.apiJsonSerializerService.serialize(resultList);
     }
 
     @POST
