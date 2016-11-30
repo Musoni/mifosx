@@ -557,8 +557,8 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             final String startTime = rs.getString("start_time");
             final String endTime = rs.getString("end_time");
 
-            return CashierData.instance(id, null, null, staffId, staffName, tellerId, tellerName, description, startDate.toDate(),
-                    endDate.toDate(), fullDay, startTime, endTime,isActive);
+            return CashierData.instance(id, null, null, staffId, staffName, tellerId, tellerName, description,(startDate != null ? startDate.toDate() : null),
+                    (endDate != null ? endDate.toDate() : null), fullDay, startTime, endTime, isActive);
         }
     }
 
