@@ -95,8 +95,8 @@ public class Cashier extends AbstractPersistable<Long> {
         this.teller = teller;
         this.staff = staff;
         this.description = description;
-        this.startDate = startDate.toDate();
-        this.endDate = endDate.toDate();
+        this.startDate = startDate!=null ? startDate.toDate() : null;
+        this.endDate = endDate!=null ? endDate.toDate() : null;
         this.isFullDay = isFullDay;
         this.startTime = startTime;
         this.endTime = endTime;

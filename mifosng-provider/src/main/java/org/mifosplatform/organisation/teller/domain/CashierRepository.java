@@ -25,12 +25,12 @@ public interface CashierRepository extends JpaRepository<Cashier, Long>, JpaSpec
 
     public static final String FIND_ACTIVE_TELLER_CASHIER = "from Cashier c where c.teller.id= :tellerId and c.isActive = 1 ";
 
-    public static final String FIND_ACTIVE_CASHIERS = "select * from m_cashiers c where c.staff_id = ( select staff_id from m_cashiers xc where xc.id = :cashierId ) and c.teller_id !=:tellerId and c.is_active = 1 ";
+    public static final String FIND_ACTIVE_CASHIERS = "select * from m_cashiers c where c.staff_id = :staffId and c.teller_id !=:tellerId and c.is_active = 1 ";
 
     @Query(FIND_ACTIVE_TELLER_CASHIER)
     List<Cashier> getActiveTellerCashier(@Param("tellerId")  Long tellerId);
 
 
     @Query(value=FIND_ACTIVE_CASHIERS,nativeQuery = true)
-    List<Cashier> getActiveCashier(@Param("cashierId")  Long cashierId, @Param("tellerId")  Long tellerId);
+    List<Cashier> getActiveCashier(@Param("staffId")  Long staffId, @Param("tellerId")  Long tellerId);
 }
