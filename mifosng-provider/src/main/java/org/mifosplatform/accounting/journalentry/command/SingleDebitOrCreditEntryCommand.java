@@ -16,15 +16,26 @@ public class SingleDebitOrCreditEntryCommand {
     private final Long glAccountId;
     private final BigDecimal amount;
     private final String comments;
+    private final Long officeId;
 
     private final Set<String> parametersPassedInRequest;
 
-    public SingleDebitOrCreditEntryCommand(final Set<String> parametersPassedInRequest, final Long glAccountId, final BigDecimal amount,
+    /*public SingleDebitOrCreditEntryCommand(final Set<String> parametersPassedInRequest, final Long glAccountId, final BigDecimal amount,
             final String comments) {
         this.parametersPassedInRequest = parametersPassedInRequest;
         this.glAccountId = glAccountId;
         this.amount = amount;
         this.comments = comments;
+        this.officeId = null;
+    }*/
+
+    public SingleDebitOrCreditEntryCommand(final Set<String> parametersPassedInRequest, final Long glAccountId, final BigDecimal amount,
+            final String comments, final Long officeId) {
+        this.parametersPassedInRequest = parametersPassedInRequest;
+        this.glAccountId = glAccountId;
+        this.amount = amount;
+        this.comments = comments;
+        this.officeId = officeId;
     }
 
     public boolean isGlAccountIdChanged() {
@@ -54,5 +65,7 @@ public class SingleDebitOrCreditEntryCommand {
     public Set<String> getParametersPassedInRequest() {
         return this.parametersPassedInRequest;
     }
+
+    public Long getOfficeId() { return this.officeId; }
 
 }
