@@ -498,7 +498,7 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
                         
                         sqlBuilder.SELECT("`" + tableAlias + "`.`username` as `" + columnLabel + "`");
                         sqlBuilder.LEFT_OUTER_JOIN("`m_appuser` `" + tableAlias + "` on `"
-                                + tableAlias + "`.`id` = `" + baseEntityName + "`.`" + metaData.getFieldName() + "`");
+                                + tableAlias + "`.`id` = `" + metaData.getTableName() + "`.`" + metaData.getFieldName() + "`");
                     } else if (fieldName.equalsIgnoreCase("id")) {
                     	sqlBuilder.SELECT("`" + datatableName + "`.`" + metaData.getFieldName() + "` as `"
                     			+ datatableDisplayName + " id`");
