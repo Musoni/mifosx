@@ -1,4 +1,10 @@
 -- Add params not in MifosX code:
+INSERT INTO `stretchy_parameter` (`parameter_name`, `parameter_variable`, `parameter_label`, `parameter_displayType`, `parameter_FormatType`, `parameter_default`, `special`, `selectOne`, `selectAll`, `parameter_sql`, `parent_id`)
+VALUES
+	('cycleX', 'cycleX', 'Cycle X', 'text', 'number', '0', NULL, NULL, NULL, '', NULL),
+	('cycleY', 'cycleY', 'Cycle Y', 'text', 'number', '0', NULL, NULL, NULL, '', NULL);
+
+
 INSERT INTO `stretchy_parameter` ( `parameter_name`, `parameter_variable`, `parameter_label`, `parameter_displayType`, `parameter_FormatType`, `parameter_default`, `special`, `selectOne`, `selectAll`, `parameter_sql`, `parent_id`)
 VALUES
 	( 'overdueX', 'overdueX', 'Overdue X', 'text', 'number', '0', NULL, NULL, NULL, '', NULL),
