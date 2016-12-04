@@ -299,7 +299,11 @@ public class AuditReadPlatformServiceImpl implements AuditReadPlatformService {
 
         final Map<String, Object> commandAsJsonMap = this.fromApiJsonHelper.extractObjectMap(typeOfMap, auditAsJson);
         final JsonElement auditJsonFragment = this.fromApiJsonHelper.parse(auditAsJson);
-        final JsonObject auditObject = auditJsonFragment.getAsJsonObject();
+        JsonObject auditObject = null;
+        if (commandAsJsonMap.size() > 0){
+           auditObject = auditJsonFragment.getAsJsonObject();
+        }
+
 
         if (commandAsJsonMap.containsKey("officeId")) {
             commandAsJsonMap.remove("officeId");
