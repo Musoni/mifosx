@@ -44,7 +44,7 @@ import static org.junit.Assert.assertEquals;
  * transactions
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
-public class DeclingBalanceLoanIntegrationTest {
+public class DecliningBalanceLoanIntegrationTest {
 
     public static final String ACCOUNT_TYPE_INDIVIDUAL = "INDIVIDUAL";
     private static final String ACCRUAL_PERIODIC = "3";
