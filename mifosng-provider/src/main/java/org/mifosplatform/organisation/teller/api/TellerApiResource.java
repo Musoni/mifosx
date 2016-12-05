@@ -304,7 +304,7 @@ public class TellerApiResource {
     public String getTransactionData(@PathParam("tellerId") final Long tellerId, @QueryParam("dateRange") final String dateRange) {
         final DateRange dateRangeHolder = DateRange.fromString(dateRange);
 
-        final Collection<TellerTransactionData> transactions = this.readPlatformService.fetchTellerTransactionsByTellerId(tellerId,
+        final Collection<CashierTransactionData> transactions = this.readPlatformService.fetchTellerTransactionsByTellerId(tellerId,
                 dateRangeHolder.getStartDate(), dateRangeHolder.getEndDate());
 
         return this.jsonSerializer.serialize(transactions);
