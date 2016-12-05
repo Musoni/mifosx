@@ -14,7 +14,8 @@ public enum DataExportCoreColumn {
 	CLIENT_ID("client_id", "client id", "BIGINT", true, "client_id", "id", "m_client", null),
 	DATE_OF_BIRTH("date_of_birth", "date of birth", "DATE", true, null, null, null, null),
 	GENDER("gender_cv_id", "gender", "VARCHAR", true, "gender_cv_id", "code_value", "m_code_value", null),
-	PHONE_NUMBER("mobile_no", "phone number", "VARCHAR", true, null, null, null, null);
+	PHONE_NUMBER("mobile_no", "phone number", "VARCHAR", true, null, null, null, null),
+	STAFF_NAME("staff_name", "staff name", "VARCHAR", true, "staff_id", "display_name", "m_staff", null);
 	
 	private String name;
 	private String label;
