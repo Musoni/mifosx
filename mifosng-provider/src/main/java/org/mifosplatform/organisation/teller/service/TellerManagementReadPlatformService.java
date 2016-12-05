@@ -33,7 +33,7 @@ public interface TellerManagementReadPlatformService {
 
     public TellerTransactionData findTellerTransaction(Long transactionId);
 
-    public Collection<TellerTransactionData> fetchTellerTransactionsByTellerId(Long tellerId, Date fromDate, Date toDate);
+    public Collection<CashierTransactionData> fetchTellerTransactionsByTellerId(Long tellerId, Date fromDate, Date toDate);
 
     public Collection<TellerJournalData> getJournals(Long officeId, Long tellerId, Long cashierId, Date dateFrom, Date dateTo);
 
