@@ -58,6 +58,7 @@ public class LoanProductTestBuilder {
 
     private String digitsAfterDecimal = "2";
     private String inMultiplesOf = "0";
+    private String installmentAmountInMultiplesOf = "0";
 
     private String nameOfLoanProduct = Utils.randomNameGenerator("LOAN_PRODUCT_", 6);
     private final String shortName = Utils.randomNameGenerator("", 4);
@@ -399,6 +400,13 @@ public class LoanProductTestBuilder {
     public LoanProductTestBuilder currencyDetails(final String digitsAfterDecimal, final String inMultiplesOf) {
         this.digitsAfterDecimal = digitsAfterDecimal;
         this.inMultiplesOf = inMultiplesOf;
+        return this;
+    }
+
+    public LoanProductTestBuilder currencyDetails(final String digitsAfterDecimal, final String inMultiplesOff,  final String installmentAmountInMultiplesOf) {
+        this.digitsAfterDecimal = digitsAfterDecimal;
+        this.inMultiplesOf = inMultiplesOf;
+        this.installmentAmountInMultiplesOf = installmentAmountInMultiplesOf;
         return this;
     }
 
