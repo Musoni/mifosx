@@ -43,6 +43,8 @@ public final class CashierData implements Serializable {
     private final String officeName;
     private final String tellerName;
     private final String staffName;
+    private final Boolean isActive;
+
     private final Collection<StaffData> staffOptions;
 
     /*
@@ -52,7 +54,7 @@ public final class CashierData implements Serializable {
     		final Long staffId, final String staffName, final Long tellerId, final String tellerName,
     		final String description,
     		final Date startDate, final Date endDate, final Boolean isFullDay,
-            final String startTime, final String endTime, Collection<StaffData> staffOptions) {
+            final String startTime, final String endTime, Collection<StaffData> staffOptions, final Boolean isActive) {
         this.id = id;
         this.officeId = officeId;
         this.staffId = staffId;
@@ -68,7 +70,7 @@ public final class CashierData implements Serializable {
         this.tellerName = tellerName;
         this.staffName = staffName;
         this.staffOptions = staffOptions;
-        
+        this.isActive = isActive;
     }
 
     /**
@@ -95,9 +97,9 @@ public final class CashierData implements Serializable {
     public static CashierData instance(final Long id, final Long officeId, String officeName, 
     		final Long staffId, final String staffName, final Long tellerId, final String tellerName,
     		final String description, final Date startDate, final Date endDate,
-    		final Boolean isFullDay, final String startTime, final String endTime) {
+    		final Boolean isFullDay, final String startTime, final String endTime, final Boolean isActive) {
         return new CashierData(id, officeId, officeName, staffId, staffName, tellerId, tellerName, 
-        		description, startDate, endDate, isFullDay, startTime, endTime, null);
+        		description, startDate, endDate, isFullDay, startTime, endTime, null,isActive);
     }
     
     /*
@@ -106,7 +108,7 @@ public final class CashierData implements Serializable {
     public static CashierData template (final Long officeId, final String officeName, 
     		final Long tellerId, final String tellerName, final Collection<StaffData> staffOptions) {
         return new CashierData(null, officeId, officeName, null, null, tellerId, tellerName, 
-        		null, null, null, null, null, null, staffOptions);
+        		null, null, null, null, null, null, staffOptions,null);
     }
 
     /**
@@ -222,4 +224,8 @@ public final class CashierData implements Serializable {
 	public String getStaffName() {
 		return staffName;
 	}
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
 }

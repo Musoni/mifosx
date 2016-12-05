@@ -5,9 +5,12 @@
  */
 package org.mifosplatform.organisation.teller.service;
 
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.joda.time.LocalDate;
 import org.mifosplatform.accounting.common.AccountingConstants.FINANCIAL_ACTIVITY;
 import org.mifosplatform.accounting.financialactivityaccount.domain.FinancialActivityAccount;
 import org.mifosplatform.accounting.financialactivityaccount.domain.FinancialActivityAccountRepositoryWrapper;
@@ -35,9 +38,7 @@ import org.mifosplatform.organisation.teller.domain.CashierTxnType;
 import org.mifosplatform.organisation.teller.domain.Teller;
 import org.mifosplatform.organisation.teller.domain.TellerRepository;
 import org.mifosplatform.organisation.teller.domain.TellerRepositoryWrapper;
-import org.mifosplatform.organisation.teller.exception.CashierExistForTellerException;
-import org.mifosplatform.organisation.teller.exception.CashierNotFoundException;
-import org.mifosplatform.organisation.teller.exception.TellerNotFoundException;
+import org.mifosplatform.organisation.teller.exception.*;
 import org.mifosplatform.organisation.teller.serialization.TellerCommandFromApiJsonDeserializer;
 import org.mifosplatform.portfolio.client.domain.ClientTransaction;
 import org.mifosplatform.useradministration.domain.AppUser;
@@ -213,10 +214,9 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
             this.context.authenticatedUser();
             Long hourStartTime;
             Long minStartTime;
-            Long hourEndTime;
-            Long minEndTime;
             String startTime = " ";
-            String endTime = " ";
+            final String endTime=" ";
+
             final Teller teller = this.tellerRepository.findOne(tellerId);
             if (teller == null) { throw new TellerNotFoundException(tellerId); }
             final Office tellerOffice = teller.getOffice();
@@ -225,8 +225,31 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
 
             this.fromApiJsonDeserializer.validateForAllocateCashier(command.json());
 
+
             final Staff staff = this.staffRepository.findOne(staffId);
             if (staff == null) { throw new StaffNotFoundException(staffId); }
+
+
+            // make sure this teller does not yet have an active cashier
+
+            List<Cashier> activeTellerCashier = this.cashierRepository.getActiveTellerCashier(tellerId);
+
+            if(!activeTellerCashier.isEmpty()){
+
+                throw new NoMoreThanOneActiveCashierPerTellerException(tellerId);
+            }
+
+
+            // make sure this cashier is not yet active in another teller
+
+            List<Cashier> activeCashiers = this.cashierRepository.getActiveCashier(staffId, tellerId);
+
+            if(!activeCashiers.isEmpty()){
+
+                throw new CashierAlreadyActiveInAnotherTellerException(staffId);
+            }
+
+
             final Boolean isFullDay = command.booleanObjectValueOfParameterNamed("isFullDay");
             if (!isFullDay) {
                 hourStartTime = command.longValueOfParameterNamed("hourStartTime");
@@ -237,16 +260,12 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
                 else
                     startTime = hourStartTime.toString() + ":" + minStartTime.toString();
 
-                hourEndTime = command.longValueOfParameterNamed("hourEndTime");
-                minEndTime = command.longValueOfParameterNamed("minEndTime");
-                if (minEndTime == 0)
-                    endTime = hourEndTime.toString() + ":" + minEndTime.toString() + "0";
-                else
-                    endTime = hourEndTime.toString() + ":" + minEndTime.toString();
 
             }
 
-            final Cashier cashier = Cashier.fromJson(tellerOffice, teller, staff, startTime, endTime, command);
+            final Cashier cashier = Cashier.fromJson(tellerOffice, teller, staff, startTime,endTime, command);
+
+            cashier.assign();
 
             this.cashierRepository.save(cashier);
 
@@ -304,6 +323,102 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
         final Cashier cashierToReturn = this.cashierRepository.findOne(cashierId);
 
         return cashierToReturn;
+    }
+    @Override
+    @Transactional
+    public CommandProcessingResult assignCashierToTeller(Long tellerId, Long cashierId,JsonCommand command){
+
+        try {
+
+            final AppUser currentUser = this.context.authenticatedUser();
+
+            // make sure this teller does not yet have an active cashier
+
+            List<Cashier> activeTellerCashier = this.cashierRepository.getActiveTellerCashier(tellerId);
+
+            if(!activeTellerCashier.isEmpty()){
+
+               throw new NoMoreThanOneActiveCashierPerTellerException(tellerId);
+            }
+
+
+            // make sure this cashier is not yet active in another teller
+
+            List<Cashier> activeCashiers = this.cashierRepository.getActiveCashier(cashierId, tellerId);
+
+            if(!activeCashiers.isEmpty()){
+
+                throw new CashierAlreadyActiveInAnotherTellerException(cashierId);
+            }
+
+
+            final Cashier cashier = validateUserPriviledgeOnCashierAndRetrieve(currentUser, tellerId, cashierId);
+
+            cashier.assign();
+
+            final Map<String, Object> changes = new LinkedHashMap<>(7);
+            changes.put("active", true);
+
+            this.cashierRepository.saveAndFlush(cashier);
+
+
+            return new CommandProcessingResultBuilder() //
+                    .withCommandId(command.commandId()) //
+                    .withEntityId(cashier.getTeller().getId()) //
+                    .withSubEntityId(cashier.getId()) //
+                    .with(changes) //
+                    .build();
+        } catch (final DataIntegrityViolationException dve) {
+            handleTellerDataIntegrityIssues(command, dve);
+            return CommandProcessingResult.empty();
+        }
+
+    }
+
+    @Override
+    @Transactional
+    public CommandProcessingResult unassignCashierToTeller(Long tellerId, Long cashierId,JsonCommand command){
+
+        try {
+
+            final AppUser currentUser = this.context.authenticatedUser();
+
+            this.fromApiJsonDeserializer.validateForUnassignCashier(command.json());
+
+            final Cashier cashier = validateUserPriviledgeOnCashierAndRetrieve(currentUser, tellerId, cashierId);
+
+            final LocalDate endDate = command.localDateValueOfParameterNamed("endDate");
+            Long hourEndTime = command.longValueOfParameterNamed("hourEndTime");
+            Long minEndTime = command.longValueOfParameterNamed("minEndTime");
+            String endTime= "";
+
+
+            if (minEndTime == 0)
+                endTime = hourEndTime.toString() + ":" + minEndTime.toString() + "0";
+            else
+                endTime = hourEndTime.toString() + ":" + minEndTime.toString();
+
+            cashier.setEndDate(endDate.toDate());
+            cashier.setEndTime(endTime);
+            cashier.unassign();
+
+            final Map<String, Object> changes = new LinkedHashMap<>(7);
+            changes.put("active",false);
+
+            this.cashierRepository.saveAndFlush(cashier);
+
+
+            return new CommandProcessingResultBuilder() //
+                    .withCommandId(command.commandId()) //
+                    .withEntityId(cashier.getTeller().getId()) //
+                    .withSubEntityId(cashier.getId()) //
+                    .with(changes) //
+                    .build();
+        } catch (final DataIntegrityViolationException dve) {
+            handleTellerDataIntegrityIssues(command, dve);
+            return CommandProcessingResult.empty();
+        }
+
     }
 
     @Override
