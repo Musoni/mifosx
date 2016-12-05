@@ -129,6 +129,7 @@ public class LoanProductTestBuilder {
         map.put("dateFormat", "dd MMMM yyyy");
         map.put("digitsAfterDecimal", digitsAfterDecimal);
         map.put("inMultiplesOf", inMultiplesOf);
+        map.put("installmentAmountInMultiplesOf", installmentAmountInMultiplesOf);
         map.put("principal", this.principal);
         map.put("numberOfRepayments", this.numberOfRepayments);
         map.put("repaymentEvery", this.repaymentPeriod);
