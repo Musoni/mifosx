@@ -392,4 +392,12 @@ public class ChargeReadPlatformServiceImpl implements ChargeReadPlatformService 
         return this.jdbcTemplate.query(sql, rm, new Object[] { ChargeAppliesTo.CLIENT.getValue() });
     }
 
+    @Override
+    public boolean isOverDueOnMaturityChargeExist(final Integer chargeTimeType) {
+
+        final String sql = "(select IF(count(*)>0,'true','false') from m_charge where charge_time_enum =?)";
+        final String isOverDueOnMaturityChargeExist = this.jdbcTemplate.queryForObject(sql, String.class, new Object[] {chargeTimeType });
+        return new Boolean(isOverDueOnMaturityChargeExist);
+    }
+
 }

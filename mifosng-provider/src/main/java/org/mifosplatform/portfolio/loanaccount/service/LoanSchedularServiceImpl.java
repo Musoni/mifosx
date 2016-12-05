@@ -22,10 +22,8 @@ import org.mifosplatform.infrastructure.core.service.ThreadLocalContextUtil;
 import org.mifosplatform.infrastructure.jobs.annotation.CronTarget;
 import org.mifosplatform.infrastructure.jobs.exception.JobExecutionException;
 import org.mifosplatform.infrastructure.jobs.service.JobName;
-import org.mifosplatform.portfolio.charge.domain.Charge;
-import org.mifosplatform.portfolio.charge.domain.ChargeCalculationType;
-import org.mifosplatform.portfolio.charge.domain.ChargePaymentMode;
-import org.mifosplatform.portfolio.charge.domain.ChargeTimeType;
+import org.mifosplatform.portfolio.charge.domain.*;
+import org.mifosplatform.portfolio.charge.service.ChargeReadPlatformServiceImpl;
 import org.mifosplatform.portfolio.common.BusinessEventNotificationConstants;
 import org.mifosplatform.portfolio.loanaccount.data.LoanAccountData;
 import org.mifosplatform.portfolio.loanaccount.domain.Loan;
@@ -48,14 +46,17 @@ public class LoanSchedularServiceImpl implements LoanSchedularService {
     private final LoanReadPlatformService loanReadPlatformService;
     private final LoanWritePlatformService loanWritePlatformService;
 	private final LoanAssembler loanAssembler;
+	private final ChargeReadPlatformServiceImpl chargeReadPlatformService;
 
     @Autowired
     public LoanSchedularServiceImpl(final ConfigurationDomainService configurationDomainService,
-            final LoanReadPlatformService loanReadPlatformService, final LoanWritePlatformService loanWritePlatformService,final LoanAssembler loanAssembler) {
+            final LoanReadPlatformService loanReadPlatformService, final LoanWritePlatformService loanWritePlatformService,final LoanAssembler loanAssembler,
+									final ChargeReadPlatformServiceImpl chargeReadPlatformService) {
         this.configurationDomainService = configurationDomainService;
         this.loanReadPlatformService = loanReadPlatformService;
         this.loanWritePlatformService = loanWritePlatformService;
 		this.loanAssembler = loanAssembler;
+		this.chargeReadPlatformService = chargeReadPlatformService;
     }
 
     @Override
@@ -118,44 +119,47 @@ public class LoanSchedularServiceImpl implements LoanSchedularService {
 	@CronTarget(jobName = JobName.APPLY_CHARGE_TO_OVERDUE_ON_MATURITY_LOANS)
 	public void applyChargeForOverdueOnMaturityLoans() throws JobExecutionException {
 
-		final Long penaltyOnMaturityWaitPeriodValue = this.configurationDomainService.retrievePenaltyOnMaturityWaitPeriod();
+		if(this.chargeReadPlatformService.isOverDueOnMaturityChargeExist(ChargeTimeType.OVERDUE_ON_MATURITY.getValue())){
 
-		final Collection<LoanAccountData> overdueLoans = this.loanReadPlatformService
-				.retrieveAllLoansOverdueOnMaturity(penaltyOnMaturityWaitPeriodValue);
+			final Long penaltyOnMaturityWaitPeriodValue = this.configurationDomainService.retrievePenaltyOnMaturityWaitPeriod();
 
-		if (!overdueLoans.isEmpty()) {
-			final StringBuilder sb = new StringBuilder();
+			final Collection<LoanAccountData> overdueLoans = this.loanReadPlatformService
+					.retrieveAllLoansOverdueOnMaturity(penaltyOnMaturityWaitPeriodValue);
 
-			for (final LoanAccountData loanAccountData : overdueLoans) {
+			if (!overdueLoans.isEmpty()) {
+				final StringBuilder sb = new StringBuilder();
 
-				final Loan overdueLoan = this.loanAssembler.assembleFrom(loanAccountData.getId());
+				for (final LoanAccountData loanAccountData : overdueLoans) {
 
-				//this.loanWritePlatformService.addLoanCharge()
-				final LoanProduct loanProduct = overdueLoan.getLoanProduct();
-				final Collection<Charge> loanProductCharges = loanProduct.getCharges();
+					final Loan overdueLoan = this.loanAssembler.assembleFrom(loanAccountData.getId());
 
-				for (Charge loanProductCharge : loanProductCharges) {
-					if (loanProductCharge.isOverdueOnMaturity()) {
-						final BigDecimal loanPrincipal = overdueLoan.getPrincpal().getAmount();
-						final BigDecimal chargeAmount = loanProductCharge.getAmount();
-						final ChargeTimeType chargeTimeType = ChargeTimeType.fromInt(loanProductCharge.getChargeTimeType());
-						final ChargeCalculationType chargeCalculationType = ChargeCalculationType.fromInt(loanProductCharge.getChargeCalculation());
-						final ChargePaymentMode chargePaymentMode = ChargePaymentMode.fromInt(loanProductCharge.getChargePaymentMode());
+					//this.loanWritePlatformService.addLoanCharge()
+					final LoanProduct loanProduct = overdueLoan.getLoanProduct();
+					final Collection<Charge> loanProductCharges = loanProduct.getCharges();
 
-						LoanCharge loanCharge = new LoanCharge(overdueLoan, loanProductCharge, loanPrincipal, chargeAmount,
-								chargeTimeType, chargeCalculationType,overdueLoan.getMaturityDate(), chargePaymentMode,null, BigDecimal.ZERO);
-//
-//						this.businessEventNotifierService.notifyBusinessEventToBeExecuted(BusinessEventNotificationConstants.BUSINESS_EVENTS.LOAN_ADD_CHARGE,
-//								constructEntityMap(BusinessEventNotificationConstants.BUSINESS_ENTITY.LOAN_CHARGE, loanCharge));
+					for (Charge loanProductCharge : loanProductCharges) {
+						if (loanProductCharge.isOverdueOnMaturity()) {
+							final BigDecimal loanPrincipal = overdueLoan.getPrincpal().getAmount();
+							final BigDecimal chargeAmount = loanProductCharge.getAmount();
+							final ChargeTimeType chargeTimeType = ChargeTimeType.fromInt(loanProductCharge.getChargeTimeType());
+							final ChargeCalculationType chargeCalculationType = ChargeCalculationType.fromInt(loanProductCharge.getChargeCalculation());
+							final ChargePaymentMode chargePaymentMode = ChargePaymentMode.fromInt(loanProductCharge.getChargePaymentMode());
 
-						// add the loan charge to the loan
-						this.loanWritePlatformService.addLoanCharge(overdueLoan, loanProductCharge, null, loanCharge);
+							LoanCharge loanCharge = new LoanCharge(overdueLoan, loanProductCharge, loanPrincipal, chargeAmount,
+									chargeTimeType, chargeCalculationType,overdueLoan.getMaturityDate(), chargePaymentMode,null, BigDecimal.ZERO);
+	//
+	//						this.businessEventNotifierService.notifyBusinessEventToBeExecuted(BusinessEventNotificationConstants.BUSINESS_EVENTS.LOAN_ADD_CHARGE,
+	//								constructEntityMap(BusinessEventNotificationConstants.BUSINESS_ENTITY.LOAN_CHARGE, loanCharge));
+
+							// add the loan charge to the loan
+							this.loanWritePlatformService.addLoanCharge(overdueLoan, loanProductCharge, null, loanCharge);
+						}
 					}
+
 				}
 
+				if (sb.length() > 0) { throw new JobExecutionException(sb.toString()); }
 			}
-
-			if (sb.length() > 0) { throw new JobExecutionException(sb.toString()); }
 		}
 	}
 

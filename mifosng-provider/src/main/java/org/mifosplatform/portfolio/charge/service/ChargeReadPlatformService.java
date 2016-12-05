@@ -27,6 +27,8 @@ public interface ChargeReadPlatformService {
      */
     Collection<ChargeData> retrieveAllChargesApplicableToClients();
 
+    boolean isOverDueOnMaturityChargeExist(final Integer chargeTimeType);
+
     /**
      * Returns all Fees (excluding penalties) applicable for loans
      * 
