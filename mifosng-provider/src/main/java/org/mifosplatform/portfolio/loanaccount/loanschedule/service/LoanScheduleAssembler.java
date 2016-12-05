@@ -275,12 +275,7 @@ public class LoanScheduleAssembler {
         final Integer graceOnPrincipalPayment = this.fromApiJsonHelper.extractIntegerWithLocaleNamed("graceOnPrincipalPayment", element);
         final Integer graceOnInterestPayment = this.fromApiJsonHelper.extractIntegerWithLocaleNamed("graceOnInterestPayment", element);
         final Integer graceOnInterestCharged = this.fromApiJsonHelper.extractIntegerWithLocaleNamed("graceOnInterestCharged", element);
-        LocalDate interestChargedFromDate = this.fromApiJsonHelper.extractLocalDateNamed("interestChargedFromDate", element);
-
-        // Override interestchargedfromdate if same as repayment period to avoid calculation collapses:
-        if(interestCalculationPeriodMethod.equals(interestCalculationPeriodMethod.SAME_AS_REPAYMENT_PERIOD)) {
-            interestChargedFromDate = null;
-        }
+        final LocalDate interestChargedFromDate = this.fromApiJsonHelper.extractLocalDateNamed("interestChargedFromDate", element);
 
         final Integer graceOnArrearsAgeing = this.fromApiJsonHelper.extractIntegerWithLocaleNamed(
                 LoanProductConstants.graceOnArrearsAgeingParameterName, element);

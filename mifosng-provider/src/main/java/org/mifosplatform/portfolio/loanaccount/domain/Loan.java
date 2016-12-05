@@ -1739,7 +1739,7 @@ public class Loan extends AbstractPersistable<Long> {
                 totalChargeAmt = loanCharge.minimumAndMaximumCap(calculatePerInstallmentChargeAmount(loanCharge));
             }
         } else {
-            chargeAmt = loanCharge.amount();
+            chargeAmt = loanCharge.amountOrPercentage();
             if (loanCharge.isInstalmentFee()) {
                 chargeAmt =  chargeAmt.divide(BigDecimal.valueOf(repaymentScheduleDetail().getNumberOfRepayments()), mc);
             }

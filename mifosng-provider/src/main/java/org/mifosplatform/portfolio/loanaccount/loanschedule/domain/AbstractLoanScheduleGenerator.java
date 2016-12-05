@@ -46,7 +46,6 @@ import org.mifosplatform.portfolio.loanaccount.loanschedule.exception.ScheduleDa
 import org.mifosplatform.portfolio.loanaccount.rescheduleloan.domain.LoanRescheduleModel;
 import org.mifosplatform.portfolio.loanaccount.rescheduleloan.domain.LoanRescheduleModelRepaymentPeriod;
 import org.mifosplatform.portfolio.loanaccount.rescheduleloan.domain.LoanRescheduleRequest;
-import org.mifosplatform.portfolio.loanproduct.domain.InterestMethod;
 import org.mifosplatform.portfolio.loanproduct.domain.LoanProductMinimumRepaymentScheduleRelatedDetail;
 
 public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGenerator {
@@ -242,20 +241,12 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
             // backup for pre-close transaction
             updateCompoundingDetails(scheduleParams, periodStartDateApplicableForInterest);
 
-            // interest payment due to grace will remain at zero for declining balance loans
-            // so that accumulating grace periods interest amount don't get applied to the first installment after the last grace period
-            Money totalOutstandingInterestPaymentDueToGrace = Money.zero(currency);
-            
-            if (loanApplicationTerms != null && loanApplicationTerms.getInterestMethod().equals(InterestMethod.FLAT)) {
-               totalOutstandingInterestPaymentDueToGrace = scheduleParams.getTotalOutstandingInterestPaymentDueToGrace();
-            }
-
             // 5 determine principal,interest of repayment period
             PrincipalInterest principalInterestForThisPeriod = calculatePrincipalInterestComponentsForPeriod(
                     this.paymentPeriodsInOneYearCalculator, currentPeriodParams.getInterestCalculationGraceOnRepaymentPeriodFraction(),
                     scheduleParams.getTotalCumulativePrincipal().minus(scheduleParams.getReducePrincipal()),
                     scheduleParams.getTotalCumulativeInterest(), totalInterestChargedForFullLoanTerm,
-                    totalOutstandingInterestPaymentDueToGrace, scheduleParams.getOutstandingBalanceAsPerRest(),
+                    scheduleParams.getTotalOutstandingInterestPaymentDueToGrace(), scheduleParams.getOutstandingBalanceAsPerRest(),
                     loanApplicationTerms, scheduleParams.getPeriodNumber(), mc, mergeVariationsToMap(scheduleParams),
                     scheduleParams.getCompoundingMap(), periodStartDateApplicableForInterest, scheduledDueDate, interestRates);
 
