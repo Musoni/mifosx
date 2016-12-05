@@ -154,7 +154,7 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
                 if(multipleCreditOffices){
                     final Long officeId = jec.getDebits()[0].getOfficeId();
                     final Map<Long,List<SingleDebitOrCreditEntryCommand>> creditOfficeMap = new HashMap<>();
-                    finalDebitList.addAll(new ArrayList<>(Arrays.asList(jec.getDebits())));
+                    finalDebitList.addAll(Arrays.asList(jec.getDebits()));
 
                     for(SingleDebitOrCreditEntryCommand credit: jec.getCredits()){
                         final List<SingleDebitOrCreditEntryCommand> differentOfficeCredits;
@@ -171,10 +171,10 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
                         if(entry.getKey().equals(officeId)){
                             finalCreditList.addAll(entry.getValue());
                         }else{
-                            final BigDecimal amount = BigDecimal.ZERO;
+                            BigDecimal amount = BigDecimal.ZERO;
 
                             for(SingleDebitOrCreditEntryCommand creditEntryCommand : entry.getValue()){
-                                amount.add(creditEntryCommand.getAmount());
+                                amount = amount.add(creditEntryCommand.getAmount());
                             }
 
                             final SingleDebitOrCreditEntryCommand controlCredit =
@@ -187,8 +187,8 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
                             finalDebitList.add(controlDebit);
                         }
                     }
-                    SingleDebitOrCreditEntryCommand[] finalCredits = (SingleDebitOrCreditEntryCommand[])finalCreditList.toArray();
-                    SingleDebitOrCreditEntryCommand[] finalDebits = (SingleDebitOrCreditEntryCommand[])finalDebitList.toArray();
+                    SingleDebitOrCreditEntryCommand[] finalCredits = finalCreditList.toArray(new SingleDebitOrCreditEntryCommand[finalCreditList.size()]);
+                    SingleDebitOrCreditEntryCommand[] finalDebits = finalDebitList.toArray(new SingleDebitOrCreditEntryCommand[finalDebitList.size()]);
 
                     final JournalEntryCommand journalEntryCommand = new JournalEntryCommand(jec.getCurrencyCode(),jec.getTransactionDate(),jec.getComments(),
                             finalCredits,finalDebits,jec.getReferenceNumber(),jec.getAccountingRuleId(),jec.getAmount(),jec.getPaymentTypeId(),
@@ -199,7 +199,7 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
                 }else{
                     final Long officeId = jec.getCredits()[0].getOfficeId();
                     final Map<Long,List<SingleDebitOrCreditEntryCommand>> debitOfficeMap = new HashMap<>();
-                    finalCreditList.addAll(new ArrayList<>(Arrays.asList(jec.getCredits())));
+                    finalCreditList.addAll(Arrays.asList(jec.getCredits()));
 
                     for(SingleDebitOrCreditEntryCommand debit: jec.getDebits()){
                         final List<SingleDebitOrCreditEntryCommand> differentOfficeDebits;
