@@ -105,7 +105,7 @@ public class TenantAwareTenantIdentifierFilter extends GenericFilterBean {
 
                 String pathInfo = request.getRequestURI();
                 boolean isReportRequest = false;
-                if (pathInfo != null && pathInfo.contains("report")) {
+                if (pathInfo != null && (pathInfo.contains("/runreports") || pathInfo.contains("/reports"))) {
                     isReportRequest = true;
                 }
                 final MifosPlatformTenant tenant = this.basicAuthTenantDetailsService.loadTenantById(tenantIdentifier, isReportRequest);
