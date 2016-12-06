@@ -1727,9 +1727,13 @@ public class Loan extends AbstractPersistable<Long> {
         BigDecimal amount = BigDecimal.ZERO;
         if (loanCharge.isOverdueInstallmentCharge()) {
             amount = calculateOverdueAmountPercentageAppliedTo(loanCharge, penaltyWaitPeriod);
+
         } else {
             amount = calculateAmountPercentageAppliedTo(loanCharge);
         }
+
+        amount = Money.of(getCurrency(),amount).getAmount();
+
 
         BigDecimal chargeAmt = BigDecimal.ZERO;
         BigDecimal totalChargeAmt = BigDecimal.ZERO;
@@ -1737,11 +1741,14 @@ public class Loan extends AbstractPersistable<Long> {
             chargeAmt = loanCharge.getPercentage();
             if (loanCharge.isInstalmentFee()) {
                 totalChargeAmt = loanCharge.minimumAndMaximumCap(calculatePerInstallmentChargeAmount(loanCharge));
+                totalChargeAmt = Money.of(getCurrency(),totalChargeAmt).getAmount();
+
             }
         } else {
             chargeAmt = loanCharge.amount();
             if (loanCharge.isInstalmentFee()) {
                 chargeAmt =  chargeAmt.divide(BigDecimal.valueOf(repaymentScheduleDetail().getNumberOfRepayments()), mc);
+                chargeAmt = Money.of(getCurrency(),chargeAmt).getAmount();
             }
         }
         if (loanCharge.isActive()) {
