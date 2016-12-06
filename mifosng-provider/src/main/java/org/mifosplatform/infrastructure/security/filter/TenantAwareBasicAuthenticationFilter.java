@@ -108,7 +108,7 @@ public class TenantAwareBasicAuthenticationFilter extends BasicAuthenticationFil
 
                 String pathInfo = request.getRequestURI();
                 boolean isReportRequest = false;
-                if (pathInfo != null && pathInfo.contains("report")) {
+                if (pathInfo != null && (pathInfo.contains("/reports") || pathInfo.contains("/runreports"))) {
                     isReportRequest = true;
                 }
                 final MifosPlatformTenant tenant = this.basicAuthTenantDetailsService.loadTenantById(tenantIdentifier, isReportRequest);
