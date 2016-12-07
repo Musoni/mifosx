@@ -153,6 +153,9 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
 
                 if(multipleCreditOffices){
                     final Long officeId = jec.getDebits()[0].getOfficeId();
+                    final Office office = this.officeRepository.findOne(officeId);
+                    if(office == null){ throw new OfficeNotFoundException(officeId); }
+                    final String transactionId = generateTransactionId(officeId);
                     final Map<Long,List<SingleDebitOrCreditEntryCommand>> creditOfficeMap = new HashMap<>();
                     finalDebitList.addAll(Arrays.asList(jec.getDebits()));
                     BigDecimal creditControlAmount = BigDecimal.ZERO;
@@ -198,11 +201,14 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
                             finalCredits,finalDebits,jec.getReferenceNumber(),jec.getAccountingRuleId(),jec.getAmount(),jec.getPaymentTypeId(),
                             jec.getAccountNumber(),jec.getCheckNumber(),jec.getReceiptNumber(),jec.getBankNumber(),jec.getRoutingCode());
 
-                    createJournalEntryForSingleOffice(journalEntryCommand,accountRuleId,currencyCode,transactionDate,referenceNumber,paymentDetail);
+                    createJournalEntryForSingleOffice(journalEntryCommand,accountRuleId,currencyCode,transactionDate,referenceNumber,paymentDetail,transactionId);
 
-                    return new CommandProcessingResultBuilder().withCommandId(command.commandId()).build();
+                    return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withTransactionId(transactionId).build();
                 }else{
                     final Long officeId = jec.getCredits()[0].getOfficeId();
+                    final Office office = this.officeRepository.findOne(officeId);
+                    if(office == null){ throw new OfficeNotFoundException(officeId); }
+                    final String transactionId = generateTransactionId(officeId);
                     final Map<Long,List<SingleDebitOrCreditEntryCommand>> debitOfficeMap = new HashMap<>();
                     finalCreditList.addAll(Arrays.asList(jec.getCredits()));
                     BigDecimal debitControlAmount = BigDecimal.ZERO;
@@ -248,9 +254,9 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
                             finalCredits,finalDebits,jec.getReferenceNumber(),jec.getAccountingRuleId(),jec.getAmount(),jec.getPaymentTypeId(),
                             jec.getAccountNumber(),jec.getCheckNumber(),jec.getReceiptNumber(),jec.getBankNumber(),jec.getRoutingCode());
 
-                    createJournalEntryForSingleOffice(journalEntryCommand,accountRuleId,currencyCode,transactionDate,referenceNumber,paymentDetail);
+                    createJournalEntryForSingleOffice(journalEntryCommand,accountRuleId,currencyCode,transactionDate,referenceNumber,paymentDetail,transactionId);
 
-                    return new CommandProcessingResultBuilder().withCommandId(command.commandId()).build();
+                    return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withTransactionId(transactionId).build();
                 }
             }else {
                 // check office is valid and set transaction id
@@ -262,7 +268,7 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
                 }
                 final String transactionId = generateTransactionId(officeId);
 
-                createJournalEntryForSingleOffice(jec,accountRuleId,currencyCode,transactionDate,referenceNumber,paymentDetail);
+                createJournalEntryForSingleOffice(jec,accountRuleId,currencyCode,transactionDate,referenceNumber,paymentDetail,transactionId);
 
                 return new CommandProcessingResultBuilder().withCommandId(command.commandId()).withOfficeId(officeId)
                         .withTransactionId(transactionId).build();
@@ -274,7 +280,8 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
     }
 
     private void createJournalEntryForSingleOffice(final JournalEntryCommand journalEntryCommand, final Long accountRuleId,
-            final String currencyCode, final Date transactionDate, final String referenceNumber, final PaymentDetail paymentDetail){
+                                                   final String currencyCode, final Date transactionDate, final String referenceNumber,
+                                                   final PaymentDetail paymentDetail, final String transactionId){
 
         validateBusinessRulesForJournalEntries(journalEntryCommand);
 
@@ -299,13 +306,13 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
                 }
 
                 saveAllDebitOrCreditEntries(journalEntryCommand, paymentDetail, currencyCode, transactionDate,
-                        journalEntryCommand.getCredits(), JournalEntryType.CREDIT, referenceNumber);
+                        journalEntryCommand.getCredits(), JournalEntryType.CREDIT, referenceNumber, transactionId);
             } else {
                 final GLAccount creditAccountHead = accountingRule.getAccountToCredit();
                 validateGLAccountForTransaction(creditAccountHead);
                 validateDebitOrCreditArrayForExistingGLAccount(creditAccountHead, journalEntryCommand.getCredits());
                 saveAllDebitOrCreditEntries(journalEntryCommand, paymentDetail, currencyCode, transactionDate,
-                        journalEntryCommand.getCredits(), JournalEntryType.CREDIT, referenceNumber);
+                        journalEntryCommand.getCredits(), JournalEntryType.CREDIT, referenceNumber, transactionId);
             }
 
             if (accountingRule.getAccountToDebit() == null) {
@@ -320,21 +327,21 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
                 }
 
                 saveAllDebitOrCreditEntries(journalEntryCommand, paymentDetail, currencyCode, transactionDate,
-                        journalEntryCommand.getDebits(), JournalEntryType.DEBIT, referenceNumber);
+                        journalEntryCommand.getDebits(), JournalEntryType.DEBIT, referenceNumber, transactionId);
             } else {
                 final GLAccount debitAccountHead = accountingRule.getAccountToDebit();
                 validateGLAccountForTransaction(debitAccountHead);
                 validateDebitOrCreditArrayForExistingGLAccount(debitAccountHead, journalEntryCommand.getDebits());
                 saveAllDebitOrCreditEntries(journalEntryCommand, paymentDetail, currencyCode, transactionDate,
-                        journalEntryCommand.getDebits(), JournalEntryType.DEBIT, referenceNumber);
+                        journalEntryCommand.getDebits(), JournalEntryType.DEBIT, referenceNumber, transactionId);
             }
         } else {
 
             saveAllDebitOrCreditEntries(journalEntryCommand, paymentDetail, currencyCode, transactionDate,
-                    journalEntryCommand.getDebits(), JournalEntryType.DEBIT, referenceNumber);
+                    journalEntryCommand.getDebits(), JournalEntryType.DEBIT, referenceNumber, transactionId);
 
             saveAllDebitOrCreditEntries(journalEntryCommand, paymentDetail, currencyCode, transactionDate,
-                    journalEntryCommand.getCredits(), JournalEntryType.CREDIT, referenceNumber);
+                    journalEntryCommand.getCredits(), JournalEntryType.CREDIT, referenceNumber, transactionId);
 
         }
     }
@@ -426,6 +433,8 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
     @Override
     public CommandProcessingResult revertJournalEntry(final JsonCommand command) {
         // is the transaction Id valid
+        //final List<JournalEntry> journalEntryList = this.glJournalEntryRepository.findAll();
+
         final List<JournalEntry> journalEntries = this.glJournalEntryRepository.findUnReversedManualJournalEntriesByTransactionId(command
                 .getTransactionId());
         
@@ -688,48 +697,15 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
 
     private void saveAllDebitOrCreditEntries(final JournalEntryCommand command, final PaymentDetail paymentDetail,
             final String currencyCode, final Date transactionDate, final SingleDebitOrCreditEntryCommand[] singleDebitOrCreditEntryCommands,
-            final JournalEntryType type, final String referenceNumber) {
+            final JournalEntryType type, final String referenceNumber, final String transactionId) {
         final boolean manualEntry = true;
-        final boolean multipleOffices = type.isCreditType()?command.hasMultipleOffices(JournalEntryJsonInputParams.CREDITS.getValue()):command.hasMultipleOffices(JournalEntryJsonInputParams.DEBITS.getValue());
-        final Map<Long,Object[]> transactionIdMap = new HashMap<>();
-        Office office = null;
-        String transactionId = null;
-
-        if(!multipleOffices){
-            final Long officeId = singleDebitOrCreditEntryCommands[0].getOfficeId();
-            office = this.officeRepository.findOne(officeId);
-            if (office == null) {
-                throw new OfficeNotFoundException(officeId);
-            }
-            transactionId = generateTransactionId(officeId);
-        }
 
         for (final SingleDebitOrCreditEntryCommand singleDebitOrCreditEntryCommand : singleDebitOrCreditEntryCommands) {
             final GLAccount glAccount = this.glAccountRepository.findOne(singleDebitOrCreditEntryCommand.getGlAccountId());
             if (glAccount == null) { throw new GLAccountNotFoundException(singleDebitOrCreditEntryCommand.getGlAccountId()); }
-
-            if(multipleOffices) {
-                final Long officeId = singleDebitOrCreditEntryCommand.getOfficeId();
-
-                if (transactionIdMap.containsKey(officeId)) {
-                    Object[] values = transactionIdMap.get(officeId);
-                    for (Object value : values) {
-                        if (value instanceof Office) {
-                            office = (Office) value;
-                        } else {
-                            transactionId = value.toString();
-                        }
-                    }
-                } else {
-                    office = this.officeRepository.findOne(officeId);
-                    if (office == null) {
-                        throw new OfficeNotFoundException(officeId);
-                    }
-                    transactionId = generateTransactionId(officeId);
-                    Object[] array = {office, transactionId};
-                    transactionIdMap.put(officeId, array);
-                }
-            }
+            final Long officeId = singleDebitOrCreditEntryCommand.getOfficeId();
+            final Office office = this.officeRepository.findOne(officeId);
+            if(office == null){ throw new OfficeNotFoundException(officeId); }
 
             validateGLAccountForTransaction(glAccount);
 
