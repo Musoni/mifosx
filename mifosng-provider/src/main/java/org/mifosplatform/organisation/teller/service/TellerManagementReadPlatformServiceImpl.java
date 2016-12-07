@@ -36,6 +36,8 @@ import org.mifosplatform.organisation.teller.data.TellerTransactionData;
 import org.mifosplatform.organisation.teller.domain.CashierTxnType;
 import org.mifosplatform.organisation.teller.domain.TellerStatus;
 import org.mifosplatform.useradministration.domain.AppUser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -46,6 +48,8 @@ import org.springframework.util.CollectionUtils;
 
 @Service
 public class TellerManagementReadPlatformServiceImpl implements TellerManagementReadPlatformService {
+
+    private final static Logger logger = LoggerFactory.getLogger(TellerManagementReadPlatformServiceImpl.class);
 
     private final JdbcTemplate jdbcTemplate;
     private final PlatformSecurityContext context;
@@ -149,7 +153,7 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             final String activeCashierName = rs.getString("cashier_name" );
             final Long activeCashierId = rs.getLong("cashier_id" );
 
-            final Double balance = rs.getDouble("balance");
+            final BigDecimal balance = rs.getBigDecimal("balance");
 
             return TellerData.instance(id, officeId, debitAccountId, creditAccountId, tellerName, description, startDate, endDate,
                     tellerStatus, officeName, null, null,activeCashierName,activeCashierId,balance);
@@ -398,6 +402,8 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
                     + " loan_txn.created_date >= CONCAT(c.start_date,' ',c.start_time,':00') and ( loan_txn.created_date <= CONCAT(c.end_date,' ',c.end_time,':00') OR c.end_date IS NULL) "
                     + " and renum.enum_value in ('Repayment At Disbursement','Repayment', 'Recovery Payment','Disbursement') ) "
                     + " order by created_date ";
+
+            logger.info(sql);
 
             return this.jdbcTemplate.query(sql, ctm, new Object[] { tellerId, null, null, hierarchySearchString, tellerId, null,null,
                     hierarchySearchString, tellerId, null,null, hierarchySearchString });
@@ -857,6 +863,47 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
 
             return CashierTransactionTypeTotalsData.instance(cashierTxnType, txnTotal);
         }
+
+
+    }
+
+    @Override
+    public boolean hasTransaction(final Long cashierId) {
+
+        final String sql = "select IF(count(*)>0,'true','false') from (" +
+
+                "select tnx.created_date as created_date , c.id as id  from m_cashier_transactions tnx " +
+                "left join m_cashiers c on c.id = tnx.cashier_id " +
+
+                "union " +
+
+                "select sav_txn.created_date as created_date  , c.id as id " +
+                "from m_savings_account_transaction sav_txn " +
+                "left join r_enum_value renum on sav_txn.transaction_type_enum = renum.enum_id and renum.enum_name = 'savings_transaction_type_enum' " +
+                "left join m_appuser user on sav_txn.appuser_id = user.id " +
+                "left join m_staff staff on user.staff_id = staff.id " +
+                "left join m_cashiers c on c.staff_id = staff.id " +
+                "where sav_txn.is_reversed = 0 and sav_txn.created_date >= CONCAT(c.start_date,' ',c.start_time,':00') " +
+                "and ( sav_txn.created_date <= CONCAT(c.end_date,' ',c.end_time,':00') OR c.end_date IS NULL) " +
+                "and renum.enum_value in ('deposit','withdrawal fee', 'Pay Charge', 'withdrawal') " +
+
+
+                "union " +
+
+                "select loan_txn.created_date as created_date  , c.id as id " +
+                "from m_loan_transaction loan_txn " +
+                "left join r_enum_value renum on loan_txn.transaction_type_enum = renum.enum_id and renum.enum_name = 'transaction_type_enum' " +
+                "left join m_appuser user on loan_txn.appuser_id = user.id  " +
+                "left join m_staff staff on user.staff_id = staff.id " +
+                "left join m_cashiers c on c.staff_id = staff.id " +
+                "where loan_txn.is_reversed = 0 and loan_txn.created_date >= CONCAT(c.start_date,' ',c.start_time,':00')  " +
+                " and ( loan_txn.created_date <= CONCAT(c.end_date,' ',c.end_time,':00') OR c.end_date IS NULL) " +
+                " and renum.enum_value in ('Repayment At Disbursement','Repayment', 'Recovery Payment','Disbursement') " +
+
+                " ) as cashier where cashier.id = ?";
+
+        final String hasTransaction = this.jdbcTemplate.queryForObject(sql, String.class, new Object[]{cashierId});
+        return new Boolean(hasTransaction);
     }
 
 }

@@ -177,5 +177,33 @@ public final class TellerCommandFromApiJsonDeserializer {
 
         final String currencyCode = this.fromApiJsonHelper.extractStringNamed("currencyCode", element);
         baseDataValidator.reset().parameter("currencyCode").value(currencyCode).notExceedingLengthOf(3);
+
+        throwExceptionIfValidationWarningsExist(dataValidationErrors);
+    }
+
+    public void validateForCashSettleTxnForCashier(final String json,BigDecimal balance) {
+        if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
+
+        final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
+        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json, this.supportedParameters);
+
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("teller");
+
+        final JsonElement element = this.fromApiJsonHelper.parse(json);
+
+        final BigDecimal txnAmount = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed("txnAmount", element);
+        baseDataValidator.reset().parameter("txnAmount").value(txnAmount).notNull().notGreaterThanMax(balance);
+
+        final LocalDate txnDate = this.fromApiJsonHelper.extractLocalDateNamed("txnDate", element);
+        baseDataValidator.reset().parameter("txnDate").value(txnDate).notNull();
+
+        final String txnNote = this.fromApiJsonHelper.extractStringNamed("txnNote", element);
+        baseDataValidator.reset().parameter("txnNote").value(txnNote).notExceedingLengthOf(200);
+
+        final String currencyCode = this.fromApiJsonHelper.extractStringNamed("currencyCode", element);
+        baseDataValidator.reset().parameter("currencyCode").value(currencyCode).notExceedingLengthOf(3);
+
+        throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
 }

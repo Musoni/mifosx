@@ -12,6 +12,7 @@ import org.mifosplatform.organisation.staff.data.StaffData;
 import org.mifosplatform.organisation.teller.domain.TellerStatus;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Date;
 
@@ -44,7 +45,7 @@ public final class TellerData implements Serializable {
     private String activeCashierName;
     private Long activeCashierId;
 
-    private Double balance;
+    private BigDecimal balance;
     
     private final Collection<OfficeData> officeOptions;
     private final Collection<StaffData> staffOptions;
@@ -55,7 +56,7 @@ public final class TellerData implements Serializable {
     private TellerData(final Long id, final Long officeId, final Long debitAccountId, final Long creditAccountId,
                        final String name, final String description, final LocalDate startDate, final LocalDate endDate,
                        final TellerStatus status, final Boolean hasTransactions, final Boolean hasMappedCashiers,final String activeCashierName,final Long activeCashierId
-    , final Double balance) {
+    , final BigDecimal balance) {
         super();
         this.id = id;
         this.officeId = officeId;
@@ -95,7 +96,7 @@ public final class TellerData implements Serializable {
                                       final Long creditAccountId, final String name, final String description,
                                       final LocalDate startDate, final LocalDate endDate, final TellerStatus status,
                                       final String officeName,
-                                      final Boolean hasTransactions, final Boolean hasMappedCashiers,final String activeCashierName,final Long activeCashierId, final Double balance) {
+                                      final Boolean hasTransactions, final Boolean hasMappedCashiers,final String activeCashierName,final Long activeCashierId, final BigDecimal balance) {
         TellerData tellerData = new TellerData(id, officeId, debitAccountId, creditAccountId, name, description, startDate, endDate,
                 status, hasTransactions, hasMappedCashiers,activeCashierName,activeCashierId,balance);
         tellerData.officeName = officeName;
@@ -160,5 +161,9 @@ public final class TellerData implements Serializable {
 
     public Long getActiveCashierId() {
         return activeCashierId;
+    }
+
+    public BigDecimal getBalance() {
+        return balance;
     }
 }

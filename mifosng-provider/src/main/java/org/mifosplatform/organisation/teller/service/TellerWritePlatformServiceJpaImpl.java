@@ -5,6 +5,7 @@
  */
 package org.mifosplatform.organisation.teller.service;
 
+import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +31,7 @@ import org.mifosplatform.organisation.office.exception.OfficeNotFoundException;
 import org.mifosplatform.organisation.staff.domain.Staff;
 import org.mifosplatform.organisation.staff.domain.StaffRepository;
 import org.mifosplatform.organisation.staff.exception.StaffNotFoundException;
+import org.mifosplatform.organisation.teller.data.TellerData;
 import org.mifosplatform.organisation.teller.domain.Cashier;
 import org.mifosplatform.organisation.teller.domain.CashierRepository;
 import org.mifosplatform.organisation.teller.domain.CashierTransaction;
@@ -64,6 +66,7 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
     private final CashierTransactionRepository cashierTxnRepository;
     private final JournalEntryRepository glJournalEntryRepository;
     private final FinancialActivityAccountRepositoryWrapper financialActivityAccountRepositoryWrapper;
+    private final TellerManagementReadPlatformService tellerManagementReadPlatformService;
 
     @Autowired
     public TellerWritePlatformServiceJpaImpl(final PlatformSecurityContext context,
@@ -71,7 +74,8 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
             final TellerRepositoryWrapper tellerRepositoryWrapper, final OfficeRepository officeRepository,
             final StaffRepository staffRepository, CashierRepository cashierRepository, CashierTransactionRepository cashierTxnRepository,
             JournalEntryRepository glJournalEntryRepository,
-            FinancialActivityAccountRepositoryWrapper financialActivityAccountRepositoryWrapper) {
+            FinancialActivityAccountRepositoryWrapper financialActivityAccountRepositoryWrapper,
+                                             final TellerManagementReadPlatformService tellerManagementReadPlatformService) {
         this.context = context;
         this.fromApiJsonDeserializer = fromApiJsonDeserializer;
         this.tellerRepository = tellerRepository;
@@ -82,6 +86,7 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
         this.cashierTxnRepository = cashierTxnRepository;
         this.glJournalEntryRepository = glJournalEntryRepository;
         this.financialActivityAccountRepositoryWrapper = financialActivityAccountRepositoryWrapper;
+        this.tellerManagementReadPlatformService = tellerManagementReadPlatformService;
     }
 
     @Override
@@ -427,6 +432,12 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
         try {
             final AppUser currentUser = this.context.authenticatedUser();
             final Cashier cashier = validateUserPriviledgeOnCashierAndRetrieve(currentUser, tellerId, cashierId);
+
+            if(this.tellerManagementReadPlatformService.hasTransaction(cashierId)){
+
+                throw new CashierHasTransactionTellerException(cashierId);
+            }
+
             this.cashierRepository.delete(cashier);
 
         } catch (final DataIntegrityViolationException dve) {
@@ -471,7 +482,18 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
             final Cashier cashier = this.cashierRepository.findOne(cashierId);
             if (cashier == null) { throw new CashierNotFoundException(cashierId); }
 
-            this.fromApiJsonDeserializer.validateForCashTxnForCashier(command.json());
+
+            if(txnType.equals(CashierTxnType.SETTLE)){
+
+                final TellerData tellerData = this.tellerManagementReadPlatformService.findTeller(cashier.getTeller().getId());
+
+                this.fromApiJsonDeserializer.validateForCashSettleTxnForCashier(command.json(), tellerData.getBalance());
+            }else{
+                this.fromApiJsonDeserializer.validateForCashTxnForCashier(command.json());
+            }
+
+
+
 
             final String entityType = command.stringValueOfParameterNamed("entityType");
             final Long entityId = command.longValueOfParameterNamed("entityId");

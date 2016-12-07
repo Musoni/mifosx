@@ -53,4 +53,7 @@ public interface TellerManagementReadPlatformService {
     public CashierTransactionsWithSummaryData retrieveCashierTransactionsWithSummary(Long cashierId, boolean includeAllTellers,
             Date fromDate, Date toDate, String currencyCode);
 
+
+    public boolean hasTransaction(final Long cashierId);
+
 }
