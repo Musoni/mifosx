@@ -391,7 +391,8 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
 
             final CashierTransactionMapper ctm = new CashierTransactionMapper();
 
-            final String sql = "select * from (select " + ctm.cashierTxnSchema()
+            final String sql = " select * from (select *, @balance:= CASE WHEN txn_type IN (103,101) THEN @balance+ txn_amount ELSE @balance-txn_amount END as balance " +
+                    "from (select @balance:=0) as p, (select * from (select " + ctm.cashierTxnSchema()
                     + " where t.id = ? and (txn.currency_code = ?  or ? IS NULL ) and o.hierarchy like ? ) cashier_txns " + " union (select "
                     + ctm.savingsTxnSchema()
                     + " where sav_txn.is_reversed = 0 and t.id = ? and ( sav.currency_code = ? OR ? IS NULL ) and o.hierarchy like ? and "
@@ -401,7 +402,7 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
                     + " where loan_txn.is_reversed = 0 and t.id = ? and (loan.currency_code = ?  OR ? IS NULL )and o.hierarchy like ? and "
                     + " loan_txn.created_date >= CONCAT(c.start_date,' ',c.start_time,':00') and ( loan_txn.created_date <= CONCAT(c.end_date,' ',c.end_time,':00') OR c.end_date IS NULL) "
                     + " and renum.enum_value in ('Repayment At Disbursement','Repayment', 'Recovery Payment','Disbursement') ) "
-                    + " order by created_date ";
+                    + " order by created_date ) as t ) as z order by created_date desc ";
 
             logger.info(sql);
 
@@ -572,17 +573,18 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
 
         final CashierTransactionMapper ctm = new CashierTransactionMapper();
 
-        final String sql = "select * from (select " + ctm.cashierTxnSchema()
+        final String sql = "select * from  ( select *, @balance:= CASE WHEN txn_type IN (103,101) THEN @balance+ txn_amount ELSE @balance-txn_amount END as balance " +
+                         " from (select @balance:=0) as p,( select * from ( select " + ctm.cashierTxnSchema()
                 + " where txn.cashier_id = ? and (txn.currency_code = ?  or ? IS NULL ) and o.hierarchy like ? ) cashier_txns " + " union (select "
                 + ctm.savingsTxnSchema()
                 + " where sav_txn.is_reversed = 0 and c.id = ? and ( sav.currency_code = ? OR ? IS NULL ) and o.hierarchy like ? and "
-                + " sav_txn.transaction_date between c.start_date and date_add(c.end_date, interval 1 day) "
+                + " sav_txn.created_date >= CONCAT(c.start_date,' ',c.start_time,':00') and ( sav_txn.created_date <= CONCAT(c.end_date,' ',c.end_time,':00') OR c.end_date IS NULL) "
                 + " and renum.enum_value in ('deposit','withdrawal fee', 'Pay Charge', 'withdrawal') ) " + " union (select "
                 + ctm.loansTxnSchema()
                 + " where loan_txn.is_reversed = 0 and c.id = ? and (loan.currency_code = ?  OR ? IS NULL )and o.hierarchy like ? and "
-                + " loan_txn.transaction_date between c.start_date and date_add(c.end_date, interval 1 day) "
+                + " loan_txn.created_date >= CONCAT(c.start_date,' ',c.start_time,':00') and ( loan_txn.created_date <= CONCAT(c.end_date,' ',c.end_time,':00') OR c.end_date IS NULL) "
                 + " and renum.enum_value in ('Repayment At Disbursement','Repayment', 'Recovery Payment','Disbursement') ) "
-                + " order by created_date ";
+                + " order by created_date ) AS T ) as z order by created_date desc ";
 
         return this.jdbcTemplate.query(sql, ctm, new Object[] { cashierId, currencyCode, currencyCode, hierarchySearchString, cashierId, currencyCode,currencyCode,
                 hierarchySearchString, cashierId, currencyCode,currencyCode, hierarchySearchString });
@@ -736,6 +738,7 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             final Integer tType = rs.getInt("txn_type");
             final CashierTxnType txnType = CashierTxnType.getCashierTxnType(tType);
             final BigDecimal txnAmount = rs.getBigDecimal("txn_amount");
+            final BigDecimal txnRunningBalance = rs.getBigDecimal("balance");
             final LocalDate txnLocalDate = JdbcSupport.getLocalDate(rs, "txn_date");
             final String txnNote = rs.getString("txn_note");
             final String entityType = rs.getString("entity_type");
@@ -761,7 +764,7 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             final String cashierName = rs.getString("cashier_name");
 
             return CashierTransactionData.instance(id, cashierId, txnType, txnAmount, txnDate, txnNote, entityType, entityId, createdDate,
-                    officeId, officeName, tellerId, tellerName, cashierName, null, null, null,currencyCode);
+                    officeId, officeName, tellerId, tellerName, cashierName, null, null, null,currencyCode,txnRunningBalance);
         }
     }
 
