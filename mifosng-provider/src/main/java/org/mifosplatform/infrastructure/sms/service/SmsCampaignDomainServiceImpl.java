@@ -228,14 +228,14 @@ public class SmsCampaignDomainServiceImpl implements SmsCampaignDomainService {
         DateTimeFormatter timeFormatter = DateTimeFormat.forPattern("HH:mm");
         DateTimeFormatter dateFormatter = DateTimeFormat.forPattern("MMM:d:yyyy");
 
-        smsParams.put("id",loanTransaction.getLoan().getClientId());
+        smsParams.put("id",client.getId());
         smsParams.put("firstname",client.getFirstname());
         smsParams.put("middlename",client.getMiddlename());
         smsParams.put("lastname",client.getLastname());
         smsParams.put("FullName",client.getDisplayName());
         smsParams.put("mobileNo",client.mobileNo());
         smsParams.put("LoanAmount",loan.getPrincpal());
-        smsParams.put("LoanOutstanding",loanTransaction.getOutstandingLoanBalance());
+        smsParams.put("LoanOutstanding",loan.getSummary().getTotalOutstanding());
         smsParams.put("loanId",loan.getId());
         smsParams.put("LoanAccountId", loan.getAccountNumber());
         smsParams.put("${officeId}", client.getOffice().getId());
