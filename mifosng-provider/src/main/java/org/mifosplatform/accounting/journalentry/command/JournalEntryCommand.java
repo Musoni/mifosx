@@ -138,7 +138,19 @@ public class JournalEntryCommand {
         return getDebitOrCreditEntryCommandOfficeIds(paramSuffix).size() > 1;
     }
 
-    public List<Long> getDebitOrCreditEntryCommandOfficeIds(final String paramSuffix){
+    public boolean isInterBranch(){
+        final List<Long> debitOffices = getDebitOrCreditEntryCommandOfficeIds(JournalEntryJsonInputParams.DEBITS.getValue());
+        final List<Long> creditOffices = getDebitOrCreditEntryCommandOfficeIds(JournalEntryJsonInputParams.CREDITS.getValue());
+        if(debitOffices.size()>1 || creditOffices.size()>1){
+            return true;
+        }
+        if(!debitOffices.get(0).equals(creditOffices.get(0))){
+            return true;
+        }
+        return false;
+    }
+
+    private List<Long> getDebitOrCreditEntryCommandOfficeIds(final String paramSuffix){
         final List<Long> officeIds = new ArrayList<>();
         final SingleDebitOrCreditEntryCommand[] debitsOrCredits;
 

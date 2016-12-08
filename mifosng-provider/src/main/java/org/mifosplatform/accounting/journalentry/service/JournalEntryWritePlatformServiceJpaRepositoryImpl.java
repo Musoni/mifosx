@@ -144,7 +144,7 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
             final Map<String, Object> changes = new LinkedHashMap<>();
             final PaymentDetail paymentDetail = this.paymentDetailWritePlatformService.createAndPersistPaymentDetail(command, changes);
 
-            if(multipleCreditOffices || multipleDebitOffices){
+            if(jec.isInterBranch()){
                 // if journal entry command involves multiple offices, retrieve control account and split up into multiple journal entries
                 FinancialActivityAccount controlAccount =
                         this.financialActivityAccountRepositoryWrapper.findByFinancialActivityTypeWithNotFoundDetection(AccountingConstants.FINANCIAL_ACTIVITY.INTERBRANCH_CONTROL.getValue());
