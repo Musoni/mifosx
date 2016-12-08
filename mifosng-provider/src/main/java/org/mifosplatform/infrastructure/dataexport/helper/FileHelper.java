@@ -11,13 +11,12 @@ import org.mifosplatform.infrastructure.dataexport.data.DataExportFileData;
 import org.mifosplatform.infrastructure.documentmanagement.contentrepository.FileSystemContentRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.jdbc.support.rowset.SqlRowSet;
 
 import java.io.*;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
 
 /** 
  * Helper class that provides useful methods to manage files 
@@ -112,16 +111,15 @@ public class FileHelper {
         return dataExportFileData;
     }
     
-    /** 
-     * create a data export CSV file
+    /**
+     * Creates a data export CSV file
      * 
-     * @param fileData
+     * @param sqlRowSet
      * @param fileName
      * @return {@link DataExportFileData} object
-     **/
-    public static DataExportFileData createDataExportCsvFile(final List<String[]> fileData,
-            final String fileName, final String[] fileHeaders) {
-        DataExportFileData dataExportFileData = null;
+     */
+    public static DataExportFileData createDataExportCsvFile(final SqlRowSet sqlRowSet, final String fileName) {
+    	DataExportFileData dataExportFileData = null;
         
         try {
             final String fileNamePlusExtension = fileName + "." + StringUtils.lowerCase(DataExportApiConstants.CSV_FILE_FORMAT);
@@ -129,7 +127,7 @@ public class FileHelper {
             final File file = new File(parentDirectoryPath, fileNamePlusExtension);
             
             // create a new csv file on the server
-            CsvFileHelper.createFile(file, fileHeaders, fileData);
+            CsvFileHelper.createFile(sqlRowSet, file);
             
             dataExportFileData = new DataExportFileData(file, fileNamePlusExtension,
                     DataExportApiConstants.CSV_FILE_CONTENT_TYPE);
@@ -141,28 +139,33 @@ public class FileHelper {
         
         return dataExportFileData;
     }
-
-    public static DataExportFileData createDataExportXlsFile(final List<String> fileHeaders, 
-    		final List<Map<String, Object>> fileData, final String fileName) {
-        DataExportFileData dataExportFileData = null;
-
-        try {
-            final String fileNamePlusExtension = fileName + "." + StringUtils.lowerCase(DataExportApiConstants.XLS_FILE_FORMAT);
+    
+    /**
+     * Creates a data export XLS file
+     * 
+     * @param sqlRowSet
+     * @param fileName
+     * @return {@link DataExportFileData} object
+     */
+    public static DataExportFileData createDataExportXlsFile(final SqlRowSet sqlRowSet, final String fileName) {
+    	DataExportFileData dataExportFileData = null;
+    	
+    	try {
+    		final String fileNamePlusExtension = fileName + "." + StringUtils.lowerCase(DataExportApiConstants.XLS_FILE_FORMAT);
             final File parentDirectoryPath = FileHelper.getDataExportDirectoryPath();
             final File file = new File(parentDirectoryPath, fileNamePlusExtension);
-
+            
             // create a new xls file on the server
-            XlsFileHelper.createFile(file, fileHeaders, fileData);
-
+            XlsFileHelper.createFile(sqlRowSet, file);
+            
             dataExportFileData = new DataExportFileData(file, fileNamePlusExtension,
                     DataExportApiConstants.XLS_FILE_CONTENT_TYPE);
-        }
-
-        catch (Exception exception) {
-            logger.error(exception.getMessage(), exception);
-        }
-
-        return dataExportFileData;
+            
+    	} catch (Exception exception) {
+    		logger.error(exception.getMessage(), exception);
+    	}
+    	
+    	return dataExportFileData;
     }
     
     /**

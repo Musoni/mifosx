@@ -5,60 +5,120 @@
  */
 package org.mifosplatform.infrastructure.dataexport.helper;
 
-import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang.WordUtils;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFDataFormat;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.mifosplatform.infrastructure.dataexport.data.MysqlDataType;
+import org.springframework.jdbc.support.rowset.SqlRowSet;
+import org.springframework.jdbc.support.rowset.SqlRowSetMetaData;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.util.List;
-import java.util.Map;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class XlsFileHelper {
-	public static void createFile(final File file, final List<String> headers, 
-    		final List<Map<String, Object>> data) {
-        try {
-        	//Blank workbook
+	public static void createFile(final SqlRowSet sqlRowSet, final File file) {
+		try {
+			final SqlRowSetMetaData sqlRowSetMetaData = sqlRowSet.getMetaData();
+            final int columnCount = sqlRowSetMetaData.getColumnCount();
+			
+			// Create a new spreadsheet workbook
             XSSFWorkbook workbook = new XSSFWorkbook();
-
-            //Create a blank sheet
+            // Create a blank sheet for the workbook
             XSSFSheet sheet = workbook.createSheet();
+            // create a new cell style object
+            XSSFCellStyle cellStyle  = workbook.createCellStyle(); 
+            // create a new data format object 
+    		XSSFDataFormat dataFormat = workbook.createDataFormat();
 
-            int rownum = 0;
-            int column = 0;
-            Row row = sheet.createRow(rownum++);
-        	
-	        for (String header : headers) {
-	        	Cell cell = row.createCell(column++);
-	            
-	            cell.setCellValue(header);
-	        }
-	
-	        for (Map<String, Object> entry : data) {
-	            row = sheet.createRow(rownum++);
-	            column = 0;
-	            
-	            for (String header : headers) {
-	                String value = (entry.get(header) != null) ? entry.get(header).toString() : null;
-	                
-	                // If the value is enclosed in double quotes, and contains a comma, newline or double quote, 
-	                // then quotes are removed. 
-	                value = StringEscapeUtils.unescapeCsv(value);
-	                
-	                Cell cell = row.createCell(column++);
-	                cell.setCellValue(value);
-	            }
-	        }
-
-            //Write the workbook in file system
-            FileOutputStream out = new FileOutputStream(file);
-            workbook.write(out);
-            out.close();
+            int rowIndex = 0;
+            int columnIndex = 0;
+            Row row = sheet.createRow(rowIndex++);
             
-        } catch (Exception exception) {
+            for (int i=1; i<=columnCount; i++) {
+            	// create a new cell for each columns for the header row
+            	Cell cell = row.createCell(columnIndex++);
+            	// get the column label of the dataset
+            	String columnLabel = WordUtils.capitalize(sqlRowSetMetaData.getColumnLabel(i));
+            	// set the value of the cell
+            	cell.setCellValue(columnLabel);
+            }
+            
+            while (sqlRowSet.next()) {
+            	columnIndex = 0;
+            	row = sheet.createRow(rowIndex++);
+            	
+            	for (int i=1; i<=columnCount; i++) {
+            		Cell cell = row.createCell(columnIndex++);
+            		String columnTypeName = sqlRowSetMetaData.getColumnTypeName(i);
+            		MysqlDataType mysqlDataType = MysqlDataType.newInstance(columnTypeName);
+            		String stringValue = sqlRowSet.getString(i);
+            		
+            		if (stringValue != null) {
+            			switch (mysqlDataType.getCategory()) {
+	            			case NUMERIC:
+	            				double numberAsDouble = Double.parseDouble(stringValue);
+    							
+	            				cell.setCellType(Cell.CELL_TYPE_NUMERIC);
+    							cell.setCellValue(numberAsDouble);
+	            				break;
+	            				
+	            			case DATE_TIME:
+	            				DateFormat dateFormat;
+	            				Date date;
+	            				
+	            				switch (mysqlDataType) {
+	            					case DATE:
+	            					case DATETIME:
+	            						String mysqlDateFormat = "yyyy-MM-dd";
+	            						String excelDateFormat = "MM/DD/YYYY";
+	            						
+	            						if (mysqlDataType.equals(MysqlDataType.DATETIME)) {
+	            							mysqlDateFormat = "yyyy-MM-dd HH:mm:ss";
+	            							excelDateFormat = "MM/DD/YYYY HH:MM:SS";
+	            						}
+	            						
+	            						dateFormat = new SimpleDateFormat(mysqlDateFormat);
+	            						date = dateFormat.parse(stringValue);
+	            						
+	            						cellStyle.setDataFormat(dataFormat.getFormat(excelDateFormat));
+	            						
+	            						cell.setCellValue(date);
+	            						cell.setCellType(Cell.CELL_TYPE_NUMERIC);
+	            						cell.setCellStyle(cellStyle);
+	            						break;
+	            						
+	            					default:
+	            						cell.setCellValue(stringValue);
+	            						break;
+	            				}
+	            				break;
+	            		
+	            			default:
+	            				cell.setCellType(Cell.CELL_TYPE_STRING);
+	                			cell.setCellValue(stringValue);
+	            				break;
+	            		}
+            			
+            		} else {
+            			cell.setCellValue(stringValue);
+            		}
+            	}
+            }
+            
+            //Write the workbook in file system
+            FileOutputStream fileOutputStream = new FileOutputStream(file);
+            workbook.write(fileOutputStream);
+            fileOutputStream.close();
+			
+		} catch (Exception exception) {
         	exception.printStackTrace();
         }
-    }
+	}
 }

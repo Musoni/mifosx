@@ -10,13 +10,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 
 import javax.ws.rs.core.Response;
 
-import org.apache.commons.lang.StringEscapeUtils;
-import org.apache.commons.lang.WordUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
@@ -44,7 +40,6 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
-import org.springframework.jdbc.support.rowset.SqlRowSetMetaData;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -94,42 +89,21 @@ public class DataExportReadPlatformServiceImpl implements DataExportReadPlatform
             }
             
             final String sql = dataExport.getDataSql();
-            final List<String> fileHeaders = new ArrayList<>();
-            final List<String[]> csvFileData = new ArrayList<>();
-            final List<Map<String, Object>> xlsFileData = new ArrayList<>();
             final SqlRowSet sqlRowSet = this.jdbcTemplate.queryForRowSet(sql);
-            final SqlRowSetMetaData sqlRowSetMetaData = sqlRowSet.getMetaData();
-            final int columnCount = sqlRowSetMetaData.getColumnCount();
             
-            for(int i=1 ; i<=columnCount ; i++) {
-                fileHeaders.add(WordUtils.capitalize(sqlRowSetMetaData.getColumnLabel(i)));
-            }
-            
-            while (sqlRowSet.next()) {
-                String[] rowData = new String[columnCount];
-                Map<String, Object> xlsRowData = new LinkedHashMap<String, Object>();
-                int rowDataIndex = 0;
-                
-                for(int i=1 ; i<=columnCount ; i++) {
-                    String data = StringEscapeUtils.escapeCsv(sqlRowSet.getString(i));
-                    Object xlsData = data;
-                    rowData[rowDataIndex++] = data;
-                    
-                    xlsRowData.put(WordUtils.capitalize(sqlRowSetMetaData.getColumnLabel(i)), xlsData);
-                }
-                
-                xlsFileData.add(xlsRowData);
-                csvFileData.add(rowData);
-            }
+            DataExportFileData dataExportFileData = null;
             
             final DataExportFileFormat dataExportFileFormat = DataExportFileFormat.fromString(fileFormat);
-            final String[] fileHeadersArray = fileHeaders.toArray(new String[fileHeaders.size()]);
             final String filename = dataExport.getFilename();
-            DataExportFileData dataExportFileData = FileHelper.createDataExportCsvFile(csvFileData, 
-                    filename, fileHeadersArray);
             
-            if (dataExportFileFormat.isXls()) {
-            	dataExportFileData = FileHelper.createDataExportXlsFile(fileHeaders, xlsFileData, filename);
+            switch (dataExportFileFormat) {
+            	case XLS:
+            		dataExportFileData = FileHelper.createDataExportXlsFile(sqlRowSet, filename);
+            		break;
+            
+            	default:
+            		dataExportFileData = FileHelper.createDataExportCsvFile(sqlRowSet, filename);
+            		break;
             }
             
             int fileDownloadCount = dataExport.getFileDownloadCount();

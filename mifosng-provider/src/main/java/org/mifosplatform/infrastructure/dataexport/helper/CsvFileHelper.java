@@ -6,14 +6,20 @@
 package org.mifosplatform.infrastructure.dataexport.helper;
 
 import au.com.bytecode.opencsv.CSVWriter;
+
+import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang.WordUtils;
 import org.mifosplatform.infrastructure.dataexport.api.DataExportApiConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.jdbc.support.rowset.SqlRowSet;
+import org.springframework.jdbc.support.rowset.SqlRowSetMetaData;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
 import java.util.List;
 
 /** 
@@ -27,22 +33,52 @@ public class CsvFileHelper {
     
     private final static Logger logger = LoggerFactory.getLogger(CsvFileHelper.class);
     
-    /** 
-     * create a new CSV file  
-     **/
-    public static void createFile(final File file, final String[] fileHeaders, 
-            final List<String[]> fileData) {
-        try {
+    /**
+     * Creates a new CSV file
+     * 
+     * @param sqlRowSet
+     * @param file
+     */
+    public static void createFile(final SqlRowSet sqlRowSet, final File file) {
+    	try {
             // create a new CSVWriter object
             final CSVWriter csvWriter = new CSVWriter(new BufferedWriter(new OutputStreamWriter(
                     new FileOutputStream(file), ENCODING)), SEPARATOR, QUOTE_CHARACTER,
                     ESCAPE_CHARACTER, DataExportApiConstants.WINDOWS_END_OF_LINE_CHARACTER);
+            final SqlRowSetMetaData sqlRowSetMetaData = sqlRowSet.getMetaData();
+            final int columnCount = sqlRowSetMetaData.getColumnCount();
+            final String[] headers = new String[columnCount];
+            final List<String[]> data = new ArrayList<>();
+            
+            int columnIndex = 0;
+            
+            for (int i=1; i<=columnCount; i++) {
+            	// get the column label of the dataset
+            	String columnLabel = WordUtils.capitalize(sqlRowSetMetaData.getColumnLabel(i));
+            	
+            	// add column label to headers array
+            	headers[columnIndex++] = columnLabel;
+            }
+            
+            while (sqlRowSet.next()) {
+            	// create a new empty string array of length "columnCount"
+            	final String[] rowData = new String[columnCount];
+            	
+            	int rowIndex = 0;
+            	
+            	for (int i=1; i<=columnCount; i++) {
+            		rowData[rowIndex++] = StringEscapeUtils.escapeCsv(sqlRowSet.getString(i));
+            	}
+            	
+            	// add the row data to the array list of row data
+            	data.add(rowData);
+            }
             
             // write file headers to file
-            csvWriter.writeNext(fileHeaders);
+            csvWriter.writeNext(headers);
             
             // write file data to file
-            csvWriter.writeAll(fileData);
+            csvWriter.writeAll(data);
             
             // close stream writer
             csvWriter.close();
