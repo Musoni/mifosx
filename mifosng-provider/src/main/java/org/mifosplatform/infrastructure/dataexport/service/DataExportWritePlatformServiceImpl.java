@@ -505,7 +505,7 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
                 String datatableDisplayName = datatableData.getDisplayName();
                 String baseEntityReferenceColumn = baseEntityName.concat("_id");
                 List<RegisteredTableMetaData> registeredTablesMetaData = this.registeredTableMetaDataRepository.
-                		findAllByTableName(datatableName);
+                		findByTableNameOrderByOrderAsc(datatableName);
                 
                 if ((coreDatatable != null) && DataExportCoreDatatable.SAVINGS_ACCOUNT_CHARGES.equals(coreDatatable)) {
                 	baseEntityReferenceColumn = "savings_account_id";
@@ -533,13 +533,17 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
                         sqlBuilder.LEFT_OUTER_JOIN("`m_code_value` `" + tableAlias + "` on `"
                                 + tableAlias + "`.`id` = `" + metaData.getTableName() + "`.`" + metaData.getFieldName() + "`");
                         
+                    } else if (fieldName.equalsIgnoreCase("submittedon_date") || fieldName.equalsIgnoreCase("submittedon_userid")) {
+                    	// skip
                     } else if (fieldName.contains("userid") || fieldName.endsWith("_by")) {
-                        String tableAlias = "user" + referencedTableIndex++;
+                    	// the commented lines below were left in the code so if Cameron wants the 
+                    	// "submittedon_date" and "submittedon_userid" fields back in
+                        /*String tableAlias = "user" + referencedTableIndex++;
                         String columnLabel = datatableDisplayName + " - " + metaData.getLabelName();
                         
                         sqlBuilder.SELECT("`" + tableAlias + "`.`username` as `" + columnLabel + "`");
                         sqlBuilder.LEFT_OUTER_JOIN("`m_appuser` `" + tableAlias + "` on `"
-                                + tableAlias + "`.`id` = `" + metaData.getTableName() + "`.`" + metaData.getFieldName() + "`");
+                                + tableAlias + "`.`id` = `" + metaData.getTableName() + "`.`" + metaData.getFieldName() + "`");*/
                     } else if (fieldName.equalsIgnoreCase("id")) {
                     	sqlBuilder.SELECT("`" + datatableName + "`.`" + metaData.getFieldName() + "` as `"
                     			+ datatableDisplayName + " id`");

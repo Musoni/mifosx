@@ -13,5 +13,11 @@ import java.util.List;
 public interface RegisteredTableMetaDataRepository  extends JpaRepository<RegisteredTableMetaData, Long>, JpaSpecificationExecutor<RegisteredTableMetaData> {
     RegisteredTableMetaData findOneByTableNameAndFieldName(String tableName,String fieldName);
 
-    List<RegisteredTableMetaData> findAllByTableName(String tableName);
+    /**
+     * Find by table name ordering the resultset by order ascending
+     * 
+     * @param tableName datatable table name
+     * @return List of {@link RegisteredTableMetaData} objects
+     */
+    List<RegisteredTableMetaData> findByTableNameOrderByOrderAsc(final String tableName);
 }
