@@ -94,6 +94,14 @@ public class GuarantorData {
                 guarantorData.allowedClientRelationshipTypes, guarantorData.accountLinkingOptions,guarantorInterestAllocation);
     }
 
+    public static GuarantorData mergeClientNotFoundData(final ClientData clientData, final GuarantorData guarantorData,final Collection<GuarantorInterestAllocationData> guarantorInterestAllocation) {
+        return new GuarantorData(guarantorData.id, guarantorData.loanId, guarantorData.clientRelationshipType, guarantorData.entityId,
+                guarantorData.guarantorType, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null,
+                guarantorData.status, guarantorData.guarantorFundingDetails, null, guarantorData.allowedClientRelationshipTypes,
+                guarantorData.accountLinkingOptions,guarantorInterestAllocation);
+    }
+
     public GuarantorData(final Long id, final Long loanId, final CodeValueData clientRelationshipType, final Long entityId,
             final EnumOptionData guarantorType, final String firstname, final String lastname, final LocalDate dob,
             final String addressLine1, final String addressLine2, final String city, final String state, final String zip,
