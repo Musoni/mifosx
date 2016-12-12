@@ -126,7 +126,9 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
                     .append(" left join acc_gl_account as glAccount on glAccount.id = journalEntry.account_id")
                     .append(" left join m_office as office on office.id = journalEntry.office_id")
                     .append(" left join m_appuser as creatingUser on creatingUser.id = journalEntry.createdby_id ")
-                    .append(" join m_currency curr on curr.code = journalEntry.currency_code ");
+                    .append(" left join m_currency curr on curr.code = journalEntry.currency_code ")
+                    .append(" left join m_staff stf  on stf.id = creatingUser.staff_id ")
+                    .append(" left join m_cashiers ch on ch.staff_id = stf.id ");
             if (associationParametersData.isPaymentDetailsRequired()) {
                 sb.append(" left join m_loan_transaction as lt on journalEntry.loan_transaction_id = lt.id ")
                         .append(" left join m_savings_account_transaction as st on journalEntry.savings_transaction_id = st.id ")
@@ -381,6 +383,16 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
                     .append(whereClose
                             + " journalEntry.savings_transaction_id in (select id from m_savings_account_transaction where savings_account_id = ?)");
             objectArray[arrayPos] = searchParameters.getSavingsId();
+            arrayPos = arrayPos + 1;
+
+            whereClose = " and ";
+        }
+
+        if (searchParameters.isTellerIdPassed()) {
+            sqlBuilder
+                    .append(whereClose
+                            + " ch.teller_id = ? and  journalEntry.created_date >= ch.started_at and ( journalEntry.created_date <= ch.ended_at OR ch.ended_at IS NULL ) ");
+            objectArray[arrayPos] = searchParameters.getTellerId();
             arrayPos = arrayPos + 1;
 
             whereClose = " and ";

@@ -96,8 +96,7 @@ public class CashierTransaction extends AbstractPersistable<Long> {
     	this.entityId = entityId;
     	this.txnNote = txnNote;
 
-        final LocalDateTime currentDateTime = DateUtils.getLocalDateTimeOfTenant();
-    	this.createdDate = currentDateTime.toDate();
+    	this.createdDate = new Date();
     	this.currencyCode = currencyCode;
     }
     

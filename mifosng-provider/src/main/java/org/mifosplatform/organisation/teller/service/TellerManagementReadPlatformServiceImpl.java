@@ -14,7 +14,9 @@ import java.util.Date;
 import java.util.Iterator;
 
 import org.apache.commons.lang.StringUtils;
+import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
 import org.mifosplatform.infrastructure.core.exception.UnrecognizedQueryParamException;
 import org.mifosplatform.infrastructure.core.service.RoutingDataSource;
@@ -96,8 +98,8 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             sqlBuilder.append(" left join m_appuser user on loan_txn.appuser_id = user.id ");
             sqlBuilder.append(" left join m_staff staff on user.staff_id = staff.id ");
             sqlBuilder.append(" left join m_cashiers c on c.staff_id = staff.id ");
-            sqlBuilder.append("where loan_txn.is_reversed = 0 and loan_txn.created_date >= CONCAT(c.start_date,' ',c.start_time,':00') ");
-            sqlBuilder.append(" and ( loan_txn.created_date <= CONCAT(c.end_date,' ',c.end_time,':00') OR c.end_date IS NULL) ");
+            sqlBuilder.append("where loan_txn.is_reversed = 0 and loan_txn.created_date >= c.started_at ");
+            sqlBuilder.append(" and ( loan_txn.created_date <= c.ended_at OR c.ended_at IS NULL) ");
             sqlBuilder.append(" and renum.enum_value in ('Repayment At Disbursement','Repayment', 'Recovery Payment','Disbursement') ");
             sqlBuilder.append(" group by c.teller_id ");
 
@@ -112,8 +114,8 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             sqlBuilder.append(" left join m_appuser user on sav_txn.appuser_id = user.id ");
             sqlBuilder.append(" left join m_staff staff on user.staff_id = staff.id ");
             sqlBuilder.append(" left join m_cashiers c on c.staff_id = staff.id ");
-            sqlBuilder.append(" where sav_txn.is_reversed = 0 and sav_txn.created_date >= CONCAT(c.start_date,' ',c.start_time,':00') ");
-            sqlBuilder.append(" and ( sav_txn.created_date <= CONCAT(c.end_date,' ',c.end_time,':00') OR c.end_date IS NULL) ");
+            sqlBuilder.append(" where sav_txn.is_reversed = 0 and sav_txn.created_date >= c.started_at ");
+            sqlBuilder.append(" and ( sav_txn.created_date <= c.ended_at OR c.ended_at IS NULL) ");
             sqlBuilder.append(" and renum.enum_value in ('deposit','withdrawal fee', 'Pay Charge', 'withdrawal') ");
             sqlBuilder.append(" group by c.teller_id ) as sav on sav.teller_id = t.id ");
 
@@ -123,8 +125,8 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             sqlBuilder.append(" from m_cashier_transactions txn ");
             sqlBuilder.append(" left join m_cashiers c on c.id = txn.cashier_id ");
             sqlBuilder.append(" left join m_staff s on s.id = c.staff_id ");
-            sqlBuilder.append(" where  txn.created_date >= CONCAT(c.start_date,' ',c.start_time,':00') ");
-            sqlBuilder.append(" and(txn.created_date <= CONCAT(c.end_date, ' ', c.end_time, ':00')OR c.end_date IS NULL)" );
+            sqlBuilder.append(" where  txn.created_date >= c.started_at ");
+            sqlBuilder.append(" and(txn.created_date <= c.ended_at OR c.end_date IS NULL)" );
 
             sqlBuilder.append(" group by c.teller_id ) as txn on txn.teller_id = t.id ");
 
@@ -396,11 +398,11 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
                     + " where t.id = ? and (txn.currency_code = ?  or ? IS NULL ) and o.hierarchy like ? ) cashier_txns " + " union (select "
                     + ctm.savingsTxnSchema()
                     + " where sav_txn.is_reversed = 0 and t.id = ? and ( sav.currency_code = ? OR ? IS NULL ) and o.hierarchy like ? and "
-                    + " sav_txn.created_date >= CONCAT(c.start_date,' ',c.start_time,':00') and ( sav_txn.created_date <= CONCAT(c.end_date,' ',c.end_time,':00') OR c.end_date IS NULL) "
+                    + " sav_txn.created_date >= c.started_at and ( sav_txn.created_date <= c.ended_at OR c.ended_at IS NULL) "
                     + " and renum.enum_value in ('deposit','withdrawal fee', 'Pay Charge', 'withdrawal') ) " + " union (select "
                     + ctm.loansTxnSchema()
                     + " where loan_txn.is_reversed = 0 and t.id = ? and (loan.currency_code = ?  OR ? IS NULL )and o.hierarchy like ? and "
-                    + " loan_txn.created_date >= CONCAT(c.start_date,' ',c.start_time,':00') and ( loan_txn.created_date <= CONCAT(c.end_date,' ',c.end_time,':00') OR c.end_date IS NULL) "
+                    + " loan_txn.created_date >= c.started_at and ( loan_txn.created_date <= c.ended_at OR c.ended_at IS NULL) "
                     + " and renum.enum_value in ('Repayment At Disbursement','Repayment', 'Recovery Payment','Disbursement') ) "
                     + " order by created_date ) as t ) as z order by created_date desc ";
 
@@ -578,11 +580,11 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
                 + " where txn.cashier_id = ? and (txn.currency_code = ?  or ? IS NULL ) and o.hierarchy like ? ) cashier_txns " + " union (select "
                 + ctm.savingsTxnSchema()
                 + " where sav_txn.is_reversed = 0 and c.id = ? and ( sav.currency_code = ? OR ? IS NULL ) and o.hierarchy like ? and "
-                + " sav_txn.created_date >= CONCAT(c.start_date,' ',c.start_time,':00') and ( sav_txn.created_date <= CONCAT(c.end_date,' ',c.end_time,':00') OR c.end_date IS NULL) "
+                + " sav_txn.created_date >= c.started_at and ( sav_txn.created_date <= c.ended_at OR c.ended_at IS NULL) "
                 + " and renum.enum_value in ('deposit','withdrawal fee', 'Pay Charge', 'withdrawal') ) " + " union (select "
                 + ctm.loansTxnSchema()
                 + " where loan_txn.is_reversed = 0 and c.id = ? and (loan.currency_code = ?  OR ? IS NULL )and o.hierarchy like ? and "
-                + " loan_txn.created_date >= CONCAT(c.start_date,' ',c.start_time,':00') and ( loan_txn.created_date <= CONCAT(c.end_date,' ',c.end_time,':00') OR c.end_date IS NULL) "
+                + " loan_txn.created_date >= c.started_at and ( loan_txn.created_date <= c.ended_at OR c.end_date IS NULL) "
                 + " and renum.enum_value in ('Repayment At Disbursement','Repayment', 'Recovery Payment','Disbursement') ) "
                 + " order by created_date ) AS T ) as z order by created_date desc ";
 
@@ -599,7 +601,7 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             sqlBuilder.append("c.id as id,c.teller_id as teller_id, t.name as teller_name, c.description as description, ");
             sqlBuilder.append("c.staff_id as staff_id, s.display_name as staff_name,  ");
             sqlBuilder.append("c.start_date as start_date, c.end_date as end_date,  ");
-            sqlBuilder.append("c.full_day as full_day, c.start_time as start_time, c.end_time as end_time, ");
+            sqlBuilder.append("c.full_day as full_day, c.start_time as start_time, c.end_time as end_time, c.started_at as started_at, c.ended_at as ended_at, ");
             sqlBuilder.append("c.is_active as is_active ");
             sqlBuilder.append("from m_cashiers c ");
             sqlBuilder.append("join m_tellers t on t.id = c.teller_id ");
@@ -620,6 +622,8 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
 
             final LocalDate startDate = JdbcSupport.getLocalDate(rs, "start_date");
             final LocalDate endDate = JdbcSupport.getLocalDate(rs, "end_date");
+            final String startedAt = rs.getString("started_at");
+            final String endedAt =  rs.getString("ended_at");;
             final Integer fullDayFromDB = rs.getInt("full_day");
             final Boolean isActive = rs.getBoolean("is_active");
 
@@ -631,7 +635,7 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             final String endTime = rs.getString("end_time");
 
             return CashierData.instance(id, null, null, staffId, staffName, tellerId, tellerName, description,(startDate != null ? startDate.toDate() : null),
-                    (endDate != null ? endDate.toDate() : null), fullDay, startTime, endTime, isActive);
+                    (endDate != null ? endDate.toDate() : null), fullDay, startTime, endTime, isActive,startedAt,endedAt);
         }
     }
 
@@ -886,8 +890,8 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
                 "left join m_appuser user on sav_txn.appuser_id = user.id " +
                 "left join m_staff staff on user.staff_id = staff.id " +
                 "left join m_cashiers c on c.staff_id = staff.id " +
-                "where sav_txn.is_reversed = 0 and sav_txn.created_date >= CONCAT(c.start_date,' ',c.start_time,':00') " +
-                "and ( sav_txn.created_date <= CONCAT(c.end_date,' ',c.end_time,':00') OR c.end_date IS NULL) " +
+                "where sav_txn.is_reversed = 0 and sav_txn.created_date >= c.started_at " +
+                "and ( sav_txn.created_date <= c.ended_at OR c.end_date IS NULL) " +
                 "and renum.enum_value in ('deposit','withdrawal fee', 'Pay Charge', 'withdrawal') " +
 
 
@@ -899,8 +903,8 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
                 "left join m_appuser user on loan_txn.appuser_id = user.id  " +
                 "left join m_staff staff on user.staff_id = staff.id " +
                 "left join m_cashiers c on c.staff_id = staff.id " +
-                "where loan_txn.is_reversed = 0 and loan_txn.created_date >= CONCAT(c.start_date,' ',c.start_time,':00')  " +
-                " and ( loan_txn.created_date <= CONCAT(c.end_date,' ',c.end_time,':00') OR c.end_date IS NULL) " +
+                "where loan_txn.is_reversed = 0 and loan_txn.created_date >= c.started_at  " +
+                " and ( loan_txn.created_date <= c.ended_at OR c.end_date IS NULL) " +
                 " and renum.enum_value in ('Repayment At Disbursement','Repayment', 'Recovery Payment','Disbursement') " +
 
                 " ) as cashier where cashier.id = ?";

@@ -5,6 +5,7 @@
  */
 package org.mifosplatform.organisation.teller.domain;
 
+import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.organisation.office.domain.Office;
@@ -65,6 +66,17 @@ public class Cashier extends AbstractPersistable<Long> {
     @Column(name = "is_active", nullable = false)
     private Boolean isActive;
 
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "started_at", nullable = false,columnDefinition="DATETIME")
+    private Date startedAt;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "ended_at", nullable = true,columnDefinition="DATETIME")
+    private Date endedAt;
+
+
+
     /**
      * Creates a new cashier.
      */
@@ -101,6 +113,8 @@ public class Cashier extends AbstractPersistable<Long> {
         this.startTime = startTime;
         this.endTime = endTime;
         this.isActive = false;
+        this.startedAt = new Date();
+        this.endedAt = null;
 
     }
 
@@ -479,6 +493,12 @@ public class Cashier extends AbstractPersistable<Long> {
     }
 
     public void unassign(){
+
         this.setIsActive(false);
+        this.setEndedAt(new Date());
+    }
+
+    public void setEndedAt(Date endedAt) {
+        this.endedAt = endedAt;
     }
 }

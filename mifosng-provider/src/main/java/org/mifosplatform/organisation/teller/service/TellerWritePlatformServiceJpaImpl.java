@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
 import org.mifosplatform.accounting.common.AccountingConstants.FINANCIAL_ACTIVITY;
 import org.mifosplatform.accounting.financialactivityaccount.domain.FinancialActivityAccount;
 import org.mifosplatform.accounting.financialactivityaccount.domain.FinancialActivityAccountRepositoryWrapper;
@@ -256,6 +257,7 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
 
 
             final Boolean isFullDay = command.booleanObjectValueOfParameterNamed("isFullDay");
+
             if (!isFullDay) {
                 hourStartTime = command.longValueOfParameterNamed("hourStartTime");
                 minStartTime = command.longValueOfParameterNamed("minStartTime");
@@ -392,19 +394,6 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
 
             final Cashier cashier = validateUserPriviledgeOnCashierAndRetrieve(currentUser, tellerId, cashierId);
 
-            final LocalDate endDate = command.localDateValueOfParameterNamed("endDate");
-            Long hourEndTime = command.longValueOfParameterNamed("hourEndTime");
-            Long minEndTime = command.longValueOfParameterNamed("minEndTime");
-            String endTime= "";
-
-
-            if (minEndTime == 0)
-                endTime = hourEndTime.toString() + ":" + minEndTime.toString() + "0";
-            else
-                endTime = hourEndTime.toString() + ":" + minEndTime.toString();
-
-            cashier.setEndDate(endDate.toDate());
-            cashier.setEndTime(endTime);
             cashier.unassign();
 
             final Map<String, Object> changes = new LinkedHashMap<>(7);
