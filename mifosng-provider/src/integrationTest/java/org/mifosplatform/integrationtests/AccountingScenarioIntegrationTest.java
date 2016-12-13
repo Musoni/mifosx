@@ -23,15 +23,9 @@ import org.joda.time.LocalDate;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mifosplatform.integrationtests.common.ClientHelper;
-import org.mifosplatform.integrationtests.common.CommonConstants;
-import org.mifosplatform.integrationtests.common.SchedulerJobHelper;
-import org.mifosplatform.integrationtests.common.Utils;
-import org.mifosplatform.integrationtests.common.accounting.Account;
-import org.mifosplatform.integrationtests.common.accounting.AccountHelper;
-import org.mifosplatform.integrationtests.common.accounting.JournalEntry;
-import org.mifosplatform.integrationtests.common.accounting.JournalEntryHelper;
-import org.mifosplatform.integrationtests.common.accounting.PeriodicAccrualAccountingHelper;
+import org.mifosplatform.accounting.common.AccountingConstants;
+import org.mifosplatform.integrationtests.common.*;
+import org.mifosplatform.integrationtests.common.accounting.*;
 import org.mifosplatform.integrationtests.common.charges.ChargesHelper;
 import org.mifosplatform.integrationtests.common.fixeddeposit.FixedDepositAccountHelper;
 import org.mifosplatform.integrationtests.common.fixeddeposit.FixedDepositAccountStatusChecker;
@@ -87,6 +81,8 @@ public class AccountingScenarioIntegrationTest {
     private final Float AMOUNT_TO_BE_WAIVE = 400.0f;
     private LoanTransactionHelper loanTransactionHelper;
     private AccountHelper accountHelper;
+    private OfficeHelper officeHelper;
+    private FinancialActivityAccountHelper financialActivityAccountHelper;
     private JournalEntryHelper journalEntryHelper;
     private SavingsAccountHelper savingsAccountHelper;
     private FixedDepositProductHelper fixedDepositProductHelper;
@@ -106,8 +102,37 @@ public class AccountingScenarioIntegrationTest {
         this.loanTransactionHelper = new LoanTransactionHelper(this.requestSpec, this.responseSpec);
         this.accountHelper = new AccountHelper(this.requestSpec, this.responseSpec);
         this.journalEntryHelper = new JournalEntryHelper(this.requestSpec, this.responseSpec);
+        this.financialActivityAccountHelper = new FinancialActivityAccountHelper(this.requestSpec);
+        this.officeHelper = new OfficeHelper(this.requestSpec, this.responseSpec);
         this.schedulerJobHelper = new SchedulerJobHelper(this.requestSpec, this.responseSpec);
         this.periodicAccrualAccountingHelper = new PeriodicAccrualAccountingHelper(this.requestSpec, this.responseSpec);
+    }
+
+    @Test
+    public void checkJournalEntryFlow(){
+        final Account assetAccount = this.accountHelper.createAssetAccount();
+        final Account interBranchAccount = this.accountHelper.createAssetAccount();
+        final Integer financialActivityId = (Integer) this.financialActivityAccountHelper.createFinancialActivityAccount(
+                AccountingConstants.FINANCIAL_ACTIVITY.INTERBRANCH_CONTROL.getValue(),interBranchAccount.getAccountID(),
+                responseSpec, CommonConstants.RESPONSE_RESOURCE_ID);
+        final Integer firstOfficeId = this.officeHelper.createOffice("01 January 2011");
+        final Integer secondOfficeId = this.officeHelper.createOffice("02 February 2012");
+        final Integer thirdOfficeId = this.officeHelper.createOffice("03 March 2013");
+        final Integer fourthOfficeId = this.officeHelper.createOffice("04 April 2014");
+
+        final Float firstCreditAmount = 500.0f;
+        final Float secondCreditAmount = 600.0f;
+        final Float firstDebitAmount = 450.0f;
+        final Float secondDebitAmount = 650.0f;
+
+        final JournalEntry[] journalEntries = {new JournalEntry(firstDebitAmount, JournalEntry.TransactionType.DEBIT, firstOfficeId, assetAccount.getAccountID()),
+                new JournalEntry(firstCreditAmount, JournalEntry.TransactionType.CREDIT, secondOfficeId, assetAccount.getAccountID()),
+                new JournalEntry(secondDebitAmount, JournalEntry.TransactionType.DEBIT, firstOfficeId, assetAccount.getAccountID()),
+                new JournalEntry(secondCreditAmount, JournalEntry.TransactionType.CREDIT, thirdOfficeId, assetAccount.getAccountID())};
+
+        final Integer transactionId = this.journalEntryHelper.createJournalEntries(assetAccount.getAccountID(),journalEntries);
+
+        final Integer deletedFinancialActivityId = this.financialActivityAccountHelper.deleteFinancialActivityAccount(financialActivityId,responseSpec,CommonConstants.RESPONSE_RESOURCE_ID);
     }
 
     @Test

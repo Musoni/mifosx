@@ -12,6 +12,8 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import com.google.gson.Gson;
+import org.mifosplatform.integrationtests.common.CommonConstants;
 import org.mifosplatform.integrationtests.common.Utils;
 
 import com.jayway.restassured.specification.RequestSpecification;
@@ -65,6 +67,13 @@ public class JournalEntryHelper {
         return (Float) entryResponse.get(entryNumber).get("amount");
     }
 
+    public Integer createJournalEntries(final Integer accountId, final JournalEntry... accountEntries){
+        String json = getAsJSON(accountEntries);
+        return Utils.performServerPost(this.requestSpec, this.responseSpec,
+                "/mifosng-provider/api/v1/journalentries?" + Utils.TENANT_IDENTIFIER, json,
+                CommonConstants.RESPONSE_RESOURCE_ID);
+    }
+
     private void checkJournalEntry(final Integer officeId, final Account account, final String date, final JournalEntry... accountEntries) {
         final String url = createURLForGettingAccountEntries(account, date, officeId);
         final ArrayList<HashMap> response = Utils.performServerGet(this.requestSpec, this.responseSpec, url, "pageItems");
@@ -93,6 +102,39 @@ public class JournalEntryHelper {
     private String createURLForGettingAccountEntriesByTransactionId(final String transactionId) {
         return new String("/mifosng-provider/api/v1/journalentries?transactionId=" + transactionId + "&tenantIdentifier=default"
                 + "&orderBy=id&sortOrder=desc&locale=en&dateFormat=dd MMMM yyyy");
+    }
+
+    private static String getAsJSON(final JournalEntry... accountEntries) {
+        final HashMap<String, Object> map = new HashMap<>();
+        final ArrayList<HashMap<String, String>> credits = new ArrayList<>();
+        final ArrayList<HashMap<String, String>> debits = new ArrayList<>();
+
+        for (int i = 0; i < accountEntries.length; i++) {
+            HashMap<String, String> creditOrDebitMap = new HashMap<>();
+
+            creditOrDebitMap.put("glAccountId",accountEntries[i].getAccountId().toString());
+            creditOrDebitMap.put("officeId",accountEntries[i].getOfficeId().toString());
+            creditOrDebitMap.put("amount",accountEntries[i].getTransactionAmount().toString());
+
+            if(accountEntries[i].getTransactionType().equals(JournalEntry.TransactionType.CREDIT.toString())){
+                credits.add(creditOrDebitMap);
+            }
+            if(accountEntries[i].getTransactionType().equals(JournalEntry.TransactionType.DEBIT.toString())){
+                debits.add(creditOrDebitMap);
+            }
+        }
+
+        map.put("transactionDate", "01-01-2011");
+        map.put("comments", "");
+        map.put("referenceNumber", "");
+        map.put("useAccountingRule", "false");
+        map.put("locale", "en_GB");
+        map.put("currencyCode", "KES");
+        map.put("dateFormat", "dd-MM-yyyy");
+        map.put("credits", credits);
+        map.put("debits", debits);
+        System.out.println("map : " + map);
+        return new Gson().toJson(map);
     }
 
 }

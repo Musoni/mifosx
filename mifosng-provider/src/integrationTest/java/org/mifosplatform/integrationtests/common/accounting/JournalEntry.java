@@ -25,11 +25,20 @@ public class JournalEntry {
     private final Float transactionAmount;
     private final TransactionType transactionType;
     private final Integer officeId;
+    private final Integer accountId;
+
+    public JournalEntry(final float transactionAmount, final TransactionType type, final int officeId, final int accountId){
+        this.transactionAmount = transactionAmount;
+        this.transactionType = type;
+        this.officeId = officeId;
+        this.accountId = accountId;
+    }
 
     public JournalEntry(final float transactionAmount, final TransactionType type) {
         this.transactionAmount = transactionAmount;
         this.transactionType = type;
         this.officeId = null;
+        this.accountId = null;
     }
 
     public Float getTransactionAmount() {
@@ -39,5 +48,9 @@ public class JournalEntry {
     public String getTransactionType() {
         return this.transactionType.toString();
     }
+
+    public Integer getOfficeId() { return this.officeId; }
+
+    public Integer getAccountId() { return this.accountId; }
 
 }
