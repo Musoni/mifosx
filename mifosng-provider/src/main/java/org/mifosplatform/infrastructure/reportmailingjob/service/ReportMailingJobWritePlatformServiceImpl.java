@@ -24,8 +24,10 @@ import org.joda.time.format.DateTimeFormatter;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResultBuilder;
+import org.mifosplatform.infrastructure.core.domain.MifosPlatformTenant;
 import org.mifosplatform.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.mifosplatform.infrastructure.core.service.DateUtils;
+import org.mifosplatform.infrastructure.core.service.ThreadLocalContextUtil;
 import org.mifosplatform.infrastructure.dataqueries.domain.Report;
 import org.mifosplatform.infrastructure.dataqueries.domain.ReportRepositoryWrapper;
 import org.mifosplatform.infrastructure.dataqueries.service.ReadReportingService;
@@ -409,7 +411,9 @@ public class ReportMailingJobWritePlatformServiceImpl implements ReportMailingJo
         try {
             final ByteArrayOutputStream byteArrayOutputStream = this.readReportingService.generatePentahoReportAsOutputStream(reportName, 
                     emailAttachmentFileFormat.getValue(), reportParams, null, reportMailingJob.getRunAsUser(), errorLog);
-            final String fileLocation = FileSystemContentRepository.MIFOSX_BASE_DIR + File.separator + "";
+            final MifosPlatformTenant mifosPlatformTenant = ThreadLocalContextUtil.getTenant();
+            final String fileLocation = FileSystemContentRepository.MIFOSX_BASE_DIR + File.separator + 
+            		mifosPlatformTenant.getTenantIdentifier() + File.separator + "reportmailingjob";
             final String fileNameWithoutExtension = fileLocation + File.separator + reportName;
             
             // check if file directory exists, if not create directory
