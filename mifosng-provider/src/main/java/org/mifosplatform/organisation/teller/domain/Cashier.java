@@ -501,4 +501,28 @@ public class Cashier extends AbstractPersistable<Long> {
     public void setEndedAt(Date endedAt) {
         this.endedAt = endedAt;
     }
+
+    public LocalDate getStartedAtLocalDate() {
+        LocalDate startedAtLocalDate = null;
+        if (this.startedAt != null) {
+            startedAtLocalDate = LocalDate.fromDateFields(this.startedAt);
+        }
+        return startedAtLocalDate;
+    }
+
+    public LocalDate getEndedAtLocalDate() {
+        LocalDate endedAtLocalDate = null;
+        if (this.endedAt != null) {
+            endedAtLocalDate = LocalDate.fromDateFields(this.endedAt);
+        }
+        return endedAtLocalDate;
+    }
+
+    public Date getStartedAt() {
+        return startedAt;
+    }
+
+    public Date getEndedAt() {
+        return endedAt;
+    }
 }

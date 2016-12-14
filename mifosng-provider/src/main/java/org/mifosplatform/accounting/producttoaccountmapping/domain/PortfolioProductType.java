@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum PortfolioProductType {
-    LOAN(1, "productType.loan"), SAVING(2, "productType.saving"), CLIENT(3, "productType.client"), PROVISIONING(4, "productType.provisioning");
+    INVALID(0, "accountType.invalid"),LOAN(1, "productType.loan"), SAVING(2, "productType.saving"), CLIENT(3, "productType.client"), PROVISIONING(4, "productType.provisioning"),CASHIERTRANSACTION(5, "productType.cashier");
 
     private final Integer value;
     private final String code;
@@ -40,10 +40,19 @@ public enum PortfolioProductType {
         }
     }
 
-    public static PortfolioProductType fromInt(final int i) {
-        final PortfolioProductType type = intToEnumMap.get(Integer.valueOf(i));
-        return type;
+    public static PortfolioProductType fromInt(final Integer i) {
+
+
+         PortfolioProductType enumType = PortfolioProductType.INVALID;
+
+        if(i!=null){
+
+            enumType = intToEnumMap.get(Integer.valueOf(i));
+        }
+
+        return enumType;
     }
+
 
     public boolean isSavingProduct() {
         return this.value.equals(PortfolioProductType.SAVING.getValue());
@@ -55,6 +64,10 @@ public enum PortfolioProductType {
 
     public boolean isClient() {
         return this.value.equals(PortfolioProductType.CLIENT.getValue());
+    }
+
+    public boolean isCashierTransaction() {
+        return this.value.equals(PortfolioProductType.CASHIERTRANSACTION.getValue());
     }
 
 }
