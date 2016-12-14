@@ -6,8 +6,7 @@
 package org.mifosplatform.integrationtests.common.accounting;
 
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -52,6 +51,39 @@ public class JournalEntryHelper {
         checkJournalEntry(officeId, liabilityAccount, date, accountEntries);
     }
 
+    public void checkInterBranchJournalEntry(final String transactionId, final JournalEntry... accountEntries){
+        final ArrayList<HashMap> response = getJournalEntriesByTransactionId(transactionId);
+        assertNotEquals("No new interbranch control journal entries created", accountEntries.length, response.size());
+        Float totalCreditAmount = 0f;
+        Float totalDebitAmount = 0f;
+        HashMap<Integer,Float> creditAmountPerOffice = new HashMap<>();
+        HashMap<Integer,Float> debitAmountPerOffice = new HashMap<>();
+
+        for (int i = 0 ; i < response.size() ; i++){
+            final Integer officeId = getOfficeIdFromJournalEntry(response, i);
+            final Float entryAmount = getTransactionAmountFromJournalEntry(response, i);
+
+            if(getEntryValueFromJournalEntry(response, i).equals(JournalEntry.TransactionType.CREDIT.toString())){
+                Float officeAmount = creditAmountPerOffice.containsKey(officeId) ? creditAmountPerOffice.get(officeId) : 0f;
+                officeAmount += entryAmount;
+                totalCreditAmount += entryAmount;
+                creditAmountPerOffice.put(officeId,officeAmount);
+            }
+
+            if(getEntryValueFromJournalEntry(response, i).equals(JournalEntry.TransactionType.DEBIT.toString())){
+                Float officeAmount = debitAmountPerOffice.containsKey(officeId) ? debitAmountPerOffice.get(officeId) : 0f;
+                officeAmount += entryAmount;
+                totalDebitAmount += entryAmount;
+                debitAmountPerOffice.put(officeId,officeAmount);
+            }
+        }
+        assertEquals("Credits and Debits aren't equal", totalCreditAmount, totalDebitAmount);
+        assertEquals("Every branch must have equal debits and credits", creditAmountPerOffice.size(), debitAmountPerOffice.size());
+        for (Integer officeId : creditAmountPerOffice.keySet()) {
+            assertEquals("Every branch must have equal debits and credits", creditAmountPerOffice.get(officeId), debitAmountPerOffice.get(officeId));
+        }
+    }
+
     public void ensureNoAccountingTransactionsWithTransactionId(final String transactionId) {
         ArrayList<HashMap> transactions = getJournalEntriesByTransactionId(transactionId);
         assertTrue("Tranasactions are is not empty", transactions.isEmpty());
@@ -67,11 +99,14 @@ public class JournalEntryHelper {
         return (Float) entryResponse.get(entryNumber).get("amount");
     }
 
-    public Integer createJournalEntries(final Integer accountId, final JournalEntry... accountEntries){
-        String json = getAsJSON(accountEntries);
+    private Integer getOfficeIdFromJournalEntry(final ArrayList<HashMap> entryResponse, final int entryNumber){
+        return (Integer) entryResponse.get(entryNumber).get("officeId");
+    }
+
+    public Object createJournalEntries(final String response, final JournalEntry... accountEntries){
         return Utils.performServerPost(this.requestSpec, this.responseSpec,
-                "/mifosng-provider/api/v1/journalentries?" + Utils.TENANT_IDENTIFIER, json,
-                CommonConstants.RESPONSE_RESOURCE_ID);
+                "/mifosng-provider/api/v1/journalentries?" + Utils.TENANT_IDENTIFIER, getAsJSON(accountEntries),
+                response);
     }
 
     private void checkJournalEntry(final Integer officeId, final Account account, final String date, final JournalEntry... accountEntries) {
@@ -129,7 +164,7 @@ public class JournalEntryHelper {
         map.put("referenceNumber", "");
         map.put("useAccountingRule", "false");
         map.put("locale", "en_GB");
-        map.put("currencyCode", "KES");
+        map.put("currencyCode", "USD");
         map.put("dateFormat", "dd-MM-yyyy");
         map.put("credits", credits);
         map.put("debits", debits);

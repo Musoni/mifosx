@@ -20,6 +20,7 @@ import java.util.Locale;
 
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -79,6 +80,7 @@ public class AccountingScenarioIntegrationTest {
     private final Float REPAYMENT_AMOUNT[] = { .0f, 2200.0f, 3000.0f, 900.0f, 2000.0f, 2500.0f };
 
     private final Float AMOUNT_TO_BE_WAIVE = 400.0f;
+    private Integer financialActivityAccountId;
     private LoanTransactionHelper loanTransactionHelper;
     private AccountHelper accountHelper;
     private OfficeHelper officeHelper;
@@ -108,13 +110,27 @@ public class AccountingScenarioIntegrationTest {
         this.periodicAccrualAccountingHelper = new PeriodicAccrualAccountingHelper(this.requestSpec, this.responseSpec);
     }
 
+    @After
+    public void tearDown() {
+        if(financialActivityAccountId != null) {
+            Integer deletedFinancialActivityAccountId = financialActivityAccountHelper.deleteFinancialActivityAccount(
+                    financialActivityAccountId, responseSpec, CommonConstants.RESPONSE_RESOURCE_ID);
+            Assert.assertNotNull(deletedFinancialActivityAccountId);
+            Assert.assertEquals(financialActivityAccountId, deletedFinancialActivityAccountId);
+        }
+    }
+
     @Test
     public void checkJournalEntryFlow(){
+        //SETTING UP ACCOUNTS FOR JOURNAL ENTRIES
+        System.out.println("-------------------- CREATING NEW JOURNAL ENTRIES ---------------------------------");
         final Account assetAccount = this.accountHelper.createAssetAccount();
         final Account interBranchAccount = this.accountHelper.createAssetAccount();
-        final Integer financialActivityId = (Integer) this.financialActivityAccountHelper.createFinancialActivityAccount(
+        financialActivityAccountId = (Integer) this.financialActivityAccountHelper.createFinancialActivityAccount(
                 AccountingConstants.FINANCIAL_ACTIVITY.INTERBRANCH_CONTROL.getValue(),interBranchAccount.getAccountID(),
                 responseSpec, CommonConstants.RESPONSE_RESOURCE_ID);
+
+        //SETTING UP OFFICES FOR MULTIBRANCH JOURNAL ENTRIES
         final Integer firstOfficeId = this.officeHelper.createOffice("01 January 2011");
         final Integer secondOfficeId = this.officeHelper.createOffice("02 February 2012");
         final Integer thirdOfficeId = this.officeHelper.createOffice("03 March 2013");
@@ -125,14 +141,27 @@ public class AccountingScenarioIntegrationTest {
         final Float firstDebitAmount = 450.0f;
         final Float secondDebitAmount = 650.0f;
 
-        final JournalEntry[] journalEntries = {new JournalEntry(firstDebitAmount, JournalEntry.TransactionType.DEBIT, firstOfficeId, assetAccount.getAccountID()),
+        //CREATING JOURNAL ENTRIES
+        final JournalEntry[] oneToMany = {new JournalEntry(firstDebitAmount, JournalEntry.TransactionType.DEBIT, firstOfficeId, assetAccount.getAccountID()),
                 new JournalEntry(firstCreditAmount, JournalEntry.TransactionType.CREDIT, secondOfficeId, assetAccount.getAccountID()),
                 new JournalEntry(secondDebitAmount, JournalEntry.TransactionType.DEBIT, firstOfficeId, assetAccount.getAccountID()),
                 new JournalEntry(secondCreditAmount, JournalEntry.TransactionType.CREDIT, thirdOfficeId, assetAccount.getAccountID())};
 
-        final Integer transactionId = this.journalEntryHelper.createJournalEntries(assetAccount.getAccountID(),journalEntries);
+        final JournalEntry[] oneOfficeEach = {new JournalEntry(secondCreditAmount, JournalEntry.TransactionType.DEBIT, firstOfficeId, assetAccount.getAccountID()),
+                new JournalEntry(secondCreditAmount, JournalEntry.TransactionType.CREDIT, fourthOfficeId, assetAccount.getAccountID())};
 
-        final Integer deletedFinancialActivityId = this.financialActivityAccountHelper.deleteFinancialActivityAccount(financialActivityId,responseSpec,CommonConstants.RESPONSE_RESOURCE_ID);
+        final JournalEntry[] manyToMany = {new JournalEntry(firstDebitAmount, JournalEntry.TransactionType.DEBIT, firstOfficeId, assetAccount.getAccountID()),
+                new JournalEntry(firstCreditAmount, JournalEntry.TransactionType.CREDIT, secondOfficeId, assetAccount.getAccountID()),
+                new JournalEntry(secondDebitAmount, JournalEntry.TransactionType.DEBIT, thirdOfficeId, assetAccount.getAccountID()),
+                new JournalEntry(secondCreditAmount, JournalEntry.TransactionType.CREDIT, fourthOfficeId, assetAccount.getAccountID())};
+
+        final String transactionId = this.journalEntryHelper.createJournalEntries(CommonConstants.RESPONSE_TRANSACTION_ID,oneToMany).toString();
+        final String oneOnOneTransactionId = this.journalEntryHelper.createJournalEntries(CommonConstants.RESPONSE_TRANSACTION_ID,oneOfficeEach).toString();
+        final List<HashMap> manyToManyError = (List) this.journalEntryHelper.createJournalEntries(CommonConstants.RESPONSE_ERROR,manyToMany);
+
+        //CHECK JOURNAL ENTRIES
+        this.journalEntryHelper.checkInterBranchJournalEntry(transactionId, oneToMany);
+        this.journalEntryHelper.checkInterBranchJournalEntry(oneOnOneTransactionId, oneOfficeEach);
     }
 
     @Test
