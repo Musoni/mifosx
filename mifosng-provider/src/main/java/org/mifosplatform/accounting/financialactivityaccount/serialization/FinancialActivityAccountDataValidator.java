@@ -82,7 +82,8 @@ public final class FinancialActivityAccountDataValidator {
                     element);
             baseDataValidator.reset().parameter(paramNameForFinancialActivity).value(financialActivityId).ignoreIfNull().isOneOfTheseValues(
                     FINANCIAL_ACTIVITY.ASSET_TRANSFER.getValue(), FINANCIAL_ACTIVITY.LIABILITY_TRANSFER.getValue(),
-                    FINANCIAL_ACTIVITY.OPENING_BALANCES_TRANSFER_CONTRA.getValue(), FINANCIAL_ACTIVITY.ASSET_FUND_SOURCE.getValue());
+                    FINANCIAL_ACTIVITY.OPENING_BALANCES_TRANSFER_CONTRA.getValue(), FINANCIAL_ACTIVITY.ASSET_FUND_SOURCE.getValue(), FINANCIAL_ACTIVITY.CASH_AT_TELLER.getValue(),
+                    FINANCIAL_ACTIVITY.CASH_AT_MAINVAULT.getValue(), FINANCIAL_ACTIVITY.INTERBRANCH_CONTROL.getValue());
         }
 
         if (this.fromApiJsonHelper.parameterExists(paramNameForGLAccount, element)) {
