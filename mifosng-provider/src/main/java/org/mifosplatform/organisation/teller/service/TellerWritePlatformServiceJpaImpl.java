@@ -20,6 +20,7 @@ import org.mifosplatform.accounting.glaccount.domain.GLAccount;
 import org.mifosplatform.accounting.journalentry.domain.JournalEntry;
 import org.mifosplatform.accounting.journalentry.domain.JournalEntryRepository;
 import org.mifosplatform.accounting.journalentry.domain.JournalEntryType;
+import org.mifosplatform.accounting.producttoaccountmapping.domain.PortfolioProductType;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResultBuilder;
@@ -476,9 +477,9 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
 
                 final TellerData tellerData = this.tellerManagementReadPlatformService.findTeller(cashier.getTeller().getId());
 
-                this.fromApiJsonDeserializer.validateForCashSettleTxnForCashier(command.json(), tellerData.getBalance());
+                this.fromApiJsonDeserializer.validateForCashSettleTxnForCashier(command.json(), tellerData.getBalance(),cashier.getStartLocalDate());
             }else{
-                this.fromApiJsonDeserializer.validateForCashTxnForCashier(command.json());
+                this.fromApiJsonDeserializer.validateForCashTxnForCashier(command.json(),cashier.getStartLocalDate());
             }
 
 
@@ -531,27 +532,29 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
 
             final Office cashierOffice = cashier.getTeller().getOffice();
 
-            final Long time = System.currentTimeMillis();
-            final String uniqueVal = String.valueOf(time) + currentUser.getId() + cashierOffice.getId();
-            final String transactionId = Long.toHexString(Long.parseLong(uniqueVal));
+           // final Long time = System.currentTimeMillis();
+            //final String uniqueVal = String.valueOf(time) + currentUser.getId() + cashierOffice.getId();
+
+            final String transactionId ="C"+cashierTxn.getId();  // Long.toHexString(Long.parseLong(uniqueVal));
+
             ClientTransaction clientTransaction = null;
 
             final JournalEntry debitJournalEntry = JournalEntry.createNew(cashierOffice, null, // payment
                                                                                                // detail
-                    debitAccount, "USD", // FIXME: Take currency code from the
+                    debitAccount, cashierTxn.getCurrencyCode(),
                                          // transaction
                     transactionId, false, // manual entry
                     cashierTxn.getTxnDate(), JournalEntryType.DEBIT, cashierTxn.getTxnAmount(), cashierTxn.getTxnNote(), // Description
-                    null, null, null, // entity Type, entityId, reference number
+                    PortfolioProductType.CASHIERTRANSACTION.getValue(), cashierTxn.getId(), null, // entity Type, entityId, reference number
                     null, null, clientTransaction); // Loan and Savings Txn
 
             final JournalEntry creditJournalEntry = JournalEntry.createNew(cashierOffice, null, // payment
                                                                                                 // detail
-                    creditAccount, "USD", // FIXME: Take currency code from the
+                    creditAccount, cashierTxn.getCurrencyCode(),
                                           // transaction
                     transactionId, false, // manual entry
                     cashierTxn.getTxnDate(), JournalEntryType.CREDIT, cashierTxn.getTxnAmount(), cashierTxn.getTxnNote(), // Description
-                    null, null, null, // entity Type, entityId, reference number
+                    PortfolioProductType.CASHIERTRANSACTION.getValue(),cashierTxn.getId(), null, // entity Type, entityId, reference number
                     null, null, clientTransaction); // Loan and Savings Txn
 
             this.glJournalEntryRepository.saveAndFlush(debitJournalEntry);
