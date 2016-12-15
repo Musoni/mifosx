@@ -53,6 +53,7 @@ public class AccountingScenarioIntegrationTest {
 
     private static RequestSpecification requestSpec;
     private static ResponseSpecification responseSpec;
+    private static ResponseSpecification errorResponse;
 
     private final String DATE_OF_JOINING = "01 January 2011";
 
@@ -100,6 +101,7 @@ public class AccountingScenarioIntegrationTest {
         this.requestSpec = new RequestSpecBuilder().setContentType(ContentType.JSON).build();
         this.requestSpec.header("Authorization", "Basic " + Utils.loginIntoServerAndGetBase64EncodedAuthenticationKey());
         this.responseSpec = new ResponseSpecBuilder().expectStatusCode(200).build();
+        this.errorResponse = new ResponseSpecBuilder().build();
 
         this.loanTransactionHelper = new LoanTransactionHelper(this.requestSpec, this.responseSpec);
         this.accountHelper = new AccountHelper(this.requestSpec, this.responseSpec);
@@ -142,10 +144,15 @@ public class AccountingScenarioIntegrationTest {
         final Float secondDebitAmount = 650.0f;
 
         //CREATING JOURNAL ENTRIES
-        final JournalEntry[] oneToMany = {new JournalEntry(firstDebitAmount, JournalEntry.TransactionType.DEBIT, firstOfficeId, assetAccount.getAccountID()),
+        final JournalEntry[] multipleCreditOffices = {new JournalEntry(firstDebitAmount, JournalEntry.TransactionType.DEBIT, firstOfficeId, assetAccount.getAccountID()),
                 new JournalEntry(firstCreditAmount, JournalEntry.TransactionType.CREDIT, secondOfficeId, assetAccount.getAccountID()),
                 new JournalEntry(secondDebitAmount, JournalEntry.TransactionType.DEBIT, firstOfficeId, assetAccount.getAccountID()),
                 new JournalEntry(secondCreditAmount, JournalEntry.TransactionType.CREDIT, thirdOfficeId, assetAccount.getAccountID())};
+
+        final JournalEntry[] multipleDebitOffices = {new JournalEntry(firstDebitAmount, JournalEntry.TransactionType.DEBIT, secondOfficeId, assetAccount.getAccountID()),
+                new JournalEntry(firstCreditAmount, JournalEntry.TransactionType.CREDIT, firstOfficeId, assetAccount.getAccountID()),
+                new JournalEntry(secondDebitAmount, JournalEntry.TransactionType.DEBIT, thirdOfficeId, assetAccount.getAccountID()),
+                new JournalEntry(secondCreditAmount, JournalEntry.TransactionType.CREDIT, firstOfficeId, assetAccount.getAccountID())};
 
         final JournalEntry[] oneOfficeEach = {new JournalEntry(secondCreditAmount, JournalEntry.TransactionType.DEBIT, firstOfficeId, assetAccount.getAccountID()),
                 new JournalEntry(secondCreditAmount, JournalEntry.TransactionType.CREDIT, fourthOfficeId, assetAccount.getAccountID())};
@@ -155,13 +162,17 @@ public class AccountingScenarioIntegrationTest {
                 new JournalEntry(secondDebitAmount, JournalEntry.TransactionType.DEBIT, thirdOfficeId, assetAccount.getAccountID()),
                 new JournalEntry(secondCreditAmount, JournalEntry.TransactionType.CREDIT, fourthOfficeId, assetAccount.getAccountID())};
 
-        final String transactionId = this.journalEntryHelper.createJournalEntries(CommonConstants.RESPONSE_TRANSACTION_ID,oneToMany).toString();
-        final String oneOnOneTransactionId = this.journalEntryHelper.createJournalEntries(CommonConstants.RESPONSE_TRANSACTION_ID,oneOfficeEach).toString();
-        final List<HashMap> manyToManyError = (List) this.journalEntryHelper.createJournalEntries(CommonConstants.RESPONSE_ERROR,manyToMany);
+        final String multipleCreditBranchesTransactionId = this.journalEntryHelper.createJournalEntries(CommonConstants.RESPONSE_TRANSACTION_ID,this.responseSpec,multipleCreditOffices).toString();
+        final String multipleDebitBranchesTransactionId = this.journalEntryHelper.createJournalEntries(CommonConstants.RESPONSE_TRANSACTION_ID,this.responseSpec,multipleDebitOffices).toString();
+        final String oneOfficeEachTransactionId = this.journalEntryHelper.createJournalEntries(CommonConstants.RESPONSE_TRANSACTION_ID,this.responseSpec,oneOfficeEach).toString();
+        final List<HashMap> manyToManyError = (List<HashMap>) this.journalEntryHelper.createJournalEntries(CommonConstants.RESPONSE_ERROR,this.errorResponse,manyToMany);
 
         //CHECK JOURNAL ENTRIES
-        this.journalEntryHelper.checkInterBranchJournalEntry(transactionId, oneToMany);
-        this.journalEntryHelper.checkInterBranchJournalEntry(oneOnOneTransactionId, oneOfficeEach);
+        this.journalEntryHelper.checkInterBranchJournalEntry(multipleCreditBranchesTransactionId, multipleCreditOffices);
+        this.journalEntryHelper.checkInterBranchJournalEntry(multipleDebitBranchesTransactionId, multipleDebitOffices);
+        this.journalEntryHelper.checkInterBranchJournalEntry(oneOfficeEachTransactionId, oneOfficeEach);
+        assertEquals("error.msg.glJournalEntry.invalid.debit.or.credit.offices",manyToManyError.get(0).get(CommonConstants.RESPONSE_ERROR_MESSAGE_CODE));
+        System.out.println("Journal Entries Tested");
     }
 
     @Test

@@ -103,8 +103,8 @@ public class JournalEntryHelper {
         return (Integer) entryResponse.get(entryNumber).get("officeId");
     }
 
-    public Object createJournalEntries(final String response, final JournalEntry... accountEntries){
-        return Utils.performServerPost(this.requestSpec, this.responseSpec,
+    public Object createJournalEntries(final String response, final ResponseSpecification responseSpec, final JournalEntry... accountEntries){
+        return Utils.performServerPost(this.requestSpec, responseSpec,
                 "/mifosng-provider/api/v1/journalentries?" + Utils.TENANT_IDENTIFIER, getAsJSON(accountEntries),
                 response);
     }
