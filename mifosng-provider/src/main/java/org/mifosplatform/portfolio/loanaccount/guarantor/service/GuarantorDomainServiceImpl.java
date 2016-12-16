@@ -6,6 +6,7 @@
 package org.mifosplatform.portfolio.loanaccount.guarantor.service;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.util.*;
 
 import javax.annotation.PostConstruct;
@@ -13,9 +14,11 @@ import javax.annotation.PostConstruct;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormatter;
 import org.mifosplatform.accounting.journalentry.service.JournalEntryWritePlatformService;
+import org.mifosplatform.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.mifosplatform.infrastructure.core.data.ApiParameterError;
 import org.mifosplatform.infrastructure.core.data.DataValidatorBuilder;
 import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidationException;
+import org.mifosplatform.infrastructure.core.service.DateUtils;
 import org.mifosplatform.organisation.monetary.domain.ApplicationCurrency;
 import org.mifosplatform.organisation.monetary.domain.ApplicationCurrencyRepositoryWrapper;
 import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
@@ -42,6 +45,7 @@ import org.mifosplatform.portfolio.paymentdetail.domain.PaymentDetail;
 import org.mifosplatform.portfolio.paymentdetail.domain.PaymentDetailRepository;
 import org.mifosplatform.portfolio.paymenttype.domain.PaymentType;
 import org.mifosplatform.portfolio.paymenttype.domain.PaymentTypeRepository;
+import org.mifosplatform.portfolio.savings.SavingsApiConstants;
 import org.mifosplatform.portfolio.savings.domain.*;
 import org.mifosplatform.portfolio.savings.exception.InsufficientAccountBalanceException;
 import org.mifosplatform.useradministration.domain.AppUser;
@@ -69,6 +73,8 @@ public class GuarantorDomainServiceImpl implements GuarantorDomainService {
     private final GuarantorInterestPaymentRepository guarantorInterestPaymentRepository;
     private final JournalEntryWritePlatformService journalEntryWritePlatformService;
     private final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepositoryWrapper;
+    private final ConfigurationDomainService configurationDomainService;
+    private final SavingsAccountAssembler savingAccountAssembler;
 
     @Autowired
     public GuarantorDomainServiceImpl(final GuarantorRepository guarantorRepository,
@@ -84,7 +90,9 @@ public class GuarantorDomainServiceImpl implements GuarantorDomainService {
             final PaymentTypeRepository paymentTypeRepository,final GuarantorInterestAllocationRepository guarantorInterestAllocationRepository,
             final GuarantorInterestPaymentRepository guarantorInterestPaymentRepository,
             final JournalEntryWritePlatformService journalEntryWritePlatformService,
-            final ApplicationCurrencyRepositoryWrapper  applicationCurrencyRepositoryWrapper) {
+            final ApplicationCurrencyRepositoryWrapper  applicationCurrencyRepositoryWrapper,
+            final ConfigurationDomainService configurationDomainService,
+            final SavingsAccountAssembler savingAccountAssembler) {
         this.guarantorRepository = guarantorRepository;
         this.guarantorFundingRepository = guarantorFundingRepository;
         this.guarantorFundingTransactionRepository = guarantorFundingTransactionRepository;
@@ -101,6 +109,8 @@ public class GuarantorDomainServiceImpl implements GuarantorDomainService {
         this.guarantorInterestPaymentRepository = guarantorInterestPaymentRepository;
         this.journalEntryWritePlatformService = journalEntryWritePlatformService;
         this.applicationCurrencyRepositoryWrapper = applicationCurrencyRepositoryWrapper;
+        this.configurationDomainService = configurationDomainService;
+        this.savingAccountAssembler = savingAccountAssembler;
     }
 
     @PostConstruct
@@ -867,12 +877,37 @@ public class GuarantorDomainServiceImpl implements GuarantorDomainService {
                     final Collection<GuarantorInterestPayment> interestPayments = this.guarantorInterestPaymentRepository.findByInterestAllocationOrderByIdDesc(allocation);
                     for(final GuarantorInterestPayment interestPayment : interestPayments){
 
-                        final SavingsAccount savingsAccount = interestPayment.getSavingsAccount();
+                        final SavingsAccount savingsAccount = this.savingAccountAssembler.assembleFrom(interestPayment.getSavingsAccount().getId());
+
+
                         final SavingsAccountTransaction savingsAccountTransaction = interestPayment.getSavingsAccountTransaction();
                         final Set<Long> existingTransactionIds = new HashSet<Long>(savingsAccount.findExistingTransactionIds());
                         final Set<Long> existingReversedTransactionIds = new HashSet<Long>(savingsAccount.findExistingReversedTransactionIds());
                         if(savingsAccountTransaction.isGuarantorInterestDeposit() && !savingsAccountTransaction.isReversed()){
                             savingsAccountTransaction.reverse();
+
+                            final LocalDate today = DateUtils.getLocalDateOfTenant();
+                            final MathContext mc = new MathContext(15, MoneyHelper.getRoundingMode());
+                            final boolean isSavingsInterestPostingAtCurrentPeriodEnd = this.configurationDomainService
+                                    .isSavingsInterestPostingAtCurrentPeriodEnd();
+                            final Integer financialYearBeginningMonth = this.configurationDomainService.retrieveFinancialYearBeginningMonth();
+
+                            boolean isInterestTransfer = false;
+                            LocalDate postInterestOnDate = null;
+                            if (savingsAccountTransaction.isPostInterestCalculationRequired()
+                                    && savingsAccount.isBeforeLastPostingPeriod(savingsAccountTransaction.transactionLocalDate())) {
+                                savingsAccount.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate);
+                            } else {
+                                savingsAccount.calculateInterestUsing(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
+                                        financialYearBeginningMonth,postInterestOnDate);
+                            }
+                            List<DepositAccountOnHoldTransaction> depositAccountOnHoldTransactions = null;
+                            if(savingsAccount.getOnHoldFunds().compareTo(BigDecimal.ZERO) == 1){
+                                depositAccountOnHoldTransactions = this.depositAccountOnHoldTransactionRepository.findBySavingsAccountAndReversedFalseOrderByCreatedDateAsc(savingsAccount);
+                            }
+                            savingsAccount.validateAccountBalanceDoesNotBecomeNegative(SavingsApiConstants.undoTransactionAction,depositAccountOnHoldTransactions);
+
+
                             final MonetaryCurrency currency = interestPayment.getSavingsAccount().getCurrency();
                             final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepositoryWrapper.findOneWithNotFoundDetection(currency);
                             boolean isAccountTransfer = false;
@@ -891,7 +926,6 @@ public class GuarantorDomainServiceImpl implements GuarantorDomainService {
 
 
             }
-
 
         }else{
             // do nothing if the interest paid and the interest accumulated are the same
