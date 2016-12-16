@@ -22,7 +22,7 @@ public final class SavingsAccountTransactionSummaryWrapper {
     public BigDecimal calculateTotalDeposits(final MonetaryCurrency currency, final List<SavingsAccountTransaction> transactions) {
         Money total = Money.zero(currency);
         for (final SavingsAccountTransaction transaction : transactions) {
-            if (transaction.isDeposit() && transaction.isNotReversed()) {
+            if ((transaction.isDeposit() || transaction.isGuarantorInterestDeposit()) && transaction.isNotReversed()) {
                 total = total.plus(transaction.getAmount(currency));
             }
         }
