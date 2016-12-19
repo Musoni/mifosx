@@ -17,6 +17,7 @@ import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
 import org.mifosplatform.accounting.common.AccountingEnumerations;
 import org.mifosplatform.accounting.financialactivityaccount.domain.FinancialActivityAccount;
 import org.mifosplatform.accounting.financialactivityaccount.domain.FinancialActivityAccountRepositoryWrapper;
@@ -186,7 +187,8 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
 
             final Long entityId = JdbcSupport.getLong(rs, "entityId");
             final Long createdByUserId = rs.getLong("createdByUserId");
-            final LocalDate createdDate = JdbcSupport.getLocalDate(rs, "createdDate");
+            final LocalDate createdDate = JdbcSupport.getLocalDate(rs,"createdDate");
+            final String createdDateTime = rs.getString("createdDate");
             final String createdByUserName = rs.getString("createdByUserName");
             final String comments = rs.getString("comments");
             final Boolean reversed = rs.getBoolean("reversed");
@@ -273,7 +275,7 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
             return new JournalEntryData(id, officeId, officeName, glAccountName, glAccountId, glCode, accountType, transactionDate,
                     entryType, amount, transactionId, manualEntry, entityType, entityId, createdByUserId, createdDate, createdByUserName,
                     comments, reversed, referenceNumber, officeRunningBalance, organizationRunningBalance, runningBalanceComputed,
-                    transactionDetailData, currency,glClosureId,isReconciled);
+                    transactionDetailData, currency,glClosureId,isReconciled,createdDateTime);
         }
     }
 
