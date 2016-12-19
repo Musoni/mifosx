@@ -2553,7 +2553,7 @@ public class CommandWrapperBuilder {
         this.actionName = "DISABLE";
         this.entityName = "ROLE";
         this.entityId = roleId;
-        this.href = "/roles/" + roleId + "/disbales";
+        this.href = "/roles/" + roleId + "/disable";
         this.json = "{}";
         return this;
     }

@@ -31,7 +31,7 @@ public final class RoleDataValidator {
     /**
      * The parameters supported for this command.
      */
-    private final Set<String> supportedParameters = new HashSet<>(Arrays.asList("id", "name", "description"));
+    private final Set<String> supportedParameters = new HashSet<>(Arrays.asList("id", "name", "description", "disabled"));
 
     private final FromJsonHelper fromApiJsonHelper;
 
