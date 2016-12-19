@@ -125,6 +125,8 @@ public class StaffReadPlatformServiceImpl implements StaffReadPlatformService {
             sqlBuilder.append("s.id as id, s.display_name as displayName ");
             sqlBuilder.append("from m_staff s ");
             sqlBuilder.append("join m_office o on o.id = s.office_id ");
+            sqlBuilder.append("left join m_appuser u on u.staff_id = s.id ");
+
 
             this.schemaSql = sqlBuilder.toString();
         }
@@ -157,7 +159,7 @@ public class StaffReadPlatformServiceImpl implements StaffReadPlatformService {
 
         final String sql = "select " + this.lookupMapper.schema() + " where s.office_id = ? and s.is_active=1 and o.hierarchy like '"+ hierarchy+ "%'";
 
-        return this.jdbcTemplate.query(sql, this.lookupMapper, new Object[] { defaultOfficeId });
+        return this.jdbcTemplate.query(sql, this.lookupMapper, new Object[]{defaultOfficeId});
     }
 
     private Long defaultToUsersOfficeIfNull(final Long officeId) {
@@ -200,7 +202,7 @@ public class StaffReadPlatformServiceImpl implements StaffReadPlatformService {
             sql += " where " + extraCriteria;
         }
         sql = sql + " order by s.lastname";
-        return this.jdbcTemplate.query(sql, rm, new Object[] {});
+        return this.jdbcTemplate.query(sql, rm, new Object[]{});
     }
 
     private String getStaffCriteria(final String sqlSearch, final Long officeId, final boolean loanOfficersOnly, final String status) {
@@ -243,7 +245,20 @@ public class StaffReadPlatformServiceImpl implements StaffReadPlatformService {
 
         String sql = "select " + this.staffInOfficeHierarchyMapper.schema(loanOfficersOnly);
         sql = sql + " order by s.lastname";
-        return this.jdbcTemplate.query(sql, this.staffInOfficeHierarchyMapper, new Object[] { officeId });
+        return this.jdbcTemplate.query(sql, this.staffInOfficeHierarchyMapper, new Object[]{officeId});
+    }
+
+    @Override
+    public Collection<StaffData> retrieveAllStaffForDropdownLinkedToUser(Long officeId){
+
+        //adding the Authorization criteria so that a user cannot see an employee who does not belong to his office or 	a sub office for his office.
+        final String hierarchy = this.context.authenticatedUser().getOffice().getHierarchy();
+
+        final Long defaultOfficeId = defaultToUsersOfficeIfNull(officeId);
+
+        final String sql = "select " + this.lookupMapper.schema() + " where s.office_id = ? and s.is_active=1 and u.id IS NOT NULL and o.hierarchy like '"+ hierarchy+ "%'";
+
+        return this.jdbcTemplate.query(sql, this.lookupMapper, new Object[]{defaultOfficeId});
     }
     
     @Override
