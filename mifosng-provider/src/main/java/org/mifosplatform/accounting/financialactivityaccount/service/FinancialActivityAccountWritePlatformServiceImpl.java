@@ -91,6 +91,11 @@ public class FinancialActivityAccountWritePlatformServiceImpl implements Financi
             if (changes.containsKey(FinancialActivityAccountsJsonInputParams.GL_ACCOUNT_ID.getValue())) {
                 final Long accountId = command.longValueOfParameterNamed(FinancialActivityAccountsJsonInputParams.GL_ACCOUNT_ID.getValue());
                 final GLAccount glAccount = glAccountRepositoryWrapper.findOneWithNotFoundDetection(accountId);
+                final FINANCIAL_ACTIVITY financialActivity = FINANCIAL_ACTIVITY.fromInt(financialActivityAccount.getFinancialActivityType());
+                if((financialActivity.equals(FINANCIAL_ACTIVITY.INTERBRANCH_CONTROL) && !glAccount.isManualEntriesAllowed()) ){
+                    String reason = "manual entries must be allowed for " + financialActivity.getCode() + " Financial Activity accounts";
+                    throw new FinancialActivityAccountInvalidException(financialActivity,glAccount, reason);
+                }
                 financialActivityAccount.updateGlAccount(glAccount);
             }
 
