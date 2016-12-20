@@ -265,6 +265,11 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
             			
             		case GROUP:
             			switch (coreColumn) {
+            				case GROUP_NAME:
+            				case GROUP_ID:
+            					sqlBuilder.SELECT("`" + baseEntityName + "`.`" + referencedColumnName + "` as `"
+                            			+ coreColumn.getLabel() + "`");
+            					break;
 	        				case BRANCH_NAME:
 	        				case STAFF_NAME:
 	        					sqlBuilder.SELECT("`" + tableAlias + "`.`" + referencedColumnName + "` as `"
