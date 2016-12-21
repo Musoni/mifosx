@@ -68,6 +68,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
 import java.io.*;
 import java.util.*;
 
@@ -242,7 +244,7 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
                     Client client =  this.clientRepository.findOne(clientId.longValue());
                     String emailAddress = client.emailAddress();
 
-                    if(emailAddress !=null) {
+                    if(emailAddress !=null && isValidEmail(emailAddress)) {
                         EmailMessage emailMessage = EmailMessage.pendingEmail(null,client,null,emailCampaign,emailSubject,message,emailAddress,campaignName);
                         this.emailMessageRepository.save(emailMessage);
                     }
@@ -252,6 +254,22 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
             // TODO throw something here
         }
 
+    }
+
+    public static boolean isValidEmail(String email) {
+
+        boolean isValid = true;
+
+        try {
+
+            InternetAddress emailO = new InternetAddress(email);
+            emailO.validate();
+
+        } catch (AddressException ex) {
+
+            isValid = false;
+        }
+        return isValid;
     }
 
     @Override
@@ -284,7 +302,7 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
         /**
          * next run time has to be in the future if not calculate a new future date
          */
-        LocalDate nextRuntime = CalendarUtils.getNextRecurringDate(emailCampaign.getRecurrence(), emailCampaign.getNextTriggerDate().toLocalDate(),nextTriggerDate.toLocalDate()) ;
+        LocalDate nextRuntime = CalendarUtils.getNextRecurringDate(emailCampaign.getRecurrence(), emailCampaign.getNextTriggerDate().toLocalDate(), nextTriggerDate.toLocalDate()) ;
         if(nextRuntime.isBefore(DateUtils.getLocalDateOfTenant())){ // means next run time is in the past calculate a new future date
             nextRuntime = CalendarUtils.getNextRecurringDate(emailCampaign.getRecurrence(), emailCampaign.getNextTriggerDate().toLocalDate(),DateUtils.getLocalDateOfTenant()) ;
         }
@@ -317,7 +335,7 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
         final DateTimeFormatter fmt = DateTimeFormat.forPattern(command.dateFormat()).withLocale(locale);
         final LocalDate activationDate = command.localDateValueOfParameterNamed("activationDate");
 
-        emailCampaign.activate(currentUser,fmt,activationDate);
+        emailCampaign.activate(currentUser, fmt, activationDate);
 
         this.emailCampaignRepository.saveAndFlush(emailCampaign);
 
@@ -523,101 +541,118 @@ public class EmailCampaignWritePlatformCommandHandlerImpl implements EmailCampai
         if (IPv4Helper.applicationIsNotRunningOnLocalMachine()){ //remove when testing locally
             final List<EmailMessage> emailMessages = this.emailMessageRepository.findByStatusType(EmailMessageStatusType.PENDING.getValue()); //retrieve all pending message
 
-            for(final EmailMessage emailMessage : emailMessages){
+            for(final EmailMessage emailMessage : emailMessages) {
 
-                final EmailCampaign emailCampaign = this.emailCampaignRepository.findOne(emailMessage.getEmailCampaign().getId()); //
 
-                final ScheduledEmailAttachmentFileFormat emailAttachmentFileFormat = ScheduledEmailAttachmentFileFormat.instance(emailCampaign.getEmailAttachmentFileFormat());
+                if (isValidEmail(emailMessage.getEmailAddress())) {
 
-                final List<File> attachmentList = new ArrayList<>();
 
-                final StringBuilder errorLog = new StringBuilder();
+                        final EmailCampaign emailCampaign = this.emailCampaignRepository.findOne(emailMessage.getEmailCampaign().getId()); //
 
-                //check if email attachment format exist
-                if (emailAttachmentFileFormat != null && Arrays.asList(ScheduledEmailAttachmentFileFormat.validValues()).
-                        contains(emailAttachmentFileFormat.getId())) {
+                        final ScheduledEmailAttachmentFileFormat emailAttachmentFileFormat = ScheduledEmailAttachmentFileFormat.instance(emailCampaign.getEmailAttachmentFileFormat());
 
-                    final Report stretchyReport = emailCampaign.getStretchyReport();
+                        final List<File> attachmentList = new ArrayList<>();
 
-                    final String reportName = (stretchyReport != null) ? stretchyReport.getReportName() : null;
+                        final StringBuilder errorLog = new StringBuilder();
 
-                    final HashMap<String,String> reportStretchyParams= this.validateStretchyReportParamMap(emailCampaign.getStretchyReportParamMap());
+                        //check if email attachment format exist
+                        if (emailAttachmentFileFormat != null && Arrays.asList(ScheduledEmailAttachmentFileFormat.validValues()).
+                                contains(emailAttachmentFileFormat.getId())) {
 
-                    // there is a probability that a client has one or more loans or savings therefore we need to send two or more attachments
-                    if(reportStretchyParams.containsKey("selectLoan") || reportStretchyParams.containsKey("loanId")){
-                        //get all ids of the client loans
-                        if(emailMessage.getClient() !=null){
+                            final Report stretchyReport = emailCampaign.getStretchyReport();
 
-                            final List<Loan> loans = this.loanRepository.findLoanByClientId(emailMessage.getClient().getId());
+                            final String reportName = (stretchyReport != null) ? stretchyReport.getReportName() : null;
 
-                            HashMap<String,String> reportParams = this.replaceStretchyParamsWithActualClientParams(reportStretchyParams,emailMessage.getClient());
+                            final HashMap<String, String> reportStretchyParams = this.validateStretchyReportParamMap(emailCampaign.getStretchyReportParamMap());
 
-                            for(final Loan loan : loans){
-                                if(loan.isOpen()){ // only send attachment for active loan
+                            // there is a probability that a client has one or more loans or savings therefore we need to send two or more attachments
+                            if (reportStretchyParams.containsKey("selectLoan") || reportStretchyParams.containsKey("loanId")) {
+                                //get all ids of the client loans
+                                if (emailMessage.getClient() != null) {
 
-                                    if(reportStretchyParams.containsKey("selectLoan")){
+                                    final List<Loan> loans = this.loanRepository.findLoanByClientId(emailMessage.getClient().getId());
 
-                                        reportParams.put("SelectLoan", loan.getId().toString());
+                                    HashMap<String, String> reportParams = this.replaceStretchyParamsWithActualClientParams(reportStretchyParams, emailMessage.getClient());
 
-                                    }else if(reportStretchyParams.containsKey("loanId")){
+                                    for (final Loan loan : loans) {
+                                        if (loan.isOpen()) { // only send attachment for active loan
 
-                                        reportParams.put("loanId",loan.getId().toString());
+                                            if (reportStretchyParams.containsKey("selectLoan")) {
+
+                                                reportParams.put("SelectLoan", loan.getId().toString());
+
+                                            } else if (reportStretchyParams.containsKey("loanId")) {
+
+                                                reportParams.put("loanId", loan.getId().toString());
+                                            }
+                                            File file = this.generateAttachments(emailCampaign, emailAttachmentFileFormat, reportParams, reportName, errorLog);
+
+                                            if (file != null) {
+                                                attachmentList.add(file);
+                                            } else {
+                                                errorLog.append(reportParams.toString());
+                                            }
+                                        }
                                     }
-                                    File file = this.generateAttachments(emailCampaign,emailAttachmentFileFormat,reportParams,reportName,errorLog);
 
-                                    if(file !=null){ attachmentList.add(file); }else{  errorLog.append(reportParams.toString());}
+                                }
+                            } else if (reportStretchyParams.containsKey("savingId")) {
+                                if (emailMessage.getClient() != null) {
+
+                                    final List<SavingsAccount> savingsAccounts = this.savingsAccountRepository.findSavingAccountByClientId(emailMessage.getClient().getId());
+
+                                    HashMap<String, String> reportParams = this.replaceStretchyParamsWithActualClientParams(reportStretchyParams, emailMessage.getClient());
+
+                                    for (final SavingsAccount savingsAccount : savingsAccounts) {
+
+                                        if (savingsAccount.isActive()) {
+
+                                            reportParams.put("savingId", savingsAccount.getId().toString());
+
+                                            File file = this.generateAttachments(emailCampaign, emailAttachmentFileFormat, reportParams, reportName, errorLog);
+
+                                            if (file != null) {
+                                                attachmentList.add(file);
+                                            } else {
+                                                errorLog.append(reportParams.toString());
+                                            }
+                                        }
+                                    }
+                                }
+                            } else {
+                                if (emailMessage.getClient() != null) {
+
+                                    HashMap<String, String> reportParams = this.replaceStretchyParamsWithActualClientParams(reportStretchyParams, emailMessage.getClient());
+
+                                    File file = this.generateAttachments(emailCampaign, emailAttachmentFileFormat, reportParams, reportName, errorLog);
+
+                                    if (file != null) {
+                                        attachmentList.add(file);
+                                    } else {
+                                        errorLog.append(reportParams.toString());
+                                    }
                                 }
                             }
 
                         }
-                    }else if(reportStretchyParams.containsKey("savingId")){
-                        if(emailMessage.getClient() !=null){
 
-                            final List<SavingsAccount> savingsAccounts = this.savingsAccountRepository.findSavingAccountByClientId(emailMessage.getClient().getId());
+                        final EmailMessageWithAttachmentData emailMessageWithAttachmentData = EmailMessageWithAttachmentData.createNew(emailMessage.getEmailAddress(), emailMessage.getMessage(),
+                                emailMessage.getEmailSubject(), attachmentList);
 
-                            HashMap<String,String> reportParams = this.replaceStretchyParamsWithActualClientParams(reportStretchyParams,emailMessage.getClient());
+                        if (!attachmentList.isEmpty() && attachmentList.size() > 0) { // only send email message if there is an attachment to it
 
-                            for(final SavingsAccount savingsAccount : savingsAccounts){
+                            this.emailMessageJobEmailService.sendEmailWithAttachment(emailMessageWithAttachmentData);
 
-                                if(savingsAccount.isActive()){
+                            emailMessage.setStatusType(EmailMessageStatusType.SENT.getValue());
 
-                                    reportParams.put("savingId", savingsAccount.getId().toString());
+                            this.emailMessageRepository.save(emailMessage);
+                        } else {
+                            emailMessage.updateErrorMessage(errorLog.toString());
 
-                                    File file = this.generateAttachments(emailCampaign,emailAttachmentFileFormat,reportParams,reportName,errorLog);
+                            emailMessage.setStatusType(EmailMessageStatusType.FAILED.getValue());
 
-                                    if(file !=null){ attachmentList.add(file); } else{  errorLog.append(reportParams.toString());}
-                                }
-                            }
+                            this.emailMessageRepository.save(emailMessage);
                         }
-                    }else{
-                       if(emailMessage.getClient() !=null){
-
-                           HashMap<String,String> reportParams = this.replaceStretchyParamsWithActualClientParams(reportStretchyParams,emailMessage.getClient());
-
-                           File file = this.generateAttachments(emailCampaign,emailAttachmentFileFormat,reportParams,reportName,errorLog);
-
-                           if(file !=null){ attachmentList.add(file);}else{ errorLog.append(reportParams.toString());}
-                       }
-                    }
-
-                }
-
-                final EmailMessageWithAttachmentData emailMessageWithAttachmentData = EmailMessageWithAttachmentData.createNew(emailMessage.getEmailAddress(),emailMessage.getMessage(),
-                        emailMessage.getEmailSubject(),attachmentList);
-
-                if(!attachmentList.isEmpty() && attachmentList.size() > 0) { // only send email message if there is an attachment to it
-
-                    this.emailMessageJobEmailService.sendEmailWithAttachment(emailMessageWithAttachmentData);
-
-                    emailMessage.setStatusType(EmailMessageStatusType.SENT.getValue());
-
-                    this.emailMessageRepository.save(emailMessage);
-                }else{
-                    emailMessage.updateErrorMessage(errorLog.toString());
-
-                    emailMessage.setStatusType(EmailMessageStatusType.FAILED.getValue());
-
-                    this.emailMessageRepository.save(emailMessage);
                 }
             }
 
