@@ -17,6 +17,7 @@ import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
 import org.mifosplatform.accounting.common.AccountingEnumerations;
 import org.mifosplatform.accounting.financialactivityaccount.domain.FinancialActivityAccount;
 import org.mifosplatform.accounting.financialactivityaccount.domain.FinancialActivityAccountRepositoryWrapper;
@@ -29,6 +30,7 @@ import org.mifosplatform.accounting.journalentry.data.OfficeOpeningBalancesData;
 import org.mifosplatform.accounting.journalentry.data.TransactionDetailData;
 import org.mifosplatform.accounting.journalentry.data.TransactionTypeEnumData;
 import org.mifosplatform.accounting.journalentry.exception.JournalEntriesNotFoundException;
+import org.mifosplatform.accounting.producttoaccountmapping.domain.PortfolioProductType;
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
 import org.mifosplatform.infrastructure.core.exception.GeneralPlatformDomainRuleException;
@@ -40,6 +42,8 @@ import org.mifosplatform.infrastructure.core.service.SearchParameters;
 import org.mifosplatform.organisation.monetary.data.CurrencyData;
 import org.mifosplatform.organisation.office.data.OfficeData;
 import org.mifosplatform.organisation.office.service.OfficeReadPlatformService;
+import org.mifosplatform.organisation.teller.domain.CashierTxnType;
+import org.mifosplatform.organisation.teller.service.TellerManagementReadPlatformServiceImpl;
 import org.mifosplatform.portfolio.account.PortfolioAccountType;
 import org.mifosplatform.portfolio.loanaccount.data.LoanTransactionEnumData;
 import org.mifosplatform.portfolio.loanproduct.service.LoanEnumerations;
@@ -48,6 +52,8 @@ import org.mifosplatform.portfolio.paymentdetail.data.PaymentDetailData;
 import org.mifosplatform.portfolio.paymenttype.data.PaymentTypeData;
 import org.mifosplatform.portfolio.savings.data.SavingsAccountTransactionEnumData;
 import org.mifosplatform.portfolio.savings.service.SavingsEnumerations;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -57,6 +63,9 @@ import org.springframework.util.CollectionUtils;
 
 @Service
 public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlatformService {
+
+
+    private final static Logger logger = LoggerFactory.getLogger(TellerManagementReadPlatformServiceImpl.class);
 
     private final JdbcTemplate jdbcTemplate;
     private final GLAccountReadPlatformService glAccountReadPlatformService;
@@ -112,7 +121,8 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
                         .append(" pd.payment_type_id as paymentTypeId,").append(" pd.bank_number as bankNumber, ")
                         .append(" pd.routing_code as routingCode, ")
                         .append(" lt.transaction_type_enum as loanTransactionType, ")
-                        .append(" st.transaction_type_enum as savingsTransactionType ");
+                        .append(" st.transaction_type_enum as savingsTransactionType, ")
+                        .append("  ct.txn_type as cashierTransactionType ");
             }            
             if (associationParametersData.isNotesRequired()) {        
                 sb.append(" ,note.id as noteId, ")
@@ -133,7 +143,8 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
                 sb.append(" left join m_loan_transaction as lt on journalEntry.loan_transaction_id = lt.id ")
                         .append(" left join m_savings_account_transaction as st on journalEntry.savings_transaction_id = st.id ")
                         .append(" left join m_payment_detail as pd on journalEntry.payment_details_id = pd.id ")
-                        .append(" left join m_payment_type as pt on pt.id = pd.payment_type_id ");
+                        .append(" left join m_payment_type as pt on pt.id = pd.payment_type_id ")
+                        .append(" left join m_cashier_transactions as ct on journalEntry.entity_id = ct.id ");
             }
              if (associationParametersData.isNotesRequired()) {        
                 sb.append(" left join m_note as note on lt.id = note.loan_transaction_id or st.id = note.savings_account_transaction_id ");
@@ -176,7 +187,8 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
 
             final Long entityId = JdbcSupport.getLong(rs, "entityId");
             final Long createdByUserId = rs.getLong("createdByUserId");
-            final LocalDate createdDate = JdbcSupport.getLocalDate(rs, "createdDate");
+            final LocalDate createdDate = JdbcSupport.getLocalDate(rs,"createdDate");
+            final String createdDateTime = rs.getString("createdDate");
             final String createdByUserName = rs.getString("createdByUserName");
             final String comments = rs.getString("comments");
             final Boolean reversed = rs.getBoolean("reversed");
@@ -235,6 +247,11 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
                             .getInteger(rs, "savingsTransactionType"));
                     transactionTypeEnumData = new TransactionTypeEnumData(savingsTransactionType.getId(), savingsTransactionType.getCode(),
                             savingsTransactionType.getValue());
+
+                }else if(PortfolioProductType.fromInt(entityTypeId).isCashierTransaction()){
+                    CashierTxnType cashierTransactionType = CashierTxnType.getCashierTxnType(JdbcSupport.getInteger(rs, "cashierTransactionType"));
+                    transactionTypeEnumData = new TransactionTypeEnumData(cashierTransactionType.getId().longValue(), "",
+                            cashierTransactionType.getValue());
                 }
                 
             }
@@ -258,7 +275,7 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
             return new JournalEntryData(id, officeId, officeName, glAccountName, glAccountId, glCode, accountType, transactionDate,
                     entryType, amount, transactionId, manualEntry, entityType, entityId, createdByUserId, createdDate, createdByUserName,
                     comments, reversed, referenceNumber, officeRunningBalance, organizationRunningBalance, runningBalanceComputed,
-                    transactionDetailData, currency,glClosureId,isReconciled);
+                    transactionDetailData, currency,glClosureId,isReconciled,createdDateTime);
         }
     }
 
@@ -414,6 +431,8 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
                 sqlBuilder.append(" offset ").append(searchParameters.getOffset());
             }
         }
+
+        logger.debug(sqlBuilder.toString());
 
         final Object[] finalObjectArray = Arrays.copyOf(objectArray, arrayPos);
         final String sqlCountRows = "SELECT FOUND_ROWS()";

@@ -8,12 +8,7 @@ package org.mifosplatform.organisation.teller.serialization;
 
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
@@ -155,7 +150,7 @@ public final class TellerCommandFromApiJsonDeserializer {
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
 
-    public void validateForCashTxnForCashier(final String json) {
+    public void validateForCashTxnForCashier(final String json,LocalDate startDate) {
         if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
 
         final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
@@ -170,7 +165,7 @@ public final class TellerCommandFromApiJsonDeserializer {
         baseDataValidator.reset().parameter("txnAmount").value(txnAmount).notNull();
 
         final LocalDate txnDate = this.fromApiJsonHelper.extractLocalDateNamed("txnDate", element);
-        baseDataValidator.reset().parameter("txnDate").value(txnDate).notNull();
+        baseDataValidator.reset().parameter("txnDate").value(txnDate).notNull().validateDateAfter(startDate);;
 
         final String txnNote = this.fromApiJsonHelper.extractStringNamed("txnNote", element);
         baseDataValidator.reset().parameter("txnNote").value(txnNote).notExceedingLengthOf(200);
@@ -181,7 +176,7 @@ public final class TellerCommandFromApiJsonDeserializer {
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
 
-    public void validateForCashSettleTxnForCashier(final String json,BigDecimal balance) {
+    public void validateForCashSettleTxnForCashier(final String json,BigDecimal balance,LocalDate startDate) {
         if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
 
         final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
@@ -196,7 +191,33 @@ public final class TellerCommandFromApiJsonDeserializer {
         baseDataValidator.reset().parameter("txnAmount").value(txnAmount).notNull().notGreaterThanMax(balance);
 
         final LocalDate txnDate = this.fromApiJsonHelper.extractLocalDateNamed("txnDate", element);
-        baseDataValidator.reset().parameter("txnDate").value(txnDate).notNull();
+        baseDataValidator.reset().parameter("txnDate").value(txnDate).notNull().validateDateAfter(startDate);
+
+        final String txnNote = this.fromApiJsonHelper.extractStringNamed("txnNote", element);
+        baseDataValidator.reset().parameter("txnNote").value(txnNote).notExceedingLengthOf(200);
+
+        final String currencyCode = this.fromApiJsonHelper.extractStringNamed("currencyCode", element);
+        baseDataValidator.reset().parameter("currencyCode").value(currencyCode).notExceedingLengthOf(3);
+
+        throwExceptionIfValidationWarningsExist(dataValidationErrors);
+    }
+
+    public void validateForCashAllocateTxnForCashier(final String json,BigDecimal balance,LocalDate startDate) {
+        if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
+
+        final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
+        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json, this.supportedParameters);
+
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("teller");
+
+        final JsonElement element = this.fromApiJsonHelper.parse(json);
+
+        final BigDecimal txnAmount = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed("txnAmount", element);
+        baseDataValidator.reset().parameter("txnAmount").value(txnAmount).notNull().notGreaterThanMax(balance);
+
+        final LocalDate txnDate = this.fromApiJsonHelper.extractLocalDateNamed("txnDate", element);
+        baseDataValidator.reset().parameter("txnDate").value(txnDate).notNull().validateDateAfter(startDate);
 
         final String txnNote = this.fromApiJsonHelper.extractStringNamed("txnNote", element);
         baseDataValidator.reset().parameter("txnNote").value(txnNote).notExceedingLengthOf(200);

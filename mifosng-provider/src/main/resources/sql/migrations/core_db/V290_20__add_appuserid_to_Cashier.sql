@@ -1,0 +1,1 @@
+ALTER TABLE m_cashiers ADD COLUMN appuser_id bigint(20) NOT NULL;

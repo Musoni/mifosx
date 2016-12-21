@@ -16,10 +16,14 @@ import org.joda.time.LocalDateTime;
 import org.mifosplatform.accounting.common.AccountingConstants.FINANCIAL_ACTIVITY;
 import org.mifosplatform.accounting.financialactivityaccount.domain.FinancialActivityAccount;
 import org.mifosplatform.accounting.financialactivityaccount.domain.FinancialActivityAccountRepositoryWrapper;
+import org.mifosplatform.accounting.glaccount.data.GLAccountData;
 import org.mifosplatform.accounting.glaccount.domain.GLAccount;
+import org.mifosplatform.accounting.glaccount.service.GLAccountReadPlatformService;
+import org.mifosplatform.accounting.journalentry.data.JournalEntryAssociationParametersData;
 import org.mifosplatform.accounting.journalentry.domain.JournalEntry;
 import org.mifosplatform.accounting.journalentry.domain.JournalEntryRepository;
 import org.mifosplatform.accounting.journalentry.domain.JournalEntryType;
+import org.mifosplatform.accounting.producttoaccountmapping.domain.PortfolioProductType;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResultBuilder;
@@ -44,7 +48,10 @@ import org.mifosplatform.organisation.teller.domain.TellerRepositoryWrapper;
 import org.mifosplatform.organisation.teller.exception.*;
 import org.mifosplatform.organisation.teller.serialization.TellerCommandFromApiJsonDeserializer;
 import org.mifosplatform.portfolio.client.domain.ClientTransaction;
+import org.mifosplatform.useradministration.data.AppUserData;
 import org.mifosplatform.useradministration.domain.AppUser;
+import org.mifosplatform.useradministration.domain.AppUserRepository;
+import org.mifosplatform.useradministration.service.AppUserReadPlatformService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,6 +75,8 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
     private final JournalEntryRepository glJournalEntryRepository;
     private final FinancialActivityAccountRepositoryWrapper financialActivityAccountRepositoryWrapper;
     private final TellerManagementReadPlatformService tellerManagementReadPlatformService;
+    private final GLAccountReadPlatformService glAccountReadPlatformService;
+    private final AppUserRepository appUserRepository;
 
     @Autowired
     public TellerWritePlatformServiceJpaImpl(final PlatformSecurityContext context,
@@ -76,7 +85,8 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
             final StaffRepository staffRepository, CashierRepository cashierRepository, CashierTransactionRepository cashierTxnRepository,
             JournalEntryRepository glJournalEntryRepository,
             FinancialActivityAccountRepositoryWrapper financialActivityAccountRepositoryWrapper,
-                                             final TellerManagementReadPlatformService tellerManagementReadPlatformService) {
+             final TellerManagementReadPlatformService tellerManagementReadPlatformService,
+             final GLAccountReadPlatformService glAccountReadPlatformService, final AppUserRepository appUserRepository) {
         this.context = context;
         this.fromApiJsonDeserializer = fromApiJsonDeserializer;
         this.tellerRepository = tellerRepository;
@@ -88,6 +98,8 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
         this.glJournalEntryRepository = glJournalEntryRepository;
         this.financialActivityAccountRepositoryWrapper = financialActivityAccountRepositoryWrapper;
         this.tellerManagementReadPlatformService = tellerManagementReadPlatformService;
+        this.glAccountReadPlatformService = glAccountReadPlatformService;
+        this.appUserRepository = appUserRepository;
     }
 
     @Override
@@ -270,7 +282,9 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
 
             }
 
-            final Cashier cashier = Cashier.fromJson(tellerOffice, teller, staff, startTime,endTime, command);
+            final AppUser user =this.appUserRepository.findAppUserByStaffId(staffId);
+
+            final Cashier cashier = Cashier.fromJson(tellerOffice, teller, staff, startTime,endTime, command, user);
 
             cashier.assign();
 
@@ -476,10 +490,28 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
 
                 final TellerData tellerData = this.tellerManagementReadPlatformService.findTeller(cashier.getTeller().getId());
 
-                this.fromApiJsonDeserializer.validateForCashSettleTxnForCashier(command.json(), tellerData.getBalance());
-            }else{
-                this.fromApiJsonDeserializer.validateForCashTxnForCashier(command.json());
-            }
+                this.fromApiJsonDeserializer.validateForCashSettleTxnForCashier(command.json(), tellerData.getBalance(),cashier.getStartLocalDate());
+
+            }else if(txnType.equals(CashierTxnType.ALLOCATE)){
+
+
+                this.fromApiJsonDeserializer.validateForCashTxnForCashier(command.json(), cashier.getStartLocalDate());
+
+                FinancialActivityAccount mainVaultFinancialActivityAccount = this.financialActivityAccountRepositoryWrapper
+                        .findByFinancialActivityTypeWithNotFoundDetection(FINANCIAL_ACTIVITY.CASH_AT_MAINVAULT.getValue());
+
+                JournalEntryAssociationParametersData associationParametersData = new JournalEntryAssociationParametersData(false,true ,false,false,false);
+
+                GLAccountData glAccountData = this.glAccountReadPlatformService.retrieveGLAccountById(mainVaultFinancialActivityAccount.getGlAccount().getId(), associationParametersData);
+
+                final BigDecimal txnAmount = command.bigDecimalValueOfParameterNamed("txnAmount");
+
+                if(txnAmount.compareTo(new BigDecimal(glAccountData.getOrganizationRunningBalance()))>0){
+
+                    throw new NotEnoughCashInTheMainVaultTellerException(glAccountData.getId());
+                }
+           }
+
 
 
 
@@ -531,27 +563,29 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
 
             final Office cashierOffice = cashier.getTeller().getOffice();
 
-            final Long time = System.currentTimeMillis();
-            final String uniqueVal = String.valueOf(time) + currentUser.getId() + cashierOffice.getId();
-            final String transactionId = Long.toHexString(Long.parseLong(uniqueVal));
+           // final Long time = System.currentTimeMillis();
+            //final String uniqueVal = String.valueOf(time) + currentUser.getId() + cashierOffice.getId();
+
+            final String transactionId ="C"+cashierTxn.getId();  // Long.toHexString(Long.parseLong(uniqueVal));
+
             ClientTransaction clientTransaction = null;
 
             final JournalEntry debitJournalEntry = JournalEntry.createNew(cashierOffice, null, // payment
                                                                                                // detail
-                    debitAccount, "USD", // FIXME: Take currency code from the
+                    debitAccount, cashierTxn.getCurrencyCode(),
                                          // transaction
                     transactionId, false, // manual entry
                     cashierTxn.getTxnDate(), JournalEntryType.DEBIT, cashierTxn.getTxnAmount(), cashierTxn.getTxnNote(), // Description
-                    null, null, null, // entity Type, entityId, reference number
+                    PortfolioProductType.CASHIERTRANSACTION.getValue(), cashierTxn.getId(), null, // entity Type, entityId, reference number
                     null, null, clientTransaction); // Loan and Savings Txn
 
             final JournalEntry creditJournalEntry = JournalEntry.createNew(cashierOffice, null, // payment
                                                                                                 // detail
-                    creditAccount, "USD", // FIXME: Take currency code from the
+                    creditAccount, cashierTxn.getCurrencyCode(),
                                           // transaction
                     transactionId, false, // manual entry
                     cashierTxn.getTxnDate(), JournalEntryType.CREDIT, cashierTxn.getTxnAmount(), cashierTxn.getTxnNote(), // Description
-                    null, null, null, // entity Type, entityId, reference number
+                    PortfolioProductType.CASHIERTRANSACTION.getValue(),cashierTxn.getId(), null, // entity Type, entityId, reference number
                     null, null, clientTransaction); // Loan and Savings Txn
 
             this.glJournalEntryRepository.saveAndFlush(debitJournalEntry);

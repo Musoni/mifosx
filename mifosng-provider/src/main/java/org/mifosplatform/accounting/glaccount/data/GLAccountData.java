@@ -193,4 +193,7 @@ public class GLAccountData {
         return null;
     }
 
+    public Long getOrganizationRunningBalance() {
+        return organizationRunningBalance;
+    }
 }
