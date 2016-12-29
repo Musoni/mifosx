@@ -421,6 +421,7 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
     public CommandProcessingResult createNewDatatableEntry(final String dataTableName, final Long appTableId, final JsonCommand command) {
 
         try {
+
             final String appTable = queryForApplicationTableName(dataTableName);
             final CommandProcessingResult commandProcessingResult = checkMainResourceExistsWithinScope(appTable, appTableId);
 
@@ -494,6 +495,7 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
             logAsErrorUnexpectedDataIntegrityException(dve);
             throw new PlatformDataIntegrityException("error.msg.unknown.data.integrity.issue",
                     "Unknown data integrity issue with resource.");
+
         } catch (final DataAccessException dve) {
             final Throwable realCause = dve.getMostSpecificCause();
             if (realCause.getMessage()
@@ -1858,8 +1860,18 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
         }
 
         for (final ResultsetColumnHeaderData pColumnHeader : columnHeaders) {
+
+
             final String key = pColumnHeader.getColumnName();
-            if(pColumnHeader.getColumnFormulaExpression() != null && !pColumnHeader.getColumnFormulaExpression().isEmpty()) {
+
+
+            if(pColumnHeader.getColumnFormulaExpression() != null && !pColumnHeader.getColumnFormulaExpression().isEmpty() &&
+                    (pColumnHeader.getColumnDisplayExpression()== null ||
+                            pColumnHeader.getColumnDisplayExpression().isEmpty() ||
+                            this.evaluateConditionalFields(affectedColumns, metaData, key) )
+                    ) {
+
+
                 // If this field has a column Expression the we parse that instead of the value
                 pValueWrite = this.getFormulaExpressionValue(affectedColumns, metaData, pColumnHeader.getColumnFormulaExpression());
 
