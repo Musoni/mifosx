@@ -2098,7 +2098,7 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
         //final Map<String, String> originalColumnValue = grs.getData().get
 
         for (final String key : affectedColumns.keySet()) {
-            final String columnValue = affectedColumns.get(key).toString();
+            final String columnValue = (affectedColumns.get(key) != null) ? affectedColumns.get(key).toString() : null;
             final ResultsetColumnHeaderData colHeader = grs.getColumnHeaderOfColumnNamed(key);
             final String colType = colHeader.getColumnDisplayType();
 
@@ -2546,11 +2546,13 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
 
         if (colHeader.isIntegerDisplayType()) {
 
-            Integer intValue = new Integer(0);
+            Long longValue = new Long(0);
+            
+            if (columnValue != null) {
+            	longValue = Long.valueOf(columnValue);
+            }
 
-            intValue = this.helper.convertToInteger(columnValue, key, locale);
-
-            return intValue;
+            return longValue;
 
         } else if (colHeader.isDecimalDisplayType()) {
 
