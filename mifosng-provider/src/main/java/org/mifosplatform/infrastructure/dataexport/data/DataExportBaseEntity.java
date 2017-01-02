@@ -10,7 +10,10 @@ public enum DataExportBaseEntity {
     CLIENT("client", "m_client"),
     GROUP("group", "m_group"),
     LOAN("loan", "m_loan"),
-    SAVINGSACCOUNT("savingsaccount", "m_savings_account");
+    SAVINGSACCOUNT("savingsaccount", "m_savings_account"),
+    LOANTRANSACTION("loanTransaction", "m_loan_transaction"),
+    SAVINGSTRANSACTION("savingsTransaction", "m_savings_account_transaction"),
+    LOANSCHEDULE("loanSchedule", "m_loan_repayment_schedule");
     
     private String entityName;
     private String tableName;
@@ -36,7 +39,6 @@ public enum DataExportBaseEntity {
         for (DataExportBaseEntity baseEntity : DataExportBaseEntity.values()) {
         	if (baseEntity.entityName.equalsIgnoreCase(entityName)) {
         		dataExportBaseEntity = baseEntity;
-        		
         		break;
         	}
         }

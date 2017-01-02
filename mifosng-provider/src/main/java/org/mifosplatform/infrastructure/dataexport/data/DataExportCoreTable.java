@@ -14,7 +14,8 @@ public enum DataExportCoreTable {
 	M_STAFF("m_staff"), 
 	M_CODE_VALUE("m_code_value"), 
 	M_CODE("m_code"), 
-	M_CHARGE("m_charge");
+	M_CHARGE("m_charge"),
+	M_LOAN("m_loan");
 	
 	private String name;
 
