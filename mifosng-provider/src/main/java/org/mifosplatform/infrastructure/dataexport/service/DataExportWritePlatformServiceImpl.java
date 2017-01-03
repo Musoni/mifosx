@@ -440,6 +440,7 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
                             					+ "isnull(`" + baseEntityName + "`.`group_id`) then `"
                             							+ mClientTableAlias + "`.`staff_id` else `"
                             									+ mGroupTableAlias + "`.`staff_id` end");
+								break;
 	        				case DATE_OF_BIRTH:
 	        				case PHONE_NUMBER:
 	        					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
@@ -470,7 +471,7 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 					case SAVINGSTRANSACTION:
 						if(mSavingsAccountAlias == null){
 							mSavingsAccountAlias = DataExportCoreTable.M_SAVINGS_ACCOUNT.getAlias(referencedTableIndex++);
-							sqlBuilder.RIGHT_OUTER_JOIN("`" + DataExportCoreTable.M_SAVINGS_ACCOUNT.getName() + "` `"
+							sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_SAVINGS_ACCOUNT.getName() + "` `"
 									+ mSavingsAccountAlias + "` on `" + baseEntityName + "`.`savings_account_id` = `"
 									+ mSavingsAccountAlias + "`.id");
 						}
@@ -480,7 +481,7 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 								sqlBuilder.SELECT("`" + tableAlias + "`.`" + referencedColumnName + "` as `"
 										+ coreColumn.getLabel() + "`");
 								sqlBuilder.LEFT_OUTER_JOIN("`" + referencedTableName + "` `" + tableAlias
-										+ "` on `" + tableAlias + "`.`id` = `" + baseEntityName + "`.`"
+										+ "` on `" + tableAlias + "`.`id` = `" + mSavingsAccountAlias + "`.`"
 										+ foreignKeyIndexColumnName + "`");
 								break;
 							case GROUP_NAME:
@@ -492,12 +493,12 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 										+ coreColumn.getLabel() + "`");
 								sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_GROUP_CLIENT.getName() + "` `"
 										+ mGroupClientTableAlias + "` on `" + mGroupClientTableAlias + "`.`client_id` = `"
-										+ baseEntityName + "`.`client_id`");
+										+ mSavingsAccountAlias + "`.`client_id`");
 								sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_GROUP.getName() + "` `"
 										+ mGroupTableAlias + "` on `" + mGroupTableAlias + "`.`id` = case when "
-										+ "isnull(`" + baseEntityName + "`.`group_id`) then `"
+										+ "isnull(`" + mSavingsAccountAlias + "`.`group_id`) then `"
 										+ mGroupClientTableAlias + "`.`group_id` else `"
-										+ baseEntityName + "`.`group_id` end");
+										+ mSavingsAccountAlias + "`.`group_id` end");
 								break;
 							case BRANCH_NAME:
 								mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
@@ -508,13 +509,13 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 										+ coreColumn.getLabel() + "`");
 								sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_CLIENT.getName() + "` `"
 										+ mClientTableAlias + "` on `" + mClientTableAlias + "`.`id` = `"
-										+ baseEntityName + "`.`client_id`");
+										+ mSavingsAccountAlias + "`.`client_id`");
 								sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_GROUP.getName() + "` `"
 										+ mGroupTableAlias + "` on `" + mGroupTableAlias + "`.`id` = `"
-										+ baseEntityName + "`.`group_id`");
+										+ mSavingsAccountAlias + "`.`group_id`");
 								sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_OFFICE.getName() + "` `"
 										+ mOfficeTableAlias + "` on `" + mOfficeTableAlias + "`.`id` = case when "
-										+ "isnull(`" + baseEntityName + "`.`group_id`) then `"
+										+ "isnull(`" + mSavingsAccountAlias + "`.`group_id`) then `"
 										+ mClientTableAlias + "`.`office_id` else `"
 										+ mGroupTableAlias + "`.`office_id` end");
 								break;
@@ -527,15 +528,16 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 										+ coreColumn.getLabel() + "`");
 								sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_CLIENT.getName() + "` `"
 										+ mClientTableAlias + "` on `" + mClientTableAlias + "`.`id` = `"
-										+ baseEntityName + "`.`client_id`");
+										+ mSavingsAccountAlias + "`.`client_id`");
 								sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_GROUP.getName() + "` `"
 										+ mGroupTableAlias + "` on `" + mGroupTableAlias + "`.`id` = `"
-										+ baseEntityName + "`.`group_id`");
+										+ mSavingsAccountAlias + "`.`group_id`");
 								sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_STAFF.getName() + "` `"
 										+ mStaffTableAlias + "` on `" + mStaffTableAlias + "`.`id` = case when "
-										+ "isnull(`" + baseEntityName + "`.`group_id`) then `"
+										+ "isnull(`" + mSavingsAccountAlias + "`.`group_id`) then `"
 										+ mClientTableAlias + "`.`staff_id` else `"
 										+ mGroupTableAlias + "`.`staff_id` end");
+								break;
 							case DATE_OF_BIRTH:
 							case PHONE_NUMBER:
 								mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
@@ -544,7 +546,7 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 										+ coreColumn.getLabel() + "`");
 								sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_CLIENT.getName() + "` `"
 										+ mClientTableAlias + "` on `" + mClientTableAlias + "`.`id` = `"
-										+ baseEntityName + "`.`client_id`");
+										+ mSavingsAccountAlias + "`.`client_id`");
 								break;
 							case GENDER:
 								mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
@@ -553,7 +555,7 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 										+ coreColumn.getLabel() + "`");
 								sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_CLIENT.getName() + "` `"
 										+ mClientTableAlias + "` on `" + mClientTableAlias + "`.`id` = `"
-										+ baseEntityName + "`.`client_id`");
+										+ mSavingsAccountAlias + "`.`client_id`");
 								sqlBuilder.LEFT_OUTER_JOIN("`" + referencedTableName + "` `" + tableAlias + "` on `"
 										+ tableAlias + "`.`id` = `" + mClientTableAlias + "`.`" + column.getName() + "`");
 								break;
@@ -563,10 +565,103 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 						}
 						break;
 
-					case LOANTRANSACTION:
-						break;
-
 					case LOANSCHEDULE:
+					case LOANTRANSACTION:
+						if(mLoanAlias == null){
+							mLoanAlias = DataExportCoreTable.M_LOAN.getAlias(referencedTableIndex++);
+							sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_LOAN.getName() + "` `"
+									+ mLoanAlias + "` on `" + baseEntityName + "`.`loan_id` = `"
+									+ mLoanAlias + "`.id");
+						}
+						switch (coreColumn) {
+							case LOAN_OFFICER_NAME:
+							case CLIENT_NAME:
+							case CLIENT_ID:
+								sqlBuilder.SELECT("`" + tableAlias + "`.`" + referencedColumnName + "` as `"
+										+ coreColumn.getLabel() + "`");
+								sqlBuilder.LEFT_OUTER_JOIN("`" + referencedTableName + "` `" + tableAlias
+										+ "` on `" + tableAlias + "`.`id` = `" + mLoanAlias + "`.`"
+										+ foreignKeyIndexColumnName + "`");
+								break;
+							case GROUP_NAME:
+							case GROUP_ID:
+								mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(referencedTableIndex++);
+								mGroupClientTableAlias = DataExportCoreTable.M_GROUP_CLIENT.getAlias(referencedTableIndex++);
+
+								sqlBuilder.SELECT("`" + mGroupTableAlias + "`.`" + referencedColumnName + "` as `"
+										+ coreColumn.getLabel() + "`");
+								sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_GROUP_CLIENT.getName() + "` `"
+										+ mGroupClientTableAlias + "` on `" + mGroupClientTableAlias + "`.`client_id` = `"
+										+ mLoanAlias + "`.`client_id`");
+								sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_GROUP.getName() + "` `"
+										+ mGroupTableAlias + "` on `" + mGroupTableAlias + "`.`id` = case when "
+										+ "isnull(`" + mLoanAlias + "`.`group_id`) then `"
+										+ mGroupClientTableAlias + "`.`group_id` else `"
+										+ mLoanAlias + "`.`group_id` end");
+								break;
+							case BRANCH_NAME:
+								mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
+								mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(referencedTableIndex++);
+								mOfficeTableAlias = DataExportCoreTable.M_OFFICE.getAlias(referencedTableIndex++);
+
+								sqlBuilder.SELECT("`" + mOfficeTableAlias + "`.`" + referencedColumnName + "` as `"
+										+ coreColumn.getLabel() + "`");
+								sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_CLIENT.getName() + "` `"
+										+ mClientTableAlias + "` on `" + mClientTableAlias + "`.`id` = `"
+										+ mLoanAlias + "`.`client_id`");
+								sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_GROUP.getName() + "` `"
+										+ mGroupTableAlias + "` on `" + mGroupTableAlias + "`.`id` = `"
+										+ mLoanAlias + "`.`group_id`");
+								sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_OFFICE.getName() + "` `"
+										+ mOfficeTableAlias + "` on `" + mOfficeTableAlias + "`.`id` = case when "
+										+ "isnull(`" + mLoanAlias + "`.`group_id`) then `"
+										+ mClientTableAlias + "`.`office_id` else `"
+										+ mGroupTableAlias + "`.`office_id` end");
+								break;
+							case STAFF_NAME:
+								mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
+								mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(referencedTableIndex++);
+								mStaffTableAlias = DataExportCoreTable.M_STAFF.getAlias(referencedTableIndex++);
+
+								sqlBuilder.SELECT("`" + mStaffTableAlias + "`.`" + referencedColumnName + "` as `"
+										+ coreColumn.getLabel() + "`");
+								sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_CLIENT.getName() + "` `"
+										+ mClientTableAlias + "` on `" + mClientTableAlias + "`.`id` = `"
+										+ mLoanAlias + "`.`client_id`");
+								sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_GROUP.getName() + "` `"
+										+ mGroupTableAlias + "` on `" + mGroupTableAlias + "`.`id` = `"
+										+ mLoanAlias + "`.`group_id`");
+								sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_STAFF.getName() + "` `"
+										+ mStaffTableAlias + "` on `" + mStaffTableAlias + "`.`id` = case when "
+										+ "isnull(`" + mLoanAlias + "`.`group_id`) then `"
+										+ mClientTableAlias + "`.`staff_id` else `"
+										+ mGroupTableAlias + "`.`staff_id` end");
+								break;
+							case DATE_OF_BIRTH:
+							case PHONE_NUMBER:
+								mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
+
+								sqlBuilder.SELECT("`" + mClientTableAlias + "`.`" + coreColumn.getName() + "` as `"
+										+ coreColumn.getLabel() + "`");
+								sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_CLIENT.getName() + "` `"
+										+ mClientTableAlias + "` on `" + mClientTableAlias + "`.`id` = `"
+										+ mLoanAlias + "`.`client_id`");
+								break;
+							case GENDER:
+								mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
+
+								sqlBuilder.SELECT("`" + tableAlias + "`.`" + referencedColumnName + "` as `"
+										+ coreColumn.getLabel() + "`");
+								sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_CLIENT.getName() + "` `"
+										+ mClientTableAlias + "` on `" + mClientTableAlias + "`.`id` = `"
+										+ mLoanAlias + "`.`client_id`");
+								sqlBuilder.LEFT_OUTER_JOIN("`" + referencedTableName + "` `" + tableAlias + "` on `"
+										+ tableAlias + "`.`id` = `" + mClientTableAlias + "`.`" + column.getName() + "`");
+								break;
+							default:
+								sqlBuilder.SELECT("NULL as `" + column.getLabel() + "`");
+								break;
+						}
 						break;
             			
 					default:
@@ -958,7 +1053,144 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
                                 break;
                         }
                         break;
-                        
+
+					case SAVINGSTRANSACTION:
+						if(mSavingsAccountAlias == null){
+							mSavingsAccountAlias = DataExportCoreTable.M_SAVINGS_ACCOUNT.getAlias(referencedTableIndex++);
+							sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_SAVINGS_ACCOUNT.getName() + "` `"
+									+ mSavingsAccountAlias + "` on `" + baseEntityName + "`.`savings_account_id` = `"
+									+ mSavingsAccountAlias + "`.id");
+						}
+						switch (coreColumn) {
+							case CLIENT_NAME:
+							case CLIENT_ID:
+								sqlBuilder.WHERE("`" + tableAlias + "`.`" + referencedColumnName + "` " + filterValue);
+								sqlBuilder.LEFT_OUTER_JOIN("`" + referencedTableName + "` `" + tableAlias
+										+ "` on `" + tableAlias + "`.`id` = `" + mSavingsAccountAlias + "`.`"
+										+ foreignKeyIndexColumnName + "`");
+								break;
+							case GROUP_NAME:
+							case GROUP_ID:
+								mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(referencedTableIndex++);
+								mGroupClientTableAlias = DataExportCoreTable.M_GROUP_CLIENT.getAlias(referencedTableIndex++);
+
+								sqlBuilder.WHERE("`" + mGroupTableAlias + "`.`" + referencedColumnName + "` " + filterValue);
+								sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_GROUP_CLIENT.getName() + "` `"
+										+ mGroupClientTableAlias + "` on `" + mGroupClientTableAlias + "`.`client_id` = `"
+										+ mSavingsAccountAlias + "`.`client_id`");
+								sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_GROUP.getName() + "` `"
+										+ mGroupTableAlias + "` on `" + mGroupTableAlias + "`.`id` = case when "
+										+ "isnull(`" + mSavingsAccountAlias + "`.`group_id`) then `"
+										+ mGroupClientTableAlias + "`.`group_id` else `"
+										+ mSavingsAccountAlias + "`.`group_id` end");
+								break;
+							case BRANCH_NAME:
+								mClientTableAlias = "m_client" + referencedTableIndex++;
+								mGroupTableAlias = "m_group" + referencedTableIndex++;
+								mOfficeTableAlias = "m_office" + referencedTableIndex++;
+
+								sqlBuilder.WHERE("`" + mOfficeTableAlias + "`.`" + referencedColumnName + "` " + filterValue);
+								sqlBuilder.LEFT_OUTER_JOIN("`m_client` `" + mClientTableAlias
+										+ "` on `" + mClientTableAlias + "`.`id` = `" + mSavingsAccountAlias + "`.`client_id`");
+								sqlBuilder.LEFT_OUTER_JOIN("`m_group` `" + mGroupTableAlias
+										+ "` on `" + mGroupTableAlias + "`.`id` = `" + mSavingsAccountAlias + "`.`group_id`");
+								sqlBuilder.LEFT_OUTER_JOIN("`m_office` `" + mOfficeTableAlias
+										+ "` on `" + mOfficeTableAlias + "`.`id` = case when isnull(`"
+										+ mSavingsAccountAlias + "`.`group_id`) then `" + mClientTableAlias
+										+ "`.`office_id` else `" + mGroupTableAlias
+										+ "`.`office_id` end");
+								break;
+							case DATE_OF_BIRTH:
+							case PHONE_NUMBER:
+								mClientTableAlias = "m_client" + referencedTableIndex++;
+
+								sqlBuilder.WHERE("`" + mClientTableAlias + "`.`" + coreColumn.getName() + "` " + filterValue);
+								sqlBuilder.LEFT_OUTER_JOIN("`m_client` `" + mClientTableAlias
+										+ "` on `" + mClientTableAlias + "`.`id` = `" + mSavingsAccountAlias + "`.`client_id`");
+								break;
+							case GENDER:
+								mClientTableAlias = "m_client" + referencedTableIndex++;
+
+								sqlBuilder.WHERE("`" + tableAlias + "`.`" + referencedColumnName + "` " + filterValue);
+								sqlBuilder.LEFT_OUTER_JOIN("`m_client` `" + mClientTableAlias
+										+ "` on `" + mClientTableAlias + "`.`id` = `" + mSavingsAccountAlias + "`.`client_id`");
+								sqlBuilder.LEFT_OUTER_JOIN("`" + referencedTableName + "` `" + tableAlias + "` on `"
+										+ tableAlias + "`.`id` = `" + mClientTableAlias + "`.`" + coreColumn.getName() + "`");
+								break;
+							default:
+								break;
+						}
+						break;
+
+					case LOANSCHEDULE:
+					case LOANTRANSACTION:
+						if(mLoanAlias == null){
+							mLoanAlias = DataExportCoreTable.M_LOAN.getAlias(referencedTableIndex++);
+							sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_LOAN.getName() + "` `"
+									+ mLoanAlias + "` on `" + baseEntityName + "`.`loan_id` = `"
+									+ mLoanAlias + "`.id");
+						}
+						switch (coreColumn) {
+							case LOAN_OFFICER_NAME:
+							case CLIENT_NAME:
+							case CLIENT_ID:
+								sqlBuilder.WHERE("`" + tableAlias + "`.`" + referencedColumnName + "` " + filterValue);
+								sqlBuilder.LEFT_OUTER_JOIN("`" + referencedTableName + "` `" + tableAlias
+										+ "` on `" + tableAlias + "`.`id` = `" + mLoanAlias + "`.`"
+										+ foreignKeyIndexColumnName + "`");
+								break;
+							case GROUP_NAME:
+							case GROUP_ID:
+								mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(referencedTableIndex++);
+								mGroupClientTableAlias = DataExportCoreTable.M_GROUP_CLIENT.getAlias(referencedTableIndex++);
+
+								sqlBuilder.WHERE("`" + mGroupTableAlias + "`.`" + referencedColumnName + "` " + filterValue);
+								sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_GROUP_CLIENT.getName() + "` `"
+										+ mGroupClientTableAlias + "` on `" + mGroupClientTableAlias + "`.`client_id` = `"
+										+ mLoanAlias + "`.`client_id`");
+								sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_GROUP.getName() + "` `"
+										+ mGroupTableAlias + "` on `" + mGroupTableAlias + "`.`id` = case when "
+										+ "isnull(`" + mLoanAlias + "`.`group_id`) then `"
+										+ mGroupClientTableAlias + "`.`group_id` else `"
+										+ mLoanAlias + "`.`group_id` end");
+								break;
+							case BRANCH_NAME:
+								mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
+								mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(referencedTableIndex++);
+								mOfficeTableAlias = DataExportCoreTable.M_OFFICE.getAlias(referencedTableIndex++);
+
+								sqlBuilder.WHERE("`" + mOfficeTableAlias + "`.`" + referencedColumnName + "` " + filterValue);
+								sqlBuilder.LEFT_OUTER_JOIN("`m_client` `" + mClientTableAlias
+										+ "` on `" + mClientTableAlias + "`.`id` = `" + mLoanAlias + "`.`client_id`");
+								sqlBuilder.LEFT_OUTER_JOIN("`m_group` `" + mGroupTableAlias
+										+ "` on `" + mGroupTableAlias + "`.`id` = `" + mLoanAlias + "`.`group_id`");
+								sqlBuilder.LEFT_OUTER_JOIN("`m_office` `" + mOfficeTableAlias
+										+ "` on `" + mOfficeTableAlias + "`.`id` = case when isnull(`"
+										+ mLoanAlias + "`.`group_id`) then `" + mClientTableAlias
+										+ "`.`office_id` else `" + mGroupTableAlias
+										+ "`.`office_id` end");
+								break;
+							case DATE_OF_BIRTH:
+							case PHONE_NUMBER:
+								mClientTableAlias = "m_client" + referencedTableIndex++;
+
+								sqlBuilder.WHERE("`" + mClientTableAlias + "`.`" + coreColumn.getName() + "` " + filterValue);
+								sqlBuilder.LEFT_OUTER_JOIN("`m_client` `" + mClientTableAlias
+										+ "` on `" + mClientTableAlias + "`.`id` = `" + mLoanAlias + "`.`client_id`");
+								break;
+							case GENDER:
+								mClientTableAlias = "m_client" + referencedTableIndex++;
+
+								sqlBuilder.WHERE("`" + tableAlias + "`.`" + referencedColumnName + "` " + filterValue);
+								sqlBuilder.LEFT_OUTER_JOIN("`m_client` `" + mClientTableAlias
+										+ "` on `" + mClientTableAlias + "`.`id` = `" + mLoanAlias + "`.`client_id`");
+								sqlBuilder.LEFT_OUTER_JOIN("`" + referencedTableName + "` `" + tableAlias + "` on `"
+										+ tableAlias + "`.`id` = `" + mClientTableAlias + "`.`" + coreColumn.getName() + "`");
+								break;
+							default:
+								break;
+						}
+						break;
                     default:
                         break;
                 }
