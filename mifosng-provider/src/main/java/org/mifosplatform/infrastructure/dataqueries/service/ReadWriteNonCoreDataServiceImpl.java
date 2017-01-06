@@ -1854,8 +1854,7 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
 
         Locale clientApplicationLocale = null;
 
-        if(queryParams.get("locale") != null && !queryParams.get("locale").toString().isEmpty())
-        {
+        if(queryParams.get("locale") != null && StringUtils.isNotBlank(queryParams.get("locale").toString())) {
             clientApplicationLocale = new Locale(queryParams.get("locale").toString());
         }
 
@@ -1883,7 +1882,12 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
                 selectColumns += "," + pValueWrite + " as " + columnName;
             }
             else if (affectedColumns.containsKey(key)) {
-                pValue = affectedColumns.get(key).toString();
+            	
+            	// check for null value to avoid NULL pointer exception
+            	if (affectedColumns.get(key) != null) {
+            		pValue = affectedColumns.get(key).toString();
+            	}
+                
                 if (StringUtils.isEmpty(pValue)) {
                     pValueWrite = "null";
                 } else {
