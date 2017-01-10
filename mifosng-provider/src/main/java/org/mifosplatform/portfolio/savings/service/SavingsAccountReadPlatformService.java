@@ -35,4 +35,6 @@ public interface SavingsAccountReadPlatformService {
     SavingsAccountTransactionData retrieveSavingsTransaction(Long savingsId, Long transactionId, DepositAccountType depositAccountType);
 
     Collection<SavingsAccountData> retrieveForLookup(Long clientId, Boolean overdraft);
+
+    Collection<SavingsAccountData> retrieveForInterestPosting();
 }

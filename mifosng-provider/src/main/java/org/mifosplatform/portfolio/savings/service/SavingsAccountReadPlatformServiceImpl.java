@@ -974,6 +974,15 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 
     }
 
+    @Override
+    public Collection<SavingsAccountData> retrieveForInterestPosting() {
+
+        SavingAccountMapperForLookup accountMapperForLookup = new SavingAccountMapperForLookup();
+        final StringBuilder sqlBuilder = new StringBuilder("select " + accountMapperForLookup.schema());
+        sqlBuilder.append(" where sa.status_enum = 300");
+        return this.jdbcTemplate.query(sqlBuilder.toString(), accountMapperForLookup);
+    }
+
     /*
      * private static final class SavingsAccountAnnualFeeMapper implements
      * RowMapper<SavingsAccountAnnualFeeData> {
