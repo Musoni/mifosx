@@ -16,7 +16,7 @@ public interface EntityDatatableChecksRepository extends JpaRepository<EntityDat
 
     public List<EntityDatatableChecks> findByEntityAndStatus(String entityName,Long status);
 
-    @Query(" from  EntityDatatableChecks t WHERE t.status =:status and t.entity=:entity and t.productLoanId = :productLoanId ")
+    @Query(" from  EntityDatatableChecks t WHERE t.status =:status and t.entity=:entity and  ( t.productLoanId = :productLoanId OR t.productLoanId is null ) ")
     public List<EntityDatatableChecks> findByEntityStatusAndLoanProduct(@Param("entity") String entity,@Param("status") Long status,@Param("productLoanId") Long productLoanId);
 
     @Query(" from  EntityDatatableChecks t WHERE t.status =:status and t.entity=:entity and t.datatableId = :datatableId AND t.productLoanId IS NOT NULL")

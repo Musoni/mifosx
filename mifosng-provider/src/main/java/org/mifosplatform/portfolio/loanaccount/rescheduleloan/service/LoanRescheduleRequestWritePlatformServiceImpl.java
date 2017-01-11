@@ -43,10 +43,6 @@ import org.mifosplatform.portfolio.calendar.domain.Calendar;
 import org.mifosplatform.portfolio.calendar.domain.CalendarEntityType;
 import org.mifosplatform.portfolio.calendar.domain.CalendarInstance;
 import org.mifosplatform.portfolio.calendar.domain.CalendarInstanceRepository;
-import org.mifosplatform.portfolio.floatingrates.data.FloatingRateDTO;
-import org.mifosplatform.portfolio.floatingrates.data.FloatingRatePeriodData;
-import org.mifosplatform.portfolio.floatingrates.exception.FloatingRateNotFoundException;
-import org.mifosplatform.portfolio.floatingrates.service.FloatingRatesReadPlatformService;
 import org.mifosplatform.portfolio.charge.domain.Charge;
 import org.mifosplatform.portfolio.charge.domain.ChargeCalculationType;
 import org.mifosplatform.portfolio.charge.domain.ChargePaymentMode;
@@ -54,6 +50,10 @@ import org.mifosplatform.portfolio.charge.domain.ChargeTimeType;
 import org.mifosplatform.portfolio.common.BusinessEventNotificationConstants.BUSINESS_ENTITY;
 import org.mifosplatform.portfolio.common.BusinessEventNotificationConstants.BUSINESS_EVENTS;
 import org.mifosplatform.portfolio.common.service.BusinessEventNotifierService;
+import org.mifosplatform.portfolio.floatingrates.data.FloatingRateDTO;
+import org.mifosplatform.portfolio.floatingrates.data.FloatingRatePeriodData;
+import org.mifosplatform.portfolio.floatingrates.exception.FloatingRateNotFoundException;
+import org.mifosplatform.portfolio.floatingrates.service.FloatingRatesReadPlatformService;
 import org.mifosplatform.portfolio.loanaccount.data.HolidayDetailDTO;
 import org.mifosplatform.portfolio.loanaccount.data.LoanChargePaidByData;
 import org.mifosplatform.portfolio.loanaccount.data.ScheduleGeneratorDTO;
@@ -61,7 +61,6 @@ import org.mifosplatform.portfolio.loanaccount.domain.ChangedTransactionDetail;
 import org.mifosplatform.portfolio.loanaccount.domain.DefaultLoanLifecycleStateMachine;
 import org.mifosplatform.portfolio.loanaccount.domain.Loan;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanCharge;
-import org.mifosplatform.portfolio.loanaccount.domain.LoanInstallmentCharge;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanLifecycleStateMachine;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanRepaymentScheduleInstallment;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanRepository;
@@ -76,6 +75,7 @@ import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanRepayment
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanRepaymentScheduleHistoryRepository;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.service.LoanScheduleHistoryWritePlatformService;
 import org.mifosplatform.portfolio.loanaccount.rescheduleloan.RescheduleLoansApiConstants;
+import org.mifosplatform.portfolio.loanaccount.rescheduleloan.data.LoanRescheduleRepaymentPeriodChargeData;
 import org.mifosplatform.portfolio.loanaccount.rescheduleloan.data.LoanRescheduleRequestDataValidator;
 import org.mifosplatform.portfolio.loanaccount.rescheduleloan.domain.DefaultLoanReschedulerFactory;
 import org.mifosplatform.portfolio.loanaccount.rescheduleloan.domain.LoanRescheduleModel;
@@ -368,14 +368,19 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
 
                 final Collection<LoanRescheduleModelRepaymentPeriod> periods = loanRescheduleModel.getPeriods();
                 List<LoanRepaymentScheduleInstallment> repaymentScheduleInstallments = loan.getRepaymentScheduleInstallments();
-                Collection<LoanCharge> waiveLoanCharges = new ArrayList<>();
+                Collection<LoanRescheduleRepaymentPeriodChargeData> waiveLoanCharges = new ArrayList<>();
 
                 for (LoanRescheduleModelRepaymentPeriod period : periods) {
 
                     if (period.isNew()) {
+                    	BigDecimal interestCharged = LoanRescheduleModelRepaymentPeriod.moneyToBigDecimal(
+                        		period.getInterestCharged());
+                        BigDecimal principalCharged = LoanRescheduleModelRepaymentPeriod.moneyToBigDecimal(
+                        		period.getPrincipalCharged());
+                    	
                         LoanRepaymentScheduleInstallment repaymentScheduleInstallment = new LoanRepaymentScheduleInstallment(loan,
-                                period.periodNumber(), period.periodFromDate(), period.periodDueDate(), period.principalDue(),
-                                period.interestDue(), BigDecimal.ZERO, BigDecimal.ZERO, false);
+                                period.getNumber(), period.getFromDate(), period.getDueDate(), principalCharged,
+                                interestCharged, BigDecimal.ZERO, BigDecimal.ZERO, false);
 
                         repaymentScheduleInstallments.add(repaymentScheduleInstallment);
                     }
@@ -383,24 +388,35 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
                     else {
                         for (LoanRepaymentScheduleInstallment repaymentScheduleInstallment : repaymentScheduleInstallments) {
 
-                            if (repaymentScheduleInstallment.getInstallmentNumber().equals(period.oldPeriodNumber())) {
+                            if (repaymentScheduleInstallment.getInstallmentNumber().equals(period.getOldNumber())) {
 
                                 LocalDate periodDueDate = repaymentScheduleInstallment.getDueDate();
                                 Money zeroAmount = Money.of(currency, new BigDecimal(0));
+                                
+                                BigDecimal interestCharged = LoanRescheduleModelRepaymentPeriod.moneyToBigDecimal(
+                                		period.getInterestCharged());
+                                BigDecimal principalCharged = LoanRescheduleModelRepaymentPeriod.moneyToBigDecimal(
+                                		period.getPrincipalCharged());
 
-                                repaymentScheduleInstallment.updateInstallmentNumber(period.periodNumber());
-                                repaymentScheduleInstallment.updateFromDate(period.periodFromDate());
-                                repaymentScheduleInstallment.updateDueDate(period.periodDueDate());
-                                repaymentScheduleInstallment.updatePrincipal(period.principalDue());
-                                repaymentScheduleInstallment.updateInterestCharged(period.interestDue());
-
-                                if (Money.of(currency, period.principalDue()).isZero() && Money.of(currency, period.interestDue()).isZero()
-                                        && repaymentScheduleInstallment.isNotFullyPaidOff()) {
-
-                                    if (repaymentScheduleInstallment.getPenaltyChargesOutstanding(currency).isGreaterThan(zeroAmount)
+                                repaymentScheduleInstallment.updateInstallmentNumber(period.getNumber());
+                                repaymentScheduleInstallment.updateFromDate(period.getFromDate());
+                                repaymentScheduleInstallment.updateDueDate(period.getDueDate());
+                                repaymentScheduleInstallment.updatePrincipal(principalCharged);
+                                repaymentScheduleInstallment.updateInterestCharged(interestCharged);
+                                
+                                if (period.getPrincipalCharged() != null && period.getInterestCharged() != null 
+                                		&& period.getInterestCharged().isZero() 
+                                		&& period.getPrincipalCharged().isZero() 
+                                		&& repaymentScheduleInstallment.isNotFullyPaidOff()) {
+                                	if (repaymentScheduleInstallment.getPenaltyChargesOutstanding(currency).isGreaterThan(zeroAmount)
                                             || repaymentScheduleInstallment.getFeeChargesOutstanding(currency).isGreaterThan(zeroAmount)) {
 
-                                        waiveLoanCharges.addAll(loan.getLoanCharges(periodDueDate));
+                                		Collection<LoanCharge> loanCharges = loan.getLoanChargesLinkedToInstallment(periodDueDate);
+                                		
+                                		for (LoanCharge loanCharge : loanCharges) {
+                                			waiveLoanCharges.add(LoanRescheduleRepaymentPeriodChargeData.instance(period.getNumber(), 
+                                					loanCharge));
+                                		}
                                     }
                                 }
 
@@ -475,28 +491,23 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
      *            collection of LoanCharge objects
      * @return void
      **/
-    private void waiveLoanCharges(Loan loan, Collection<LoanCharge> loanCharges) {
+    private void waiveLoanCharges(final Loan loan, 
+    		final Collection<LoanRescheduleRepaymentPeriodChargeData> repaymentPeriodCharges) {
         AppUser currentUser = this.platformSecurityContext.authenticatedUser();
         this.loanAssembler.setHelpers(loan);
 
-        for (LoanCharge loanCharge : loanCharges) {
-
+        for (LoanRescheduleRepaymentPeriodChargeData repaymentPeriodCharge : repaymentPeriodCharges) {
+        	LoanCharge loanCharge = repaymentPeriodCharge.getLoanCharge();
+        	
             if (loanCharge.isChargePending()) {
-                Integer loanInstallmentNumber = null;
-
-                if (loanCharge.isInstalmentFee()) {
-                    LoanInstallmentCharge chargePerInstallment = loanCharge.getUnpaidInstallmentLoanCharge();
-
-                    if (chargePerInstallment != null) {
-                        loanInstallmentNumber = chargePerInstallment.getRepaymentInstallment().getInstallmentNumber();
-                    }
-                }
+                Integer loanInstallmentNumber = repaymentPeriodCharge.getInstallmentNumber();
 
                 final Map<String, Object> changes = new LinkedHashMap<>(3);
 
                 final List<Long> existingTransactionIds = new ArrayList<>();
                 final List<Long> existingReversedTransactionIds = new ArrayList<>();
                 LocalDate recalculateFrom = null;
+                
                 if (loan.repaymentScheduleDetail().isInterestRecalculationEnabled()) {
                     recalculateFrom = DateUtils.getLocalDateOfTenant();
                 }

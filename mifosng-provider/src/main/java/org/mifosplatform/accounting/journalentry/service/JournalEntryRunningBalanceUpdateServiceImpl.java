@@ -126,7 +126,6 @@ public class JournalEntryRunningBalanceUpdateServiceImpl implements JournalEntry
         return commandProcessingResultBuilder.build();
     }
 
-    @Transactional
     private void updateOrganizationRunningBalance(Date entityDate) {
         Map<Long, BigDecimal> runningBalanceMap = new HashMap<>(5);
         Map<Long, Map<Long, BigDecimal>> officesRunningBalance = new HashMap<>();
@@ -216,7 +215,6 @@ public class JournalEntryRunningBalanceUpdateServiceImpl implements JournalEntry
 
     }
 
-    @Transactional
     private void updateRunningBalance(Long officeId, Date entityDate) {
         Map<Long, BigDecimal> runningBalanceMap = new HashMap<>(5);
 
