@@ -99,7 +99,7 @@ public class CashBasedAccountingProcessorForSavings implements AccountingProcess
             }
 
             /** Handle Deposits and reversals of deposits **/
-            else if (savingsTransactionDTO.getTransactionType().isDeposit()) {
+            else if (savingsTransactionDTO.getTransactionType().isDeposit() || savingsTransactionDTO.getTransactionType().isGuarantorInterestDeposit()) {
                 if (savingsTransactionDTO.isAccountTransfer()) {
                     this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
                             FINANCIAL_ACTIVITY.LIABILITY_TRANSFER.getValue(), CASH_ACCOUNTS_FOR_SAVINGS.SAVINGS_CONTROL.getValue(),

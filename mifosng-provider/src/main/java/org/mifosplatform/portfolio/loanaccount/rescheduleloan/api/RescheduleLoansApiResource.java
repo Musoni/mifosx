@@ -97,7 +97,8 @@ public class RescheduleLoansApiResource {
         if (compareIgnoreCase(command, "previewLoanReschedule")) {
             final LoanRescheduleModel loanRescheduleModel = this.loanReschedulePreviewPlatformService.previewLoanReschedule(scheduleId);
 
-            return this.loanRescheduleToApiJsonSerializer.serialize(settings, loanRescheduleModel.toData(), new HashSet<String>());
+            return this.loanRescheduleToApiJsonSerializer.serialize(settings, loanRescheduleModel.toLoanScheduleData(), 
+            		new HashSet<String>());
         }
 
         final LoanRescheduleRequestData loanRescheduleRequestData = this.loanRescheduleRequestReadPlatformService

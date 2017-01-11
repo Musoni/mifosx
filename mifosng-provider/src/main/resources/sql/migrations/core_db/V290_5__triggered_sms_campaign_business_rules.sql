@@ -24,6 +24,11 @@ VALUES ('DefaultGroup', 'groupId', 'Group', 'none', 'number', '-1', 'Y', 'select
 INSERT INTO `stretchy_parameter` (`parameter_name`, `parameter_variable`, `parameter_label`, `parameter_displayType`, `parameter_FormatType`, `parameter_default`, `selectAll`, `parameter_sql`, `parent_id`)
 VALUES ('SelectLoanType', 'loanType', 'Loan Type', 'select', 'number', '-1', 'Y', "select\nenum_id as id,\nenum_value as value\nfrom r_enum_value\nwhere enum_name = 'loan_type_enum'", NULL);
 
+INSERT INTO `stretchy_parameter` ( `parameter_name`, `parameter_variable`, `parameter_label`, `parameter_displayType`, `parameter_FormatType`, `parameter_default`, `special`, `selectOne`, `selectAll`, `parameter_sql`, `parent_id`)
+VALUES
+	( 'LoanOfficerSelectOneRec', 'staffId', 'Loanofficer', 'select', 'number', '0', NULL, 'Y', NULL, 'select -1 as id, \'All\' as display_name\nUNION\n(\nselect id, display_name from m_staff where office_id = ${officeId} and is_loan_officer = true  and is_active = true)', (select id from (select id from stretchy_parameter where parameter_name = 'OfficeIdSelectOne') as x));
+
+
 SET @LRej = (select id from `stretchy_report` where `report_name`='Loan Rejected');
 SET @LApp = (select id from `stretchy_report` where `report_name`='Loan Approved');
 SET @LRep = (select id from `stretchy_report` where `report_name`='Loan Repayment');
@@ -50,4 +55,3 @@ VALUES (@LRej, @Office, 'Office'),
 (@LRej, @LoanType, 'loanType'),
 (@LApp, @LoanType, 'loanType'),
 (@LRep, @LoanType, 'loanType');
-

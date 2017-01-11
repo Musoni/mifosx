@@ -113,9 +113,13 @@ public final class SavingsAccountTransaction extends AbstractPersistable<Long> {
     }
 
     public static SavingsAccountTransaction deposit(final SavingsAccount savingsAccount, final Office office,
-            final PaymentDetail paymentDetail, final LocalDate date, final Money amount, Date createdDate, final AppUser appUser) {
+            final PaymentDetail paymentDetail, final LocalDate date, final Money amount, Date createdDate, final AppUser appUser,final boolean isGuarantorInterestDeposit) {
         final boolean isReversed = false;
-        return new SavingsAccountTransaction(savingsAccount, office, paymentDetail, SavingsAccountTransactionType.DEPOSIT.getValue(), date,
+        Integer savingAccountTransactionType = SavingsAccountTransactionType.DEPOSIT.getValue();
+        if(isGuarantorInterestDeposit){
+            savingAccountTransactionType = SavingsAccountTransactionType.GUARANTOR_INTEREST_DEPOSIT.getValue();
+        }
+        return new SavingsAccountTransaction(savingsAccount, office, paymentDetail, savingAccountTransactionType, date,
                 createdDate, amount, isReversed, appUser);
     }
 
@@ -315,6 +319,10 @@ public final class SavingsAccountTransaction extends AbstractPersistable<Long> {
 
     public boolean isTransferWithdrawal() {
         return SavingsAccountTransactionType.fromInt(this.typeOf).isTransferWithdrawal();
+    }
+
+    public boolean isGuarantorInterestDeposit(){
+        return SavingsAccountTransactionType.fromInt(this.typeOf).isGuarantorInterestDeposit();
     }
 
     public boolean isTransferRelatedTransaction() {
@@ -532,7 +540,7 @@ public final class SavingsAccountTransaction extends AbstractPersistable<Long> {
     }
 
     public boolean isCredit() {
-        return isDeposit() || isInterestPostingAndNotReversed();
+        return isDeposit() || isInterestPostingAndNotReversed() || isGuarantorInterestDeposit();
     }
 
     public boolean isDebit() {

@@ -53,7 +53,6 @@ public final class JournalEntryCommandFromApiJsonDeserializer extends AbstractFr
 
         final JsonElement element = this.fromApiJsonHelper.parse(json);
 
-        final Long officeId = this.fromApiJsonHelper.extractLongNamed(JournalEntryJsonInputParams.OFFICE_ID.getValue(), element);
         final String currencyCode = this.fromApiJsonHelper
                 .extractStringNamed(JournalEntryJsonInputParams.CURRENCY_CODE.getValue(), element);
         final String comments = this.fromApiJsonHelper.extractStringNamed(JournalEntryJsonInputParams.COMMENTS.getValue(), element);
@@ -89,12 +88,11 @@ public final class JournalEntryCommandFromApiJsonDeserializer extends AbstractFr
                 debits = populateCreditsOrDebitsArray(topLevelJsonElement, locale, debits, JournalEntryJsonInputParams.DEBITS.getValue());
             }
         }
-        return new JournalEntryCommand(officeId, currencyCode, transactionDate, comments, credits, debits, referenceNumber,
+        return new JournalEntryCommand(currencyCode, transactionDate, comments, credits, debits, referenceNumber,
                 accountingRuleId, amount, paymentTypeId, accountNumber, checkNumber, receiptNumber, bankNumber, routingCode);
     }
 
     /**
-     * @param comments
      * @param topLevelJsonElement
      * @param locale
      */
@@ -110,8 +108,11 @@ public final class JournalEntryCommandFromApiJsonDeserializer extends AbstractFr
             final Long glAccountId = this.fromApiJsonHelper.extractLongNamed("glAccountId", creditElement);
             final String comments = this.fromApiJsonHelper.extractStringNamed("comments", creditElement);
             final BigDecimal amount = this.fromApiJsonHelper.extractBigDecimalNamed("amount", creditElement, locale);
+            final Long officeId = creditElement.has("officeId") ?
+                    this.fromApiJsonHelper.extractLongNamed("officeId",creditElement) :
+                    this.fromApiJsonHelper.extractLongNamed(JournalEntryJsonInputParams.OFFICE_ID.getValue(), topLevelJsonElement);
 
-            debitOrCredits[i] = new SingleDebitOrCreditEntryCommand(parametersPassedInForCreditsCommand, glAccountId, amount, comments);
+            debitOrCredits[i] = new SingleDebitOrCreditEntryCommand(parametersPassedInForCreditsCommand, glAccountId, amount, comments, officeId);
         }
         return debitOrCredits;
     }

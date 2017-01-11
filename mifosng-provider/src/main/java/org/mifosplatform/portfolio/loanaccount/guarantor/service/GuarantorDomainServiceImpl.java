@@ -6,20 +6,22 @@
 package org.mifosplatform.portfolio.loanaccount.guarantor.service;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.math.MathContext;
+import java.util.*;
 
 import javax.annotation.PostConstruct;
 
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormatter;
+import org.mifosplatform.accounting.journalentry.service.JournalEntryWritePlatformService;
+import org.mifosplatform.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.mifosplatform.infrastructure.core.data.ApiParameterError;
 import org.mifosplatform.infrastructure.core.data.DataValidatorBuilder;
 import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidationException;
+import org.mifosplatform.infrastructure.core.service.DateUtils;
+import org.mifosplatform.organisation.monetary.domain.ApplicationCurrency;
+import org.mifosplatform.organisation.monetary.domain.ApplicationCurrencyRepositoryWrapper;
+import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
 import org.mifosplatform.organisation.monetary.domain.MoneyHelper;
 import org.mifosplatform.portfolio.account.PortfolioAccountType;
 import org.mifosplatform.portfolio.account.data.AccountTransferDTO;
@@ -27,6 +29,7 @@ import org.mifosplatform.portfolio.account.domain.AccountTransferDetails;
 import org.mifosplatform.portfolio.account.domain.AccountTransferType;
 import org.mifosplatform.portfolio.account.service.AccountTransfersReadPlatformService;
 import org.mifosplatform.portfolio.account.service.AccountTransfersWritePlatformService;
+import org.mifosplatform.portfolio.common.BusinessEventNotificationConstants;
 import org.mifosplatform.portfolio.common.BusinessEventNotificationConstants.BUSINESS_ENTITY;
 import org.mifosplatform.portfolio.common.BusinessEventNotificationConstants.BUSINESS_EVENTS;
 import org.mifosplatform.portfolio.common.service.BusinessEventListner;
@@ -35,27 +38,20 @@ import org.mifosplatform.portfolio.loanaccount.domain.Loan;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanStatus;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTransaction;
 import org.mifosplatform.portfolio.loanaccount.guarantor.GuarantorConstants;
-import org.mifosplatform.portfolio.loanaccount.guarantor.domain.Guarantor;
-import org.mifosplatform.portfolio.loanaccount.guarantor.domain.GuarantorFundingDetails;
-import org.mifosplatform.portfolio.loanaccount.guarantor.domain.GuarantorFundingRepository;
-import org.mifosplatform.portfolio.loanaccount.guarantor.domain.GuarantorFundingTransaction;
-import org.mifosplatform.portfolio.loanaccount.guarantor.domain.GuarantorFundingTransactionRepository;
-import org.mifosplatform.portfolio.loanaccount.guarantor.domain.GuarantorRepository;
+import org.mifosplatform.portfolio.loanaccount.guarantor.domain.*;
 import org.mifosplatform.portfolio.loanproduct.domain.LoanProduct;
 import org.mifosplatform.portfolio.loanproduct.domain.LoanProductGuaranteeDetails;
 import org.mifosplatform.portfolio.paymentdetail.domain.PaymentDetail;
 import org.mifosplatform.portfolio.paymentdetail.domain.PaymentDetailRepository;
 import org.mifosplatform.portfolio.paymenttype.domain.PaymentType;
 import org.mifosplatform.portfolio.paymenttype.domain.PaymentTypeRepository;
-import org.mifosplatform.portfolio.savings.domain.DepositAccountOnHoldTransaction;
-import org.mifosplatform.portfolio.savings.domain.DepositAccountOnHoldTransactionRepository;
-import org.mifosplatform.portfolio.savings.domain.SavingsAccount;
-import org.mifosplatform.portfolio.savings.domain.SavingsAccountDomainService;
-import org.mifosplatform.portfolio.savings.domain.SavingsAccountTransactionSummaryWrapper;
-import org.mifosplatform.portfolio.savings.domain.SavingsHelper;
+import org.mifosplatform.portfolio.savings.SavingsApiConstants;
+import org.mifosplatform.portfolio.savings.domain.*;
 import org.mifosplatform.portfolio.savings.exception.InsufficientAccountBalanceException;
+import org.mifosplatform.useradministration.domain.AppUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class GuarantorDomainServiceImpl implements GuarantorDomainService {
@@ -73,6 +69,12 @@ public class GuarantorDomainServiceImpl implements GuarantorDomainService {
     private final AccountTransfersReadPlatformService accountTransfersReadPlatformService;
     private final PaymentDetailRepository paymentDetailRepository;
     private final PaymentTypeRepository paymentTypeRepository;
+    private final GuarantorInterestAllocationRepository guarantorInterestAllocationRepository;
+    private final GuarantorInterestPaymentRepository guarantorInterestPaymentRepository;
+    private final JournalEntryWritePlatformService journalEntryWritePlatformService;
+    private final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepositoryWrapper;
+    private final ConfigurationDomainService configurationDomainService;
+    private final SavingsAccountAssembler savingAccountAssembler;
 
     @Autowired
     public GuarantorDomainServiceImpl(final GuarantorRepository guarantorRepository,
@@ -85,7 +87,12 @@ public class GuarantorDomainServiceImpl implements GuarantorDomainService {
             final SavingsAccountTransactionSummaryWrapper savingsAccountTransactionSummaryWrapper, 
             final AccountTransfersReadPlatformService accountTransfersReadPlatformService,
             final PaymentDetailRepository paymentDetailRepository, 
-            final PaymentTypeRepository paymentTypeRepository) {
+            final PaymentTypeRepository paymentTypeRepository,final GuarantorInterestAllocationRepository guarantorInterestAllocationRepository,
+            final GuarantorInterestPaymentRepository guarantorInterestPaymentRepository,
+            final JournalEntryWritePlatformService journalEntryWritePlatformService,
+            final ApplicationCurrencyRepositoryWrapper  applicationCurrencyRepositoryWrapper,
+            final ConfigurationDomainService configurationDomainService,
+            final SavingsAccountAssembler savingAccountAssembler) {
         this.guarantorRepository = guarantorRepository;
         this.guarantorFundingRepository = guarantorFundingRepository;
         this.guarantorFundingTransactionRepository = guarantorFundingTransactionRepository;
@@ -98,6 +105,12 @@ public class GuarantorDomainServiceImpl implements GuarantorDomainService {
         this.savingsHelper = new SavingsHelper(this.accountTransfersReadPlatformService);
         this.paymentDetailRepository = paymentDetailRepository;
         this.paymentTypeRepository = paymentTypeRepository;
+        this.guarantorInterestAllocationRepository = guarantorInterestAllocationRepository;
+        this.guarantorInterestPaymentRepository = guarantorInterestPaymentRepository;
+        this.journalEntryWritePlatformService = journalEntryWritePlatformService;
+        this.applicationCurrencyRepositoryWrapper = applicationCurrencyRepositoryWrapper;
+        this.configurationDomainService = configurationDomainService;
+        this.savingAccountAssembler = savingAccountAssembler;
     }
 
     @PostConstruct
@@ -116,6 +129,7 @@ public class GuarantorDomainServiceImpl implements GuarantorDomainService {
                 new ReverseFundsOnBusinessEvent());
         this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.LOAN_MAKE_REPAYMENT,
                 new SplitInterestIncomeOnBusinessEvent());
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.LOAN_WRITTEN_OFF,new SplitInterestIncomeOnBusinessEvent());
     }
 
     @Override
@@ -569,10 +583,11 @@ public class GuarantorDomainServiceImpl implements GuarantorDomainService {
                             final PaymentType paymentType = this.paymentTypeRepository.findByName("Interest from Guaranteed Loan");
                             final PaymentDetail paymentDetail =  PaymentDetail.generatePaymentDetailWithReference(paymentType, reference);
                             PaymentDetail newPaymentTypeToSave = paymentDetailRepository.save(paymentDetail);
+                            final boolean isGuarantorInterestDeposit = true;
                             
                             // call method to handle savings account deposit
                             this.savingsAccountDomainService.handleDeposit(savingsAccount, fmt, transactionDate,
-                                    shareOfLoanInterestIncome, newPaymentTypeToSave, isAccountTransfer, isRegularTransaction);
+                                    shareOfLoanInterestIncome, newPaymentTypeToSave, isAccountTransfer, isRegularTransaction,isGuarantorInterestDeposit);
                         }
                     }
                 }
@@ -722,11 +737,16 @@ public class GuarantorDomainServiceImpl implements GuarantorDomainService {
     private class SplitInterestIncomeOnBusinessEvent implements BusinessEventListner {
 
         @Override
-        public void businessEventToBeExecuted(Map<BUSINESS_ENTITY, Object> businessEventEntity) { }
+        public void businessEventToBeExecuted(Map<BUSINESS_ENTITY, Object> businessEventEntity) {
+            Object entity = businessEventEntity.get(BUSINESS_ENTITY.LOAN_TRANSACTION);
+
+
+        }
 
         @Override
         public void businessEventWasExecuted(Map<BUSINESS_ENTITY, Object> businessEventEntity) {
             Object entity = businessEventEntity.get(BUSINESS_ENTITY.LOAN_TRANSACTION);
+
             if (entity instanceof LoanTransaction) {
                 LoanTransaction loanTransaction = (LoanTransaction) entity;
                 Loan loan = (loanTransaction != null) ? loanTransaction.getLoan() : null;
@@ -735,9 +755,184 @@ public class GuarantorDomainServiceImpl implements GuarantorDomainService {
                         loanProduct.getLoanProductGuaranteeDetails() : null;
                 
                 if (loanProductGuaranteeDetails != null && loanProductGuaranteeDetails.splitInterestAmongGuarantors()) {
-                    splitIncomeInterestAmongGuarantors(loanTransaction);
+                    if(loan.status().isClosedObligationsMet()){
+                        splitPartialInterestAmongGuarantors(loan,null);
+                    }else if(loan.status().isClosedWrittenOff()){
+                        splitPartialInterestAmongGuarantors(loan,null);
+                    }
+                }
+            }
+
+        }
+    }
+
+
+    @Override
+    public void splitPartialInterestAmongGuarantors(final Loan loan,final AppUser user) {
+        BigDecimal interestPaid = BigDecimal.ZERO;
+        final List<LoanTransaction> loanTransactions = loan.getLoanTransactions();
+
+        if(loanTransactions.size() > 0 && !loanTransactions.isEmpty()){
+            for (final LoanTransaction loanTransaction : loanTransactions) {
+                if (!loanTransaction.isReversed() && (loanTransaction.isRecoveryRepayment() || loanTransaction.isRepayment())) {
+                    interestPaid = interestPaid.add(loanTransaction.getInterestPortion(loan.getCurrency()).getAmount());
                 }
             }
         }
+
+
+        /** check if the accumulated guarantor table for the last record compare it with the new interest allocated
+            if its more subtract it and find the difference . If its less that means reversal has happen
+            reverse those associated with accumulated bookings
+         **/
+
+        final Collection<GuarantorInterestAllocation> guarantorInterestAccumulateds = this.guarantorInterestAllocationRepository.findByLoan(loan);
+        BigDecimal guarantorInterestAllocated = BigDecimal.ZERO;
+
+        if(!guarantorInterestAccumulateds.isEmpty()  && guarantorInterestAccumulateds.size() > 0){
+            for(final GuarantorInterestAllocation guarantorInterestAccumulated : guarantorInterestAccumulateds){
+                if(!guarantorInterestAccumulated.isReversed()){
+                    guarantorInterestAllocated = guarantorInterestAllocated.add(guarantorInterestAccumulated.getAllocatedInterestPaid());
+                }
+            }
+        }
+
+        if(guarantorInterestAllocated.compareTo(BigDecimal.ZERO) == 1){
+            interestPaid = interestPaid.subtract(guarantorInterestAllocated);
+        }
+
+
+        if (interestPaid.compareTo(BigDecimal.ZERO) == 1) {
+
+            final List<Guarantor> guarantors = this.guarantorRepository.findByLoan(loan);
+            final LoanProduct loanProduct = (loan != null) ? loan.getLoanProduct() : null;
+            final LoanProductGuaranteeDetails loanProductGuaranteeDetails = (loanProduct != null) ? loanProduct.getLoanProductGuaranteeDetails() : null;
+
+            final LoanStatus loanStatus = (loan != null) ? LoanStatus.fromInt(loan.getStatus()) : null;
+
+
+            if ((loanProductGuaranteeDetails != null) && (loanStatus != null && !loanStatus.isOverpaid()) && loanProductGuaranteeDetails.splitInterestAmongGuarantors()) {
+
+                final GuarantorInterestAllocation guarantorInterestAccumulated = GuarantorInterestAllocation.createNew(interestPaid,loan,user);
+
+                final List<GuarantorInterestPayment> guarantorInterestPaymentList = new ArrayList<>();
+
+                for (Guarantor guarantor : guarantors) {
+                    if (guarantor.isExistingCustomer()) {
+                        final List<GuarantorFundingDetails> guarantorFundingDetails = guarantor.getGuarantorFundDetails();
+
+                        for (GuarantorFundingDetails guarantorFundingDetail : guarantorFundingDetails) {
+                            final SavingsAccount savingsAccount = guarantorFundingDetail.getLinkedSavingsAccount();
+                            final BigDecimal shareOfLoanInterestIncome = guarantorFundingDetail.calculateShareOfPartialLoanInterestIncome(loan, interestPaid);
+
+                            if (shareOfLoanInterestIncome.compareTo(BigDecimal.ZERO) == 1 && (savingsAccount != null)) {
+                                final LocalDate transactionDate = LocalDate.now();
+                                final DateTimeFormatter fmt = null;
+                                // final PaymentDetail paymentDetail = null;
+                                final boolean isRegularTransaction = true;
+
+                                final boolean isAccountTransfer = false;
+                                final boolean isGuarantorInterestDeposit = true;
+
+                                // inject helper classes to savings account class
+                                savingsAccount.setHelpers(this.savingsAccountTransactionSummaryWrapper, this.savingsHelper);
+
+                            /*hard coded for temporal fix to add reference. code value inserted in backend db */
+                                final String reference = "Interest from Guaranteed Loan";
+                                final PaymentType paymentType = this.paymentTypeRepository.findByName("Interest from Guaranteed Loan");
+                                final PaymentDetail paymentDetail = PaymentDetail.generatePaymentDetailWithReference(paymentType, reference);
+                                PaymentDetail newPaymentTypeToSave = paymentDetailRepository.save(paymentDetail);
+
+                                // call method to handle savings account deposit
+                                final SavingsAccountTransaction savingsAccountTransaction =this.savingsAccountDomainService.handleDeposit(savingsAccount, fmt, transactionDate,
+                                        shareOfLoanInterestIncome, newPaymentTypeToSave, isAccountTransfer, isRegularTransaction,isGuarantorInterestDeposit);
+
+
+                                final GuarantorInterestPayment guarantorInterestPayment = GuarantorInterestPayment.createNew(guarantor,guarantorInterestAccumulated,shareOfLoanInterestIncome,savingsAccount,savingsAccountTransaction);
+                                guarantorInterestPaymentList.add(guarantorInterestPayment);
+                            }
+                        }
+                    }
+
+                }
+
+                if(!guarantorInterestPaymentList.isEmpty() && guarantorInterestPaymentList.size() > 0){
+                    guarantorInterestAccumulated.addGuarantorInterestPayment(guarantorInterestPaymentList);
+                    this.guarantorInterestAllocationRepository.save(guarantorInterestAccumulated);
+                }
+
+            }
+
+        }else if(interestPaid.compareTo(BigDecimal.ZERO) == -1){
+            final Collection<GuarantorInterestAllocation> guarantorInterestAllocations = this.guarantorInterestAllocationRepository.findByLoanAndReversedFalseOrderByIdDesc(loan);
+
+
+            /**  validate if the all savings transaction **/
+
+            /**  Get all payments made */
+            BigDecimal interestPaidToReversed = interestPaid.abs();
+            for(final GuarantorInterestAllocation allocation : guarantorInterestAllocations){
+
+                while(interestPaidToReversed.compareTo(BigDecimal.ZERO) == 1 ){
+                    final Collection<GuarantorInterestPayment> interestPayments = this.guarantorInterestPaymentRepository.findByInterestAllocationOrderByIdDesc(allocation);
+                    for(final GuarantorInterestPayment interestPayment : interestPayments){
+
+                        final SavingsAccount savingsAccount = this.savingAccountAssembler.assembleFrom(interestPayment.getSavingsAccount().getId());
+
+
+                        final SavingsAccountTransaction savingsAccountTransaction = interestPayment.getSavingsAccountTransaction();
+                        final Set<Long> existingTransactionIds = new HashSet<Long>(savingsAccount.findExistingTransactionIds());
+                        final Set<Long> existingReversedTransactionIds = new HashSet<Long>(savingsAccount.findExistingReversedTransactionIds());
+                        if(savingsAccountTransaction.isGuarantorInterestDeposit() && !savingsAccountTransaction.isReversed()){
+                            savingsAccountTransaction.reverse();
+
+                            final LocalDate today = DateUtils.getLocalDateOfTenant();
+                            final MathContext mc = new MathContext(15, MoneyHelper.getRoundingMode());
+                            final boolean isSavingsInterestPostingAtCurrentPeriodEnd = this.configurationDomainService
+                                    .isSavingsInterestPostingAtCurrentPeriodEnd();
+                            final Integer financialYearBeginningMonth = this.configurationDomainService.retrieveFinancialYearBeginningMonth();
+
+                            boolean isInterestTransfer = false;
+                            LocalDate postInterestOnDate = null;
+                            if (savingsAccountTransaction.isPostInterestCalculationRequired()
+                                    && savingsAccount.isBeforeLastPostingPeriod(savingsAccountTransaction.transactionLocalDate())) {
+                                savingsAccount.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth, postInterestOnDate);
+                            } else {
+                                savingsAccount.calculateInterestUsing(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
+                                        financialYearBeginningMonth,postInterestOnDate);
+                            }
+                            List<DepositAccountOnHoldTransaction> depositAccountOnHoldTransactions = null;
+                            if(savingsAccount.getOnHoldFunds().compareTo(BigDecimal.ZERO) == 1){
+                                depositAccountOnHoldTransactions = this.depositAccountOnHoldTransactionRepository.findBySavingsAccountAndReversedFalseOrderByCreatedDateAsc(savingsAccount);
+                            }
+                            savingsAccount.validateAccountBalanceDoesNotBecomeNegative(SavingsApiConstants.undoTransactionAction,depositAccountOnHoldTransactions);
+
+
+                            final MonetaryCurrency currency = interestPayment.getSavingsAccount().getCurrency();
+                            final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepositoryWrapper.findOneWithNotFoundDetection(currency);
+                            boolean isAccountTransfer = false;
+                            final Map<String, Object> accountingBridgeData = savingsAccount.deriveAccountingBridgeData(applicationCurrency.toData(),
+                                    existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
+                            this.journalEntryWritePlatformService.createJournalEntriesForSavings(accountingBridgeData);
+
+                            allocation.reverse(); interestPayment.reverse();
+                            this.guarantorInterestAllocationRepository.save(allocation);
+
+                            interestPaidToReversed = interestPaidToReversed.subtract(allocation.getAllocatedInterestPaid());
+                        }
+                    }
+
+                }
+
+
+            }
+
+        }else{
+            // do nothing if the interest paid and the interest accumulated are the same
+        }
+
+
     }
+
+
 }

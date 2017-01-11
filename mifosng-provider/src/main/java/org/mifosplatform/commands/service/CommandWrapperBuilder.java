@@ -204,6 +204,15 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder splitInterestAmongGuarantors(final Long loanId) {
+        this.actionName = "SPLITINTERESTAMONGGUARANTORS";
+        this.entityName = "LOAN";
+        this.entityId = loanId;
+        this.loanId = loanId;
+        this.href = "/loans/" + loanId + "?command=splitInterestAmongGuarantors";
+        return this;
+    }
+
     public CommandWrapperBuilder updateGuarantor(final Long loanId, final Long guarantorId) {
         this.actionName = "UPDATE";
         this.entityName = "GUARANTOR";
@@ -2484,6 +2493,25 @@ public class CommandWrapperBuilder {
         this.href = "/tellers/" + tellerId + "/cashiers/" + cashierId;
         return this;
     }
+
+    public CommandWrapperBuilder assignCashierToTeller(final Long tellerId, final Long cashierId) {
+        this.actionName = "ASSIGNCASHIERTOTELLER";
+        this.entityName = "TELLER";
+        this.entityId = tellerId;
+        this.subentityId = cashierId;
+        this.href = "/tellers/" + tellerId + "/cashiers/" + cashierId;
+        return this;
+    }
+
+    public CommandWrapperBuilder unassignCashierToTeller(final Long tellerId, final Long cashierId) {
+        this.actionName = "UNASSIGNCASHIERTOTELLER";
+        this.entityName = "TELLER";
+        this.entityId = tellerId;
+        this.subentityId = cashierId;
+        this.href = "/tellers/" + tellerId + "/cashiers/" + cashierId;
+        return this;
+    }
+
 
     public CommandWrapperBuilder deleteAllocationTeller(final Long tellerId, final Long cashierId) {
         this.actionName = "DELETECASHIERALLOCATION";

@@ -72,7 +72,7 @@ public class Money implements Comparable<Money> {
         BigDecimal amountScaled = amountStripped;
 
         // round monetary amounts into multiplesof say 20/50.
-        if (inMultiplesOf != null && this.currencyDigitsAfterDecimal == 0 && inMultiplesOf > 0 && amountScaled.doubleValue() > 0) {
+        if (inMultiplesOf != null && this.currencyDigitsAfterDecimal == 0 && inMultiplesOf > 1 && amountScaled.doubleValue() > 0) {
             final double existingVal = amountScaled.doubleValue();
             amountScaled = BigDecimal.valueOf(roundToMultiplesOf(existingVal, inMultiplesOf));
         }

@@ -8,6 +8,7 @@ package org.mifosplatform.portfolio.loanaccount.guarantor.service;
 import org.joda.time.LocalDate;
 import org.mifosplatform.portfolio.loanaccount.domain.Loan;
 import org.mifosplatform.portfolio.loanaccount.guarantor.domain.GuarantorFundingDetails;
+import org.mifosplatform.useradministration.domain.AppUser;
 
 public interface GuarantorDomainService {
 
@@ -18,5 +19,7 @@ public interface GuarantorDomainService {
     void assignGuarantor(GuarantorFundingDetails guarantorFundingDetails, LocalDate transactionDate);
 
     void transaferFundsFromGuarantor(Loan loan);
+
+    void splitPartialInterestAmongGuarantors(Loan loan,AppUser user);
 
 }

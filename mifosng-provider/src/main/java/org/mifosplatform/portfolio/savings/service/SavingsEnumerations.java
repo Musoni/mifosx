@@ -149,7 +149,6 @@ public class SavingsEnumerations {
                 optionData = new SavingsAccountTransactionEnumData(SavingsAccountTransactionType.WITHDRAW_TRANSFER.getValue().longValue(),
                         SavingsAccountTransactionType.WITHDRAW_TRANSFER.getCode(), "Transfer Withdrawn");
             break;
-            default:
             case PAY_CHARGE:
                 optionData = new SavingsAccountTransactionEnumData(SavingsAccountTransactionType.PAY_CHARGE.getValue().longValue(),
                         SavingsAccountTransactionType.PAY_CHARGE.getCode(), "Pay Charge");
@@ -166,6 +165,10 @@ public class SavingsEnumerations {
                 optionData = new SavingsAccountTransactionEnumData(SavingsAccountTransactionType.OVERDRAFT_INTEREST.getValue().longValue(),
                         SavingsAccountTransactionType.OVERDRAFT_INTEREST.getCode(), "Overdraft Interest");
             break;
+            case GUARANTOR_INTEREST_DEPOSIT:
+                optionData = new SavingsAccountTransactionEnumData(SavingsAccountTransactionType.GUARANTOR_INTEREST_DEPOSIT.getValue().longValue(),
+                        SavingsAccountTransactionType.GUARANTOR_INTEREST_DEPOSIT.getCode(), "Guarantor interest deposit");
+                break;
         }
         return optionData;
     }

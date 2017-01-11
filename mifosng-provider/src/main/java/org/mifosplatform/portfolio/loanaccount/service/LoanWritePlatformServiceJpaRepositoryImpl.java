@@ -130,14 +130,7 @@ import org.mifosplatform.portfolio.loanaccount.domain.LoanTrancheDisbursementCha
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTransaction;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTransactionRepository;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTransactionType;
-import org.mifosplatform.portfolio.loanaccount.exception.ExceedingTrancheCountException;
-import org.mifosplatform.portfolio.loanaccount.exception.InvalidPaidInAdvanceAmountException;
-import org.mifosplatform.portfolio.loanaccount.exception.LoanDisbursalException;
-import org.mifosplatform.portfolio.loanaccount.exception.LoanMultiDisbursementException;
-import org.mifosplatform.portfolio.loanaccount.exception.LoanOfficerAssignmentException;
-import org.mifosplatform.portfolio.loanaccount.exception.LoanOfficerUnassignmentException;
-import org.mifosplatform.portfolio.loanaccount.exception.LoanTransactionNotFoundException;
-import org.mifosplatform.portfolio.loanaccount.exception.MultiDisbursementDataRequiredException;
+import org.mifosplatform.portfolio.loanaccount.exception.*;
 import org.mifosplatform.portfolio.loanaccount.guarantor.service.GuarantorDomainService;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.data.OverdueLoanScheduleData;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.DefaultScheduledDateGenerator;
@@ -150,6 +143,8 @@ import org.mifosplatform.portfolio.loanaccount.serialization.LoanEventApiJsonVal
 import org.mifosplatform.portfolio.loanaccount.serialization.LoanUpdateCommandFromApiJsonDeserializer;
 import org.mifosplatform.portfolio.loanproduct.data.LoanOverdueDTO;
 import org.mifosplatform.portfolio.loanproduct.data.LoanProductData;
+import org.mifosplatform.portfolio.loanproduct.domain.LoanProduct;
+import org.mifosplatform.portfolio.loanproduct.domain.LoanProductGuaranteeDetails;
 import org.mifosplatform.portfolio.loanproduct.exception.InvalidCurrencyException;
 import org.mifosplatform.portfolio.loanproduct.exception.LinkedAccountRequiredException;
 import org.mifosplatform.portfolio.loanproduct.service.LoanProductReadPlatformService;
@@ -1133,6 +1128,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 
         this.businessEventNotifierService.notifyBusinessEventWasExecuted(BUSINESS_EVENTS.LOAN_WRITTEN_OFF,
                 constructEntityMap(BUSINESS_ENTITY.LOAN_TRANSACTION, writeoff));
+
 
         this.loanSuspendAccruedIncomeWritePlatformService.suspendedIncomeOutOfNPA(loan);
         return new CommandProcessingResultBuilder() //
@@ -2966,5 +2962,27 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 constructEntityMap(BUSINESS_ENTITY.LOAN_CHARGE, loanCharge));
         
         return loanCharge;
+    }
+
+    @Override
+    public CommandProcessingResult splitInterestAmongGuarantors(Long loanId) {
+        final AppUser currentUser = getAppUserIfPresent();
+
+        final Loan loan = this.loanAssembler.assembleFrom(loanId);
+
+        final LoanProduct loanProduct = loan.getLoanProduct();
+        final LoanProductGuaranteeDetails loanProductGuaranteeDetails = loanProduct.getLoanProductGuaranteeDetails();
+
+        if(!loanProductGuaranteeDetails.splitInterestAmongGuarantors()){
+            //throw exception this loan doesnt support  split interest amount guarantors
+            throw new GuarantorInterestAllocationException(loanId);
+        }
+
+
+
+        this.guarantorDomainService.splitPartialInterestAmongGuarantors(loan,currentUser);
+
+        return new CommandProcessingResultBuilder().withLoanId(loanId).build();
+
     }
 }

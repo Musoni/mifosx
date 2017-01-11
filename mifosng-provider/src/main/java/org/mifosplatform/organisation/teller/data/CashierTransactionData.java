@@ -19,11 +19,13 @@ public final class CashierTransactionData implements Serializable {
     private final Long cashierId;
     private final CashierTxnType txnType;
     private final BigDecimal txnAmount;
+    private final BigDecimal runningBalance;
     private final Date txnDate;
     private final Long entityId;
     private final String entityType;
     private final String txnNote;
     private final Date createdDate;
+    private final String currencyCode;
     
     // Template fields
     private final Long officeId;
@@ -35,6 +37,7 @@ public final class CashierTransactionData implements Serializable {
     private final CashierData cashierData;
     private final Date startDate;
     private final Date endDate;
+
     
     private final Collection<CurrencyData> currencyOptions;
 
@@ -45,7 +48,8 @@ public final class CashierTransactionData implements Serializable {
     		final BigDecimal txnAmount, final Date txnDate, String txnNote, 
     		String entityType, Long entityId, Date createdDate, 
     		Long officeId, String officeName, Long tellerId, String tellerName, String cashierName,
-    		CashierData cashierData, Date startDate, Date endDate, final Collection<CurrencyData> currencyOptions) {
+    		CashierData cashierData, Date startDate, Date endDate, final Collection<CurrencyData> currencyOptions,final String currencyCode,
+                                   final BigDecimal runningBalance) {
         this.id = id;
         this.cashierId = cashierId;
         this.txnType = txnType;
@@ -67,6 +71,9 @@ public final class CashierTransactionData implements Serializable {
         this.endDate = endDate;
         
         this.currencyOptions = currencyOptions;
+
+        this.currencyCode = currencyCode;
+        this.runningBalance = runningBalance;
     }
 
     public static CashierTransactionData instance(final Long id, final Long cashierId, CashierTxnType txnType,
@@ -74,10 +81,10 @@ public final class CashierTransactionData implements Serializable {
     		final String entityType, final Long entityId, final Date createdDate,
     		final Long officeId, final String officeName, final Long tellerId,
     		final String tellerName, final String cashierName, final CashierData cashierData,
-    		Date startDate, Date endDate) {
+    		Date startDate, Date endDate,final String currencyCode, final BigDecimal runningBalance) {
         return new CashierTransactionData(id, cashierId, txnType, txnAmount, txnDate, txnNote, entityType, 
         		entityId, createdDate, officeId, officeName, tellerId,
-        		tellerName, cashierName, cashierData, startDate, endDate, null);
+        		tellerName, cashierName, cashierData, startDate, endDate, null,currencyCode,runningBalance);
     }
     
     public static CashierTransactionData template (final Long cashierId,  
@@ -86,7 +93,7 @@ public final class CashierTransactionData implements Serializable {
     		final CashierData cashierData, Date startDate, Date endDate, final Collection<CurrencyData> currencyOptions) {
         return new CashierTransactionData(null, cashierId, null, null, null, null, null, 
         		null, null, officeId, officeName, tellerId, tellerName, cashierName, cashierData,
-        		startDate, endDate, currencyOptions);
+        		startDate, endDate, currencyOptions,null,null);
     }
 
     public Long getId() {
@@ -157,4 +164,9 @@ public final class CashierTransactionData implements Serializable {
     	return cashierData;
     }
 
+    public String currencyCode(){return currencyCode;}
+
+    public BigDecimal getRunningBalance() {
+        return runningBalance;
+    }
 }

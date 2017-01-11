@@ -5,10 +5,7 @@
  */
 package org.mifosplatform.infrastructure.jobs.service;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -164,10 +161,16 @@ public class JobRegisterServiceImpl implements JobRegisterService, ApplicationLi
             }
         } 
         
+
+        catch (FileNotFoundException ex) {
+            isEnabled = true;
+        }
+
         catch (IOException ex) {
             logger.error(ex.getMessage(), ex);
-        } 
-        
+        }
+
+
         finally {
             if (quartzPropertiesInputStream != null) {
                 try {

@@ -5,10 +5,12 @@
  */
 package org.mifosplatform.organisation.teller.domain;
 
+import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.organisation.office.domain.Office;
 import org.mifosplatform.organisation.staff.domain.Staff;
+import org.mifosplatform.useradministration.domain.AppUser;
 import org.springframework.data.jpa.domain.AbstractPersistable;
 
 import javax.persistence.*;
@@ -62,6 +64,24 @@ public class Cashier extends AbstractPersistable<Long> {
     @Column(name = "end_time", nullable = true, length = 10)
     private String endTime;
 
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive;
+
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "started_at", nullable = false,columnDefinition="DATETIME")
+    private Date startedAt;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "ended_at", nullable = true,columnDefinition="DATETIME")
+    private Date endedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "appuser_id", nullable = false)
+    private AppUser user;
+
+
+
     /**
      * Creates a new cashier.
      */
@@ -70,7 +90,7 @@ public class Cashier extends AbstractPersistable<Long> {
     }
 
     public static Cashier fromJson(final Office cashierOffice, final Teller teller, final Staff staff, final String startTime,
-            final String endTime, final JsonCommand command) {
+            final String endTime, final JsonCommand command, final AppUser user) {
         // final Long tellerId = teller.getId();
         // final Long staffId = command.longValueOfParameterNamed("staffId");
         final String description = command.stringValueOfParameterNamed("description");
@@ -83,20 +103,25 @@ public class Cashier extends AbstractPersistable<Long> {
          * endTime = command.stringValueOfParameterNamed("endTime");
          */
 
-        return new Cashier(cashierOffice, teller, staff, description, startDate, endDate, isFullDay, startTime, endTime);
+        return new Cashier(cashierOffice, teller, staff, description, startDate, endDate, isFullDay, startTime, endTime,user);
     }
 
     public Cashier(Office office, Teller teller, Staff staff, String description, LocalDate startDate, LocalDate endDate,
-            Boolean isFullDay, String startTime, String endTime) {
+            Boolean isFullDay, String startTime, String endTime,AppUser user) {
         this.office = office;
         this.teller = teller;
         this.staff = staff;
         this.description = description;
-        this.startDate = startDate.toDate();
-        this.endDate = endDate.toDate();
+        this.startDate = startDate!=null ? startDate.toDate() : null;
+        this.endDate = endDate!=null ? endDate.toDate() : null;
         this.isFullDay = isFullDay;
         this.startTime = startTime;
         this.endTime = endTime;
+        this.isActive = false;
+        this.startedAt = new Date();
+        this.endedAt = null;
+        this.user = user;
+
     }
 
     public Map<String, Object> update(final JsonCommand command) {
@@ -459,5 +484,55 @@ public class Cashier extends AbstractPersistable<Long> {
      */
     public void setEndTime(String endTime) {
         this.endTime = endTime;
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
+    }
+
+    public void assign(){
+        this.setIsActive(true);
+    }
+
+    public void unassign(){
+
+        this.setIsActive(false);
+        this.setEndedAt(new Date());
+    }
+
+    public void setEndedAt(Date endedAt) {
+        this.endedAt = endedAt;
+    }
+
+    public LocalDate getStartedAtLocalDate() {
+        LocalDate startedAtLocalDate = null;
+        if (this.startedAt != null) {
+            startedAtLocalDate = LocalDate.fromDateFields(this.startedAt);
+        }
+        return startedAtLocalDate;
+    }
+
+    public LocalDate getEndedAtLocalDate() {
+        LocalDate endedAtLocalDate = null;
+        if (this.endedAt != null) {
+            endedAtLocalDate = LocalDate.fromDateFields(this.endedAt);
+        }
+        return endedAtLocalDate;
+    }
+
+    public Date getStartedAt() {
+        return startedAt;
+    }
+
+    public Date getEndedAt() {
+        return endedAt;
+    }
+
+    public AppUser getUser() {
+        return user;
     }
 }

@@ -88,7 +88,8 @@ public class AccountNumberPreferencesTest {
 
     }
 
-    @Test
+    // Disabled by SH on 2016-12-05 > Differences between Musoni & Mifos implementations.
+    // @Test
     public void testAccountNumberPreferences() {
 
         /* Create Loan and Savings Product */

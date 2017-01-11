@@ -68,6 +68,8 @@ public class JournalEntryData {
 
     private final Long glClosureId;
 
+    private final String createDateTime;
+
     public JournalEntryData(final Long id, final Long officeId, final String officeName, final String glAccountName,
                             final Long glAccountId, final String glAccountCode, final EnumOptionData glAccountClassification,
                             final LocalDate transactionDate, final EnumOptionData entryType, final BigDecimal amount, final String transactionId,
@@ -104,6 +106,7 @@ public class JournalEntryData {
         this.currency = currency;
         this.glClosureId = glAccountId;
         this.isReconciled = false;
+        this.createDateTime = null;
 
 
     }
@@ -143,6 +146,45 @@ public class JournalEntryData {
         this.currency = currency;
         this.glClosureId = glAccountId;
         this.isReconciled = isReconciled;
+        this.createDateTime = null;
+    }
+
+    public JournalEntryData(final Long id, final Long officeId, final String officeName, final String glAccountName,
+                            final Long glAccountId, final String glAccountCode, final EnumOptionData glAccountClassification,
+                            final LocalDate transactionDate, final EnumOptionData entryType, final BigDecimal amount, final String transactionId,
+                            final Boolean manualEntry, final EnumOptionData entityType, final Long entityId, final Long createdByUserId,
+                            final LocalDate createdDate, final String createdByUserName, final String comments, final Boolean reversed,
+                            final String referenceNumber, final BigDecimal officeRunningBalance, final BigDecimal organizationRunningBalance,
+                            final Boolean runningBalanceComputed, final TransactionDetailData transactionDetailData, final CurrencyData currency,
+                            final Long glClosureId,final boolean isReconciled,final String createdDateTime) {
+        this.id = id;
+        this.officeId = officeId;
+        this.officeName = officeName;
+        this.glAccountName = glAccountName;
+        this.glAccountId = glAccountId;
+        this.glAccountCode = glAccountCode;
+        this.glAccountType = glAccountClassification;
+        this.transactionDate = transactionDate;
+        this.entryType = entryType;
+        this.amount = amount;
+        this.transactionId = transactionId;
+        this.manualEntry = manualEntry;
+        this.entityType = entityType;
+        this.entityId = entityId;
+        this.createdByUserId = createdByUserId;
+        this.createdDate = createdDate;
+        this.createdByUserName = createdByUserName;
+        this.comments = comments;
+        this.reversed = reversed;
+        this.referenceNumber = referenceNumber;
+        this.officeRunningBalance = officeRunningBalance;
+        this.organizationRunningBalance = organizationRunningBalance;
+        this.runningBalanceComputed = runningBalanceComputed;
+        this.transactionDetails = transactionDetailData;
+        this.currency = currency;
+        this.glClosureId = glAccountId;
+        this.isReconciled = isReconciled;
+        this.createDateTime = createdDateTime;
     }
 
     public static JournalEntryData fromGLAccountData(final GLAccountData glAccountData) {
