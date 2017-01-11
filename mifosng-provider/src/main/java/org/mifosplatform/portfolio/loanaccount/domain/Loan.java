@@ -5600,12 +5600,19 @@ public class Loan extends AbstractPersistable<Long> {
         return (this.createStandingInstructionAtDisbursement != null) && this.createStandingInstructionAtDisbursement;
     }
 
-    public Collection<LoanCharge> getLoanCharges(LocalDate dueDate) {
+    /**
+     * Gets all {@link LoanCharge} objects linked to an installment with the specified due date
+     * 
+     * @param dueDate installment due date
+     * @return collection of {@link LoanCharge} objects
+     */
+    public Collection<LoanCharge> getLoanChargesLinkedToInstallment(LocalDate dueDate) {
         Collection<LoanCharge> loanCharges = new ArrayList<>();
 
         for (LoanCharge loanCharge : charges) {
 
-            if ((loanCharge.getDueLocalDate() != null) && loanCharge.getDueLocalDate().equals(dueDate)) {
+            if ((loanCharge.getDueLocalDate() != null) && loanCharge.getDueLocalDate().equals(dueDate) 
+            		|| (loanCharge.isInstalmentFee())) {
                 loanCharges.add(loanCharge);
             }
         }

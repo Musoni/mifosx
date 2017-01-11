@@ -72,15 +72,15 @@ public final class LoanRescheduleModel {
                 loanRescheduleModel.totalOutstanding);
     }
 
-    public LoanScheduleData toData() {
+    public LoanScheduleData toLoanScheduleData() {
 
         final int decimalPlaces = this.totalPrincipalDisbursed.getCurrencyDigitsAfterDecimal();
         final Integer inMultiplesOf = this.totalPrincipalDisbursed.getCurrencyInMultiplesOf();
         final CurrencyData currency = this.applicationCurrency.toData(decimalPlaces, inMultiplesOf);
 
         final Collection<LoanSchedulePeriodData> periodsData = new ArrayList<>();
-        for (final LoanRescheduleModalPeriod modelPeriod : this.periods) {
-            periodsData.add(modelPeriod.toData());
+        for (final LoanRescheduleModelRepaymentPeriod modelPeriod : this.periods) {
+            periodsData.add(modelPeriod.toLoanSchedulePeriodData());
         }
 
         final BigDecimal totalWaived = null;
