@@ -677,7 +677,7 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
                 String tableAlias = referencedTableName + referencedTableIndex++;
                 
                 // variables initialized with null values
-            	String mClientTableAlias, mGroupTableAlias, mGroupClientTableAlias, mOfficeTableAlias;
+            	String mClientTableAlias, mGroupTableAlias, mStaffTableAlias, mGroupClientTableAlias, mOfficeTableAlias;
                 
                 switch (baseEntity) {
                     case CLIENT:
@@ -695,6 +695,7 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
                                 break;
                             case BRANCH_NAME:
                             case GENDER:
+                            case STAFF_NAME:
                                 sqlBuilder.WHERE("`" + tableAlias + "`.`" + referencedColumnName + "` " + filterValue);
                                 sqlBuilder.LEFT_OUTER_JOIN("`" + referencedTableName + "` `" + tableAlias 
                             			+ "` on `" + tableAlias + "`.`id` = `" + baseEntityName + "`.`"
@@ -721,6 +722,7 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
                                 sqlBuilder.WHERE("`" + baseEntityName + "`.`" + referencedColumnName + "` " + filterValue);
                                 break;
                             case BRANCH_NAME:
+                            case STAFF_NAME:
                                 sqlBuilder.WHERE("`" + tableAlias + "`.`" + referencedColumnName + "` " + filterValue);
                                 sqlBuilder.LEFT_OUTER_JOIN("`" + referencedTableName + "` `" + tableAlias 
                                         + "` on `" + tableAlias + "`.`id` = `" + baseEntityName + "`.`"
@@ -772,6 +774,23 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
                                                         + "`.`office_id` else `" + mGroupTableAlias
                                                                 + "`.`office_id` end");
                                 break;
+                            case STAFF_NAME:
+	        					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
+	        					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(referencedTableIndex++);
+            					mStaffTableAlias = DataExportCoreTable.M_STAFF.getAlias(referencedTableIndex++);
+            					
+            					sqlBuilder.WHERE("`" + mStaffTableAlias + "`.`" + referencedColumnName + "` " + filterValue);
+            					sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_CLIENT.getName() + "` `"
+            							+ mClientTableAlias + "` on `" + mClientTableAlias + "`.`id` = `"
+            									+ baseEntityName + "`.`client_id`");
+                            	sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_GROUP.getName() + "` `"
+                            			+ mGroupTableAlias + "` on `" + mGroupTableAlias + "`.`id` = `"
+                            					+ baseEntityName + "`.`group_id`");
+                            	sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_STAFF.getName() + "` `"
+                            			+ mStaffTableAlias + "` on `" + mStaffTableAlias + "`.`id` = case when "
+                            					+ "isnull(`" + baseEntityName + "`.`group_id`) then `"
+                            							+ mClientTableAlias + "`.`staff_id` else `"
+                            									+ mGroupTableAlias + "`.`staff_id` end");
                             case DATE_OF_BIRTH:
                             case PHONE_NUMBER:
                                 mClientTableAlias = "m_client" + referencedTableIndex++;
@@ -834,6 +853,23 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
                                                         + "`.`office_id` else `" + mGroupTableAlias
                                                                 + "`.`office_id` end");
                                 break;
+                            case STAFF_NAME:
+	        					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
+	        					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(referencedTableIndex++);
+            					mStaffTableAlias = DataExportCoreTable.M_STAFF.getAlias(referencedTableIndex++);
+            					
+            					sqlBuilder.WHERE("`" + mStaffTableAlias + "`.`" + referencedColumnName + "` " + filterValue);
+            					sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_CLIENT.getName() + "` `"
+            							+ mClientTableAlias + "` on `" + mClientTableAlias + "`.`id` = `"
+            									+ baseEntityName + "`.`client_id`");
+                            	sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_GROUP.getName() + "` `"
+                            			+ mGroupTableAlias + "` on `" + mGroupTableAlias + "`.`id` = `"
+                            					+ baseEntityName + "`.`group_id`");
+                            	sqlBuilder.LEFT_OUTER_JOIN("`" + DataExportCoreTable.M_STAFF.getName() + "` `"
+                            			+ mStaffTableAlias + "` on `" + mStaffTableAlias + "`.`id` = case when "
+                            					+ "isnull(`" + baseEntityName + "`.`group_id`) then `"
+                            							+ mClientTableAlias + "`.`staff_id` else `"
+                            									+ mGroupTableAlias + "`.`staff_id` end");
                             case DATE_OF_BIRTH:
                             case PHONE_NUMBER:
                                 mClientTableAlias = "m_client" + referencedTableIndex++;
