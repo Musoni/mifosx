@@ -20,8 +20,7 @@ public class BusinessEventNotificationConstants {
                 "loan_waive_charge"), LOAN_DELETE_CHARGE("loan_delete_charge"), LOAN_CHARGE_PAYMENT("loan_charge_payment"), LOAN_INITIATE_TRANSFER(
                 "loan_initiate_transfer"), LOAN_ACCEPT_TRANSFER("loan_accept_transfer"), LOAN_WITHDRAW_TRANSFER("loan_withdraw_transfer"), LOAN_REJECT_TRANSFER(
                 "loan_reject_transfer"), LOAN_REASSIGN_OFFICER("loan_reassign_officer"), LOAN_REMOVE_OFFICER("loan_remove_officer"), LOAN_APPLY_OVERDUE_CHARGE(
-                "loan_apply_overdue_charge"), LOAN_INTEREST_RECALCULATION("loan_interest_recalculation"), LOAN_REFUND("loan_refund"), SAVINGS_ACTIVATION(
-                "savings_activation"), SAVINGS_DEPOSIT("savings_deposit"), SAVINGS_WITHDRAWAL("savings_withdrawal");
+                "loan_apply_overdue_charge"), LOAN_INTEREST_RECALCULATION("loan_interest_recalculation"), LOAN_REFUND("loan_refund");
 
         private final String value;
 
@@ -47,8 +46,7 @@ public class BusinessEventNotificationConstants {
 
     public static enum BUSINESS_ENTITY {
         LOAN("loan"), LOAN_TRANSACTION("loan_transaction"), LOAN_CHARGE("loan_charge"), LOAN_ADJUSTED_TRANSACTION(
-                "loan_adjusted_transaction"), SAVINGSACCOUNT("savings_account"), SAVINGSACCOUNT_TRANSACTION(
-                "savings_account_transaction");
+                "loan_adjusted_transaction");
 
         private final String value;
 

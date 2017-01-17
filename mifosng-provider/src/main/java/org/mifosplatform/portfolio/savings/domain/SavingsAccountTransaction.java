@@ -246,8 +246,6 @@ public final class SavingsAccountTransaction extends AbstractPersistable<Long> {
         this.manuallyAdjustedOrReversed = true;
     }
 
-    public SavingsAccount getSavingsAccount(){ return this.savingsAccount; }
-
     public Money getAmount(final MonetaryCurrency currency) {
         return Money.of(currency, this.amount);
     }

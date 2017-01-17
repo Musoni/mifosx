@@ -11,9 +11,9 @@ import org.mifosplatform.infrastructure.core.exception.AbstractPlatformDomainRul
  * {@link AbstractPlatformDomainRuleException} thrown an action to transition a
  * loan from one state to another violates a domain rule.
  */
-public class InvalidAccountTypeException extends AbstractPlatformDomainRuleException {
+public class InvalidLoanTypeException extends AbstractPlatformDomainRuleException {
 
-    public InvalidAccountTypeException(final String defaultUserMessage, final Object... defaultUserMessageArgs) {
+    public InvalidLoanTypeException(final String defaultUserMessage, final Object... defaultUserMessageArgs) {
         super("error.msg.loan.type.invalid", defaultUserMessage, defaultUserMessageArgs);
     }
 }

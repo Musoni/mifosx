@@ -412,14 +412,6 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         return SavingsAccountStatusType.fromInt(this.status).isActive();
     }
 
-    public boolean hasInvalidAccountType(){return AccountType.fromInt(this.accountType).isInvalid();}
-
-    public boolean isIndividualSavings(){return AccountType.fromInt(this.accountType).isIndividualAccount();}
-
-    public boolean isGroupSavings() {
-        return AccountType.fromInt(this.accountType).isGroupAccount();
-    }
-
     public boolean isNotSubmittedAndPendingApproval() {
         return !isSubmittedAndPendingApproval();
     }

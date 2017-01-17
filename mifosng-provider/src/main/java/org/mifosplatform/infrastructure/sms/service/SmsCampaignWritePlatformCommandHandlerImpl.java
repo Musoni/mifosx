@@ -54,8 +54,7 @@ import org.mifosplatform.portfolio.group.domain.GroupRepository;
 import org.mifosplatform.portfolio.loanaccount.domain.Loan;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanRepository;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTransaction;
-import org.mifosplatform.portfolio.loanaccount.exception.InvalidAccountTypeException;
-import org.mifosplatform.portfolio.savings.domain.SavingsAccount;
+import org.mifosplatform.portfolio.loanaccount.exception.InvalidLoanTypeException;
 import org.mifosplatform.template.domain.TemplateRepository;
 import org.mifosplatform.template.service.TemplateMergeService;
 import org.mifosplatform.useradministration.domain.AppUser;
@@ -233,10 +232,10 @@ public class SmsCampaignWritePlatformCommandHandlerImpl implements SmsCampaignWr
     }
 
     @Override
-    public void insertTriggeredCampaignIntoSmsOutboundTable(final Loan loan, final SmsCampaign smsCampaign){
+    public void insertDirectCampaignIntoSmsOutboundTable(final Loan loan, final SmsCampaign smsCampaign){
         try{
             if(loan.hasInvalidLoanType()){
-                throw new InvalidAccountTypeException("Loan Type cannot be 0 for the Triggered Sms Campaign");
+                throw new InvalidLoanTypeException("Loan Type cannot be 0 for the Triggered Sms Campaign");
             }
 
             Set<Client> clientSet = new HashSet<>();
@@ -264,59 +263,6 @@ public class SmsCampaignWritePlatformCommandHandlerImpl implements SmsCampaignWr
                 queryParamForRunReport.put("${clientId}", client.getId().toString());
 
                 List<HashMap<String, Object>> runReportObject = this.getRunReportByServiceImpl(
-                        campaignParams.get("reportName"), queryParamForRunReport);
-
-                if (runReportObject != null && runReportObject.size() > 0) {
-                    for (HashMap<String, Object> entry : runReportObject) {
-                        String textMessage = this.compileSmsTemplate(smsCampaign.getMessage(), smsCampaign.getCampaignName(), entry);
-                        Object mobileNo = entry.get("mobileNo");
-
-                        if (mobileNo != null) {
-                            SmsMessage smsMessage = SmsMessage.pendingSms(
-                                    null, null, client, null, textMessage, null, mobileNo.toString(), smsCampaign.getCampaignName());
-                            this.smsMessageRepository.save(smsMessage);
-                        }
-                    }
-                }
-            }
-        }catch(final IOException e){
-            System.out.println("IOException: " + e.getMessage());
-            // TODO throw something here
-        }catch(final RuntimeException e){System.out.println("RuntimeException: " + e.getMessage());}
-    }
-
-    @Override
-    public void insertTriggeredCampaignIntoSmsOutboundTable(final SavingsAccount savingsAccount, final SmsCampaign smsCampaign){
-        try{
-            if(savingsAccount.hasInvalidAccountType()){
-                throw new InvalidAccountTypeException("Loan Type cannot be 0 for the Triggered Sms Campaign");
-            }
-
-            Set<Client> clientSet = new HashSet<>();
-
-            HashMap<String, String> campaignParams = new ObjectMapper().readValue(
-                    smsCampaign.getParamValue(), new TypeReference<HashMap<String, String>>() {});
-            campaignParams.put("${savingsId}", savingsAccount.getId().toString());
-
-            HashMap<String, String> queryParamForRunReport = new ObjectMapper().readValue(
-                    smsCampaign.getParamValue(), new TypeReference<HashMap<String, String>>() {});
-            queryParamForRunReport.put("${savingsId}", savingsAccount.getId().toString());
-
-            if(savingsAccount.isGroupSavings()){
-                Group group = savingsAccount.group();
-                clientSet.addAll(group.getClientMembers());
-                campaignParams.put("${groupId}", group.getId().toString());
-                queryParamForRunReport.put("${groupId}", group.getId().toString());
-            }else{
-                Client client = savingsAccount.getClient();
-                clientSet.add(client);
-            }
-
-            for(Client client : clientSet) {
-                campaignParams.put("${clientId}", client.getId().toString());
-                queryParamForRunReport.put("${clientId}", client.getId().toString());
-
-                List<HashMap<String, Object>> runReportObject = getRunReportByServiceImpl(
                         campaignParams.get("reportName"), queryParamForRunReport);
 
                 if (runReportObject != null && runReportObject.size() > 0) {
