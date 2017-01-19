@@ -586,7 +586,7 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
     public CommandProcessingResult reconcileJournalEntry(final JsonCommand command) {
         // is the transaction Id valid
 
-                final List<JournalEntry> journalEntries = this.glJournalEntryRepository.findUnReversedJournalEntriesByTransactionId(command
+                final List<JournalEntry> journalEntries = this.glJournalEntryRepository.findByIsReconciledFalseAndTransactionId(command
                 .getTransactionId());
 
         if (journalEntries.size() <= 1) { throw new JournalEntriesNotFoundException(command.getTransactionId()); }
@@ -619,7 +619,7 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
 
         final String[] transactionIds = command.arrayValueOfParameterNamed("transactionId");
 
-        final List<JournalEntry> journalEntries = this.glJournalEntryRepository.findUnReversedJournalEntriesByArrayOfTransactionId(transactionIds);
+        final List<JournalEntry> journalEntries = this.glJournalEntryRepository.findByIsReconciledFalseAndTransactionIdIn(transactionIds);
 
         if (journalEntries.size() <= 1) { throw new JournalEntriesNotFoundException(transactionIds); }
 
