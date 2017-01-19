@@ -10,9 +10,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 
+import org.joda.time.LocalDate;
 import org.mifosplatform.accounting.common.AccountingEnumerations;
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
+import org.mifosplatform.infrastructure.core.service.DateUtils;
 import org.mifosplatform.infrastructure.core.service.RoutingDataSource;
 import org.mifosplatform.infrastructure.entityaccess.domain.MifosEntityType;
 import org.mifosplatform.infrastructure.entityaccess.service.MifosEntityAccessUtil;
@@ -63,10 +65,14 @@ public class SavingsProductReadPlatformServiceImpl implements SavingsProductRead
     }
 
     @Override
-    public Collection<SavingsProductData> retrieveAllForLookup() {
+    public Collection<SavingsProductData> retrieveAllForLookup(final Boolean onlyActive) {
 
         String sql = "select " + this.savingsProductLookupsRowMapper.schema() + " where sp.deposit_type_enum = ? ";
-        
+
+        if(onlyActive){
+            sql += " and (close_date is null or close_date >= CURDATE())";
+        }
+
         // Check if branch specific products are enabled. If yes, fetch only products mapped to current user's office
  		String inClause = mifosEntityAccessUtil.
  				getSQLWhereClauseForProductIDsForUserOffice_ifGlobalConfigEnabled(
@@ -119,7 +125,9 @@ public class SavingsProductReadPlatformServiceImpl implements SavingsProductRead
             sqlBuilder.append("sp.min_required_balance as minRequiredBalance, ");
             sqlBuilder.append("sp.enforce_min_required_balance as enforceMinRequiredBalance, ");
             sqlBuilder.append("sp.min_balance_for_interest_calculation as minBalanceForInterestCalculation,");
-            sqlBuilder.append("sp.accounting_type as accountingType ");
+            sqlBuilder.append("sp.accounting_type as accountingType, ");
+            sqlBuilder.append("sp.start_date as startDate, ");
+            sqlBuilder.append("sp.close_date as closeDate ");
             sqlBuilder.append("from m_savings_product sp ");
             sqlBuilder.append("join m_currency curr on curr.code = sp.currency_code ");
 
@@ -177,6 +185,16 @@ public class SavingsProductReadPlatformServiceImpl implements SavingsProductRead
                 lockinPeriodFrequencyType = SavingsEnumerations.lockinPeriodFrequencyType(lockinPeriodFrequencyTypeValue);
             }
 
+            final LocalDate startDate = JdbcSupport.getLocalDate(rs, "startDate");
+            final LocalDate closeDate = JdbcSupport.getLocalDate(rs, "closeDate");
+            String status = "";
+            if ((closeDate != null && closeDate.isBefore(DateUtils.getLocalDateOfTenant()))
+                    || (startDate != null && startDate.isAfter(DateUtils.getLocalDateOfTenant()))) {
+                status = "savingsProduct.inActive";
+            } else {
+                status = "savingsProduct.active";
+            }
+
             final boolean withdrawalFeeForTransfers = rs.getBoolean("withdrawalFeeForTransfers");
             final boolean allowOverdraft = rs.getBoolean("allowOverdraft");
             final BigDecimal overdraftLimit = rs.getBigDecimal("overdraftLimit");
@@ -191,7 +209,8 @@ public class SavingsProductReadPlatformServiceImpl implements SavingsProductRead
                     compoundingInterestPeriodType, interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType,
                     minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers,
                     accountingRuleType, allowOverdraft, overdraftLimit, minRequiredBalance, enforceMinRequiredBalance,
-                    minBalanceForInterestCalculation, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation);
+                    minBalanceForInterestCalculation, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation,
+                    startDate, closeDate, status);
         }
     }
 
