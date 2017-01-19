@@ -478,7 +478,13 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 
     @Override
     public SavingsAccountData retrieveTemplate(final Long clientId, final Long groupId, final Long productId,
-            final boolean staffInSelectedOfficeOnly) {
+                                               final boolean staffInSelectedOfficeOnly){
+        return retrieveTemplate(clientId, groupId, productId, staffInSelectedOfficeOnly, false);
+    }
+
+    @Override
+    public SavingsAccountData retrieveTemplate(final Long clientId, final Long groupId, final Long productId,
+            final boolean staffInSelectedOfficeOnly, final boolean onlyActive) {
 
         final AppUser loggedInUser = this.context.authenticatedUser();
         Long officeId = loggedInUser.getOffice().getId();
@@ -495,7 +501,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             officeId = group.officeId();
         }
 
-        final Collection<SavingsProductData> productOptions = this.savingsProductReadPlatformService.retrieveAllForLookup();
+        final Collection<SavingsProductData> productOptions = this.savingsProductReadPlatformService.retrieveAllForLookup(onlyActive);
         SavingsAccountData template = null;
         if (productId != null) {
 

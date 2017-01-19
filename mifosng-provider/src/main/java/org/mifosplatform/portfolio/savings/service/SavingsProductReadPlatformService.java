@@ -13,7 +13,7 @@ public interface SavingsProductReadPlatformService {
 
     Collection<SavingsProductData> retrieveAll();
 
-    Collection<SavingsProductData> retrieveAllForLookup();
+    Collection<SavingsProductData> retrieveAllForLookup(Boolean onlyActive);
 
     Collection<SavingsProductData> retrieveAllForLookupByType(Boolean isOverdraftType);
 
