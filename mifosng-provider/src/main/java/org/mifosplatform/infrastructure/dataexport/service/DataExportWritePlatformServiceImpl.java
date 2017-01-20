@@ -439,6 +439,7 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
                             					+ "isnull(`" + baseEntityName + "`.`group_id`) then `"
                             							+ mClientTableAlias + "`.`staff_id` else `"
                             									+ mGroupTableAlias + "`.`staff_id` end");
+                            	break;
 	        				case DATE_OF_BIRTH:
 	        				case PHONE_NUMBER:
 	        					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
@@ -791,6 +792,7 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
                             					+ "isnull(`" + baseEntityName + "`.`group_id`) then `"
                             							+ mClientTableAlias + "`.`staff_id` else `"
                             									+ mGroupTableAlias + "`.`staff_id` end");
+                            	break;
                             case DATE_OF_BIRTH:
                             case PHONE_NUMBER:
                                 mClientTableAlias = "m_client" + referencedTableIndex++;
@@ -870,6 +872,7 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
                             					+ "isnull(`" + baseEntityName + "`.`group_id`) then `"
                             							+ mClientTableAlias + "`.`staff_id` else `"
                             									+ mGroupTableAlias + "`.`staff_id` end");
+                            	break;
                             case DATE_OF_BIRTH:
                             case PHONE_NUMBER:
                                 mClientTableAlias = "m_client" + referencedTableIndex++;
