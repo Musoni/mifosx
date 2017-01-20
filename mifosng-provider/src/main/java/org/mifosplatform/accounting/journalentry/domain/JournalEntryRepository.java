@@ -33,4 +33,20 @@ public interface JournalEntryRepository extends JpaRepository<JournalEntry, Long
 
     @Query("from JournalEntry journalEntry where journalEntry.transactionId IN :transactionIdArray and journalEntry.reversed is false")
     List<JournalEntry> findUnReversedJournalEntriesByArrayOfTransactionId(@Param("transactionIdArray") String[] transactionIds);
+    
+    /**
+     * Search for all unreconciled journal entries by transaction ID
+     * 
+     * @param transactionId journal entry transaction ID
+     * @return {@link JournalEntry} objects
+     */
+    List<JournalEntry> findByIsReconciledFalseAndTransactionId(String transactionId);
+    
+    /**
+     * Search for all unreconciled journal entries where transaction ID in array of transaction ID strings
+     * 
+     * @param transactionId array of journal entry transaction IDs
+     * @return {@link JournalEntry} objects
+     */
+    List<JournalEntry> findByIsReconciledFalseAndTransactionIdIn(String[] transactionIds);
 }
