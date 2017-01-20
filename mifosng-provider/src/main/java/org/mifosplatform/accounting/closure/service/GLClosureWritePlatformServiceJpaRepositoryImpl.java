@@ -332,16 +332,16 @@ public class GLClosureWritePlatformServiceJpaRepositoryImpl implements GLClosure
         for(final IncomeAndExpenseJournalEntryData incomeAndExpense : incomeAndExpenseJournalEntryDataList){
             if(incomeAndExpense.isIncomeAccountType()){
                 if(incomeAndExpense.getOfficeRunningBalance().signum() == 1){
-                    debitsJournalEntry[m] = new SingleDebitOrCreditEntryCommand(null,incomeAndExpense.getAccountId(),incomeAndExpense.getOfficeRunningBalance().abs(),null,incomeAndExpense.getOfficeId());m++;
+                    debitsJournalEntry[m] = new SingleDebitOrCreditEntryCommand(null,incomeAndExpense.getAccountId(),incomeAndExpense.getOfficeRunningBalance().abs(),null,office.getId());m++;
                 }else{
-                    creditsJournalEntry[n]= new SingleDebitOrCreditEntryCommand(null,incomeAndExpense.getAccountId(),incomeAndExpense.getOfficeRunningBalance().abs(),null,incomeAndExpense.getOfficeId());n++;
+                    creditsJournalEntry[n]= new SingleDebitOrCreditEntryCommand(null,incomeAndExpense.getAccountId(),incomeAndExpense.getOfficeRunningBalance().abs(),null,office.getId());n++;
                 }
             }
             if(incomeAndExpense.isExpenseAccountType()){
                 if(incomeAndExpense.getOfficeRunningBalance().signum() == 1){
-                    creditsJournalEntry[n]= new SingleDebitOrCreditEntryCommand(null,incomeAndExpense.getAccountId(),incomeAndExpense.getOfficeRunningBalance().abs(),null,incomeAndExpense.getOfficeId());n++;
+                    creditsJournalEntry[n]= new SingleDebitOrCreditEntryCommand(null,incomeAndExpense.getAccountId(),incomeAndExpense.getOfficeRunningBalance().abs(),null,office.getId());n++;
                 }else{
-                    debitsJournalEntry[m]= new SingleDebitOrCreditEntryCommand(null,incomeAndExpense.getAccountId(),incomeAndExpense.getOfficeRunningBalance().abs(),null,incomeAndExpense.getOfficeId());m++;
+                    debitsJournalEntry[m]= new SingleDebitOrCreditEntryCommand(null,incomeAndExpense.getAccountId(),incomeAndExpense.getOfficeRunningBalance().abs(),null,office.getId());m++;
                 }
             }
         }
@@ -349,7 +349,7 @@ public class GLClosureWritePlatformServiceJpaRepositoryImpl implements GLClosure
         if(compare == 1){
             /* book with target gl id on the credit side */
             difference = debits.subtract(credits);
-            final SingleDebitOrCreditEntryCommand targetBooking = new SingleDebitOrCreditEntryCommand(null,closureData.getEquityGlAccountId(),difference,null,closureData.getOfficeId());
+            final SingleDebitOrCreditEntryCommand targetBooking = new SingleDebitOrCreditEntryCommand(null,closureData.getEquityGlAccountId(),difference,null,office.getId());
             creditsJournalEntry[n] = targetBooking;
             journalEntryCommand = new JournalEntryCommand(closureData.getCurrencyCode(),closureData.getClosingDate(),closureData.getComments(),creditsJournalEntry,debitsJournalEntry,closureData.getIncomeAndExpenseComments(),
                                         null,null,null,null,null,null,null,null);
@@ -358,7 +358,7 @@ public class GLClosureWritePlatformServiceJpaRepositoryImpl implements GLClosure
         }else if(compare == -1){
             /* book with target gl id on the debit side*/
             difference = credits.subtract(debits);
-            final SingleDebitOrCreditEntryCommand targetBooking = new SingleDebitOrCreditEntryCommand(null,closureData.getEquityGlAccountId(),difference,null,closureData.getOfficeId());
+            final SingleDebitOrCreditEntryCommand targetBooking = new SingleDebitOrCreditEntryCommand(null,closureData.getEquityGlAccountId(),difference,null,office.getId());
             debitsJournalEntry[m]= targetBooking;
             journalEntryCommand = new JournalEntryCommand(closureData.getCurrencyCode(),closureData.getClosingDate(),closureData.getComments(),creditsJournalEntry,debitsJournalEntry,closureData.getIncomeAndExpenseComments(),
                                                             null,null,null,null,null,null,null,null);

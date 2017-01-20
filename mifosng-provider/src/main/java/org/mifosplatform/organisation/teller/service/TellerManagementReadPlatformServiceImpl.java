@@ -406,7 +406,7 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
                     + " and renum.enum_value in ('Repayment At Disbursement','Repayment', 'Recovery Payment','Disbursement') ) "
                     + " order by created_date ) as t ) as z order by created_date desc ";
 
-            logger.info(sql);
+            // logger.info(sql);
 
             return this.jdbcTemplate.query(sql, ctm, new Object[] { tellerId, null, null, hierarchySearchString, tellerId, null,null,
                     hierarchySearchString, tellerId, null,null, hierarchySearchString });
