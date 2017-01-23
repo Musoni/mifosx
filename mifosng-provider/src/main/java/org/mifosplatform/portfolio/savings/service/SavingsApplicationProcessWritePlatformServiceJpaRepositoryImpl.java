@@ -6,7 +6,6 @@
 package org.mifosplatform.portfolio.savings.service;
 
 import org.apache.commons.lang.StringUtils;
-import org.joda.time.LocalDate;
 import org.mifosplatform.commands.domain.CommandWrapper;
 import org.mifosplatform.commands.service.CommandProcessingService;
 import org.mifosplatform.commands.service.CommandWrapperBuilder;
@@ -50,7 +49,6 @@ import org.mifosplatform.portfolio.savings.domain.SavingsAccountDomainService;
 import org.mifosplatform.portfolio.savings.domain.SavingsAccountRepositoryWrapper;
 import org.mifosplatform.portfolio.savings.domain.SavingsProduct;
 import org.mifosplatform.portfolio.savings.domain.SavingsProductRepository;
-import org.mifosplatform.portfolio.savings.exception.SavingsApplicationDateException;
 import org.mifosplatform.portfolio.savings.exception.SavingsProductNotFoundException;
 import org.mifosplatform.useradministration.domain.AppUser;
 import org.slf4j.Logger;
@@ -160,9 +158,6 @@ public class SavingsApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
             final AppUser submittedBy = this.context.authenticatedUser();
 
             final SavingsAccount account = this.savingAccountAssembler.assembleFrom(command, submittedBy);
-
-            validateSubmittedOnDate(account);
-
             this.savingAccountRepository.save(account);
 
             generateAccountNumber(account);
@@ -266,8 +261,6 @@ public class SavingsApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
                         changes.remove("charges");
                     }
                 }
-
-                validateSubmittedOnDate(account);
 
                 this.savingAccountRepository.saveAndFlush(account);
             }
@@ -526,25 +519,6 @@ public class SavingsApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
                 .withSavingsId(savingsId) //
                 .with(changes) //
                 .build();
-    }
-
-    private void validateSubmittedOnDate(final SavingsAccount savingsAccount) {
-        final LocalDate startDate = savingsAccount.savingsProduct().getStartDate();
-        final LocalDate closeDate = savingsAccount.savingsProduct().getCloseDate();
-        final LocalDate submittedOnDate = savingsAccount.getSubmittedOnDate();
-
-        String defaultUserMessage = "";
-        if (startDate != null && submittedOnDate.isBefore(startDate)) {
-            defaultUserMessage = "submittedOnDate cannot be before the savings product startDate.";
-            throw new SavingsApplicationDateException("submitted.on.date.cannot.be.before.the.savings.product.start.date", defaultUserMessage,
-                    submittedOnDate.toString(), startDate.toString());
-        }
-
-        if (closeDate != null && submittedOnDate.isAfter(closeDate)) {
-            defaultUserMessage = "submittedOnDate cannot be after the savings product closeDate.";
-            throw new SavingsApplicationDateException("submitted.on.date.cannot.be.after.the.savings.product.close.date", defaultUserMessage,
-                    submittedOnDate.toString(), closeDate.toString());
-        }
     }
 
     private void checkClientOrGroupActive(final SavingsAccount account) {
