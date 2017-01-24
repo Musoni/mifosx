@@ -263,36 +263,91 @@ public class StaffReadPlatformServiceImpl implements StaffReadPlatformService {
     
     @Override
 	public Object[] hasAssociatedItems(final Long staffId){
-        ArrayList<String> params = new ArrayList<String>();        
-                
-        String sql =  "select c.display_name as client, g.display_name as grp,l.loan_officer_id as loan, s.field_officer_id as sav"+
-        			  " from m_staff staff "+
-        			  " left outer join m_client c on staff.id = c.staff_id  AND c.status_enum < "+ ClientStatus.CLOSED.getValue() +
-        			  " left outer join m_group g on staff.id = g.staff_id " +
-                      " left outer join m_loan l on staff.id = l.loan_officer_id and l.loan_status_id < " +  LoanStatus.WITHDRAWN_BY_CLIENT.getValue() +
-                      " left outer join m_savings_account s on c.staff_id = s.field_officer_id and s.status_enum < "+ SavingsAccountStatusType.WITHDRAWN_BY_APPLICANT.getValue() +
-                      " where  staff.id  =  " + staffId +
-                      " group by staff.id";
+        ArrayList<String> params = new ArrayList<String>();  
         
-       
-        List<Map<String, Object>> result =  this.jdbcTemplate.queryForList(sql);
-        if (result != null) {
-       		for (Map<String, Object> map : result) {
-       			if (map.get("client") != null) {
-       				params.add("client");
-       			}
-       			if (map.get("grp") != null) {
-       				params.add("group");
-       			}
-       			if (map.get("loan")  != null) {
-       				params.add("loan");
-       			}
-       			if (map.get("sav")  != null) {
-       				params.add("savings account");
-       			}
-       		}		
-        }
+        ArrayList<String> associatedClients = this.hasAssociatedClients(staffId);
+        ArrayList<String> associatedGroups = this.hasAssociatedGroups(staffId);
+        ArrayList<String> associatedLoans = this.hasAssociatedLoans(staffId);
+        ArrayList<String> associatedSavingsAccounts = this.hasAssociatedSavingsAccounts(staffId);
+        
+        params.addAll(associatedClients);
+        params.addAll(associatedGroups);
+        params.addAll(associatedLoans);
+        params.addAll(associatedSavingsAccounts);
+        
         return params.toArray();
         
     }
+
+	@Override
+	public ArrayList<String> hasAssociatedClients(Long staffId) {
+		ArrayList<String> params = new ArrayList<String>(); 
+		
+		final String sql = "SELECT display_name FROM `m_client` WHERE `status_enum` < " + ClientStatus.CLOSED.getValue() + " AND `staff_id` = " + staffId + " group by staff_id";
+		final List<Map<String, Object>> result =  this.jdbcTemplate.queryForList(sql);
+		
+		if (result != null) {
+       		for (Map<String, Object> map : result) {
+       			if (map.get("display_name") != null) {
+       				params.add("display_name");
+       			}
+       		}
+		}
+		
+		return params;
+	}
+
+	@Override
+	public ArrayList<String> hasAssociatedGroups(Long staffId) {
+		ArrayList<String> params = new ArrayList<String>(); 
+		
+		final String sql = "SELECT display_name FROM `m_group` WHERE `staff_id` = " + staffId + " group by staff_id";
+		final List<Map<String, Object>> result =  this.jdbcTemplate.queryForList(sql);
+		
+		if (result != null) {
+       		for (Map<String, Object> map : result) {
+       			if (map.get("display_name") != null) {
+       				params.add("display_name");
+       			}
+       		}
+		}
+		
+		return params;
+	}
+
+	@Override
+	public ArrayList<String> hasAssociatedLoans(Long staffId) {
+		ArrayList<String> params = new ArrayList<String>(); 
+		
+		final String sql = "SELECT loan_officer_id FROM `m_loan` WHERE `loan_status_id` < " + LoanStatus.WITHDRAWN_BY_CLIENT.getValue() + " AND `loan_officer_id` = " + staffId + " group by loan_officer_id";
+		final List<Map<String, Object>> result =  this.jdbcTemplate.queryForList(sql);
+		
+		if (result != null) {
+       		for (Map<String, Object> map : result) {
+       			if (map.get("loan_officer_id") != null) {
+       				params.add("loan_officer_id");
+       			}
+       		}
+		}
+		
+		return params;
+	}
+
+	@Override
+	public ArrayList<String> hasAssociatedSavingsAccounts(Long staffId) {
+		ArrayList<String> params = new ArrayList<String>(); 
+		
+		final String sql = "SELECT field_officer_id FROM `m_savings_account` WHERE `status_enum` < " + SavingsAccountStatusType.WITHDRAWN_BY_APPLICANT.getValue() + " AND `field_officer_id` = " + staffId + " group by field_officer_id";
+		final List<Map<String, Object>> result =  this.jdbcTemplate.queryForList(sql);
+		
+		if (result != null) {
+       		for (Map<String, Object> map : result) {
+       			if (map.get("field_officer_id") != null) {
+       				params.add("field_officer_id");
+       			}
+       		}
+		}
+		
+		return params;
+	}
 }
