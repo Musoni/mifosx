@@ -100,7 +100,7 @@ public class InterestRateChart extends AbstractPersistable<Long> {
             }
             for (int j = i + 1; j < chartSlabsList.size(); j++) {
                 InterestRateChartSlab jSlabs = chartSlabsList.get(j);
-                if (iSlabs.slabFields().isPeriodOverlapping(jSlabs.slabFields())) {
+                if (!iSlabs.getId().equals(jSlabs.getId()) && iSlabs.slabFields().isPeriodOverlapping(jSlabs.slabFields())) {
                     baseDataValidator
                             .failWithCodeNoParameterAddedToErrorCode("chart.slabs.period.overlapping", iSlabs.slabFields().fromPeriod(),
                                     iSlabs.slabFields().toPeriod(), jSlabs.slabFields().fromPeriod(), jSlabs.slabFields().toPeriod());
@@ -229,7 +229,13 @@ public class InterestRateChart extends AbstractPersistable<Long> {
             actualChanges.put("deletedChartSlabs", deleteChartSlabs);
         }
 
-        this.validateChartSlabs(baseDataValidator);
+        /*
+         I am commenting the following line out because:
+         It is currently possible to create two chart slab, using the same period, with different amount range.
+         for example slab1 from period 1 to 3 amount range 100 to 200 and salb2 from period 1 to 3 amount range 201 to 500.
+         however during the update, the following line, will prohibit such a combination of chart slab, and raised an error on already created slab
+         */
+        // this.validateChartSlabs(baseDataValidator);
     }
 
     public InterestRateChartSlab findChartSlab(Long chartSlabId) {
