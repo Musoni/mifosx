@@ -100,19 +100,13 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
         final LoanRepaymentScheduleTransactionProcessor loanRepaymentScheduleTransactionProcessor = scheduleParams
                 .getLoanRepaymentScheduleTransactionProcessor();
 
-        Collection<LoanScheduleModelPeriod> periods = new ArrayList<>();
-        if(!scheduleParams.isPartialUpdate()) {
-            periods = createNewLoanScheduleListWithDisbursementDetails(numberOfRepayments,
-                    loanApplicationTerms, chargesDueAtTimeOfDisbursement);
-        }
+        final Collection<LoanScheduleModelPeriod> periods = createNewLoanScheduleListWithDisbursementDetails(numberOfRepayments,
+                loanApplicationTerms, chargesDueAtTimeOfDisbursement);
 
         // Determine the total interest owed over the full loan for FLAT
         // interest method .
-        if (!scheduleParams.isPartialUpdate()) {
-            Money totalInterestChargedForFullLoanTerm = loanApplicationTerms.calculateTotalInterestCharged(
-                    this.paymentPeriodsInOneYearCalculator, mc);
-            loanApplicationTerms.updateTotalInterestDue(totalInterestChargedForFullLoanTerm);
-        }
+        final Money totalInterestChargedForFullLoanTerm = loanApplicationTerms.calculateTotalInterestCharged(
+                this.paymentPeriodsInOneYearCalculator, mc);
 
         boolean isFirstRepayment = true;
         LocalDate firstRepaymentdate = this.scheduledDateGenerator.generateNextRepaymentDate(
@@ -236,7 +230,7 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
             // for a loan repayment which falls between the
             // two periods for interest first repayment strategies
             handleRecalculationForNonDueDateTransactions(mc, loanApplicationTerms, loanCharges, holidayDetailDTO, scheduleParams, periods,
-                    loanApplicationTerms.getTotalInterestDue(), idealDisbursementDate, firstRepaymentdate, lastRestDate, scheduledDueDate,
+                    totalInterestChargedForFullLoanTerm, idealDisbursementDate, firstRepaymentdate, lastRestDate, scheduledDueDate,
                     periodStartDateApplicableForInterest, applicableTransactions, currentPeriodParams);
 
             if (currentPeriodParams.isSkipCurrentLoop()) {
@@ -260,7 +254,7 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
             PrincipalInterest principalInterestForThisPeriod = calculatePrincipalInterestComponentsForPeriod(
                     this.paymentPeriodsInOneYearCalculator, currentPeriodParams.getInterestCalculationGraceOnRepaymentPeriodFraction(),
                     scheduleParams.getTotalCumulativePrincipal().minus(scheduleParams.getReducePrincipal()),
-                    scheduleParams.getTotalCumulativeInterest(), loanApplicationTerms.getTotalInterestDue(),
+                    scheduleParams.getTotalCumulativeInterest(), totalInterestChargedForFullLoanTerm,
                     totalOutstandingInterestPaymentDueToGrace, scheduleParams.getOutstandingBalanceAsPerRest(),
                     loanApplicationTerms, scheduleParams.getPeriodNumber(), mc, mergeVariationsToMap(scheduleParams),
                     scheduleParams.getCompoundingMap(), periodStartDateApplicableForInterest, scheduledDueDate, interestRates);
@@ -317,7 +311,7 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
             // apply loan transactions on installments to identify early/late
             // payments for interest recalculation
             installment = handleRecalculationForTransactions(mc, loanApplicationTerms, holidayDetailDTO, currency, scheduleParams,
-                    loanRepaymentScheduleTransactionProcessor, loanApplicationTerms.getTotalInterestDue(), lastRestDate, scheduledDueDate,
+                    loanRepaymentScheduleTransactionProcessor, totalInterestChargedForFullLoanTerm, lastRestDate, scheduledDueDate,
                     periodStartDateApplicableForInterest, applicableTransactions, currentPeriodParams,
                     lastTotalOutstandingInterestPaymentDueToGrace, installment, loanCharges);
             periods.add(installment);
@@ -908,8 +902,10 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
     /**
      * @param loanApplicationTerms
      * @param scheduleParams
+     * @param priviousScheduledDueDate
      * @param previousRepaymentDate
      * @param scheduledDueDate
+     * @param scheduleDateForReversal
      * @return
      */
     private LoanTermVariationParams applyLoanTermVariations(final LoanApplicationTerms loanApplicationTerms,

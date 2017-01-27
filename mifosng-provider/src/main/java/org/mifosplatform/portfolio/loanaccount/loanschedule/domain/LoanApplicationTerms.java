@@ -547,7 +547,7 @@ public final class LoanApplicationTerms {
         // with periodic interest for default month and year for
         // equal installment
         final BigDecimal periodicInterestRateForRepaymentPeriod = periodicInterestRate(calculator, mc, DaysInMonthType.DAYS_30,
-                DaysInYearType.DAYS_365, periodStartDate, periodEndDate, true);
+                DaysInYearType.DAYS_365, periodStartDate, periodEndDate);
         Money totalPmtForThisInstallment = calculateTotalDueForEqualInstallmentRepaymentPeriod(periodicInterestRateForRepaymentPeriod,
                 outstandingBalance, periodsElapsed);
         return totalPmtForThisInstallment;
@@ -829,13 +829,7 @@ public final class LoanApplicationTerms {
     }
 
     private BigDecimal periodicInterestRate(final PaymentPeriodsInOneYearCalculator calculator, final MathContext mc,
-            final DaysInMonthType daysInMonthType, final DaysInYearType daysInYearType, LocalDate periodStartDate,
-            LocalDate periodEndDate) {
-        return periodicInterestRate(calculator, mc, daysInMonthType, daysInYearType, periodStartDate, periodEndDate, false);
-    }
-
-    private BigDecimal periodicInterestRate(final PaymentPeriodsInOneYearCalculator calculator, final MathContext mc, final DaysInMonthType daysInMonthType,
-            final DaysInYearType daysInYearType, LocalDate periodStartDate, LocalDate periodEndDate, boolean isForPMT) {
+            final DaysInMonthType daysInMonthType, final DaysInYearType daysInYearType, LocalDate periodStartDate, LocalDate periodEndDate) {
 
         final long loanTermPeriodsInOneYear = calculatePeriodsInOneYear(calculator);
 
@@ -843,12 +837,7 @@ public final class LoanApplicationTerms {
         final BigDecimal loanTermPeriodsInYearBigDecimal = BigDecimal.valueOf(loanTermPeriodsInOneYear);
 
         BigDecimal periodicInterestRate = BigDecimal.ZERO;
-        BigDecimal loanTermFrequencyBigDecimal = BigDecimal.ONE;
-        if(isForPMT){
-            loanTermFrequencyBigDecimal = BigDecimal.valueOf(this.repaymentEvery);
-        } else {
-            loanTermFrequencyBigDecimal = calculateLoanTermFrequency(periodStartDate, periodEndDate);
-        }
+        BigDecimal loanTermFrequencyBigDecimal = calculateLoanTermFrequency(periodStartDate, periodEndDate);
         switch (this.interestCalculationPeriodMethod) {
             case INVALID:
             break;
@@ -1373,10 +1362,6 @@ public final class LoanApplicationTerms {
         if (totalInterestDue != null) {
             this.totalInterestDue = totalInterestDue;
         }
-    }
-
-    public Money getTotalInterestDue() {
-        return this.totalInterestDue;
     }
 
     public ApplicationCurrency getApplicationCurrency() {
