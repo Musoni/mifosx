@@ -24,6 +24,7 @@ public class SavingsApiConstants {
     public static String summitalAction = ".summital";
     public static String approvalAction = ".approval";
     public static String undoApprovalAction = ".undoApproval";
+    public static String undoActivateAction = ".undoApproval";
     public static String undoRejectionAction = ".undoRejection";
     public static String rejectAction = ".reject";
     public static String withdrawnByApplicantAction = ".withdrawnByApplicant";

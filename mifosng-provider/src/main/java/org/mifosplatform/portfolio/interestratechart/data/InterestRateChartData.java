@@ -182,4 +182,7 @@ public class InterestRateChartData {
         return this.clientClassificationOptions;
     }
 
+    public Long getId() {
+        return id;
+    }
 }

@@ -19,6 +19,7 @@ public enum SavingsEvent {
     SAVINGS_WITHDRAWAL("withdraw"), //
     SAVINGS_POST_INTEREST("interest.post"), //
     SAVINGS_UNDO_TRANSACTION("transaction.undo"), //
+    SAVINGS_APPLICATION_ACTIVATE_UNDO("application.activate.undo"),
     SAVINGS_ADJUST_TRANSACTION("transaction.adjust"), //
     SAVINGS_APPLY_CHARGE("charge.apply"), //
     SAVINGS_WAIVE_CHARGE("charge.waive"), //

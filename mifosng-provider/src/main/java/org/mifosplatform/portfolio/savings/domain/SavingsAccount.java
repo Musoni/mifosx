@@ -1743,6 +1743,46 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         return actualChanges;
     }
 
+    public Map<String, Object> undoApplicationActivate(final LocalDate tenantsTodayDate) {
+
+
+
+        final Map<String, Object> actualChanges = new LinkedHashMap<>();
+
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
+                .resource(SAVINGS_ACCOUNT_RESOURCE_NAME + SavingsApiConstants.undoActivateAction);
+
+        final SavingsAccountStatusType currentStatus = SavingsAccountStatusType.fromInt(this.status);
+        if (!SavingsAccountStatusType.ACTIVE.hasStateOf(currentStatus)) {
+
+            baseDataValidator.reset().parameter(SavingsApiConstants.activatedOnDateParamName)
+                    .failWithCodeNoParameterAddedToErrorCode("not.in.active.state");
+
+            if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
+        }
+
+        this.status = SavingsAccountStatusType.APPROVED.getValue();
+        actualChanges.put(SavingsApiConstants.statusParamName, SavingsEnumerations.status(this.status));
+
+        this.activatedOnDate = null;
+        this.activatedBy = null;
+        this.rejectedOnDate = null;
+        this.rejectedBy = null;
+        this.withdrawnOnDate = null;
+        this.withdrawnBy = null;
+        this.closedOnDate = null;
+        this.closedBy = null;
+        actualChanges.put(SavingsApiConstants.activatedOnDateParamName, "");
+
+        // FIXME - kw - support field officer history for savings accounts
+        // this.loanOfficerHistory.clear();
+
+        validateActivityNotBeforeClientOrGroupTransferDate(SavingsEvent.SAVINGS_APPLICATION_ACTIVATE_UNDO,tenantsTodayDate);
+
+        return actualChanges;
+    }
+
 
     public void undoTransaction(final Long transactionId, final boolean manuallyReverse) {
 
@@ -1801,6 +1841,15 @@ public class SavingsAccount extends AbstractPersistable<Long> {
                 }
             }
         }
+    }
+
+    public void undoAllTransaction(){
+
+        for (final SavingsAccountTransaction transaction : this.transactions) {
+
+            this.undoTransaction(transaction.getId());
+        }
+
     }
 
     private Date findLatestAnnualFeeTransactionDueDate() {

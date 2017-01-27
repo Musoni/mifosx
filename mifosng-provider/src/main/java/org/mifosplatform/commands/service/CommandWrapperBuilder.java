@@ -2117,6 +2117,15 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder fixedDepositAccountUndoActivation(final Long accountId) {
+        this.actionName = "UNDOACTIVATE";
+        this.entityName = "FIXEDDEPOSITACCOUNT";
+        this.savingsId = accountId;
+        this.entityId = accountId;
+        this.href = "/fixeddepositaccounts/" + accountId + "?command=undoactivate";
+        return this;
+    }
+
     public CommandWrapperBuilder closeFixedDepositAccount(final Long accountId) {
         this.actionName = "CLOSE";
         this.entityName = "FIXEDDEPOSITACCOUNT";
