@@ -2219,12 +2219,12 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
 
                                 }else if(columnHeader.isIntegerDisplayType() && columnHeader.isBigInt()){
 
-                                    Long intValue = null;
+                                    Long longValue = null;
                                     if (!queryParams.get(key).toString().isEmpty()) {
 
-                                        intValue = Long.parseLong(queryParams.get(key).toString());
+                                        longValue = this.helper.convertToLong(pObjectValue.toString(), columnHeader.getColumnName(), clientApplicationLocale);
                                     }
-                                    affectedColumns.put(columnHeader.getColumnName(), intValue);
+                                    affectedColumns.put(columnHeader.getColumnName(), longValue);
                                 }
                                 else if (columnHeader.isDecimalDisplayType()) {
 
