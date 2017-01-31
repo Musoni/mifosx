@@ -531,7 +531,7 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
                         sqlBuilder.LEFT_OUTER_JOIN("`m_code_value` `" + tableAlias + "` on `"
                                 + tableAlias + "`.`code_value` = `" + metaData.getTableName() + "`.`" + metaData.getFieldName() + "`");
                         
-                    } else if (fieldName.contains("_cd_")) {
+                    } else if (fieldName.contains("_cd_") || fieldName.contains("_cb_")) {
                         String tableAlias = "mcv" + referencedTableIndex++;
                         String columnLabel = datatableDisplayName + " - " + metaData.getLabelName();
                         
