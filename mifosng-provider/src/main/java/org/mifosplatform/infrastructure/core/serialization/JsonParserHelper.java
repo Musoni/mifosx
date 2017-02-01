@@ -474,6 +474,67 @@ public class JsonParserHelper {
         }
     }
 
+    public Long convertToLong(final String numericalValueFormatted, final String parameterName, final Locale clientApplicationLocale) {
+
+        if (clientApplicationLocale == null) {
+
+            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+            final String defaultMessage = new StringBuilder("The parameter '" + parameterName
+                    + "' requires a 'locale' parameter to be passed with it.").toString();
+            final ApiParameterError error = ApiParameterError.parameterError("validation.msg.missing.locale.parameter", defaultMessage,
+                    parameterName);
+            dataValidationErrors.add(error);
+
+            throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.",
+                    dataValidationErrors);
+        }
+
+        try {
+            Long number = null;
+
+            if (StringUtils.isNotBlank(numericalValueFormatted)) {
+
+                String source = numericalValueFormatted.trim();
+
+                final NumberFormat format = NumberFormat.getInstance(clientApplicationLocale);
+                final DecimalFormat df = (DecimalFormat) format;
+                final DecimalFormatSymbols symbols = df.getDecimalFormatSymbols();
+                df.setParseBigDecimal(true);
+
+                // http://bugs.sun.com/view_bug.do?bug_id=4510618
+                final char groupingSeparator = symbols.getGroupingSeparator();
+                if (groupingSeparator == '\u00a0') {
+                    source = source.replaceAll(" ", Character.toString('\u00a0'));
+                }
+
+                final Number parsedNumber = df.parse(source);
+
+                final double parsedNumberDouble = parsedNumber.doubleValue();
+                final long parsedNumberInteger = parsedNumber.longValue();
+
+                // if (parsedNumber.contains(Character.toString(symbols.getDecimalSeparator()))) { throw new ParseException(source, 0); }
+
+                if (!Double.valueOf(parsedNumberDouble).equals(Double.valueOf(Long.valueOf(parsedNumberInteger)))) { throw new ParseException(
+                        source, 0); }
+
+                number = parsedNumber.longValue();
+            }
+
+            return number;
+        } catch (final ParseException e) {
+
+            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+            final ApiParameterError error = ApiParameterError.parameterError("validation.msg.invalid.integer.format", "The parameter "
+                    + parameterName + " has value: " + numericalValueFormatted + " which is invalid integer value for provided locale of ["
+                    + clientApplicationLocale.toString() + "].", parameterName, numericalValueFormatted, clientApplicationLocale);
+            error.setValue(numericalValueFormatted);
+            dataValidationErrors.add(error);
+
+            throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.",
+                    dataValidationErrors);
+        }
+    }
+
     public Integer convertToIntegerSanLocale(final String numericalValueFormatted, final String parameterName) {
 
         try {
