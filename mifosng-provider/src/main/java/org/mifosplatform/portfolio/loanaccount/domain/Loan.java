@@ -1133,6 +1133,12 @@ public class Loan extends AbstractPersistable<Long> {
         this.transactionProcessingStrategy = strategy;
     }
 
+    public void setCreateStandingInstructionAtDisbursement(Boolean createStandingInstructionAtDisbursement) {
+        this.createStandingInstructionAtDisbursement = createStandingInstructionAtDisbursement;
+    }
+
+    public Boolean getCreateStandingInstructionAtDisbursement() {return this.createStandingInstructionAtDisbursement;}
+
     public void updateLoanCharges(final Set<LoanCharge> loanCharges) {
         List<Long> existingCharges = fetchAllLoanChargeIds();
 
