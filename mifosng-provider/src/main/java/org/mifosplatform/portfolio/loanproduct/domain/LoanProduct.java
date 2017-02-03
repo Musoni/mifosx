@@ -998,6 +998,13 @@ public class LoanProduct extends AbstractPersistable<Long> {
                             .getAsJsonObject(LoanProductConstants.allowAttributeOverridesParamName)
                             .getAsJsonPrimitive(LoanProductConstants.graceOnArrearsAgeingParameterName).getAsBoolean());
                 }
+                if (command.parsedJson().getAsJsonObject().getAsJsonObject(LoanProductConstants.allowAttributeOverridesParamName)
+                        .getAsJsonPrimitive(LoanProductConstants.standingInstructionParamName).getAsBoolean() != this.loanConfigurableAttributes
+                        .getStandingInstruction()) {
+                    this.loanConfigurableAttributes.setStandingInstruction(command.parsedJson().getAsJsonObject()
+                            .getAsJsonObject(LoanProductConstants.allowAttributeOverridesParamName)
+                            .getAsJsonPrimitive(LoanProductConstants.standingInstructionParamName).getAsBoolean());
+                }
             } else {
                 this.loanConfigurableAttributes = LoanProductConfigurableAttributes.populateDefaultsForConfigurableAttributes();
                 this.loanConfigurableAttributes.updateLoanProduct(this);

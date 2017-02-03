@@ -61,6 +61,7 @@ import org.mifosplatform.portfolio.loanaccount.domain.LoanTransactionProcessingS
 import org.mifosplatform.portfolio.loanaccount.exception.ExceedingTrancheCountException;
 import org.mifosplatform.portfolio.loanaccount.exception.LoanTransactionProcessingStrategyNotFoundException;
 import org.mifosplatform.portfolio.loanaccount.exception.MultiDisbursementDataRequiredException;
+import org.mifosplatform.portfolio.loanaccount.exception.StandingInstructionNotAllowedException;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanApplicationTerms;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanScheduleModel;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.service.LoanScheduleAssembler;
@@ -170,6 +171,12 @@ public class LoanAssembler {
 
         final LoanProduct loanProduct = this.loanProductRepository.findOne(productId);
         if (loanProduct == null) { throw new LoanProductNotFoundException(productId); }
+
+        Boolean standingInstructionConfiguration = loanProduct.getLoanProductConfigurableAttributes().getStandingInstruction();
+        /* production does not allow standing instruction to be created with a loan*/
+        if((!standingInstructionConfiguration) && createStandingInstructionAtDisbursement){
+            throw new StandingInstructionNotAllowedException(productId);
+        }
 
         final Fund fund = findFundByIdIfProvided(fundId);
         final Staff loanOfficer = findLoanOfficerByIdIfProvided(loanOfficerId);
