@@ -538,7 +538,7 @@ public class LoanScheduleAssembler {
 
     public LoanScheduleModel assembleLoanScheduleFrom(final LoanApplicationTerms loanApplicationTerms, final boolean isHolidayEnabled,
             final List<Holiday> holidays, final WorkingDays workingDays, final JsonElement element,
-            Set<LoanDisbursementDetails> disbursementDetails) {
+            List<LoanDisbursementDetails> disbursementDetails) {
 
         final Set<LoanCharge> loanCharges = this.loanChargeAssembler.fromParsedJson(element, disbursementDetails);
 
