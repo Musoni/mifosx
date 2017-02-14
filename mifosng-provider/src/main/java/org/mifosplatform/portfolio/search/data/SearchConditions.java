@@ -17,10 +17,13 @@ public class SearchConditions {
 	private final Boolean savingSeach;
     private final Boolean clientIdentifierSearch;
     private  Boolean exactMatch;
+    private final Integer searchLimit;
 
-    public SearchConditions(final String searchQueryParam, final String searchResource, Boolean exactMatch) {
+	public SearchConditions(final String searchQueryParam, final String searchResource, Boolean exactMatch, 
+    		final Integer searchLimit) {
         this.searchQuery = searchQueryParam;
         this.searchResource = searchResource;
+        this.searchLimit = searchLimit;
         this.exactMatch=exactMatch;
         this.clientSearch = (null == searchResource || searchResource.toLowerCase().contains(
                 SEARCH_SUPPORTED_RESOURCES.CLIENTS.name().toLowerCase())) ? true : false;
@@ -35,7 +38,8 @@ public class SearchConditions {
     }
 
     public SearchConditions(final String searchQueryParam, final String searchResource, final Boolean clientSearch,
-            final Boolean groupSearch, final Boolean loanSeach, final Boolean savingSeach, final Boolean clientIdentifierSearch, Boolean exactMatch) {
+            final Boolean groupSearch, final Boolean loanSeach, final Boolean savingSeach, final Boolean clientIdentifierSearch, Boolean exactMatch, 
+            final Integer searchLimit) {
         this.searchQuery = searchQueryParam;
         this.searchResource = searchResource;
         this.clientSearch = clientSearch;
@@ -44,6 +48,7 @@ public class SearchConditions {
 		this.savingSeach = savingSeach;
         this.clientIdentifierSearch = clientIdentifierSearch;
         this.exactMatch=exactMatch;
+        this.searchLimit = searchLimit;
     }
 
     public String getSearchQuery() {
@@ -76,4 +81,10 @@ public class SearchConditions {
         return this.clientIdentifierSearch;
     }
 
+	/**
+	 * @return the searchLimit
+	 */
+	public Integer getSearchLimit() {
+		return searchLimit;
+	}
 }

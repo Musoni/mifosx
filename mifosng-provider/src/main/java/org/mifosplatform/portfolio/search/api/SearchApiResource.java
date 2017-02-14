@@ -73,9 +73,11 @@ public class SearchApiResource {
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public String searchData(@Context final UriInfo uriInfo, @QueryParam("query") final String query,
-            @QueryParam("resource") final String resource ,@DefaultValue("false") @QueryParam("exactMatch")  Boolean exactMatch) {
+            @QueryParam("resource") final String resource , 
+            @DefaultValue("false") @QueryParam("exactMatch") Boolean exactMatch, 
+            @QueryParam("limit") Integer limit) {
     	
-        final SearchConditions searchConditions = new SearchConditions(query, resource,exactMatch);
+        final SearchConditions searchConditions = new SearchConditions(query, resource, exactMatch, limit);
 
         final Collection<SearchData> searchResults = this.searchReadPlatformService.retriveMatchingData(searchConditions);
 
