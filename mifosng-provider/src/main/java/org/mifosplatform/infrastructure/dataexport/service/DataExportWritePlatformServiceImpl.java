@@ -57,11 +57,12 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
     private final JdbcTemplate jdbcTemplate;
 
     /**
-     * @param platformSecurityContext
+     * @param registeredTableMetaDataRepository
      * @param exportDataValidator
      * @param fromJsonHelper
      * @param dataExportRepository
      * @param dataExportReadPlatformService
+	 * @param dataSource
      */
     @Autowired
     public DataExportWritePlatformServiceImpl(final ExportDataValidator exportDataValidator, 
@@ -925,9 +926,82 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
     }
 
 	@Override
-	public CommandProcessingResult updateDataExport(final Long id, final JsonCommand command) {
-		// 26.10.2016 - put on hold for now
-		return null;
+	public CommandProcessingResult updateDataExport(final Long id, final JsonCommand jsonCommand) {
+		try {
+			// retrieve entity from database
+			final DataExport dataExport = this.dataExportRepository.findOne(id);
+
+			// throw exception if entity not found
+			if (dataExport == null) {
+				throw new DataExportNotFoundException(id);
+			}
+
+			if(!jsonCommand.json().equals(dataExport.getUserRequestMap())) {
+				// validate the request to create a new data export entity
+				this.exportDataValidator.validateCreateDataExportRequest(jsonCommand);
+
+				final DataExportCreateRequestData dataExportCreateRequestData = this.fromJsonHelper.fromJson(
+						jsonCommand.json(), DataExportCreateRequestData.class);
+
+				final String name = dataExportCreateRequestData.getName();
+				final String baseEntityName = dataExportCreateRequestData.getBaseEntityName();
+				final String[] datatableNames = dataExportCreateRequestData.getDatatables();
+				final String[] columnNames = dataExportCreateRequestData.getColumns();
+				final Map<String, String> filters = dataExportCreateRequestData.getFilters();
+
+				final DataExportEntityData dataExportEntityData = this.dataExportReadPlatformService.
+						retrieveTemplate(baseEntityName);
+				final Collection<DatatableData> baseEntityDatatables = dataExportEntityData.getDatatables();
+				final Collection<EntityColumnMetaData> baseEntityColumns = dataExportEntityData.getColumns();
+				final Collection<DatatableData> selectedDatatables = new ArrayList<>();
+				final Collection<EntityColumnMetaData> selectedColumns = new ArrayList<>();
+				final Map<EntityColumnMetaData, String> selectedFilters = new HashMap<>();
+				final Iterator<Map.Entry<String, String>> filterEntries = filters.entrySet().iterator();
+
+				while (filterEntries.hasNext()) {
+					Map.Entry<String, String> filterEntry = filterEntries.next();
+					EntityColumnMetaData entityColumnMetaData = this.getEntityColumnMetaData(filterEntry.getKey(),
+							baseEntityColumns);
+
+					if (entityColumnMetaData != null) {
+						selectedFilters.put(entityColumnMetaData, filterEntry.getValue());
+					}
+				}
+
+				for (String datatableName : datatableNames) {
+					DatatableData datatableData = this.getDatatableData(datatableName, baseEntityDatatables);
+
+					if (datatableData != null) {
+						selectedDatatables.add(datatableData);
+					}
+				}
+
+				for (String columnName : columnNames) {
+					EntityColumnMetaData entityColumnMetaData = this.getEntityColumnMetaData(columnName, baseEntityColumns);
+
+					if (entityColumnMetaData != null) {
+						selectedColumns.add(entityColumnMetaData);
+					}
+				}
+
+				final String dataSql = this.generateDataSql(dataExportEntityData, selectedDatatables,
+						selectedColumns, selectedFilters);
+
+				dataExport.update(name, baseEntityName, jsonCommand.json(), dataSql);
+
+				// save the new data export entity
+				this.dataExportRepository.save(dataExport);
+			}
+
+			return new CommandProcessingResultBuilder()
+					.withCommandId(jsonCommand.commandId())
+					.withEntityId(dataExport.getId())
+					.build();
+		} catch (final DataIntegrityViolationException dve) {
+			handleDataIntegrityIssues(jsonCommand, dve);
+
+			return CommandProcessingResult.empty();
+		}
 	}
 
 	@Override
