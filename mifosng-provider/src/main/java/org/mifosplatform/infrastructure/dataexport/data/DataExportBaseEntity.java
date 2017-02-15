@@ -10,7 +10,10 @@ public enum DataExportBaseEntity {
     CLIENT("client", "m_client"),
     GROUP("group", "m_group"),
     LOAN("loan", "m_loan"),
-    SAVINGSACCOUNT("savingsaccount", "m_savings_account");
+    SAVINGS_ACCOUNT("savings_account", "m_savings_account"),
+    LOAN_TRANSACTION("loan_transaction", "m_loan_transaction"),
+    SAVINGS_ACCOUNT_TRANSACTION("savings_account_transaction", "m_savings_account_transaction"),
+    LOAN_REPAYMENT_SCHEDULE("loan_repayment_schedule", "m_loan_repayment_schedule");
     
     private String entityName;
     private String tableName;

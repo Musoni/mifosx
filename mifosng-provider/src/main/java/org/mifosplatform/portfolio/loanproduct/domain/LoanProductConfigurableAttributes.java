@@ -47,9 +47,12 @@ public class LoanProductConfigurableAttributes extends AbstractPersistable<Long>
     @Column(name = "grace_on_arrears_ageing", nullable = true)
     private Boolean graceOnArrearsAgeing;
 
+    @Column(name = "standing_instruction_enum", nullable = true)
+    private Boolean standingInstruction;
+
     public static String[] supportedloanConfigurableAttributes = { "amortizationType", "interestType", "transactionProcessingStrategyId",
             "interestCalculationPeriodType", "inArrearsTolerance", "repaymentEvery", "graceOnPrincipalAndInterestPayment",
-            "graceOnArrearsAgeing" };
+            "graceOnArrearsAgeing","standingInstruction" };
 
     public static LoanProductConfigurableAttributes createFrom(JsonCommand command) {
 
@@ -77,9 +80,12 @@ public class LoanProductConfigurableAttributes extends AbstractPersistable<Long>
         final Boolean graceOnArrearsAging = command.parsedJson().getAsJsonObject()
                 .getAsJsonObject(LoanProductConstants.allowAttributeOverridesParamName)
                 .getAsJsonPrimitive(LoanProductConstants.graceOnArrearsAgeingParameterName).getAsBoolean();
+        final Boolean standingInstruction = command.parsedJson().getAsJsonObject()
+                .getAsJsonObject(LoanProductConstants.allowAttributeOverridesParamName)
+                .getAsJsonPrimitive(LoanProductConstants.standingInstructionParamName).getAsBoolean();
 
         return new LoanProductConfigurableAttributes(amortization, interestMethod, transactionProcessingStrategy, interestCalcPeriod,
-                arrearsTolerance, repaymentEvery, graceOnPrincipalAndInterestPayment, graceOnArrearsAging);
+                arrearsTolerance, repaymentEvery, graceOnPrincipalAndInterestPayment, graceOnArrearsAging,standingInstruction);
     }
 
     public void updateLoanProduct(final LoanProduct loanProduct) {
@@ -95,14 +101,15 @@ public class LoanProductConfigurableAttributes extends AbstractPersistable<Long>
         final Boolean repaymentEvery = true;
         final Boolean graceOnPrincipalAndInterestPayment = true;
         final Boolean graceOnArrearsAging = true;
+        final Boolean standingInstruction = true;
 
         return new LoanProductConfigurableAttributes(amortization, interestMethod, transactionProcessingStrategy, interestCalcPeriod,
-                arrearsTolerance, repaymentEvery, graceOnPrincipalAndInterestPayment, graceOnArrearsAging);
+                arrearsTolerance, repaymentEvery, graceOnPrincipalAndInterestPayment, graceOnArrearsAging,standingInstruction );
     }
 
     public LoanProductConfigurableAttributes(Boolean amortization, Boolean interestMethod, Boolean transactionProcessingStrategy,
             Boolean interestCalcPeriod, Boolean arrearsTolerance, Boolean repaymentEvery, Boolean graceOnPrincipalAndInterestPayment,
-            Boolean graceOnArrearsAging) {
+            Boolean graceOnArrearsAging, Boolean standingInstruction) {
         this.amortizationType = amortization;
         this.interestType = interestMethod;
         this.inArrearsTolerance = arrearsTolerance;
@@ -111,6 +118,7 @@ public class LoanProductConfigurableAttributes extends AbstractPersistable<Long>
         this.graceOnPrincipalAndInterestPayment = graceOnPrincipalAndInterestPayment;
         this.repaymentEvery = repaymentEvery;
         this.transactionProcessingStrategyId = transactionProcessingStrategy;
+        this.standingInstruction = standingInstruction;
     }
 
     protected LoanProductConfigurableAttributes() {
@@ -193,4 +201,9 @@ public class LoanProductConfigurableAttributes extends AbstractPersistable<Long>
         this.graceOnArrearsAgeing = graceOnArrearsAgeing;
     }
 
+    public Boolean getStandingInstruction() {return this.standingInstruction;}
+
+    public void setStandingInstruction(Boolean standingInstruction) {
+        this.standingInstruction = standingInstruction;
+    }
 }

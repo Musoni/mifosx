@@ -6,12 +6,7 @@
 package org.mifosplatform.portfolio.loanaccount.service;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
@@ -61,6 +56,7 @@ import org.mifosplatform.portfolio.loanaccount.domain.LoanTransactionProcessingS
 import org.mifosplatform.portfolio.loanaccount.exception.ExceedingTrancheCountException;
 import org.mifosplatform.portfolio.loanaccount.exception.LoanTransactionProcessingStrategyNotFoundException;
 import org.mifosplatform.portfolio.loanaccount.exception.MultiDisbursementDataRequiredException;
+import org.mifosplatform.portfolio.loanaccount.exception.StandingInstructionNotAllowedException;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanApplicationTerms;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanScheduleModel;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.service.LoanScheduleAssembler;
@@ -171,6 +167,12 @@ public class LoanAssembler {
         final LoanProduct loanProduct = this.loanProductRepository.findOne(productId);
         if (loanProduct == null) { throw new LoanProductNotFoundException(productId); }
 
+        Boolean standingInstructionConfiguration = loanProduct.getLoanProductConfigurableAttributes().getStandingInstruction();
+        /* production does not allow standing instruction to be created with a loan*/
+        if((!standingInstructionConfiguration) && createStandingInstructionAtDisbursement){
+            throw new StandingInstructionNotAllowedException(productId);
+        }
+
         final Fund fund = findFundByIdIfProvided(fundId);
         final Staff loanOfficer = findLoanOfficerByIdIfProvided(loanOfficerId);
         final LoanTransactionProcessingStrategy loanTransactionProcessingStrategy = findStrategyByIdIfProvided(transactionProcessingStrategyId);
@@ -178,7 +180,7 @@ public class LoanAssembler {
         if (loanPurposeId != null) {
             loanPurpose = this.codeValueRepository.findOneWithNotFoundDetection(loanPurposeId);
         }
-        Set<LoanDisbursementDetails> disbursementDetails = null;
+        List<LoanDisbursementDetails> disbursementDetails = null;
         BigDecimal fixedEmiAmount = null;
         if (loanProduct.isMultiDisburseLoan() || loanProduct.canDefineInstallmentAmount()) {
             fixedEmiAmount = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(LoanApiConstants.emiAmountParameterName, element);
@@ -308,10 +310,10 @@ public class LoanAssembler {
         return loanApplication;
     }
 
-    public Set<LoanDisbursementDetails> fetchDisbursementData(final JsonObject command) {
+    public List<LoanDisbursementDetails> fetchDisbursementData(final JsonObject command) {
         final Locale locale = this.fromApiJsonHelper.extractLocaleParameter(command);
         final String dateFormat = this.fromApiJsonHelper.extractDateFormatParameter(command);
-        Set<LoanDisbursementDetails> disbursementDatas = new HashSet<>();
+        List<LoanDisbursementDetails> disbursementDatas = new ArrayList<>();
         if (command.has(LoanApiConstants.disbursementDataParameterName)) {
             final JsonArray disbursementDataArray = command.getAsJsonArray(LoanApiConstants.disbursementDataParameterName);
             if (disbursementDataArray != null && disbursementDataArray.size() > 0) {

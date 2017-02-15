@@ -8,7 +8,7 @@ package org.mifosplatform.infrastructure.dataexport.data;
 public enum DataExportCoreDatatable {
 	GUARANTORS("m_guarantor", "Loan Guarantors", DataExportBaseEntity.LOAN),
 	LOAN_CHARGES("m_loan_charge", "Loan Charges", DataExportBaseEntity.LOAN), 
-	SAVINGS_ACCOUNT_CHARGES("m_savings_account_charge", "Savings Account Charges", DataExportBaseEntity.SAVINGSACCOUNT), 
+	SAVINGS_ACCOUNT_CHARGES("m_savings_account_charge", "Savings Account Charges", DataExportBaseEntity.SAVINGS_ACCOUNT), 
 	LOAN_COLLATERALS("m_loan_collateral", "Loan Collateral", DataExportBaseEntity.LOAN);
 	
 	private final String tableName;

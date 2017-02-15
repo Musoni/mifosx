@@ -142,4 +142,12 @@ public class DataExport extends AbstractAuditableCustom<AppUser, Long> {
     public void updateFilename(final String filename) {
         this.filename = filename;
     }
+
+    public void update(final String name, final String baseEntityName,
+                       final String userRequestMap, final String dataSql) {
+        if(name != null && !name.equals(this.name)){ this.name = name; }
+        if(baseEntityName != null && !baseEntityName.equals(this.baseEntityName)){ this.baseEntityName = baseEntityName; }
+        if(userRequestMap != null && !userRequestMap.equals(this.userRequestMap)){ this.userRequestMap = userRequestMap; }
+        if(dataSql != null && !dataSql.equals(this.dataSql)){ this.dataSql = dataSql; }
+    }
 }

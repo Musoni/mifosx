@@ -104,6 +104,7 @@ public interface LoanProductConstants {
     public static final String inArrearsToleranceParamName = "inArrearsTolerance";
     public static final String repaymentEveryParamName = "repaymentEvery";
     public static final String graceOnPrincipalAndInterestPaymentParamName = "graceOnPrincipalAndInterestPayment";
+    public static final String standingInstructionParamName = "standingInstruction";
     
     //Variable Installments Settings
     public static final String allowVariableInstallmentsParamName = "allowVariableInstallments" ;
