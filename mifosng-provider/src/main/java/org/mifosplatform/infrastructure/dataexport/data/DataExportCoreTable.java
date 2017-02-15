@@ -14,15 +14,7 @@ public enum DataExportCoreTable {
 	M_STAFF("m_staff"), 
 	M_CODE_VALUE("m_code_value"), 
 	M_CODE("m_code"), 
-	M_CHARGE("m_charge"),
-	M_LOAN("m_loan"),
-	M_LOAN_TRANSACTION("m_loan_transaction"),
-	M_SAVINGS_ACCOUNT_TRANSACTION("m_savings_account_transaction"),
-	M_LOAN_REPAYMENT_SCHEDULE("m_loan_repayment_schedule"),
-	M_PAYMENT_DETAIL("m_payment_detail"),
-	M_PRODUCT_LOAN("m_product_loan"),
-	M_SAVINGS_PRODUCT("m_savings_product"),
-	M_PAYMENT_TYPE("m_payment_type");
+	M_CHARGE("m_charge");
 	
 	private String name;
 

@@ -205,13 +205,10 @@ public class DataExportReadPlatformServiceImpl implements DataExportReadPlatform
             
             // add the core columns
             for (DataExportCoreColumn coreColumn : DataExportCoreColumn.values()) {
-            	if (coreColumn.getBaseEntity() == null || 
-            			(coreColumn.getBaseEntity() != null && coreColumn.getBaseEntity().equals(dataExportBaseEntity))) {
-            		EntityColumnMetaData metaData = EntityColumnMetaData.newInstance(coreColumn.getName(), 
-            				coreColumn.getLabel(), coreColumn.getType(), coreColumn.isNullable());
-            		
-            		uniqueColumns.put(coreColumn.getName(), metaData);
-            	}
+            	EntityColumnMetaData metaData = EntityColumnMetaData.newInstance(coreColumn.getName(), 
+        				coreColumn.getLabel(), coreColumn.getType(), coreColumn.isNullable());
+            	
+            	uniqueColumns.put(coreColumn.getName(), metaData);
             }
             
             // add the non-core columns
@@ -228,21 +225,4 @@ public class DataExportReadPlatformServiceImpl implements DataExportReadPlatform
         
         return dataExportEntityData;
     }
-
-	@Override
-	public Collection<DataExportEntityData> retrieveAllBaseEntities() {
-		final Collection<DataExportEntityData> dataExportEntityDataList = new ArrayList<>();
-		
-		for (DataExportBaseEntity dataExportBaseEntity : DataExportBaseEntity.values()) {
-			if (dataExportBaseEntity.isValid()) {
-				DataExportEntityData dataExportEntityData = DataExportEntityData.newInstance(
-						dataExportBaseEntity.getEntityName(), dataExportBaseEntity.getTableName(), 
-						null, null);
-				
-				dataExportEntityDataList.add(dataExportEntityData);
-			}
-		}
-		
-		return dataExportEntityDataList;
-	}
 }
