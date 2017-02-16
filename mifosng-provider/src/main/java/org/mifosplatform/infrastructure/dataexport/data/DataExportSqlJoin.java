@@ -5,11 +5,13 @@
  */
 package org.mifosplatform.infrastructure.dataexport.data;
 
+import org.apache.commons.lang.StringUtils;
+
 /**
  * @see https://en.wikipedia.org/wiki/Foreign_key
  */
 public class DataExportSqlJoin {
-	private final String id;
+	private String id;
 	private final DataExportCoreTable parentTable;
 	private final DataExportCoreTable childTable;
 	private final String sqlStatement;
@@ -51,6 +53,25 @@ public class DataExportSqlJoin {
 		final String id = createId(parentTable, childTable);
 		
 		return new DataExportSqlJoin(id, parentTable, childTable, sqlStatement, 
+				parentTableAlias, childTableAlias);
+	}
+	
+	/**
+	 * Creates a new {@link DataExportSqlJoin} object
+	 * 
+	 * @param parentTable
+	 * @param childTableName
+	 * @param sqlStatement
+	 * @param parentTableAlias
+	 * @param childTableAlias
+	 * @return {@link DataExportSqlJoin} object
+	 */
+	public static final DataExportSqlJoin newInstance(final DataExportCoreTable parentTable, 
+			final String childTableName, final String sqlStatement, final String parentTableAlias, 
+			final String childTableAlias) {
+		final String id = createId(parentTable.getName(), childTableName);
+		
+		return new DataExportSqlJoin(id, parentTable, null, sqlStatement, 
 				parentTableAlias, childTableAlias);
 	}
 
@@ -105,6 +126,28 @@ public class DataExportSqlJoin {
 	 */
 	public static String createId(final DataExportCoreTable parentTable, 
 			final DataExportCoreTable childTable) {
-		return parentTable.getName() + "_" + childTable.getName();
+		return createId(parentTable.getName(), childTable.getName());
+	}
+	
+	/**
+	 * Creates an id string by concatenating the parent table name and child table name
+	 * 
+	 * @param parentTableName
+	 * @param childTableName
+	 * @return id
+	 */
+	public static String createId(final String parentTableName, final String childTableName) {
+		return parentTableName + "_" + childTableName;
+	}
+	
+	/**
+	 * Updates the id of the object
+	 * 
+	 * @param id
+	 */
+	public void updateId(final String id) {
+		if (StringUtils.isNotBlank(id)) {
+			this.id = id;
+		}
 	}
 }

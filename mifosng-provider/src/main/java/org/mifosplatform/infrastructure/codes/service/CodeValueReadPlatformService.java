@@ -43,4 +43,11 @@ public interface CodeValueReadPlatformService {
      * @return {@link CodeValueData} objects
      */
     Collection<CodeValueData> retrieveAllActiveCodeValues(final Long codeId);
+    
+    /**
+     * Retrieves all code values
+     * 
+     * @return {@link CodeValueData} objects
+     */
+    Collection<CodeValueData> retrieveAllCodeValues();
 }

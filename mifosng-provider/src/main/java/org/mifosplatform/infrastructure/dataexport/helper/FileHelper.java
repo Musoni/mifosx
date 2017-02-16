@@ -6,9 +6,12 @@
 package org.mifosplatform.infrastructure.dataexport.helper;
 
 import org.apache.commons.lang.StringUtils;
+import org.mifosplatform.infrastructure.codes.data.CodeValueData;
 import org.mifosplatform.infrastructure.dataexport.api.DataExportApiConstants;
+import org.mifosplatform.infrastructure.dataexport.data.DataExportCoreTable;
 import org.mifosplatform.infrastructure.dataexport.data.DataExportFileData;
 import org.mifosplatform.infrastructure.documentmanagement.contentrepository.FileSystemContentRepository;
+import org.mifosplatform.useradministration.data.AppUserData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
@@ -17,6 +20,7 @@ import java.io.*;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 
 /** 
  * Helper class that provides useful methods to manage files 
@@ -118,7 +122,9 @@ public class FileHelper {
      * @param fileName
      * @return {@link DataExportFileData} object
      */
-    public static DataExportFileData createDataExportCsvFile(final SqlRowSet sqlRowSet, final String fileName) {
+    public static DataExportFileData createDataExportCsvFile(final SqlRowSet sqlRowSet, final String fileName, 
+    		final HashMap<Long, CodeValueData> codeValueMap, final HashMap<Long, AppUserData> appUserMap,
+    		final DataExportCoreTable coreTable) {
     	DataExportFileData dataExportFileData = null;
         
         try {
@@ -127,7 +133,7 @@ public class FileHelper {
             final File file = new File(parentDirectoryPath, fileNamePlusExtension);
             
             // create a new csv file on the server
-            CsvFileHelper.createFile(sqlRowSet, file);
+            CsvFileHelper.createFile(sqlRowSet, file, codeValueMap, appUserMap, coreTable);
             
             dataExportFileData = new DataExportFileData(file, fileNamePlusExtension,
                     DataExportApiConstants.CSV_FILE_CONTENT_TYPE);
@@ -147,7 +153,9 @@ public class FileHelper {
      * @param fileName
      * @return {@link DataExportFileData} object
      */
-    public static DataExportFileData createDataExportXlsFile(final SqlRowSet sqlRowSet, final String fileName) {
+    public static DataExportFileData createDataExportXlsFile(final SqlRowSet sqlRowSet, final String fileName, 
+    		final HashMap<Long, CodeValueData> codeValueMap, final HashMap<Long, AppUserData> appUserMap,
+    		final DataExportCoreTable coreTable) {
     	DataExportFileData dataExportFileData = null;
     	
     	try {
@@ -156,7 +164,7 @@ public class FileHelper {
             final File file = new File(parentDirectoryPath, fileNamePlusExtension);
             
             // create a new xls file on the server
-            XlsFileHelper.createFile(sqlRowSet, file);
+            XlsFileHelper.createFile(sqlRowSet, file, codeValueMap, appUserMap, coreTable);
             
             dataExportFileData = new DataExportFileData(file, fileNamePlusExtension,
                     DataExportApiConstants.XLS_FILE_CONTENT_TYPE);

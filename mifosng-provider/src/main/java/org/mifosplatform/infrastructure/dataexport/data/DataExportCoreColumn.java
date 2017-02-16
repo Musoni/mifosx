@@ -5,6 +5,9 @@
  */
 package org.mifosplatform.infrastructure.dataexport.data;
 
+/**
+ * TODO - Add an id property that will uniquely identifier each core column 
+ */
 public enum DataExportCoreColumn {
 	BRANCH_NAME("branch_name", "branch name", "VARCHAR", true, "office_id", "name", "m_office", null),
 	LOAN_OFFICER_NAME("loan_officer_name", "loan officer name", "VARCHAR", true, "loan_officer_id", "display_name", "m_staff", null),
@@ -25,6 +28,12 @@ public enum DataExportCoreColumn {
 	LOAN_TRANSACTION_LOAN_ACCOUNT_NUMBER("loan_transaction_loan_account_number", "account number", "VARCHAR", true, "loan_id", "account_no", "m_loan", DataExportBaseEntity.LOAN_TRANSACTION),
 	LOAN_TRANSACTION_PAYMENT_CHANNEL("loan_transaction_payment_channel", "payment channel", "VARCHAR", true, "payment_type_id", "value", "m_payment_type", DataExportBaseEntity.LOAN_TRANSACTION),
 	LOAN_TRANSACTION_REFERENCE("loan_transaction_reference", "reference", "VARCHAR", true, "payment_detail_id", "receipt_number", "m_payment_detail", DataExportBaseEntity.LOAN_TRANSACTION),
+	LOAN_TRANSACTION_TOTAL_REPAID("loan_transaction_total_repaid", "total repaid", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_TRANSACTION),
+	LOAN_TRANSACTION_PRINCIPAL_REPAID("principal_portion_derived", "principal repaid", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_TRANSACTION),
+	LOAN_TRANSACTION_INTEREST_REPAID("interest_portion_derived", "interest repaid", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_TRANSACTION),
+	LOAN_TRANSACTION_FEES_REPAID("fee_charges_portion_derived", "fees repaid", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_TRANSACTION),
+	LOAN_TRANSACTION_PENALTIES_REPAID("penalty_charges_portion_derived", "penalties repaid", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_TRANSACTION),
+	LOAN_TRANSACTION_OVERPAYMENT_REPAID("overpayment_portion_derived", "overpayment repaid", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_TRANSACTION),
 	SAVINGS_TRANSACTION_DEPOSIT("savings_transaction_deposit", "deposit", "DECIMAL", true, null, null, null, DataExportBaseEntity.SAVINGS_ACCOUNT_TRANSACTION),
 	SAVINGS_TRANSACTION_CHARGE_APPLIED("savings_transaction_charge_applied", "charges applied", "DECIMAL", true, null, null, null, DataExportBaseEntity.SAVINGS_ACCOUNT_TRANSACTION),
 	SAVINGS_TRANSACTION_CHARGE_WAIVED("savings_transaction_charge_waived", "charges waived", "DECIMAL", true, null, null, null, DataExportBaseEntity.SAVINGS_ACCOUNT_TRANSACTION),
