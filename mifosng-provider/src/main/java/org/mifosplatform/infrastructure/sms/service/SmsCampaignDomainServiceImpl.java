@@ -180,7 +180,7 @@ public class SmsCampaignDomainServiceImpl implements SmsCampaignDomainService {
                                 String message = this.smsCampaignWritePlatformCommandHandler.compileSmsTemplate(smsCampaign.getMessage(), smsCampaign.getCampaignName(), smsParams);
                                 Object mobileNo = smsParams.get("mobileNo");
 
-                                if (mobileNo != null) {
+                                if (mobileNo != null && loan.isOpen()) {
                                     SmsMessage smsMessage = SmsMessage.pendingSms(null, null, client, null, message, null, mobileNo.toString(), smsCampaign.getCampaignName());
                                     this.smsMessageRepository.save(smsMessage);
                                 }

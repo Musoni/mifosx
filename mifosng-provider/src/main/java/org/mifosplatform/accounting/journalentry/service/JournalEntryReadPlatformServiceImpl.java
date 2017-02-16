@@ -408,7 +408,7 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
         if (searchParameters.isTellerIdPassed()) {
             sqlBuilder
                     .append(whereClose
-                            + " ch.teller_id = ? and  journalEntry.created_date >= ch.started_at and ( journalEntry.created_date <= ch.ended_at OR ch.ended_at IS NULL ) ");
+                            + " ch.teller_id = ? and pt.is_cash_payment=1 and  journalEntry.created_date >= ch.started_at and ( journalEntry.created_date <= ch.ended_at OR ch.ended_at IS NULL ) ");
             objectArray[arrayPos] = searchParameters.getTellerId();
             arrayPos = arrayPos + 1;
 

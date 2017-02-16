@@ -1872,7 +1872,7 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
 
 
                 // If this field has a column Expression the we parse that instead of the value
-                pValueWrite = this.getFormulaExpressionValue(affectedColumns, metaData, pColumnHeader.getColumnFormulaExpression());
+                pValueWrite = this.getFormulaExpressionValue(affectedColumns, metaData, pColumnHeader.getColumnFormulaExpression(), columnHeaders);
 
                 // Write back the new value so it can be used in other fields:
                 affectedColumns.put(key,  getObjectValueforColumn(pColumnHeader,pValueWrite,clientApplicationLocale));
@@ -1919,7 +1919,7 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
         return addSql;
     }
 
-    private String getFormulaExpressionValue(Map<String, Object> affectedColumns, final List<MetaDataResultSet> metaData, String expression)
+    private String getFormulaExpressionValue(Map<String, Object> affectedColumns, final List<MetaDataResultSet> metaData, String expression,final List<ResultsetColumnHeaderData> columnHeaders)
     {
 
         try{
@@ -1929,7 +1929,30 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
 
             for(final String col : affectedColumns.keySet())
             {
-                context.setVariable(col, affectedColumns.get(col));
+
+                for(final ResultsetColumnHeaderData pColumnHeader : columnHeaders){
+
+                    if(pColumnHeader.getColumnName().equals(col) && ( pColumnHeader.getColumnDisplayExpression() == null ||
+                            pColumnHeader.getColumnDisplayExpression().isEmpty() || this.evaluateConditionalFields(affectedColumns, metaData, col))){
+
+                        context.setVariable(col, affectedColumns.get(col));
+
+                        break;
+                    }else if(pColumnHeader.getColumnName().equals(col) && pColumnHeader.getColumnDisplayExpression() != null &&
+                            !pColumnHeader.getColumnDisplayExpression().isEmpty() && ! this.evaluateConditionalFields(affectedColumns, metaData, col)){
+
+                        if(pColumnHeader.isIntegerDisplayType() || pColumnHeader.isDecimalDisplayType() ){
+
+                            context.setVariable(col,0);
+
+                        }else{
+
+                            context.setVariable(col,null);
+                        }
+
+                    }
+                }
+
             }
 
             Expression exp = parser.parseExpression(expression);
