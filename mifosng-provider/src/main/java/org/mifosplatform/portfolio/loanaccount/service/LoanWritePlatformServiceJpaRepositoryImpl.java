@@ -431,6 +431,9 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
             this.accountTransfersWritePlatformService.transferFunds(accountTransferDTO);
         }
 
+        loan.updateLoanSummarAndStatus();
+        this.loanAccountDomainService.saveLoanWithDataIntegrityViolationChecks(loan);
+
         updateRecurringCalendarDatesForInterestRecalculation(loan);
         this.loanAccountDomainService.recalculateAccruals(loan);
         this.businessEventNotifierService.notifyBusinessEventWasExecuted(BUSINESS_EVENTS.LOAN_DISBURSAL,
