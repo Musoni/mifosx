@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.mutable.MutableInt;
 import org.joda.time.LocalDateTime;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
@@ -197,50 +198,15 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
             final Map<EntityColumnMetaData, String> selectedFilters) {
         final String baseEntityTableName = dataExportEntityData.getTableName();
         final String baseEntityName = dataExportEntityData.getEntityName();
-        int referencedTableIndex = 0;
         final HashMap<String, DataExportSqlJoin> sqlJoinMap = new HashMap<>();
+        final MutableInt aliasPostfixNumber = new MutableInt(0);
         
         // initialize the SQl statement builder class
-        SQL sqlBuilder = new SQL();
+        final SQL sqlBuilder = new SQL();
         
         for (EntityColumnMetaData column : selectedColumns) {
-            String columnName = column.getName();
-            DataExportCoreColumn coreColumn = DataExportCoreColumn.newInstanceFromName(columnName);
-            
-            if (coreColumn != null) {
-            	this.addCoreColumnSqlToSqlBuilder(dataExportEntityData, coreColumn, sqlBuilder, sqlJoinMap, 
-            			true, null);
-            	
-            } else if (columnName.contains("userid") || columnName.contains("_by")) {
-                String tableAlias = "user" + referencedTableIndex++;
-                
-                sqlBuilder.SELECT("`" + tableAlias + "`.`username` as `" + column.getLabel() + "`");
-                sqlBuilder.LEFT_OUTER_JOIN("`m_appuser` `" + tableAlias + "` on `" + tableAlias 
-                		+ "`.`id` = `" + baseEntityName + "`.`" + column.getName() + "`");
-            } else if (columnName.equals("loan_status_id")) { 
-                String tableAlias = "rev" + referencedTableIndex++;
-                
-                sqlBuilder.SELECT("`" + tableAlias + "`.`enum_value` as `loan status`");
-                sqlBuilder.LEFT_OUTER_JOIN("`r_enum_value` `" + tableAlias + "` on `"
-                        + tableAlias + "`.`enum_id` = `" + baseEntityName + "`.`" + column.getName()
-                        		+ "` and `" + tableAlias + "`.`enum_name` = 'loan_status_id'");
-            } else if (columnName.equals("status_enum")) { 
-                String tableAlias = "rev" + referencedTableIndex++;
-                
-                sqlBuilder.SELECT("`" + tableAlias + "`.`enum_value` as `" + column.getLabel() + "`");
-                sqlBuilder.LEFT_OUTER_JOIN("`r_enum_value` `" + tableAlias + "` on `"
-                        + tableAlias + "`.`enum_id` = `" + baseEntityName + "`.`" + column.getName()
-                        		+ "` and `" + tableAlias + "`.`enum_name` = 'status_enum'");
-            } else if (columnName.equals("closure_reason_cv_id") || columnName.equals("gender_cv_id") || 
-            		columnName.equals("loanpurpose_cv_id")) { 
-                String tableAlias = "mcv" + referencedTableIndex++;
-                
-                sqlBuilder.SELECT("`" + tableAlias + "`.`code_value` as `" + column.getLabel() + "`");
-                sqlBuilder.LEFT_OUTER_JOIN("`m_code_value` `" + tableAlias + "` on `"
-                        + tableAlias + "`.`id` = `" + baseEntityName + "`.`" + column.getName() + "`");
-            } else {
-            	sqlBuilder.SELECT("`" + baseEntityName + "`.`" + columnName + "` as `" + column.getLabel() + "`");
-            } 
+            this.addCoreColumnSqlToSqlBuilder(dataExportEntityData, column, sqlBuilder, sqlJoinMap, 
+        			true, null, aliasPostfixNumber);
         }
         
         if (selectedDatatables.size() > 0) {
@@ -263,36 +229,10 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
                 for (RegisteredTableMetaData metaData : registeredTablesMetaData) {
                     String fieldName = metaData.getFieldName();
 
-                    if (fieldName.contains("_cv_")) {
-                        String tableAlias = "mcv" + referencedTableIndex++;
-                        String columnLabel = datatableDisplayName + " - " + metaData.getLabelName();
-                        
-                        sqlBuilder.SELECT("`" + tableAlias + "`.`code_value` as `" + columnLabel + "`");
-                        sqlBuilder.LEFT_OUTER_JOIN("`m_code_value` `" + tableAlias + "` on `"
-                                + tableAlias + "`.`code_value` = `" + metaData.getTableName() + "`.`" + metaData.getFieldName() + "`");
-                        
-                    } else if (fieldName.contains("_cd_")) {
-                        String tableAlias = "mcv" + referencedTableIndex++;
-                        String columnLabel = datatableDisplayName + " - " + metaData.getLabelName();
-                        
-                        sqlBuilder.SELECT("`" + tableAlias + "`.`code_value` as `" + columnLabel + "`");
-                        sqlBuilder.LEFT_OUTER_JOIN("`m_code_value` `" + tableAlias + "` on `"
-                                + tableAlias + "`.`id` = `" + metaData.getTableName() + "`.`" + metaData.getFieldName() + "`");
-                        
-                    } else if (fieldName.equalsIgnoreCase("submittedon_date") || fieldName.equalsIgnoreCase("submittedon_userid")) {
+                    if (fieldName.equalsIgnoreCase("submittedon_date") || fieldName.equalsIgnoreCase("submittedon_userid")) {
                     	// skip
                     } else if (fieldName.contains("userid") || fieldName.endsWith("_by")) {
-                    	// the commented lines below were left in the code so if Cameron wants the 
-                    	// "submittedon_date" and "submittedon_userid" fields back in
-                        /*String tableAlias = "user" + referencedTableIndex++;
-                        String columnLabel = datatableDisplayName + " - " + metaData.getLabelName();
-                        
-                        sqlBuilder.SELECT("`" + tableAlias + "`.`username` as `" + columnLabel + "`");
-                        sqlBuilder.LEFT_OUTER_JOIN("`m_appuser` `" + tableAlias + "` on `"
-                                + tableAlias + "`.`id` = `" + metaData.getTableName() + "`.`" + metaData.getFieldName() + "`");*/
-                    } else if (fieldName.equalsIgnoreCase("id")) {
-                    	sqlBuilder.SELECT("`" + datatableName + "`.`" + metaData.getFieldName() + "` as `"
-                    			+ datatableDisplayName + " id`");
+                    	// skip
                     } else if (fieldName.equalsIgnoreCase(baseEntityReferenceColumn)) { 
                     	// skip
                     } else {
@@ -307,63 +247,88 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
                 	List<EntityColumnMetaData> columnsMetaData = DataExportUtils.getTableColumnsMetaData(
                 			coreDatatable.getTableName(), this.jdbcTemplate);
                 	
-                	String guarantorClientTableAlias = "guarantorClient";
-                	String guarantorStaffTableAlias = "guarantorStaff";
-                	
                 	for (EntityColumnMetaData metaData : columnsMetaData) {
                 		String fieldName = metaData.getName();
                 		String fieldLabel = metaData.getLabel();
                 		
                 		if (coreDatatable.equals(DataExportCoreDatatable.GUARANTORS)) {
+                			DataExportSqlJoin dataExportSqlJoin;
+                    		String sqlStatement;
+                    		
+                    		// =============================================================================
+        					String sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
+        							DataExportCoreTable.M_GUARANTOR);
+        					
+        					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+        						// increment the alias postfix number
+    	    					aliasPostfixNumber.increment();
+                    			
+                    			String mClientAlias = DataExportCoreTable.M_CLIENT.getAlias(aliasPostfixNumber.intValue());
+        						
+        						sqlStatement = "`" + DataExportCoreTable.M_CLIENT.getName() + "` `" + mClientAlias + "` on `"
+                                        + mClientAlias + "`.`id` = `" + datatableName + "`.`entity_id`";
+        						
+        						dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_CLIENT, 
+            							DataExportCoreTable.M_GUARANTOR, sqlStatement, mClientAlias, 
+            							datatableName);
+        						
+        						sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+        						
+        						// add the join to the map
+            					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+        					}
+        					// =============================================================================
+        					
+        					// =============================================================================
+        					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_STAFF, 
+        							DataExportCoreTable.M_GUARANTOR);
+        					
+        					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+        						// increment the alias postfix number
+    	    					aliasPostfixNumber.increment();
+    	    					
+    	    					String mStaffAlias = DataExportCoreTable.M_STAFF.getAlias(aliasPostfixNumber.intValue());
+        						
+        						sqlStatement = "`" + DataExportCoreTable.M_STAFF.getName() + "` `" + mStaffAlias + "` on `"
+                                        + mStaffAlias + "`.`id` = `" + datatableName + "`.`entity_id`";
+        						
+        						dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_STAFF, 
+            							DataExportCoreTable.M_GUARANTOR, sqlStatement, mStaffAlias, 
+            							datatableName);
+        						
+        						sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+        						
+        						// add the join to the map
+            					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+        					}
+        					// =============================================================================
+                			
                 			String[] excludeFields = {
                 				"loan_id", "type_enum", "entity_id", "address_line_2", "state", "zip", "mobile_number", "comment", "is_active"
                 			};
                 			
                 			if (ArrayUtils.contains(excludeFields, fieldName)) {
                 				// skip
-                			} else if (fieldName.equalsIgnoreCase("firstname")) {
-                				String columnLabel = datatableDisplayName + " - firstname";
+                			} else if (fieldName.equalsIgnoreCase("firstname") || fieldName.equalsIgnoreCase("lastname")) {
+                				String columnLabel = datatableDisplayName + " - " + fieldName;
+                				String clientSqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
+            							DataExportCoreTable.M_GUARANTOR);
+                				DataExportSqlJoin clientDataExportSqlJoin = sqlJoinMap.get(clientSqlJoinKey);
+                				String staffSqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_STAFF, 
+            							DataExportCoreTable.M_GUARANTOR);
+                				DataExportSqlJoin staffDataExportSqlJoin = sqlJoinMap.get(staffSqlJoinKey);
                 				
                 				sqlBuilder.SELECT("case when `" + datatableName + "`.`type_enum`=1 then `"
-                    					+ guarantorClientTableAlias + "`.`firstname` when `" + datatableName + "`.`type_enum`=2 "
-                    							+ "then `" + guarantorStaffTableAlias + "`.`firstname` else `"
-                    									+ datatableName + "`.`firstname` end as `" + columnLabel + "`");
-                    		} else if (fieldName.equalsIgnoreCase("lastname")) {
-                    			String columnLabel = datatableDisplayName + " - lastname";
-                    			
-                    			sqlBuilder.SELECT("case when `" + datatableName + "`.`type_enum`=1 then `"
-                    					+ guarantorClientTableAlias + "`.`lastname` when `" + datatableName + "`.`type_enum`=2 "
-                    							+ "then `" + guarantorStaffTableAlias + "`.`lastname` else `"
-                    									+ datatableName + "`.`lastname` end as `" + columnLabel + "`");
-                    		} else if (fieldName.equalsIgnoreCase("client_reln_cv_id")) {
-                    			String tableAlias = "mcv" + referencedTableIndex++;
-                    			String columnLabel = datatableDisplayName + " - client relationship";
-                    			
-                    			sqlBuilder.SELECT("`" + tableAlias + "`.`code_value` as `" + columnLabel + "`");
-                    			sqlBuilder.LEFT_OUTER_JOIN("`m_code_value` `" + tableAlias + "` on `"
-                                        + tableAlias + "`.`id` = `" + datatableName + "`.`" + fieldName + "`");
-                    		} else if (fieldName.equalsIgnoreCase("id")) {
-                    			String columnLabel = datatableDisplayName + " - id";
-                    			
-                    			sqlBuilder.SELECT("`" + datatableName + "`.`" + fieldName + "` as `" + columnLabel + "`");
+                    					+ clientDataExportSqlJoin.getParentTableAlias() + "`.`" + fieldName + "` when `" + datatableName + "`.`type_enum`=2 "
+                    							+ "then `" + staffDataExportSqlJoin.getParentTableAlias() + "`.`" + fieldName + "` else `"
+                    									+ datatableName + "`.`" + fieldName + "` end as `" + columnLabel + "`");
                     		} else {
                     			String columnLabel = datatableDisplayName + " - " + fieldLabel;
                     			
                             	sqlBuilder.SELECT("`" + datatableName + "`.`" + fieldName + "` as `" + columnLabel + "`");
                     		}
                 		} else if (coreDatatable.equals(DataExportCoreDatatable.LOAN_COLLATERALS)) {
-                			if (fieldName.equalsIgnoreCase("type_cv_id")) {
-                    			String tableAlias = "mcv" + referencedTableIndex++;
-                    			String columnLabel = datatableDisplayName + " - collateral type";
-                    			
-                    			sqlBuilder.SELECT("`" + tableAlias + "`.`code_value` as `" + columnLabel + "`");
-                    			sqlBuilder.LEFT_OUTER_JOIN("`m_code_value` `" + tableAlias + "` on `"
-                                        + tableAlias + "`.`id` = `" + datatableName + "`.`" + fieldName + "`");
-                			} else if (fieldName.equalsIgnoreCase("id")) {
-                				String columnLabel = datatableDisplayName + " - id";
-                				
-                				sqlBuilder.SELECT("`" + datatableName + "`.`" + fieldName + "` as `" + columnLabel + "`");
-                			} else if (fieldName.equalsIgnoreCase(baseEntityReferenceColumn)) { 
+                			if (fieldName.equalsIgnoreCase(baseEntityReferenceColumn)) { 
                             	// skip
                             } else {
                             	String columnLabel = datatableDisplayName + " - " + fieldLabel;
@@ -371,15 +336,44 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
                             	sqlBuilder.SELECT("`" + datatableName + "`.`" + fieldName + "` as `" + columnLabel + "`");
                     		}
                 		} else if (fieldName.equalsIgnoreCase("charge_id")) {
-                			String tableAlias = "charge" + referencedTableIndex++;
-                			String columnLabel = datatableDisplayName + " - charge name";
-                			
-                			sqlBuilder.SELECT("`" + tableAlias + "`.`id` as `charge id`, `" + tableAlias
-                            		+ "`.`name` as `" + columnLabel + "`");
-                			sqlBuilder.LEFT_OUTER_JOIN("`m_charge` `" + tableAlias + "` on `"
-                                    + tableAlias + "`.`id` = `" + datatableName + "`.`" + fieldName + "`");
+                			DataExportSqlJoin dataExportSqlJoin;
+                    		String sqlStatement;
+                    		
+                    		// =============================================================================
+        					String sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CHARGE.getName(), 
+        							coreDatatable.getTableName());
+        					
+        					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+        						// increment the alias postfix number
+    	    					aliasPostfixNumber.increment();
+        						
+        						String mChargeAlias = DataExportCoreTable.M_CHARGE.getAlias(aliasPostfixNumber.intValue());
+        						
+        						sqlStatement = "`" + DataExportCoreTable.M_CHARGE.getName() + "` `" + mChargeAlias + "` on `"
+                                        + mChargeAlias + "`.`id` = `" + datatableName + "`.`" + fieldName + "`";
+        						
+        						dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_CHARGE, 
+        								datatableName, sqlStatement, mChargeAlias, datatableName);
+        						
+        						sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+        						
+        						// add the join to the map
+            					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+        					}
+        					// =============================================================================
+        					
+        					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
+	    					sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`id` as `" 
+	    							+ datatableDisplayName + " - charge id`, `" + dataExportSqlJoin.getParentTableAlias()
+                            		+ "`.`name` as `" + datatableDisplayName + " - charge name`";
+        					
+    						// add the select statement
+    						sqlBuilder.SELECT(sqlStatement);
+	    					// =============================================================================
                 		} else if (fieldName.equalsIgnoreCase("id")) {
-                			String columnLabel = datatableDisplayName + " - id";
+                			String columnLabel = datatableDisplayName + " - " + fieldLabel;
                 			
                 			sqlBuilder.SELECT("`" + datatableName + "`.`" + fieldName + "` as `" + columnLabel + "`");
                 		} else if (fieldName.equalsIgnoreCase(baseEntityReferenceColumn)) { 
@@ -392,10 +386,56 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
                 	}
                 	
                 	if (coreDatatable.equals(DataExportCoreDatatable.GUARANTORS)) {
-                		sqlBuilder.LEFT_OUTER_JOIN("`m_client` `" + guarantorClientTableAlias + "` on `"
-                                + guarantorClientTableAlias + "`.`id` = `" + datatableName + "`.`entity_id`");
-                		sqlBuilder.LEFT_OUTER_JOIN("`m_staff` `" + guarantorStaffTableAlias + "` on `"
-                                + guarantorStaffTableAlias + "`.`id` = `" + datatableName + "`.`entity_id`");
+                		DataExportSqlJoin dataExportSqlJoin;
+                		String sqlStatement;
+                		
+                		// =============================================================================
+    					String sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
+    							DataExportCoreTable.M_GUARANTOR);
+    					
+    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+    						// increment the alias postfix number
+        					aliasPostfixNumber.increment();
+                    		
+                    		String mClientAlias = DataExportCoreTable.M_CLIENT.getAlias(aliasPostfixNumber.intValue());
+    						
+    						sqlStatement = "`" + DataExportCoreTable.M_CLIENT.getName() + "` `" + mClientAlias + "` on `"
+                                    + mClientAlias + "`.`id` = `" + datatableName + "`.`entity_id`";
+    						
+    						dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_CLIENT, 
+        							DataExportCoreTable.M_GUARANTOR, sqlStatement, mClientAlias, 
+        							datatableName);
+    						
+    						sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+    						
+    						// add the join to the map
+        					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+    					}
+    					// =============================================================================
+    					
+    					// =============================================================================
+    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_STAFF, 
+    							DataExportCoreTable.M_GUARANTOR);
+    					
+    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+    						// increment the alias postfix number
+        					aliasPostfixNumber.increment();
+        					
+        					String mStaffAlias = DataExportCoreTable.M_STAFF.getAlias(aliasPostfixNumber.intValue());
+    						
+    						sqlStatement = "`" + DataExportCoreTable.M_STAFF.getName() + "` `" + mStaffAlias + "` on `"
+                                    + mStaffAlias + "`.`id` = `" + datatableName + "`.`entity_id`";
+    						
+    						dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_STAFF, 
+        							DataExportCoreTable.M_GUARANTOR, sqlStatement, mStaffAlias, 
+        							datatableName);
+    						
+    						sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+    						
+    						// add the join to the map
+        					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+    					}
+    					// =============================================================================
                 	}
                 }
             }
@@ -408,16 +448,10 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
         while (filterEntries.hasNext()) {
             Entry<EntityColumnMetaData, String> filterEntry = filterEntries.next();
             EntityColumnMetaData columnMetaData = filterEntry.getKey();
-            DataExportCoreColumn coreColumn = DataExportCoreColumn.newInstanceFromName(columnMetaData.getName());
             String filterValue = filterEntry.getValue();
             
-            if (coreColumn != null) {
-            	this.addCoreColumnSqlToSqlBuilder(dataExportEntityData, coreColumn, sqlBuilder, sqlJoinMap, 
-            			false, filterValue);
-                
-            } else {
-            	sqlBuilder.WHERE("`" + baseEntityName + "`.`" + columnMetaData.getName() + "` " + filterValue);
-            }
+            this.addCoreColumnSqlToSqlBuilder(dataExportEntityData, columnMetaData, sqlBuilder, sqlJoinMap, 
+        			false, filterValue, aliasPostfixNumber);
         }
         
         return sqlBuilder.toString();
@@ -434,41 +468,47 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
      * @param isSelectStatement
      * @param filterValue
      */
-    private void addCoreColumnSqlToSqlBuilder(final DataExportEntityData dataExportEntityData, 
-    		final DataExportCoreColumn coreColumn, final SQL sqlBuilder, 
+    private void addCoreColumnSqlToSqlBuilder(final DataExportEntityData dataExportEntityData,
+    		final EntityColumnMetaData columnMetaData, final SQL sqlBuilder, 
     		final HashMap<String, DataExportSqlJoin> sqlJoinMap, final boolean isSelectStatement, 
-    		final String filterValue) {
+    		final String filterValue, final MutableInt aliasPostfixNumber) {
+    	final String columnName = columnMetaData.getName();
+    	final String columnLabel = columnMetaData.getLabel();
+    	final DataExportCoreColumn coreColumn = DataExportCoreColumn.newInstanceFromName(columnName);
+    	final String baseEntityName = dataExportEntityData.getEntityName();
+        final DataExportBaseEntity baseEntity = DataExportBaseEntity.fromEntityName(baseEntityName);
+        final DataExportCoreTable baseEntityCoreTable = DataExportCoreTable.newInstance(baseEntity.getTableName());
+    	
+    	// variables initialized with null values
+    	String sqlStatement, mClientTableAlias, mGroupTableAlias, mGroupClientTableAlias, 
+    	mOfficeTableAlias, mStaffTableAlias, mLoanTableAlias, mProductLoanTableAlias, 
+    	mPaymentDetailTableAlias, mSavingsProductTableAlias, sqlJoinKey, parentTableAlias, 
+    	mSavingsAccountTableAlias;
+    	DataExportSqlJoin dataExportSqlJoin;
+    	
     	if (coreColumn != null) {
-            final String baseEntityName = dataExportEntityData.getEntityName();
-            final DataExportBaseEntity baseEntity = DataExportBaseEntity.fromEntityName(baseEntityName);
-            int referencedTableIndex = 0;
             String referencedTableName = coreColumn.getReferencedTableName();
         	DataExportCoreTable referencedTable = DataExportCoreTable.newInstance(referencedTableName);
         	String referencedColumnName = coreColumn.getReferencedColumnName();
         	String foreignKeyIndexColumnName = coreColumn.getForeignKeyIndexColumnName();
-        	
-        	// variables initialized with null values
-        	String sqlStatement, mClientTableAlias, mGroupTableAlias, mGroupClientTableAlias, 
-        	mOfficeTableAlias, mStaffTableAlias, mLoanTableAlias, mProductLoanTableAlias, 
-        	mPaymentDetailTableAlias, mSavingsProductTableAlias, sqlJoinKey, parentTableAlias, 
-        	mCodeValueTableAlias, mSavingsAccountTableAlias;
-        	DataExportSqlJoin dataExportSqlJoin;
         	
         	switch (baseEntity) {
 	    		case CLIENT:
 	    			switch (coreColumn) {
 	    				case GROUP_NAME:
 	    				case GROUP_ID:
-	    					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(referencedTableIndex++);
-	    					mGroupClientTableAlias = DataExportCoreTable.M_GROUP_CLIENT.
-	    							getAlias(referencedTableIndex++);
-	    					
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
 	    							DataExportCoreTable.M_GROUP_CLIENT);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mGroupClientTableAlias = DataExportCoreTable.M_GROUP_CLIENT.
+		    							getAlias(aliasPostfixNumber.intValue());
+	    						
 	        					// m_client and m_group_client table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_GROUP_CLIENT.getName()
 	        							+ "` `" + mGroupClientTableAlias + "` on `" + mGroupClientTableAlias
@@ -485,18 +525,25 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					
 	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_GROUP, 
 	    							DataExportCoreTable.M_GROUP_CLIENT);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_group_client and m_group table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_GROUP.getName() + "` `"
 	                        			+ mGroupTableAlias + "` on `" + mGroupTableAlias + "`.`id` = `"
-	                							+ mGroupClientTableAlias + "`.`group_id`";
+	                							+ dataExportSqlJoin.getChildTableAlias() + "`.`group_id`";
 	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_GROUP, 
 	        							DataExportCoreTable.M_GROUP_CLIENT, sqlStatement, mGroupTableAlias, 
-	        							mGroupClientTableAlias);
+	        							dataExportSqlJoin.getChildTableAlias());
 	        					
 	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
 	    						
@@ -526,14 +573,16 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					break;
 	    				case BRANCH_NAME:
 	    				case STAFF_NAME:
-	    				case GENDER:
-	    					parentTableAlias = referencedTable.getAlias(referencedTableIndex++);
-	    					
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(referencedTable, 
 	    							DataExportCoreTable.M_CLIENT);
 	    					
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					parentTableAlias = referencedTable.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_office/m_staff and m_client table join
 	        					sqlStatement = "`" + referencedTable.getName() + "` `" + parentTableAlias 
 	                        			+ "` on `" + parentTableAlias + "`.`id` = `" + baseEntityName + "`.`"
@@ -568,7 +617,6 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					}
 	    					// =============================================================================
 	    					break;
-	    					
 	    				case CLIENT_ID:
 	    				case CLIENT_NAME:
 	    					// =============================================================================
@@ -590,6 +638,7 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					break;
 	    				case PHONE_NUMBER:
 	    				case DATE_OF_BIRTH:
+	    				case GENDER:
 	    					// =============================================================================
 	    					if (isSelectStatement) {
 	    						sqlStatement = "`" + baseEntityName + "`.`" + coreColumn.getName() + "` as `"
@@ -643,14 +692,17 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					break;
 	    				case BRANCH_NAME:
 	    				case STAFF_NAME:
-	    					parentTableAlias = referencedTable.getAlias(referencedTableIndex++);
-	    					
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(referencedTable, 
 	    							DataExportCoreTable.M_GROUP);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					parentTableAlias = referencedTable.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_office/m_staff and m_group table join
 	        					sqlStatement = "`" + referencedTableName + "` `" + parentTableAlias 
 	                        			+ "` on `" + parentTableAlias + "`.`id` = `" + baseEntityName + "`.`"
@@ -703,14 +755,17 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    				case LOAN_OFFICER_NAME:
 	    				case CLIENT_NAME:
 	    				case CLIENT_ID:
-	    					parentTableAlias = referencedTable.getAlias(referencedTableIndex++);
-	    					
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(referencedTable, 
 	    							DataExportCoreTable.M_LOAN);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					parentTableAlias = referencedTable.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_client/m_staff and m_loan
 	    						sqlStatement = "`" + referencedTable.getName() + "` `" + parentTableAlias 
 	                        			+ "` on `" + parentTableAlias + "`.`id` = `" + baseEntityName + "`.`"
@@ -747,16 +802,18 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					break;
 	    				case GROUP_NAME:
 	    				case GROUP_ID:
-	    					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(referencedTableIndex++);
-	    					mGroupClientTableAlias = DataExportCoreTable.M_GROUP_CLIENT.getAlias(
-	    							referencedTableIndex++);
-	    					
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_LOAN, 
 	    							DataExportCoreTable.M_GROUP_CLIENT);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mGroupClientTableAlias = DataExportCoreTable.M_GROUP_CLIENT.getAlias(
+		    							aliasPostfixNumber.intValue());
+	    						
 	    						// m_loan and m_group_client table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_GROUP_CLIENT.getName()
 	        							+ "` `" + mGroupClientTableAlias + "` on `" + mGroupClientTableAlias
@@ -773,20 +830,27 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					
 	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_GROUP, 
 	    							DataExportCoreTable.M_GROUP_CLIENT);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_group_client and m_group table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_GROUP.getName() + "` `"
 	                        			+ mGroupTableAlias + "` on `" + mGroupTableAlias + "`.`id` = case when "
 	                							+ "isnull(`" + baseEntityName + "`.`group_id`) then `"
-	                									+ mGroupClientTableAlias + "`.`group_id` else `"
+	                									+ dataExportSqlJoin.getChildTableAlias() + "`.`group_id` else `"
 	                											+ baseEntityName + "`.`group_id` end";
 	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_GROUP, 
 	        							DataExportCoreTable.M_GROUP_CLIENT, sqlStatement, mGroupTableAlias, 
-	        							mGroupClientTableAlias);
+	        							dataExportSqlJoin.getChildTableAlias());
 	        					
 	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
 	    						
@@ -815,16 +879,17 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					break;
 	    				case BRANCH_NAME:
-	    					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
-	    					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(referencedTableIndex++);
-	    					mOfficeTableAlias = DataExportCoreTable.M_OFFICE.getAlias(referencedTableIndex++);
-	    					
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
 	    							DataExportCoreTable.M_LOAN);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_loan and m_client table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_CLIENT.getName() + "` `"
 	        							+ mClientTableAlias + "` on `" + mClientTableAlias + "`.`id` = `"
@@ -846,6 +911,11 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_loan and m_group table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_GROUP.getName() + "` `"
 	                        			+ mGroupTableAlias + "` on `" + mGroupTableAlias + "`.`id` = `"
@@ -867,12 +937,27 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
+		    							DataExportCoreTable.M_LOAN);
+	    						
+	    						DataExportSqlJoin clientLoanSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    						
+	    						sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_GROUP, 
+		    							DataExportCoreTable.M_LOAN);
+	    						
+	    						DataExportSqlJoin groupLoanSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    						
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mOfficeTableAlias = DataExportCoreTable.M_OFFICE.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_office and m_client/m_group table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_OFFICE.getName() + "` `"
 	                        			+ mOfficeTableAlias + "` on `" + mOfficeTableAlias + "`.`id` = case when "
 	                					+ "isnull(`" + baseEntityName + "`.`group_id`) then `"
-	                							+ mClientTableAlias + "`.`office_id` else `"
-	                									+ mGroupTableAlias + "`.`office_id` end";
+	                							+ clientLoanSqlJoin.getParentTableAlias() + "`.`office_id` else `"
+	                									+ groupLoanSqlJoin.getParentTableAlias() + "`.`office_id` end";
 	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_OFFICE, 
 	        							DataExportCoreTable.M_LOAN, sqlStatement, mOfficeTableAlias, 
 	        							baseEntityName);
@@ -885,6 +970,9 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					
 	    					// =============================================================================
+	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_OFFICE, 
+	    							DataExportCoreTable.M_LOAN);
+	    					
 	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
 	    					
 	    					if (isSelectStatement) {
@@ -904,16 +992,17 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					break;
 	    				case STAFF_NAME:
-	    					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
-	    					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(referencedTableIndex++);
-	    					mStaffTableAlias = DataExportCoreTable.M_STAFF.getAlias(referencedTableIndex++);
-	    					
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
 	    							DataExportCoreTable.M_LOAN);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_loan and m_client table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_CLIENT.getName() + "` `"
 	        							+ mClientTableAlias + "` on `" + mClientTableAlias + "`.`id` = `"
@@ -935,6 +1024,11 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_loan and m_group table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_GROUP.getName() + "` `"
 	                        			+ mGroupTableAlias + "` on `" + mGroupTableAlias + "`.`id` = `"
@@ -956,12 +1050,27 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
+		    							DataExportCoreTable.M_LOAN);
+	    						
+	    						DataExportSqlJoin clientLoanSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    						
+	    						sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_GROUP, 
+		    							DataExportCoreTable.M_LOAN);
+	    						
+	    						DataExportSqlJoin groupLoanSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    						
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mStaffTableAlias = DataExportCoreTable.M_STAFF.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_staff and m_client/m_group table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_STAFF.getName() + "` `"
 	                    			+ mStaffTableAlias + "` on `" + mStaffTableAlias + "`.`id` = case when "
 	            					+ "isnull(`" + baseEntityName + "`.`group_id`) then `"
-	            							+ mClientTableAlias + "`.`staff_id` else `"
-	            									+ mGroupTableAlias + "`.`staff_id` end";
+	            							+ clientLoanSqlJoin.getParentTableAlias() + "`.`staff_id` else `"
+	            									+ groupLoanSqlJoin.getParentTableAlias() + "`.`staff_id` end";
 	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_STAFF, 
 	        							DataExportCoreTable.M_LOAN, sqlStatement, mStaffTableAlias, 
 	        							baseEntityName);
@@ -974,6 +1083,9 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	                        
 	                        // =============================================================================
+	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_STAFF, 
+	    							DataExportCoreTable.M_LOAN);
+	    					
 	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
 	    					
 	    					if (isSelectStatement) {
@@ -994,13 +1106,17 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					break;
 	    				case DATE_OF_BIRTH:
 	    				case PHONE_NUMBER:
-	    					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
-	    					
+	    				case GENDER:
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
 	    							DataExportCoreTable.M_LOAN);
 	    					
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_loan and m_client table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_CLIENT.getName() + "` `" + mClientTableAlias 
 	                        			+ "` on `" + mClientTableAlias + "`.`id` = `" + baseEntityName 
@@ -1034,69 +1150,6 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    						sqlBuilder.WHERE(sqlStatement);
 	    					}
 	    					break;
-	    				case GENDER:
-	    					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
-	    					mCodeValueTableAlias = referencedTable.getAlias(referencedTableIndex++);
-	    					
-	    					// =============================================================================
-	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
-	    							DataExportCoreTable.M_LOAN);
-	    					
-	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
-	    						sqlStatement = "`" + DataExportCoreTable.M_CLIENT.getName() + "` `"
-	        							+ mClientTableAlias + "` on `" + mClientTableAlias + "`.`id` = `"
-										+ baseEntityName + "`.`client_id`";
-	    						
-	    						dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_CLIENT, 
-	        							DataExportCoreTable.M_LOAN, sqlStatement, mClientTableAlias, 
-	        							baseEntityName);
-	    						
-	    						sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
-	    						
-	    						// add the join to the map
-	        					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
-	    					}
-	    					// =============================================================================
-	    					
-	    					// =============================================================================
-	    					sqlJoinKey = DataExportSqlJoin.createId(referencedTable, 
-	    							DataExportCoreTable.M_CLIENT);
-	    					
-	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
-	    						sqlStatement = "`" + referencedTable.getName() + "` `" + mCodeValueTableAlias + "` on `"
-	        	                        + mCodeValueTableAlias + "`.`id` = `" + mClientTableAlias + "`.`" 
-	    										+ coreColumn.getName() + "`";
-	    						
-	    						dataExportSqlJoin = DataExportSqlJoin.newInstance(referencedTable, 
-	        							DataExportCoreTable.M_CLIENT, sqlStatement, mCodeValueTableAlias, 
-	        							mClientTableAlias);
-	    						
-	    						sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
-	    						
-	    						// add the join to the map
-	        					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
-	    					}
-	    					// =============================================================================
-	    					
-	    					// =============================================================================
-	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
-	    					
-	    					if (isSelectStatement) {
-	    						sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`" 
-	    								+ referencedColumnName + "` as `" + coreColumn.getLabel() + "`";
-	    						
-	    						// add the select statement
-	        					sqlBuilder.SELECT(sqlStatement);
-	    						
-	    					} else if (filterValue != null) {
-	    						sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`" 
-	    								+ referencedColumnName + "` " + filterValue;
-	    						
-	    						// add a WHERE clause
-	    						sqlBuilder.WHERE(sqlStatement);
-	    					}
-	    					// =============================================================================
-	    					break;
 	    				default:
 	    					// =============================================================================
 	    					if (isSelectStatement) {
@@ -1114,14 +1167,17 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    			switch (coreColumn) {
 	    				case CLIENT_NAME:
 	    				case CLIENT_ID:
-	    					parentTableAlias = referencedTable.getAlias(referencedTableIndex++);
-	    					
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(referencedTable, 
 	    							DataExportCoreTable.M_SAVINGS_ACCOUNT);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					parentTableAlias = referencedTable.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_client/m_staff and m_savings_account
 	    						sqlStatement = "`" + referencedTable.getName() + "` `" + parentTableAlias 
 	                        			+ "` on `" + parentTableAlias + "`.`id` = `" + baseEntityName + "`.`"
@@ -1158,16 +1214,18 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					break;
 	    				case GROUP_NAME:
 	    				case GROUP_ID:
-	    					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(referencedTableIndex++);
-	    					mGroupClientTableAlias = DataExportCoreTable.M_GROUP_CLIENT.getAlias(
-	    							referencedTableIndex++);
-	    					
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_SAVINGS_ACCOUNT, 
 	    							DataExportCoreTable.M_GROUP_CLIENT);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mGroupClientTableAlias = DataExportCoreTable.M_GROUP_CLIENT.getAlias(
+		    							aliasPostfixNumber.intValue());
+	    						
 	    						// m_loan and m_group_client table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_GROUP_CLIENT.getName()
 	        							+ "` `" + mGroupClientTableAlias + "` on `" + mGroupClientTableAlias
@@ -1184,20 +1242,27 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					
 	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_GROUP, 
 	    							DataExportCoreTable.M_GROUP_CLIENT);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_group_client and m_group table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_GROUP.getName() + "` `"
 	                        			+ mGroupTableAlias + "` on `" + mGroupTableAlias + "`.`id` = case when "
 	                							+ "isnull(`" + baseEntityName + "`.`group_id`) then `"
-	                									+ mGroupClientTableAlias + "`.`group_id` else `"
+	                									+ dataExportSqlJoin.getChildTableAlias() + "`.`group_id` else `"
 	                											+ baseEntityName + "`.`group_id` end";
 	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_GROUP, 
 	        							DataExportCoreTable.M_GROUP_CLIENT, sqlStatement, mGroupTableAlias, 
-	        							mGroupClientTableAlias);
+	        							dataExportSqlJoin.getChildTableAlias());
 	        					
 	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
 	    						
@@ -1226,16 +1291,17 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					break;
 	    				case BRANCH_NAME:
-	    					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
-	    					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(referencedTableIndex++);
-	    					mOfficeTableAlias = DataExportCoreTable.M_OFFICE.getAlias(referencedTableIndex++);
-	    					
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
 	    							DataExportCoreTable.M_SAVINGS_ACCOUNT);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_loan and m_client table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_CLIENT.getName() + "` `"
 	        							+ mClientTableAlias + "` on `" + mClientTableAlias + "`.`id` = `"
@@ -1257,6 +1323,11 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_loan and m_group table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_GROUP.getName() + "` `"
 	                        			+ mGroupTableAlias + "` on `" + mGroupTableAlias + "`.`id` = `"
@@ -1278,12 +1349,27 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
+		    							DataExportCoreTable.M_SAVINGS_ACCOUNT);
+	    						
+	    						DataExportSqlJoin clientSavingsAccount = sqlJoinMap.get(sqlJoinKey);
+	    						
+	    						sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_GROUP, 
+		    							DataExportCoreTable.M_SAVINGS_ACCOUNT);
+	    						
+	    						DataExportSqlJoin groupSavingsAccount = sqlJoinMap.get(sqlJoinKey);
+	    						
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mOfficeTableAlias = DataExportCoreTable.M_OFFICE.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_office and m_client/m_group table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_OFFICE.getName() + "` `"
 	                        			+ mOfficeTableAlias + "` on `" + mOfficeTableAlias + "`.`id` = case when "
 	                					+ "isnull(`" + baseEntityName + "`.`group_id`) then `"
-	                							+ mClientTableAlias + "`.`office_id` else `"
-	                									+ mGroupTableAlias + "`.`office_id` end";
+	                							+ clientSavingsAccount.getParentTableAlias() + "`.`office_id` else `"
+	                									+ groupSavingsAccount.getParentTableAlias() + "`.`office_id` end";
 	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_OFFICE, 
 	        							DataExportCoreTable.M_SAVINGS_ACCOUNT, sqlStatement, mOfficeTableAlias, 
 	        							baseEntityName);
@@ -1296,6 +1382,9 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					
 	    					// =============================================================================
+	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_OFFICE, 
+	    							DataExportCoreTable.M_SAVINGS_ACCOUNT);
+	    					
 	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
 	    					
 	    					if (isSelectStatement) {
@@ -1315,16 +1404,17 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					break;
 	    				case STAFF_NAME:
-	    					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
-	    					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(referencedTableIndex++);
-	    					mStaffTableAlias = DataExportCoreTable.M_STAFF.getAlias(referencedTableIndex++);
-	    					
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
 	    							DataExportCoreTable.M_SAVINGS_ACCOUNT);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_loan and m_client table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_CLIENT.getName() + "` `"
 	        							+ mClientTableAlias + "` on `" + mClientTableAlias + "`.`id` = `"
@@ -1346,6 +1436,11 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_loan and m_group table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_GROUP.getName() + "` `"
 	                        			+ mGroupTableAlias + "` on `" + mGroupTableAlias + "`.`id` = `"
@@ -1367,12 +1462,27 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
+		    							DataExportCoreTable.M_SAVINGS_ACCOUNT);
+	    						
+	    						DataExportSqlJoin clientSavingsAccount = sqlJoinMap.get(sqlJoinKey);
+	    						
+	    						sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_GROUP, 
+		    							DataExportCoreTable.M_SAVINGS_ACCOUNT);
+	    						
+	    						DataExportSqlJoin groupSavingsAccount = sqlJoinMap.get(sqlJoinKey);
+	    						
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mStaffTableAlias = DataExportCoreTable.M_STAFF.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_staff and m_client/m_group table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_STAFF.getName() + "` `"
 	                    			+ mStaffTableAlias + "` on `" + mStaffTableAlias + "`.`id` = case when "
 	            					+ "isnull(`" + baseEntityName + "`.`group_id`) then `"
-	            							+ mClientTableAlias + "`.`staff_id` else `"
-	            									+ mGroupTableAlias + "`.`staff_id` end";
+	            							+ clientSavingsAccount.getParentTableAlias() + "`.`staff_id` else `"
+	            									+ groupSavingsAccount.getParentTableAlias() + "`.`staff_id` end";
 	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_STAFF, 
 	        							DataExportCoreTable.M_SAVINGS_ACCOUNT, sqlStatement, mStaffTableAlias, 
 	        							baseEntityName);
@@ -1385,6 +1495,9 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	                        
 	                        // =============================================================================
+	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_STAFF, 
+	    							DataExportCoreTable.M_SAVINGS_ACCOUNT);
+	    					
 	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
 	    					
 	    					if (isSelectStatement) {
@@ -1405,13 +1518,17 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	                    	break;
 	    				case DATE_OF_BIRTH:
 	    				case PHONE_NUMBER:
-	    					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
-	    					
+	    				case GENDER:
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
 	    							DataExportCoreTable.M_SAVINGS_ACCOUNT);
 	    					
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_loan and m_client table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_CLIENT.getName() + "` `" + mClientTableAlias 
 	                        			+ "` on `" + mClientTableAlias + "`.`id` = `" + baseEntityName 
@@ -1445,69 +1562,6 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    						sqlBuilder.WHERE(sqlStatement);
 	    					}
 	    					break;
-	    				case GENDER:
-	    					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
-	    					mCodeValueTableAlias = referencedTable.getAlias(referencedTableIndex++);
-	    					
-	    					// =============================================================================
-	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
-	    							DataExportCoreTable.M_SAVINGS_ACCOUNT);
-	    					
-	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
-	    						sqlStatement = "`" + DataExportCoreTable.M_CLIENT.getName() + "` `"
-	        							+ mClientTableAlias + "` on `" + mClientTableAlias + "`.`id` = `"
-										+ baseEntityName + "`.`client_id`";
-	    						
-	    						dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_CLIENT, 
-	        							DataExportCoreTable.M_SAVINGS_ACCOUNT, sqlStatement, mClientTableAlias, 
-	        							baseEntityName);
-	    						
-	    						sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
-	    						
-	    						// add the join to the map
-	        					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
-	    					}
-	    					// =============================================================================
-	    					
-	    					// =============================================================================
-	    					sqlJoinKey = DataExportSqlJoin.createId(referencedTable, 
-	    							DataExportCoreTable.M_CLIENT);
-	    					
-	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
-	    						sqlStatement = "`" + referencedTable.getName() + "` `" + mCodeValueTableAlias + "` on `"
-	        	                        + mCodeValueTableAlias + "`.`id` = `" + mClientTableAlias + "`.`" 
-	    										+ coreColumn.getName() + "`";
-	    						
-	    						dataExportSqlJoin = DataExportSqlJoin.newInstance(referencedTable, 
-	        							DataExportCoreTable.M_CLIENT, sqlStatement, mCodeValueTableAlias, 
-	        							mClientTableAlias);
-	    						
-	    						sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
-	    						
-	    						// add the join to the map
-	        					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
-	    					}
-	    					// =============================================================================
-	    					
-	    					// =============================================================================
-	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
-	    					
-	    					if (isSelectStatement) {
-	    						sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`" 
-	    								+ referencedColumnName + "` as `" + coreColumn.getLabel() + "`";
-	    						
-	    						// add the select statement
-	        					sqlBuilder.SELECT(sqlStatement);
-	    						
-	    					} else if (filterValue != null) {
-	    						sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`" 
-	    								+ referencedColumnName + "` " + filterValue;
-	    						
-	    						// add a WHERE clause
-	    						sqlBuilder.WHERE(sqlStatement);
-	    					}
-	    					// =============================================================================
-	    					break;
 	    				default:
 	    					// =============================================================================
 	    					if (isSelectStatement) {
@@ -1523,6 +1577,58 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    			
 	    		case LOAN_TRANSACTION:
 	    			switch (coreColumn) {
+	    				case LOAN_TRANSACTION_TOTAL_REPAID:
+	    					// =============================================================================
+	    					if (isSelectStatement) {
+	    						sqlStatement = "case when `" + baseEntityName + "`.`amount` "
+	        							+ "is not null and `" + baseEntityName + "`.`transaction_type_enum` = "
+										+ LoanTransactionType.REPAYMENT.getValue() + " then `" + baseEntityName 
+												+ "`.`amount` else NULL end as `"
+														+ coreColumn.getLabel() + "`";
+	    						
+	    						// add the select statement
+	        					sqlBuilder.SELECT(sqlStatement);
+	    						
+	    					} else if (filterValue != null) {
+	    						sqlStatement = "case when `" + baseEntityName + "`.`amount` "
+	        							+ "is not null and `" + baseEntityName + "`.`transaction_type_enum` = "
+										+ LoanTransactionType.REPAYMENT.getValue() + " then `" + baseEntityName 
+												+ "`.`amount` else NULL end "
+														+ filterValue;
+	    						
+	    						// add a WHERE clause
+	    						sqlBuilder.WHERE(sqlStatement);
+	    					}
+	    					// =============================================================================
+	    					break;
+	    				case LOAN_TRANSACTION_PRINCIPAL_REPAID:
+	    				case LOAN_TRANSACTION_INTEREST_REPAID:
+	    				case LOAN_TRANSACTION_FEES_REPAID:
+	    				case LOAN_TRANSACTION_PENALTIES_REPAID:
+	    				case LOAN_TRANSACTION_OVERPAYMENT_REPAID:
+	    					// =============================================================================
+	    					if (isSelectStatement) {
+	    						sqlStatement = "case when `" + baseEntityName + "`.`" + coreColumn.getName() + "` "
+	        							+ "is not null and `" + baseEntityName + "`.`transaction_type_enum` = "
+										+ LoanTransactionType.REPAYMENT.getValue() + " then `" + baseEntityName 
+												+ "`.`" + coreColumn.getName() + "` else NULL end as `"
+														+ coreColumn.getLabel() + "`";
+	    						
+	    						// add the select statement
+	        					sqlBuilder.SELECT(sqlStatement);
+	    						
+	    					} else if (filterValue != null) {
+	    						sqlStatement = "case when `" + baseEntityName + "`.`" + coreColumn.getName() + "` "
+	        							+ "is not null and `" + baseEntityName + "`.`transaction_type_enum` = "
+										+ LoanTransactionType.REPAYMENT.getValue() + " then `" + baseEntityName 
+												+ "`.`" + coreColumn.getName() + "` else NULL end "
+														+ filterValue;
+	    						
+	    						// add a WHERE clause
+	    						sqlBuilder.WHERE(sqlStatement);
+	    					}
+	    					// =============================================================================
+	    					break;
 	    				case LOAN_TRANSACTION_INTEREST_ACCRUED:
 	    					// =============================================================================
 	    					if (isSelectStatement) {
@@ -1592,18 +1698,42 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					}
 	    					// =============================================================================
 	    					break;
+	    				case LOAN_TRANSACTION_TOTAL_RECOVERED:
+	    					// =============================================================================
+	    					if (isSelectStatement) {
+	    						sqlStatement = "case when `" + baseEntityName + "`.`transaction_type_enum` = "
+										+ LoanTransactionType.RECOVERY_REPAYMENT.getValue() + " then `" 
+												+ baseEntityName + "`.`amount` else NULL end as `"
+														+ coreColumn.getLabel() + "`";
+	    						
+	    						// add the select statement
+	        					sqlBuilder.SELECT(sqlStatement);
+	    						
+	    					} else if (filterValue != null) {
+	    						sqlStatement = "case when `" + baseEntityName + "`.`transaction_type_enum` = "
+										+ LoanTransactionType.RECOVERY_REPAYMENT.getValue() + " then `" 
+												+ baseEntityName + "`.`amount` else NULL end `"
+														+ filterValue;
+	    						
+	    						// add a WHERE clause
+	    						sqlBuilder.WHERE(sqlStatement);
+	    					}
+	    					// =============================================================================
+	    					break;
 	    				case LOAN_TRANSACTION_PRODUCT_SHORT_NAME:
 	    				case LOAN_TRANSACTION_PRODUCT_NAME:
 	    				case LOAN_TRANSACTION_PRODUCT_ID:
-	    					mLoanTableAlias = DataExportCoreTable.M_LOAN.getAlias(referencedTableIndex++);
-	    					mProductLoanTableAlias = referencedTable.getAlias(referencedTableIndex++);
-	    					
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_LOAN, 
 	    							DataExportCoreTable.M_LOAN_TRANSACTION);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mLoanTableAlias = DataExportCoreTable.M_LOAN.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						sqlStatement = "`" + DataExportCoreTable.M_LOAN.getName() + "` `"
 	        							+ mLoanTableAlias + "` on `" + mLoanTableAlias + "`.`id` = `"
 												+ baseEntityName + "`.`loan_id`";
@@ -1619,17 +1749,24 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					
 	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
 	    					sqlJoinKey = DataExportSqlJoin.createId(referencedTable, 
 	    							DataExportCoreTable.M_LOAN);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mProductLoanTableAlias = referencedTable.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						sqlStatement = "`" + referencedTable.getName() + "` `" + mProductLoanTableAlias 
-	                        			+ "` on `" + mProductLoanTableAlias + "`.`id` = `" + mLoanTableAlias + "`.`"
+	                        			+ "` on `" + mProductLoanTableAlias + "`.`id` = `" + dataExportSqlJoin.getParentTableAlias() + "`.`"
 	                							+ foreignKeyIndexColumnName + "`";
 	    						dataExportSqlJoin = DataExportSqlJoin.newInstance(referencedTable, 
 	        							DataExportCoreTable.M_LOAN, sqlStatement, mProductLoanTableAlias, 
-	        							mLoanTableAlias);
+	        							dataExportSqlJoin.getParentTableAlias());
 	    						
 	    						sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
 	    						
@@ -1658,14 +1795,17 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					break;
 	    				case LOAN_TRANSACTION_LOAN_ACCOUNT_NUMBER:
-	    					mLoanTableAlias = DataExportCoreTable.M_LOAN.getAlias(referencedTableIndex++);
-	    					
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_LOAN, 
 	    							DataExportCoreTable.M_LOAN_TRANSACTION);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mLoanTableAlias = DataExportCoreTable.M_LOAN.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						sqlStatement = "`" + DataExportCoreTable.M_LOAN.getName() + "` `"
 	        							+ mLoanTableAlias + "` on `" + mLoanTableAlias + "`.`id` = `"
 												+ baseEntityName + "`.`loan_id`";
@@ -1700,15 +1840,17 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					break;
 	    				case LOAN_TRANSACTION_PAYMENT_CHANNEL:
-	    					mPaymentDetailTableAlias = DataExportCoreTable.M_PAYMENT_DETAIL.getAlias(referencedTableIndex++);
-	    					parentTableAlias = referencedTable.getAlias(referencedTableIndex++);
-	    					
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_PAYMENT_DETAIL, 
 	    							DataExportCoreTable.M_LOAN_TRANSACTION);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mPaymentDetailTableAlias = DataExportCoreTable.M_PAYMENT_DETAIL.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						sqlStatement = "`" + DataExportCoreTable.M_PAYMENT_DETAIL.getName() + "` `"
 	        							+ mPaymentDetailTableAlias + "` on `" + mPaymentDetailTableAlias + "`.`id` = `"
 										+ baseEntityName + "`.`payment_detail_id`";
@@ -1724,17 +1866,24 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					
 	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
 	    					sqlJoinKey = DataExportSqlJoin.createId(referencedTable, 
 	    							DataExportCoreTable.M_PAYMENT_DETAIL);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					parentTableAlias = referencedTable.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						sqlStatement = "`" + referencedTable.getName() + "` `" + parentTableAlias 
-	                        			+ "` on `" + parentTableAlias + "`.`id` = `" + mPaymentDetailTableAlias + "`.`"
+	                        			+ "` on `" + parentTableAlias + "`.`id` = `" + dataExportSqlJoin.getParentTableAlias() + "`.`"
 	                							+ foreignKeyIndexColumnName + "`";
 	    						dataExportSqlJoin = DataExportSqlJoin.newInstance(referencedTable, 
 	        							DataExportCoreTable.M_PAYMENT_DETAIL, sqlStatement, parentTableAlias, 
-	        							mPaymentDetailTableAlias);
+	        							dataExportSqlJoin.getParentTableAlias());
 	        					
 	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
 	    						
@@ -1763,14 +1912,17 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					break;
 	    				case LOAN_TRANSACTION_REFERENCE:
-	    					mPaymentDetailTableAlias = DataExportCoreTable.M_PAYMENT_DETAIL.getAlias(referencedTableIndex++);
-	    					
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_PAYMENT_DETAIL, 
 	    							DataExportCoreTable.M_LOAN_TRANSACTION);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mPaymentDetailTableAlias = DataExportCoreTable.M_PAYMENT_DETAIL.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						sqlStatement = "`" + DataExportCoreTable.M_PAYMENT_DETAIL.getName() + "` `"
 	        							+ mPaymentDetailTableAlias + "` on `" + mPaymentDetailTableAlias + "`.`id` = `"
 												+ baseEntityName + "`.`payment_detail_id`";
@@ -1807,15 +1959,17 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    				case LOAN_OFFICER_NAME:
 	    				case CLIENT_NAME:
 	    				case CLIENT_ID:
-	    					mLoanTableAlias = DataExportCoreTable.M_LOAN.getAlias(referencedTableIndex++);
-	    					parentTableAlias = referencedTable.getAlias(referencedTableIndex++);
-	    					
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_LOAN, 
 	    							DataExportCoreTable.M_LOAN_TRANSACTION);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mLoanTableAlias = DataExportCoreTable.M_LOAN.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						sqlStatement = "`" + DataExportCoreTable.M_LOAN.getName() + "` `"
 	        							+ mLoanTableAlias + "` on `" + mLoanTableAlias + "`.`id` = `"
 												+ baseEntityName + "`.`loan_id`";
@@ -1831,17 +1985,24 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					
 	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
 	    					sqlJoinKey = DataExportSqlJoin.createId(referencedTable, 
 	    							DataExportCoreTable.M_LOAN);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					parentTableAlias = referencedTable.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						sqlStatement = "`" + referencedTable.getName() + "` `" + parentTableAlias 
-	                        			+ "` on `" + parentTableAlias + "`.`id` = `" + mLoanTableAlias + "`.`"
+	                        			+ "` on `" + parentTableAlias + "`.`id` = `" + dataExportSqlJoin.getParentTableAlias() + "`.`"
 	                							+ foreignKeyIndexColumnName + "`";
 	    						dataExportSqlJoin = DataExportSqlJoin.newInstance(referencedTable, 
 	        							DataExportCoreTable.M_LOAN, sqlStatement, parentTableAlias, 
-	        							mLoanTableAlias);
+	        							dataExportSqlJoin.getParentTableAlias());
 	        					
 	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
 	    						
@@ -1871,16 +2032,17 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					break;
 	    				case GROUP_NAME:
 	    				case GROUP_ID:
-	    					mLoanTableAlias = DataExportCoreTable.M_LOAN.getAlias(referencedTableIndex++);
-	    					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(referencedTableIndex++);
-	    					mGroupClientTableAlias = DataExportCoreTable.M_GROUP_CLIENT.getAlias(referencedTableIndex++);
-	    					
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_LOAN, 
 	    							DataExportCoreTable.M_LOAN_TRANSACTION);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mLoanTableAlias = DataExportCoreTable.M_LOAN.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_loan and m_group_client table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_LOAN.getName() + "` `"
 	        							+ mLoanTableAlias + "` on `" + mLoanTableAlias + "`.`id` = `"
@@ -1897,17 +2059,24 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					
 	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_LOAN, 
 	    							DataExportCoreTable.M_GROUP_CLIENT);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
-	    						// m_loan and m_group_client table join
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mGroupClientTableAlias = DataExportCoreTable.M_GROUP_CLIENT.getAlias(aliasPostfixNumber.intValue());
+		    					
+		    					// m_loan and m_group_client table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_GROUP_CLIENT.getName()
 	        							+ "` `" + mGroupClientTableAlias + "` on `" + mGroupClientTableAlias
-	        									+ "`.`client_id` = `" + mLoanTableAlias + "`.`client_id`";
+	        									+ "`.`client_id` = `" + dataExportSqlJoin.getParentTableAlias() + "`.`client_id`";
 	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_LOAN, 
-	        							DataExportCoreTable.M_GROUP_CLIENT, sqlStatement, mLoanTableAlias, 
+	        							DataExportCoreTable.M_GROUP_CLIENT, sqlStatement, dataExportSqlJoin.getParentTableAlias(), 
 	        							mGroupClientTableAlias);
 	        					
 	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
@@ -1923,15 +2092,30 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_LOAN, 
+		    							DataExportCoreTable.M_LOAN_TRANSACTION);
+	    						
+	    						DataExportSqlJoin loanTransactionSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    						
+	    						sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_LOAN, 
+		    							DataExportCoreTable.M_GROUP_CLIENT);
+	    						
+	    						DataExportSqlJoin loanGroupClientSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    						
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_group_client and m_group table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_GROUP.getName() + "` `"
 	                        			+ mGroupTableAlias + "` on `" + mGroupTableAlias + "`.`id` = case when "
-	                							+ "isnull(`" + mLoanTableAlias + "`.`group_id`) then `"
-	                									+ mGroupClientTableAlias + "`.`group_id` else `"
-	                											+ mLoanTableAlias + "`.`group_id` end";
+	                							+ "isnull(`" + loanTransactionSqlJoin.getParentTableAlias() + "`.`group_id`) then `"
+	                									+ loanGroupClientSqlJoin.getChildTableAlias() + "`.`group_id` else `"
+	                											+ loanTransactionSqlJoin.getParentTableAlias() + "`.`group_id` end";
 	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_GROUP, 
 	        							DataExportCoreTable.M_GROUP_CLIENT, sqlStatement, mGroupTableAlias, 
-	        							mGroupClientTableAlias);
+	        							loanGroupClientSqlJoin.getChildTableAlias());
 	        					
 	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
 	    						
@@ -1941,6 +2125,9 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					
 	    					// =============================================================================
+	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_GROUP, 
+	    							DataExportCoreTable.M_GROUP_CLIENT);
+	    					
 	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
 	    					
 	    					if (isSelectStatement) {
@@ -1960,14 +2147,17 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					break;
 	    				case BRANCH_NAME:
-	    					mOfficeTableAlias = DataExportCoreTable.M_OFFICE.getAlias(referencedTableIndex++);
-	    					
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_OFFICE, 
 	    							DataExportCoreTable.M_LOAN_TRANSACTION);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mOfficeTableAlias = DataExportCoreTable.M_OFFICE.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						sqlStatement = "`" + DataExportCoreTable.M_OFFICE.getName() + "` `"
 	        							+ mOfficeTableAlias + "` on `" + mOfficeTableAlias + "`.`id` = `"
 												+ baseEntityName + "`.`office_id`";
@@ -2002,17 +2192,17 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					break;
 	    				case STAFF_NAME:
-	    					mLoanTableAlias = DataExportCoreTable.M_LOAN.getAlias(referencedTableIndex++);
-	    					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
-	    					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(referencedTableIndex++);
-	    					mStaffTableAlias = DataExportCoreTable.M_STAFF.getAlias(referencedTableIndex++);
-	    					
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_LOAN, 
 	    							DataExportCoreTable.M_LOAN_TRANSACTION);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mLoanTableAlias = DataExportCoreTable.M_LOAN.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_loan and m_group_client table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_LOAN.getName() + "` `"
 	        							+ mLoanTableAlias + "` on `" + mLoanTableAlias + "`.`id` = `"
@@ -2029,18 +2219,25 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					
 	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
 	    							DataExportCoreTable.M_LOAN);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_loan and m_group_client table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_CLIENT.getName() + "` `"
 	        							+ mClientTableAlias + "` on `" + mClientTableAlias + "`.`id` = `"
-												+ mLoanTableAlias + "`.`client_id`";
+												+ dataExportSqlJoin.getParentTableAlias() + "`.`client_id`";
 	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_CLIENT, 
 	        							DataExportCoreTable.M_LOAN, sqlStatement, mClientTableAlias, 
-	        							mLoanTableAlias);
+	        							dataExportSqlJoin.getParentTableAlias());
 	        					
 	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
 	    						
@@ -2055,13 +2252,23 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_LOAN, 
+		    							DataExportCoreTable.M_LOAN_TRANSACTION);
+	    						
+	    						DataExportSqlJoin loanTransactionSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    						
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_loan and m_group_client table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_GROUP.getName() + "` `"
 	                        			+ mGroupTableAlias + "` on `" + mGroupTableAlias + "`.`id` = `"
-	                							+ mLoanTableAlias + "`.`group_id`";
+	                							+ loanTransactionSqlJoin.getParentTableAlias() + "`.`group_id`";
 	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_GROUP, 
 	        							DataExportCoreTable.M_LOAN, sqlStatement, mGroupTableAlias, 
-	        							mLoanTableAlias);
+	        							loanTransactionSqlJoin.getParentTableAlias());
 	        					
 	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
 	    						
@@ -2076,15 +2283,35 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_LOAN, 
+		    							DataExportCoreTable.M_LOAN_TRANSACTION);
+	    						
+	    						DataExportSqlJoin loanTransactionSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    						
+	    						sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
+		    							DataExportCoreTable.M_LOAN);
+	    						
+	    						DataExportSqlJoin clientLoanSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    						
+	    						sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_GROUP, 
+		    							DataExportCoreTable.M_LOAN);
+	    						
+	    						DataExportSqlJoin groupLoanSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    						
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mStaffTableAlias = DataExportCoreTable.M_STAFF.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_group_client and m_group table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_STAFF.getName() + "` `"
 	                        			+ mStaffTableAlias + "` on `" + mStaffTableAlias + "`.`id` = case when "
-	                					+ "isnull(`" + mLoanTableAlias + "`.`group_id`) then `"
-	                							+ mClientTableAlias + "`.`staff_id` else `"
-	                									+ mGroupTableAlias + "`.`staff_id` end";
+	                					+ "isnull(`" + loanTransactionSqlJoin.getParentTableAlias() + "`.`group_id`) then `"
+	                							+ clientLoanSqlJoin.getParentTableAlias() + "`.`staff_id` else `"
+	                									+ groupLoanSqlJoin.getParentTableAlias() + "`.`staff_id` end";
 	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_STAFF, 
 	        							DataExportCoreTable.M_LOAN, sqlStatement, mStaffTableAlias, 
-	        							mLoanTableAlias);
+	        							loanTransactionSqlJoin.getParentTableAlias());
 	        					
 	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
 	    						
@@ -2094,6 +2321,9 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					
 	    					// =============================================================================
+	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_STAFF, 
+	    							DataExportCoreTable.M_LOAN);
+	    					
 	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
 	    					
 	    					if (isSelectStatement) {
@@ -2114,15 +2344,18 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					break;
 	    				case DATE_OF_BIRTH:
 	    				case PHONE_NUMBER:
-	    					mLoanTableAlias = DataExportCoreTable.M_LOAN.getAlias(referencedTableIndex++);
-	    					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
-	    					
+	    				case GENDER:
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_LOAN, 
 	    							DataExportCoreTable.M_LOAN_TRANSACTION);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mLoanTableAlias = DataExportCoreTable.M_LOAN.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						sqlStatement = "`" + DataExportCoreTable.M_LOAN.getName() + "` `"
 		    							+ mLoanTableAlias + "` on `" + mLoanTableAlias + "`.`id` = `"
     											+ baseEntityName + "`.`loan_id`";
@@ -2138,17 +2371,24 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					
 	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
 	    							DataExportCoreTable.M_LOAN);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						sqlStatement = "`" + DataExportCoreTable.M_CLIENT.getName() + "` `"
 	        							+ mClientTableAlias + "` on `" + mClientTableAlias + "`.`id` = `"
-												+ mLoanTableAlias + "`.`client_id`";
+												+ dataExportSqlJoin.getParentTableAlias() + "`.`client_id`";
 	    						dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_CLIENT, 
 	        							DataExportCoreTable.M_LOAN, sqlStatement, mClientTableAlias, 
-	        							mLoanTableAlias);
+	        							dataExportSqlJoin.getParentTableAlias());
 	        					
 	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
 	    						
@@ -2170,90 +2410,6 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					} else if (filterValue != null) {
 	    						sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`" 
 	    								+ coreColumn.getName() + "` " + filterValue;
-	    						
-	    						// add a WHERE clause
-	    						sqlBuilder.WHERE(sqlStatement);
-	    					}
-	    					// =============================================================================
-	    					break;
-	    				case GENDER:
-	    					mLoanTableAlias = DataExportCoreTable.M_LOAN.getAlias(referencedTableIndex++);
-	    					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
-	    					mCodeValueTableAlias = referencedTable.getAlias(referencedTableIndex++);
-	    					
-	    					// =============================================================================
-	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_LOAN, 
-	    							DataExportCoreTable.M_LOAN_TRANSACTION);
-	    					
-	    					// only add the join statement if it hasn't been previously added
-	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
-	    						sqlStatement = "`" + DataExportCoreTable.M_LOAN.getName() + "` `"
-	        							+ mLoanTableAlias + "` on `" + mLoanTableAlias + "`.`id` = `"
-												+ baseEntityName + "`.`loan_id`";
-	    						dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_LOAN, 
-	        							DataExportCoreTable.M_LOAN_TRANSACTION, sqlStatement, mLoanTableAlias, 
-	        							baseEntityName);
-	        					
-	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
-	    						
-	    						// add the join to the map
-	        					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
-	    					}
-	    					// =============================================================================
-	    					
-	    					// =============================================================================
-	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
-	    							DataExportCoreTable.M_LOAN);
-	    					
-	    					// only add the join statement if it hasn't been previously added
-	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
-	    						sqlStatement = "`" + DataExportCoreTable.M_CLIENT.getName() + "` `"
-	        							+ mClientTableAlias + "` on `" + mClientTableAlias + "`.`id` = `"
-												+ mLoanTableAlias + "`.`client_id`";
-	    						dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_CLIENT, 
-	        							DataExportCoreTable.M_LOAN, sqlStatement, mClientTableAlias, 
-	        							mLoanTableAlias);
-	        					
-	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
-	    						
-	    						// add the join to the map
-	        					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
-	    					}
-	    					// =============================================================================
-	    					
-	    					// =============================================================================
-	    					sqlJoinKey = DataExportSqlJoin.createId(referencedTable, 
-	    							DataExportCoreTable.M_CLIENT);
-	    					
-	    					// only add the join statement if it hasn't been previously added
-	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
-	    						sqlStatement = "`" + referencedTable.getName() + "` `" + mCodeValueTableAlias 
-										+ "` on `" + mCodeValueTableAlias + "`.`id` = `" + mClientTableAlias 
-	        	                        		+ "`.`" + coreColumn.getName() + "`";
-	    						dataExportSqlJoin = DataExportSqlJoin.newInstance(referencedTable, 
-	        							DataExportCoreTable.M_CLIENT, sqlStatement, mCodeValueTableAlias, 
-	        							mClientTableAlias);
-	        					
-	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
-	    						
-	    						// add the join to the map
-	        					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
-	    					}
-	    					// =============================================================================
-	    					
-	    					// =============================================================================
-	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
-	    					
-	    					if (isSelectStatement) {
-	    						sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`" 
-	        							+  referencedColumnName + "` as `" + coreColumn.getLabel() + "`";
-	        					
-	    						// add the select statement
-	    						sqlBuilder.SELECT(sqlStatement);
-	    						
-	    					} else if (filterValue != null) {
-	    						sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`" 
-	    								+ referencedColumnName + "` " + filterValue;
 	    						
 	    						// add a WHERE clause
 	    						sqlBuilder.WHERE(sqlStatement);
@@ -2371,15 +2527,17 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    				case SAVINGS_TRANSACTION_PRODUCT_SHORT_NAME:
 	    				case SAVINGS_TRANSACTION_PRODUCT_NAME:
 	    				case SAVINGS_TRANSACTION_PRODUCT_ID:
-	    					mSavingsAccountTableAlias = DataExportCoreTable.M_SAVINGS_ACCOUNT.getAlias(referencedTableIndex++);
-	    					mSavingsProductTableAlias = referencedTable.getAlias(referencedTableIndex++);
-	    					
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_SAVINGS_ACCOUNT, 
 	    							DataExportCoreTable.M_SAVINGS_ACCOUNT_TRANSACTION);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mSavingsAccountTableAlias = DataExportCoreTable.M_SAVINGS_ACCOUNT.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						sqlStatement = "`" + DataExportCoreTable.M_SAVINGS_ACCOUNT.getName() + "` `"
 	        							+ mSavingsAccountTableAlias + "` on `" + mSavingsAccountTableAlias + "`.`id` = `"
 												+ baseEntityName + "`.`savings_account_id`";
@@ -2395,17 +2553,24 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					
 	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
 	    					sqlJoinKey = DataExportSqlJoin.createId(referencedTable, 
 	    							DataExportCoreTable.M_SAVINGS_ACCOUNT);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mSavingsProductTableAlias = referencedTable.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						sqlStatement = "`" + referencedTable.getName() + "` `" + mSavingsProductTableAlias 
-	                        			+ "` on `" + mSavingsProductTableAlias + "`.`id` = `" + mSavingsAccountTableAlias + "`.`"
+	                        			+ "` on `" + mSavingsProductTableAlias + "`.`id` = `" + dataExportSqlJoin.getParentTableAlias() + "`.`"
 	                							+ foreignKeyIndexColumnName + "`";
 	    						dataExportSqlJoin = DataExportSqlJoin.newInstance(referencedTable, 
 	        							DataExportCoreTable.M_SAVINGS_ACCOUNT, sqlStatement, mSavingsProductTableAlias, 
-	        							mSavingsAccountTableAlias);
+	        							dataExportSqlJoin.getParentTableAlias());
 	    						
 	    						sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
 	    						
@@ -2434,14 +2599,17 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					break;
 	    				case SAVINGS_TRANSACTION_ACCOUNT_NUMBER:
-	    					mSavingsAccountTableAlias = DataExportCoreTable.M_SAVINGS_ACCOUNT.getAlias(referencedTableIndex++);
-	    					
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_SAVINGS_ACCOUNT, 
 	    							DataExportCoreTable.M_SAVINGS_ACCOUNT_TRANSACTION);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mSavingsAccountTableAlias = DataExportCoreTable.M_SAVINGS_ACCOUNT.getAlias(aliasPostfixNumber.intValue());
+		    					
 	    						sqlStatement = "`" + DataExportCoreTable.M_SAVINGS_ACCOUNT.getName() + "` `"
 	        							+ mSavingsAccountTableAlias + "` on `" + mSavingsAccountTableAlias + "`.`id` = `"
 												+ baseEntityName + "`.`savings_account_id`";
@@ -2476,15 +2644,17 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					break;
 	    				case SAVINGS_TRANSACTION_PAYMENT_CHANNEL:
-	    					mPaymentDetailTableAlias = DataExportCoreTable.M_PAYMENT_DETAIL.getAlias(referencedTableIndex++);
-	    					parentTableAlias = referencedTable.getAlias(referencedTableIndex++);
-	    					
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_PAYMENT_DETAIL, 
 	    							DataExportCoreTable.M_SAVINGS_ACCOUNT_TRANSACTION);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mPaymentDetailTableAlias = DataExportCoreTable.M_PAYMENT_DETAIL.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						sqlStatement = "`" + DataExportCoreTable.M_PAYMENT_DETAIL.getName() + "` `"
 	        							+ mPaymentDetailTableAlias + "` on `" + mPaymentDetailTableAlias + "`.`id` = `"
 										+ baseEntityName + "`.`payment_detail_id`";
@@ -2500,17 +2670,24 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					
 	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
 	    					sqlJoinKey = DataExportSqlJoin.createId(referencedTable, 
 	    							DataExportCoreTable.M_PAYMENT_DETAIL);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					parentTableAlias = referencedTable.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						sqlStatement = "`" + referencedTable.getName() + "` `" + parentTableAlias 
-	                        			+ "` on `" + parentTableAlias + "`.`id` = `" + mPaymentDetailTableAlias + "`.`"
+	                        			+ "` on `" + parentTableAlias + "`.`id` = `" + dataExportSqlJoin.getParentTableAlias() + "`.`"
 	                							+ foreignKeyIndexColumnName + "`";
 	    						dataExportSqlJoin = DataExportSqlJoin.newInstance(referencedTable, 
 	        							DataExportCoreTable.M_PAYMENT_DETAIL, sqlStatement, parentTableAlias, 
-	        							mPaymentDetailTableAlias);
+	        							dataExportSqlJoin.getParentTableAlias());
 	        					
 	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
 	    						
@@ -2539,14 +2716,17 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					break;
 	    				case SAVINGS_TRANSACTION_REFERENCE:
-	    					mPaymentDetailTableAlias = DataExportCoreTable.M_PAYMENT_DETAIL.getAlias(referencedTableIndex++);
-	    					
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_PAYMENT_DETAIL, 
 	    							DataExportCoreTable.M_SAVINGS_ACCOUNT_TRANSACTION);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mPaymentDetailTableAlias = DataExportCoreTable.M_PAYMENT_DETAIL.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						sqlStatement = "`" + DataExportCoreTable.M_PAYMENT_DETAIL.getName() + "` `"
 	        							+ mPaymentDetailTableAlias + "` on `" + mPaymentDetailTableAlias + "`.`id` = `"
 												+ baseEntityName + "`.`payment_detail_id`";
@@ -2604,15 +2784,17 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					break;
 	    				case CLIENT_NAME:
 	    				case CLIENT_ID:
-	    					mSavingsAccountTableAlias = DataExportCoreTable.M_SAVINGS_ACCOUNT.getAlias(referencedTableIndex++);
-	    					parentTableAlias = referencedTable.getAlias(referencedTableIndex++);
-	    					
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_SAVINGS_ACCOUNT, 
 	    							DataExportCoreTable.M_SAVINGS_ACCOUNT_TRANSACTION);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mSavingsAccountTableAlias = DataExportCoreTable.M_SAVINGS_ACCOUNT.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						sqlStatement = "`" + DataExportCoreTable.M_SAVINGS_ACCOUNT.getName() + "` `"
 	        							+ mSavingsAccountTableAlias + "` on `" + mSavingsAccountTableAlias + "`.`id` = `"
 												+ baseEntityName + "`.`savings_account_id`";
@@ -2628,17 +2810,24 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					
 	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
 	    					sqlJoinKey = DataExportSqlJoin.createId(referencedTable, 
 	    							DataExportCoreTable.M_SAVINGS_ACCOUNT);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					parentTableAlias = referencedTable.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						sqlStatement = "`" + referencedTable.getName() + "` `" + parentTableAlias 
-	                        			+ "` on `" + parentTableAlias + "`.`id` = `" + mSavingsAccountTableAlias + "`.`"
+	                        			+ "` on `" + parentTableAlias + "`.`id` = `" + dataExportSqlJoin.getParentTableAlias() + "`.`"
 	                							+ foreignKeyIndexColumnName + "`";
 	    						dataExportSqlJoin = DataExportSqlJoin.newInstance(referencedTable, 
 	        							DataExportCoreTable.M_SAVINGS_ACCOUNT, sqlStatement, parentTableAlias, 
-	        							mSavingsAccountTableAlias);
+	        							dataExportSqlJoin.getParentTableAlias());
 	        					
 	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
 	    						
@@ -2648,6 +2837,9 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					
 	    					// =============================================================================
+	    					sqlJoinKey = DataExportSqlJoin.createId(referencedTable, 
+	    							DataExportCoreTable.M_SAVINGS_ACCOUNT);
+	    					
 	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
 	    					
 	    					if (isSelectStatement) {
@@ -2668,16 +2860,17 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					break;
 	    				case GROUP_NAME:
 	    				case GROUP_ID:
-	    					mSavingsAccountTableAlias = DataExportCoreTable.M_SAVINGS_ACCOUNT.getAlias(referencedTableIndex++);
-	    					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(referencedTableIndex++);
-	    					mGroupClientTableAlias = DataExportCoreTable.M_GROUP_CLIENT.getAlias(referencedTableIndex++);
-	    					
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_SAVINGS_ACCOUNT, 
 	    							DataExportCoreTable.M_SAVINGS_ACCOUNT_TRANSACTION);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mSavingsAccountTableAlias = DataExportCoreTable.M_SAVINGS_ACCOUNT.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_loan and m_group_client table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_SAVINGS_ACCOUNT.getName() + "` `"
 	        							+ mSavingsAccountTableAlias + "` on `" + mSavingsAccountTableAlias + "`.`id` = `"
@@ -2694,17 +2887,24 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					
 	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_SAVINGS_ACCOUNT, 
 	    							DataExportCoreTable.M_GROUP_CLIENT);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mGroupClientTableAlias = DataExportCoreTable.M_GROUP_CLIENT.getAlias(aliasPostfixNumber.intValue());
+		    					
 	    						// m_loan and m_group_client table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_GROUP_CLIENT.getName()
 	        							+ "` `" + mGroupClientTableAlias + "` on `" + mGroupClientTableAlias
-	        									+ "`.`client_id` = `" + mSavingsAccountTableAlias + "`.`client_id`";
+	        									+ "`.`client_id` = `" + dataExportSqlJoin.getParentTableAlias() + "`.`client_id`";
 	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_SAVINGS_ACCOUNT, 
-	        							DataExportCoreTable.M_GROUP_CLIENT, sqlStatement, mSavingsAccountTableAlias, 
+	        							DataExportCoreTable.M_GROUP_CLIENT, sqlStatement, dataExportSqlJoin.getParentTableAlias(), 
 	        							mGroupClientTableAlias);
 	        					
 	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
@@ -2720,15 +2920,25 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_SAVINGS_ACCOUNT, 
+		    							DataExportCoreTable.M_GROUP_CLIENT);
+	    						
+	    						DataExportSqlJoin savingsAccountGroupClientSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    						
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_group_client and m_group table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_GROUP.getName() + "` `"
 	                        			+ mGroupTableAlias + "` on `" + mGroupTableAlias + "`.`id` = case when "
-	                							+ "isnull(`" + mSavingsAccountTableAlias + "`.`group_id`) then `"
-	                									+ mGroupClientTableAlias + "`.`group_id` else `"
-	                											+ mSavingsAccountTableAlias + "`.`group_id` end";
+	                							+ "isnull(`" + savingsAccountGroupClientSqlJoin.getParentTableAlias() + "`.`group_id`) then `"
+	                									+ savingsAccountGroupClientSqlJoin.getChildTableAlias() + "`.`group_id` else `"
+	                											+ savingsAccountGroupClientSqlJoin.getParentTableAlias() + "`.`group_id` end";
 	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_GROUP, 
 	        							DataExportCoreTable.M_GROUP_CLIENT, sqlStatement, mGroupTableAlias, 
-	        							mGroupClientTableAlias);
+	        							savingsAccountGroupClientSqlJoin.getChildTableAlias());
 	        					
 	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
 	    						
@@ -2738,6 +2948,9 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					
 	    					// =============================================================================
+	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_GROUP, 
+	    							DataExportCoreTable.M_GROUP_CLIENT);
+	    					
 	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
 	    					
 	    					if (isSelectStatement) {
@@ -2757,14 +2970,17 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					break;
 	    				case BRANCH_NAME:
-	    					mOfficeTableAlias = DataExportCoreTable.M_OFFICE.getAlias(referencedTableIndex++);
-	    					
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_OFFICE, 
 	    							DataExportCoreTable.M_SAVINGS_ACCOUNT_TRANSACTION);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mOfficeTableAlias = DataExportCoreTable.M_OFFICE.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						sqlStatement = "`" + DataExportCoreTable.M_OFFICE.getName() + "` `"
 	        							+ mOfficeTableAlias + "` on `" + mOfficeTableAlias + "`.`id` = `"
 												+ baseEntityName + "`.`office_id`";
@@ -2799,17 +3015,17 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					break;
 	    				case STAFF_NAME:
-	    					mSavingsAccountTableAlias = DataExportCoreTable.M_SAVINGS_ACCOUNT.getAlias(referencedTableIndex++);
-	    					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
-	    					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(referencedTableIndex++);
-	    					mStaffTableAlias = DataExportCoreTable.M_STAFF.getAlias(referencedTableIndex++);
-	    					
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_SAVINGS_ACCOUNT, 
 	    							DataExportCoreTable.M_SAVINGS_ACCOUNT_TRANSACTION);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mSavingsAccountTableAlias = DataExportCoreTable.M_SAVINGS_ACCOUNT.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_loan and m_group_client table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_SAVINGS_ACCOUNT.getName() + "` `"
 	        							+ mSavingsAccountTableAlias + "` on `" + mSavingsAccountTableAlias + "`.`id` = `"
@@ -2826,18 +3042,25 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					
 	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
 	    							DataExportCoreTable.M_SAVINGS_ACCOUNT);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_loan and m_group_client table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_CLIENT.getName() + "` `"
 	        							+ mClientTableAlias + "` on `" + mClientTableAlias + "`.`id` = `"
-												+ mSavingsAccountTableAlias + "`.`client_id`";
+												+ dataExportSqlJoin.getChildTableAlias() + "`.`client_id`";
 	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_CLIENT, 
 	        							DataExportCoreTable.M_SAVINGS_ACCOUNT, sqlStatement, mClientTableAlias, 
-	        							mSavingsAccountTableAlias);
+	        							dataExportSqlJoin.getChildTableAlias());
 	        					
 	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
 	    						
@@ -2852,13 +3075,23 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
+		    							DataExportCoreTable.M_SAVINGS_ACCOUNT);
+	    						
+	    						DataExportSqlJoin clientSavingsAccountSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    						
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_loan and m_group_client table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_GROUP.getName() + "` `"
 	                        			+ mGroupTableAlias + "` on `" + mGroupTableAlias + "`.`id` = `"
-	                							+ mSavingsAccountTableAlias + "`.`group_id`";
+	                							+ clientSavingsAccountSqlJoin.getChildTableAlias() + "`.`group_id`";
 	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_GROUP, 
 	        							DataExportCoreTable.M_SAVINGS_ACCOUNT, sqlStatement, mGroupTableAlias, 
-	        							mSavingsAccountTableAlias);
+	        							clientSavingsAccountSqlJoin.getChildTableAlias());
 	        					
 	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
 	    						
@@ -2873,15 +3106,30 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
+		    							DataExportCoreTable.M_SAVINGS_ACCOUNT);
+	    						
+	    						DataExportSqlJoin clientSavingsAccountSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    						
+	    						sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_GROUP, 
+		    							DataExportCoreTable.M_SAVINGS_ACCOUNT);
+	    						
+	    						DataExportSqlJoin groupSavingsAccountSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    						
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mStaffTableAlias = DataExportCoreTable.M_STAFF.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_group_client and m_group table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_STAFF.getName() + "` `"
 	                        			+ mStaffTableAlias + "` on `" + mStaffTableAlias + "`.`id` = case when "
-	                					+ "isnull(`" + mSavingsAccountTableAlias + "`.`group_id`) then `"
-	                							+ mClientTableAlias + "`.`staff_id` else `"
-	                									+ mGroupTableAlias + "`.`staff_id` end";
+	                					+ "isnull(`" + clientSavingsAccountSqlJoin.getChildTableAlias() + "`.`group_id`) then `"
+	                							+ clientSavingsAccountSqlJoin.getParentTableAlias() + "`.`staff_id` else `"
+	                									+ groupSavingsAccountSqlJoin.getParentTableAlias() + "`.`staff_id` end";
 	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_STAFF, 
 	        							DataExportCoreTable.M_SAVINGS_ACCOUNT, sqlStatement, mStaffTableAlias, 
-	        							mSavingsAccountTableAlias);
+	        							clientSavingsAccountSqlJoin.getChildTableAlias());
 	        					
 	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
 	    						
@@ -2891,6 +3139,9 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					
 	    					// =============================================================================
+	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_STAFF, 
+	    							DataExportCoreTable.M_SAVINGS_ACCOUNT);
+	    					
 	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
 	    					
 	    					if (isSelectStatement) {
@@ -2911,15 +3162,18 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					break;
 	    				case DATE_OF_BIRTH:
 	    				case PHONE_NUMBER:
-	    					mSavingsAccountTableAlias = DataExportCoreTable.M_SAVINGS_ACCOUNT.getAlias(referencedTableIndex++);
-	    					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
-	    					
+	    				case GENDER:
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_SAVINGS_ACCOUNT, 
 	    							DataExportCoreTable.M_SAVINGS_ACCOUNT_TRANSACTION);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mSavingsAccountTableAlias = DataExportCoreTable.M_SAVINGS_ACCOUNT.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						sqlStatement = "`" + DataExportCoreTable.M_SAVINGS_ACCOUNT.getName() + "` `"
 		    							+ mSavingsAccountTableAlias + "` on `" + mSavingsAccountTableAlias + "`.`id` = `"
     											+ baseEntityName + "`.`savings_account_id`";
@@ -2935,17 +3189,24 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					
 	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
 	    							DataExportCoreTable.M_SAVINGS_ACCOUNT);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						sqlStatement = "`" + DataExportCoreTable.M_CLIENT.getName() + "` `"
 	        							+ mClientTableAlias + "` on `" + mClientTableAlias + "`.`id` = `"
-												+ mSavingsAccountTableAlias + "`.`client_id`";
+												+ dataExportSqlJoin.getParentTableAlias() + "`.`client_id`";
 	    						dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_CLIENT, 
 	        							DataExportCoreTable.M_SAVINGS_ACCOUNT, sqlStatement, mClientTableAlias, 
-	        							mSavingsAccountTableAlias);
+	        							dataExportSqlJoin.getParentTableAlias());
 	        					
 	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
 	    						
@@ -2967,90 +3228,6 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					} else if (filterValue != null) {
 	    						sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`" 
 	    								+ coreColumn.getName() + "` " + filterValue;
-	    						
-	    						// add a WHERE clause
-	    						sqlBuilder.WHERE(sqlStatement);
-	    					}
-	    					// =============================================================================
-	    					break;
-	    				case GENDER:
-	    					mSavingsAccountTableAlias = DataExportCoreTable.M_SAVINGS_ACCOUNT.getAlias(referencedTableIndex++);
-	    					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
-	    					mCodeValueTableAlias = referencedTable.getAlias(referencedTableIndex++);
-	    					
-	    					// =============================================================================
-	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_SAVINGS_ACCOUNT, 
-	    							DataExportCoreTable.M_SAVINGS_ACCOUNT_TRANSACTION);
-	    					
-	    					// only add the join statement if it hasn't been previously added
-	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
-	    						sqlStatement = "`" + DataExportCoreTable.M_SAVINGS_ACCOUNT.getName() + "` `"
-	        							+ mSavingsAccountTableAlias + "` on `" + mSavingsAccountTableAlias + "`.`id` = `"
-												+ baseEntityName + "`.`savings_account_id`";
-	    						dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_SAVINGS_ACCOUNT, 
-	        							DataExportCoreTable.M_SAVINGS_ACCOUNT_TRANSACTION, sqlStatement, mSavingsAccountTableAlias, 
-	        							baseEntityName);
-	        					
-	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
-	    						
-	    						// add the join to the map
-	        					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
-	    					}
-	    					// =============================================================================
-	    					
-	    					// =============================================================================
-	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
-	    							DataExportCoreTable.M_SAVINGS_ACCOUNT);
-	    					
-	    					// only add the join statement if it hasn't been previously added
-	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
-	    						sqlStatement = "`" + DataExportCoreTable.M_CLIENT.getName() + "` `"
-	        							+ mClientTableAlias + "` on `" + mClientTableAlias + "`.`id` = `"
-												+ mSavingsAccountTableAlias + "`.`client_id`";
-	    						dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_CLIENT, 
-	        							DataExportCoreTable.M_SAVINGS_ACCOUNT, sqlStatement, mClientTableAlias, 
-	        							mSavingsAccountTableAlias);
-	        					
-	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
-	    						
-	    						// add the join to the map
-	        					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
-	    					}
-	    					// =============================================================================
-	    					
-	    					// =============================================================================
-	    					sqlJoinKey = DataExportSqlJoin.createId(referencedTable, 
-	    							DataExportCoreTable.M_CLIENT);
-	    					
-	    					// only add the join statement if it hasn't been previously added
-	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
-	    						sqlStatement = "`" + referencedTable.getName() + "` `" + mCodeValueTableAlias 
-										+ "` on `" + mCodeValueTableAlias + "`.`id` = `" + mClientTableAlias 
-	        	                        		+ "`.`" + coreColumn.getName() + "`";
-	    						dataExportSqlJoin = DataExportSqlJoin.newInstance(referencedTable, 
-	        							DataExportCoreTable.M_CLIENT, sqlStatement, mCodeValueTableAlias, 
-	        							mClientTableAlias);
-	        					
-	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
-	    						
-	    						// add the join to the map
-	        					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
-	    					}
-	    					// =============================================================================
-	    					
-	    					// =============================================================================
-	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
-	    					
-	    					if (isSelectStatement) {
-	    						sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`" 
-	        							+  referencedColumnName + "` as `" + coreColumn.getLabel() + "`";
-	        					
-	    						// add the select statement
-	    						sqlBuilder.SELECT(sqlStatement);
-	    						
-	    					} else if (filterValue != null) {
-	    						sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`" 
-	    								+ referencedColumnName + "` " + filterValue;
 	    						
 	    						// add a WHERE clause
 	    						sqlBuilder.WHERE(sqlStatement);
@@ -3116,17 +3293,17 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					}
 	    					break;
 		    			case STAFF_NAME:
-		    				mLoanTableAlias = DataExportCoreTable.M_LOAN.getAlias(referencedTableIndex++);
-	    					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
-	    					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(referencedTableIndex++);
-	    					mStaffTableAlias = DataExportCoreTable.M_STAFF.getAlias(referencedTableIndex++);
-	    					
-	    					// =============================================================================
+		    				// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_LOAN, 
 	    							DataExportCoreTable.M_LOAN_REPAYMENT_SCHEDULE);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+			    				
+			    				mLoanTableAlias = DataExportCoreTable.M_LOAN.getAlias(aliasPostfixNumber.intValue());
+	    						
 	        					sqlStatement = "`" + DataExportCoreTable.M_LOAN.getName() + "` `"
 	        							+ mLoanTableAlias + "` on `" + mLoanTableAlias + "`.`id` = `"
 												+ baseEntityName + "`.`loan_id`";
@@ -3142,18 +3319,25 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					
 	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
 	    							DataExportCoreTable.M_LOAN);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_loan and m_client table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_CLIENT.getName() + "` `"
 	        							+ mClientTableAlias + "` on `" + mClientTableAlias + "`.`id` = `"
-	    										+ mLoanTableAlias + "`.`client_id`";
+	    										+ dataExportSqlJoin.getParentTableAlias() + "`.`client_id`";
 	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_CLIENT, 
 	        							DataExportCoreTable.M_LOAN, sqlStatement, mClientTableAlias, 
-	        							mLoanTableAlias);
+	        							dataExportSqlJoin.getParentTableAlias());
 	        					
 	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
 	    						
@@ -3168,6 +3352,11 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_loan and m_group table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_GROUP.getName() + "` `"
 	                        			+ mGroupTableAlias + "` on `" + mGroupTableAlias + "`.`id` = `"
@@ -3189,12 +3378,27 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
+		    							DataExportCoreTable.M_LOAN);
+	    						
+	    						DataExportSqlJoin clientLoanSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    						
+	    						sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_GROUP, 
+		    							DataExportCoreTable.M_LOAN);
+	    						
+	    						DataExportSqlJoin groupLoanSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    						
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mStaffTableAlias = DataExportCoreTable.M_STAFF.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_staff and m_client/m_group table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_STAFF.getName() + "` `"
 	                    			+ mStaffTableAlias + "` on `" + mStaffTableAlias + "`.`id` = case when "
 	            					+ "isnull(`" + baseEntityName + "`.`group_id`) then `"
-	            							+ mClientTableAlias + "`.`staff_id` else `"
-	            									+ mGroupTableAlias + "`.`staff_id` end";
+	            							+ clientLoanSqlJoin.getParentTableAlias() + "`.`staff_id` else `"
+	            									+ groupLoanSqlJoin.getParentTableAlias() + "`.`staff_id` end";
 	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_STAFF, 
 	        							DataExportCoreTable.M_LOAN, sqlStatement, mStaffTableAlias, 
 	        							baseEntityName);
@@ -3207,6 +3411,9 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	                        
 	                        // =============================================================================
+	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_STAFF, 
+	    							DataExportCoreTable.M_LOAN);
+	    					
 	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
 	    					
 	    					if (isSelectStatement) {
@@ -3226,17 +3433,17 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					break;
 		    			case BRANCH_NAME:
-		    				mLoanTableAlias = DataExportCoreTable.M_LOAN.getAlias(referencedTableIndex++);
-		    				mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
-	    					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(referencedTableIndex++);
-	    					mOfficeTableAlias = DataExportCoreTable.M_OFFICE.getAlias(referencedTableIndex++);
-	    					
-	    					// =============================================================================
+		    				// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_LOAN, 
 	    							DataExportCoreTable.M_LOAN_REPAYMENT_SCHEDULE);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+	    						
+	    						mLoanTableAlias = DataExportCoreTable.M_LOAN.getAlias(aliasPostfixNumber.intValue());
+	    						
 	        					sqlStatement = "`" + DataExportCoreTable.M_LOAN.getName() + "` `"
 	        							+ mLoanTableAlias + "` on `" + mLoanTableAlias + "`.`id` = `"
 												+ baseEntityName + "`.`loan_id`";
@@ -3252,18 +3459,25 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					
 	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
 	    							DataExportCoreTable.M_LOAN);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_loan and m_client table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_CLIENT.getName() + "` `"
 	        							+ mClientTableAlias + "` on `" + mClientTableAlias + "`.`id` = `"
-	    										+ mLoanTableAlias + "`.`client_id`";
+	    										+ dataExportSqlJoin.getParentTableAlias() + "`.`client_id`";
 	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_CLIENT, 
 	        							DataExportCoreTable.M_LOAN, sqlStatement, mClientTableAlias, 
-	        							mLoanTableAlias);
+	        							dataExportSqlJoin.getParentTableAlias());
 	        					
 	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
 	    						
@@ -3278,13 +3492,23 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_LOAN, 
+		    							DataExportCoreTable.M_LOAN_REPAYMENT_SCHEDULE);
+	    						
+	    						dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    						
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_loan and m_group table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_GROUP.getName() + "` `"
 	                        			+ mGroupTableAlias + "` on `" + mGroupTableAlias + "`.`id` = `"
-	                					+ mLoanTableAlias + "`.`group_id`";
+	                					+ dataExportSqlJoin.getParentTableAlias() + "`.`group_id`";
 	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_GROUP, 
 	        							DataExportCoreTable.M_LOAN, sqlStatement, mGroupTableAlias, 
-	        							mLoanTableAlias);
+	        							dataExportSqlJoin.getParentTableAlias());
 	        					
 	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
 	    						
@@ -3299,15 +3523,35 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_LOAN, 
+		    							DataExportCoreTable.M_LOAN_REPAYMENT_SCHEDULE);
+	    						
+	    						DataExportSqlJoin loanScheduleSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    						
+	    						sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_GROUP, 
+		    							DataExportCoreTable.M_LOAN);
+	    						
+	    						DataExportSqlJoin groupLoanSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    						
+	    						sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
+		    							DataExportCoreTable.M_LOAN);
+	    						
+	    						DataExportSqlJoin clientLoanSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    						
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mOfficeTableAlias = DataExportCoreTable.M_OFFICE.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_office and m_client/m_group table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_OFFICE.getName() + "` `"
 	                        			+ mOfficeTableAlias + "` on `" + mOfficeTableAlias + "`.`id` = case when "
-	                					+ "isnull(`" + mLoanTableAlias + "`.`group_id`) then `"
-	                							+ mClientTableAlias + "`.`office_id` else `"
-	                									+ mGroupTableAlias + "`.`office_id` end";
+	                					+ "isnull(`" + loanScheduleSqlJoin.getParentTableAlias() + "`.`group_id`) then `"
+	                							+ clientLoanSqlJoin.getParentTableAlias() + "`.`office_id` else `"
+	                									+ groupLoanSqlJoin.getParentTableAlias() + "`.`office_id` end";
 	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_OFFICE, 
 	        							DataExportCoreTable.M_LOAN, sqlStatement, mOfficeTableAlias, 
-	        							mLoanTableAlias);
+	        							loanScheduleSqlJoin.getParentTableAlias());
 	        					
 	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
 	    						
@@ -3317,6 +3561,9 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					
 	    					// =============================================================================
+	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_OFFICE, 
+	    							DataExportCoreTable.M_LOAN);
+	    					
 	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
 	    					
 	    					if (isSelectStatement) {
@@ -3337,16 +3584,17 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					break;
 		    			case GROUP_NAME:
 	    				case GROUP_ID:
-	    					mLoanTableAlias = DataExportCoreTable.M_LOAN.getAlias(referencedTableIndex++);
-	    					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(referencedTableIndex++);
-	    					mGroupClientTableAlias = DataExportCoreTable.M_GROUP_CLIENT.getAlias(referencedTableIndex++);
-	    					
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_LOAN, 
 	    							DataExportCoreTable.M_LOAN_REPAYMENT_SCHEDULE);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mLoanTableAlias = DataExportCoreTable.M_LOAN.getAlias(aliasPostfixNumber.intValue());
+	    						
 	        					sqlStatement = "`" + DataExportCoreTable.M_LOAN.getName() + "` `"
 	        							+ mLoanTableAlias + "` on `" + mLoanTableAlias + "`.`id` = `"
 												+ baseEntityName + "`.`loan_id`";
@@ -3362,17 +3610,24 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					
 	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_LOAN, 
 	    							DataExportCoreTable.M_GROUP_CLIENT);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mGroupClientTableAlias = DataExportCoreTable.M_GROUP_CLIENT.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_loan and m_group_client table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_GROUP_CLIENT.getName()
 	        							+ "` `" + mGroupClientTableAlias + "` on `" + mGroupClientTableAlias
-	        									+ "`.`client_id` = `" + mLoanTableAlias + "`.`client_id`";
+	        									+ "`.`client_id` = `" + dataExportSqlJoin.getParentTableAlias() + "`.`client_id`";
 	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_LOAN, 
-	        							DataExportCoreTable.M_GROUP_CLIENT, sqlStatement, mLoanTableAlias, 
+	        							DataExportCoreTable.M_GROUP_CLIENT, sqlStatement, dataExportSqlJoin.getParentTableAlias(), 
 	        							mGroupClientTableAlias);
 	        					
 	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
@@ -3383,20 +3638,27 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					
 	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_GROUP, 
 	    							DataExportCoreTable.M_GROUP_CLIENT);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						// m_group_client and m_group table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_GROUP.getName() + "` `"
 	                        			+ mGroupTableAlias + "` on `" + mGroupTableAlias + "`.`id` = case when "
-	                							+ "isnull(`" + mLoanTableAlias + "`.`group_id`) then `"
-	                									+ mGroupClientTableAlias + "`.`group_id` else `"
-	                											+ mLoanTableAlias + "`.`group_id` end";
+	                							+ "isnull(`" + dataExportSqlJoin.getParentTableAlias() + "`.`group_id`) then `"
+	                									+ dataExportSqlJoin.getChildTableAlias() + "`.`group_id` else `"
+	                											+ dataExportSqlJoin.getParentTableAlias() + "`.`group_id` end";
 	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_GROUP, 
 	        							DataExportCoreTable.M_GROUP_CLIENT, sqlStatement, mGroupTableAlias, 
-	        							mGroupClientTableAlias);
+	        							dataExportSqlJoin.getChildTableAlias());
 	        					
 	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
 	    						
@@ -3427,15 +3689,17 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 		    			case LOAN_OFFICER_NAME:
 	    				case CLIENT_NAME:
 	    				case CLIENT_ID:
-	    					mLoanTableAlias = DataExportCoreTable.M_LOAN.getAlias(referencedTableIndex++);
-	    					parentTableAlias = referencedTable.getAlias(referencedTableIndex++);
-	    					
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_LOAN, 
 	    							DataExportCoreTable.M_LOAN_REPAYMENT_SCHEDULE);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mLoanTableAlias = DataExportCoreTable.M_LOAN.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						sqlStatement = "`" + DataExportCoreTable.M_LOAN.getName() + "` `"
 	        							+ mLoanTableAlias + "` on `" + mLoanTableAlias + "`.`id` = `"
 												+ baseEntityName + "`.`loan_id`";
@@ -3451,17 +3715,24 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					
 	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
 	    					sqlJoinKey = DataExportSqlJoin.createId(referencedTable, 
 	    							DataExportCoreTable.M_LOAN);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					parentTableAlias = referencedTable.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						sqlStatement = "`" + referencedTable.getName() + "` `" + parentTableAlias 
-	                        			+ "` on `" + parentTableAlias + "`.`id` = `" + mLoanTableAlias + "`.`"
+	                        			+ "` on `" + parentTableAlias + "`.`id` = `" + dataExportSqlJoin.getParentTableAlias() + "`.`"
 	                							+ foreignKeyIndexColumnName + "`";
 	    						dataExportSqlJoin = DataExportSqlJoin.newInstance(referencedTable, 
 	        							DataExportCoreTable.M_LOAN, sqlStatement, parentTableAlias, 
-	        							mLoanTableAlias);
+	        							dataExportSqlJoin.getParentTableAlias());
 	        					
 	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
 	    						
@@ -3491,15 +3762,18 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					break;
 		    			case DATE_OF_BIRTH:
 	    				case PHONE_NUMBER:
-	    					mLoanTableAlias = DataExportCoreTable.M_LOAN.getAlias(referencedTableIndex++);
-	    					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
-	    					
+	    				case GENDER:
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_LOAN, 
 	    							DataExportCoreTable.M_LOAN_REPAYMENT_SCHEDULE);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mLoanTableAlias = DataExportCoreTable.M_LOAN.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						sqlStatement = "`" + DataExportCoreTable.M_LOAN.getName() + "` `"
 		    							+ mLoanTableAlias + "` on `" + mLoanTableAlias + "`.`id` = `"
 												+ baseEntityName + "`.`loan_id`";
@@ -3515,17 +3789,24 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					
 	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
 	    							DataExportCoreTable.M_LOAN);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						sqlStatement = "`" + DataExportCoreTable.M_CLIENT.getName() + "` `"
 	        							+ mClientTableAlias + "` on `" + mClientTableAlias + "`.`id` = `"
-												+ mLoanTableAlias + "`.`client_id`";
+												+ dataExportSqlJoin.getParentTableAlias() + "`.`client_id`";
 	    						dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_CLIENT, 
 	        							DataExportCoreTable.M_LOAN, sqlStatement, mClientTableAlias, 
-	        							mLoanTableAlias);
+	        							dataExportSqlJoin.getParentTableAlias());
 	        					
 	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
 	    						
@@ -3553,102 +3834,20 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					}
 	    					// =============================================================================
 	    					break;
-		    			case GENDER:
-	    					mLoanTableAlias = DataExportCoreTable.M_LOAN.getAlias(referencedTableIndex++);
-	    					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(referencedTableIndex++);
-	    					mCodeValueTableAlias = referencedTable.getAlias(referencedTableIndex++);
-	    					
-	    					// =============================================================================
-	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_LOAN, 
-	    							DataExportCoreTable.M_LOAN_REPAYMENT_SCHEDULE);
-	    					
-	    					// only add the join statement if it hasn't been previously added
-	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
-	    						sqlStatement = "`" + DataExportCoreTable.M_LOAN.getName() + "` `"
-	        							+ mLoanTableAlias + "` on `" + mLoanTableAlias + "`.`id` = `"
-												+ baseEntityName + "`.`loan_id`";
-	    						dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_LOAN, 
-	        							DataExportCoreTable.M_LOAN_REPAYMENT_SCHEDULE, sqlStatement, mLoanTableAlias, 
-	        							baseEntityName);
-	        					
-	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
-	    						
-	    						// add the join to the map
-	        					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
-	    					}
-	    					// =============================================================================
-	    					
-	    					// =============================================================================
-	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
-	    							DataExportCoreTable.M_LOAN);
-	    					
-	    					// only add the join statement if it hasn't been previously added
-	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
-	    						sqlStatement = "`" + DataExportCoreTable.M_CLIENT.getName() + "` `"
-	        							+ mClientTableAlias + "` on `" + mClientTableAlias + "`.`id` = `"
-												+ mLoanTableAlias + "`.`client_id`";
-	    						dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_CLIENT, 
-	        							DataExportCoreTable.M_LOAN, sqlStatement, mClientTableAlias, 
-	        							mLoanTableAlias);
-	        					
-	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
-	    						
-	    						// add the join to the map
-	        					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
-	    					}
-	    					// =============================================================================
-	    					
-	    					// =============================================================================
-	    					sqlJoinKey = DataExportSqlJoin.createId(referencedTable, 
-	    							DataExportCoreTable.M_CLIENT);
-	    					
-	    					// only add the join statement if it hasn't been previously added
-	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
-	    						sqlStatement = "`" + referencedTable.getName() + "` `" + mCodeValueTableAlias 
-										+ "` on `" + mCodeValueTableAlias + "`.`id` = `" + mClientTableAlias 
-	        	                        		+ "`.`" + coreColumn.getName() + "`";
-	    						dataExportSqlJoin = DataExportSqlJoin.newInstance(referencedTable, 
-	        							DataExportCoreTable.M_CLIENT, sqlStatement, mCodeValueTableAlias, 
-	        							mClientTableAlias);
-	        					
-	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
-	    						
-	    						// add the join to the map
-	        					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
-	    					}
-	    					// =============================================================================
-	    					
-	    					// =============================================================================
-	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
-	    					
-	    					if (isSelectStatement) {
-	    						sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`" 
-	        							+  referencedColumnName + "` as `" + coreColumn.getLabel() + "`";
-	        					
-	    						// add the select statement
-	    						sqlBuilder.SELECT(sqlStatement);
-	    						
-	    					} else if (filterValue != null) {
-	    						sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`" 
-	    								+ referencedColumnName + "` " + filterValue;
-	    						
-	    						// add a WHERE clause
-	    						sqlBuilder.WHERE(sqlStatement);
-	    					}
-	    					// =============================================================================
-	    					break;
 		    			case REPAYMENT_SCHEDULE_PRODUCT_SHORT_NAME:
 	    				case REPAYMENT_SCHEDULE_PRODUCT_NAME:
 	    				case REPAYMENT_SCHEDULE_PRODUCT_ID:
-	    					mLoanTableAlias = DataExportCoreTable.M_LOAN.getAlias(referencedTableIndex++);
-	    					mProductLoanTableAlias = referencedTable.getAlias(referencedTableIndex++);
-	    					
 	    					// =============================================================================
 	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_LOAN, 
 	    							DataExportCoreTable.M_LOAN_REPAYMENT_SCHEDULE);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mLoanTableAlias = DataExportCoreTable.M_LOAN.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						sqlStatement = "`" + DataExportCoreTable.M_LOAN.getName() + "` `"
 	        							+ mLoanTableAlias + "` on `" + mLoanTableAlias + "`.`id` = `"
 												+ baseEntityName + "`.`loan_id`";
@@ -3664,17 +3863,24 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					// =============================================================================
 	    					
 	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
 	    					sqlJoinKey = DataExportSqlJoin.createId(referencedTable, 
 	    							DataExportCoreTable.M_LOAN);
 	    					
 	    					// only add the join statement if it hasn't been previously added
 	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mProductLoanTableAlias = referencedTable.getAlias(aliasPostfixNumber.intValue());
+	    						
 	    						sqlStatement = "`" + referencedTable.getName() + "` `" + mProductLoanTableAlias 
-	                        			+ "` on `" + mProductLoanTableAlias + "`.`id` = `" + mLoanTableAlias + "`.`"
+	                        			+ "` on `" + mProductLoanTableAlias + "`.`id` = `" + dataExportSqlJoin.getParentTableAlias() + "`.`"
 	                							+ foreignKeyIndexColumnName + "`";
 	    						dataExportSqlJoin = DataExportSqlJoin.newInstance(referencedTable, 
 	        							DataExportCoreTable.M_LOAN, sqlStatement, mProductLoanTableAlias, 
-	        							mLoanTableAlias);
+	        							dataExportSqlJoin.getParentTableAlias());
 	    						
 	    						sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
 	    						
@@ -3702,6 +3908,51 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					}
 	    					// =============================================================================
 	    					break;
+	    				case REPAYMENT_SCHEDULE_LOAN_ACCOUNT_NUMBER:
+	    					// =============================================================================
+	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_LOAN, 
+	    							DataExportCoreTable.M_LOAN_REPAYMENT_SCHEDULE);
+	    					
+	    					// only add the join statement if it hasn't been previously added
+	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mLoanTableAlias = DataExportCoreTable.M_LOAN.getAlias(aliasPostfixNumber.intValue());
+		    					
+	    						sqlStatement = "`" + DataExportCoreTable.M_LOAN.getName() + "` `"
+	        							+ mLoanTableAlias + "` on `" + mLoanTableAlias + "`.`id` = `"
+												+ baseEntityName + "`.`loan_id`";
+	    						dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_LOAN, 
+	        							DataExportCoreTable.M_LOAN_REPAYMENT_SCHEDULE, sqlStatement, mLoanTableAlias, 
+	        							baseEntityName);
+	        					
+	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+	    						
+	    						// add the join to the map
+	        					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+	    					}
+	    					// =============================================================================
+	    					
+	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
+	    					if (isSelectStatement) {
+	    						sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`" 
+	    								+ referencedColumnName + "` as `" + coreColumn.getLabel() + "`";
+	    						
+	    						// add the select statement
+	        					sqlBuilder.SELECT(sqlStatement);
+	        					
+	    					} else if (filterValue != null) {
+	    						sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`" 
+	    								+ referencedColumnName + "` " + filterValue;
+	    						
+	    						// add the WHERE clause
+	    						sqlBuilder.WHERE(sqlStatement);
+	    					}
+	    					// =============================================================================
+	    					break;
 	    				default:
 	    					// =============================================================================
 	    					if (isSelectStatement) {
@@ -3717,7 +3968,157 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 				default:
 					break;
 	    	}
-    	}
+    	} else if (columnName.equals("loan_status_id")) { 
+        	// =============================================================================
+    		sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.R_ENUM_VALUE, 
+            		baseEntityCoreTable) + "_loan_status_id";
+            
+            // only add the join statement if it hasn't been previously added
+			if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+				// increment the alias postfix number
+				aliasPostfixNumber.increment();
+	        	
+	        	String rEnumValuetableAlias = DataExportCoreTable.R_ENUM_VALUE.getAlias(aliasPostfixNumber.intValue());
+				
+				sqlStatement = "`" + DataExportCoreTable.R_ENUM_VALUE.getName() + "` `" + rEnumValuetableAlias 
+						+ "` on `" + rEnumValuetableAlias + "`.`enum_id` = `" + baseEntityName + "`.`" + columnName
+								+ "` and `" + rEnumValuetableAlias + "`.`enum_name` = '" + columnName + "'";
+				dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.R_ENUM_VALUE, 
+						baseEntityCoreTable, sqlStatement, rEnumValuetableAlias, 
+						baseEntityName);
+				
+				// update the DataExportSqlJoin id
+				dataExportSqlJoin.updateId(sqlJoinKey);
+				
+				sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+				
+				// add the join to the map
+				sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+			}
+            // =============================================================================
+			
+			// =============================================================================
+			dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+			
+			if (isSelectStatement) {
+				sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`enum_value` as `" + columnLabel + "`";
+				
+				// add the select statement
+				sqlBuilder.SELECT(sqlStatement);
+				
+			} else if (filterValue != null) {
+				sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`enum_value`" + filterValue;
+				
+				// add a WHERE clause
+				sqlBuilder.WHERE(sqlStatement);
+			}
+			// =============================================================================
+    	} else if (columnName.equals("loan_type_enum")) { 
+        	// =============================================================================
+    		sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.R_ENUM_VALUE, 
+            		baseEntityCoreTable) + "_loan_type_enum";
+            
+            // only add the join statement if it hasn't been previously added
+			if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+				// increment the alias postfix number
+				aliasPostfixNumber.increment();
+	        	
+	        	String rEnumValuetableAlias = DataExportCoreTable.R_ENUM_VALUE.getAlias(aliasPostfixNumber.intValue());
+				
+				sqlStatement = "`" + DataExportCoreTable.R_ENUM_VALUE.getName() + "` `" + rEnumValuetableAlias 
+						+ "` on `" + rEnumValuetableAlias + "`.`enum_id` = `" + baseEntityName + "`.`" + columnName
+								+ "` and `" + rEnumValuetableAlias + "`.`enum_name` = '" + columnName + "'";
+				dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.R_ENUM_VALUE, 
+						baseEntityCoreTable, sqlStatement, rEnumValuetableAlias, 
+						baseEntityName);
+				
+				// update the DataExportSqlJoin id
+				dataExportSqlJoin.updateId(sqlJoinKey);
+				
+				sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+				
+				// add the join to the map
+				sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+			}
+            // =============================================================================
+			
+			// =============================================================================
+			dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+			
+			if (isSelectStatement) {
+				sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`enum_value` as `" + columnLabel + "`";
+				
+				// add the select statement
+				sqlBuilder.SELECT(sqlStatement);
+				
+			} else if (filterValue != null) {
+				sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`enum_value`" + filterValue;
+				
+				// add a WHERE clause
+				sqlBuilder.WHERE(sqlStatement);
+			}
+			// =============================================================================
+    	} else if (columnName.equals("status_enum")) { 
+        	// =============================================================================
+    		sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.R_ENUM_VALUE, 
+            		baseEntityCoreTable) + "_status_enum";
+            
+            // only add the join statement if it hasn't been previously added
+			if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+				// increment the alias postfix number
+				aliasPostfixNumber.increment();
+	        	
+	        	String rEnumValuetableAlias = DataExportCoreTable.R_ENUM_VALUE.getAlias(aliasPostfixNumber.intValue());
+				
+				sqlStatement = "`" + DataExportCoreTable.R_ENUM_VALUE.getName() + "` `" + rEnumValuetableAlias 
+						+ "` on `" + rEnumValuetableAlias + "`.`enum_id` = `" + baseEntityName + "`.`" + columnName
+								+ "` and `" + rEnumValuetableAlias + "`.`enum_name` = '" + columnName + "'";
+				dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.R_ENUM_VALUE, 
+						baseEntityCoreTable, sqlStatement, rEnumValuetableAlias, 
+						baseEntityName);
+				
+				// update the DataExportSqlJoin id
+				dataExportSqlJoin.updateId(sqlJoinKey);
+				
+				sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+				
+				// add the join to the map
+				sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+			}
+            // =============================================================================
+			
+			// =============================================================================
+			dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+			
+			if (isSelectStatement) {
+				sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`enum_value` as `" + columnLabel + "`";
+				
+				// add the select statement
+				sqlBuilder.SELECT(sqlStatement);
+				
+			} else if (filterValue != null) {
+				sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`enum_value`" + filterValue;
+				
+				// add a WHERE clause
+				sqlBuilder.WHERE(sqlStatement);
+			}
+			// =============================================================================
+        } else {
+        	// =============================================================================
+			if (isSelectStatement) {
+				sqlStatement = "`" + baseEntityName + "`.`" + columnName + "` as `" + columnLabel + "`";
+				
+				// add the select statement
+				sqlBuilder.SELECT(sqlStatement);
+				
+			} else if (filterValue != null) {
+				sqlStatement = "`" + baseEntityName + "`.`" + columnName + "` " + filterValue;
+				
+				// add a WHERE clause
+				sqlBuilder.WHERE(sqlStatement);
+			}
+			// =============================================================================
+        } 
     }
     
     /** 
@@ -3730,6 +4131,12 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
     private void handleDataIntegrityIssues(final JsonCommand jsonCommand, 
             final DataIntegrityViolationException dve) {
         final Throwable realCause = dve.getMostSpecificCause();
+        
+        if (realCause.getMessage().contains(DataExportApiConstants.NAME_PARAM_NAME)) {
+            final String name = jsonCommand.stringValueOfParameterNamed(DataExportApiConstants.NAME_PARAM_NAME);
+            throw new PlatformDataIntegrityException("error.msg.data.export.duplicate.name", "Data export with name `" + name + "` already exists",
+            		DataExportApiConstants.NAME_PARAM_NAME, name);
+        }
         
         logger.error(dve.getMessage(), dve);
         
