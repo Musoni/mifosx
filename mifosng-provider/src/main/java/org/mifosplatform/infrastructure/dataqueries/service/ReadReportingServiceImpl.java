@@ -720,6 +720,7 @@ public class ReadReportingServiceImpl implements ReadReportingService {
             }
 
             if ("CSV".equalsIgnoreCase(outputType)) {
+                masterReport.getReportConfiguration().setConfigProperty("org.pentaho.reporting.engine.classic.core.modules.output.table.csv.AssumeOverflowX", "true");
                 CSVReportUtil.createCSV(masterReport, baos, "UTF-8");
                 return baos;
             }
