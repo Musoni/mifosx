@@ -21,6 +21,7 @@ import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext
 import org.mifosplatform.organisation.staff.data.StaffData;
 import org.mifosplatform.organisation.staff.exception.StaffNotFoundException;
 import org.mifosplatform.portfolio.client.domain.ClientStatus;
+import org.mifosplatform.portfolio.group.domain.GroupingTypeStatus;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanStatus;
 import org.mifosplatform.portfolio.savings.domain.SavingsAccountStatusType;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -301,7 +302,7 @@ public class StaffReadPlatformServiceImpl implements StaffReadPlatformService {
 	public ArrayList<String> hasAssociatedGroups(Long staffId) {
 		ArrayList<String> params = new ArrayList<String>(); 
 		
-		final String sql = "SELECT display_name FROM `m_group` WHERE `staff_id` = " + staffId + " group by staff_id";
+		final String sql = "SELECT display_name FROM `m_group` WHERE `status_enum` < "+ GroupingTypeStatus.CLOSED.getValue()  + " And `staff_id` = " + staffId + " group by staff_id";
 		final List<Map<String, Object>> result =  this.jdbcTemplate.queryForList(sql);
 		
 		if (result != null) {
