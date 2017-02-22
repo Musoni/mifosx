@@ -14,6 +14,8 @@ public class StandingInstructionDTO {
     final SearchParameters searchParameters;
     final Long clientId;
     final String clientName;
+    final Long groupId;
+    final String groupName;
     final Integer transferType;
     final Integer fromAccountType;
     final Long fromAccount;
@@ -22,12 +24,14 @@ public class StandingInstructionDTO {
     final Long standingInstructionId;
 
     public StandingInstructionDTO(final SearchParameters searchParameters, final Integer transferType, final String clientName,
-            final Long clientId, final Long fromAccount, final Integer fromAccountType, final Date startDateRange, final Date endDateRange, 
+            final Long clientId, final String groupName, final Long groupId, final Long fromAccount, final Integer fromAccountType, final Date startDateRange, final Date endDateRange,
             final Long standingInstructionId) {
         this.searchParameters = searchParameters;
         this.transferType = transferType;
         this.clientName = clientName;
         this.clientId = clientId;
+        this.groupName = groupName;
+        this.groupId = groupId;
         this.fromAccount = fromAccount;
         this.fromAccountType = fromAccountType;
         this.startDateRange = startDateRange;
@@ -46,6 +50,10 @@ public class StandingInstructionDTO {
     public String clientName() {
         return this.clientName;
     }
+
+    public Long groupId() { return this.groupId; }
+
+    public String groupName() { return this.groupName; }
 
     public Integer transferType() {
         return this.transferType;
