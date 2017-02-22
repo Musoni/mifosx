@@ -5,9 +5,7 @@
  */
 package org.mifosplatform.portfolio.account.service;
 
-import static org.mifosplatform.portfolio.account.AccountDetailConstants.fromAccountTypeParamName;
-import static org.mifosplatform.portfolio.account.AccountDetailConstants.fromClientIdParamName;
-import static org.mifosplatform.portfolio.account.AccountDetailConstants.toAccountTypeParamName;
+import static org.mifosplatform.portfolio.account.AccountDetailConstants.*;
 import static org.mifosplatform.portfolio.account.api.StandingInstructionApiConstants.statusParamName;
 
 import java.math.BigDecimal;
@@ -100,7 +98,8 @@ public class StandingInstructionWritePlatformServiceImpl implements StandingInst
         final Integer toAccountTypeId = command.integerValueSansLocaleOfParameterNamed(toAccountTypeParamName);
         final PortfolioAccountType toAccountType = PortfolioAccountType.fromInt(toAccountTypeId);
 
-        final Long fromClientId = command.longValueOfParameterNamed(fromClientIdParamName);
+        final Long fromClientId = command.hasParameter(fromClientIdParamName) ? command.longValueOfParameterNamed(fromClientIdParamName) : null;
+        final Long fromGroupId = command.hasParameter(fromGroupIdParamName) ? command.longValueOfParameterNamed(fromGroupIdParamName) : null;
 
         Long standingInstructionId = null;
         try {
@@ -124,8 +123,12 @@ public class StandingInstructionWritePlatformServiceImpl implements StandingInst
             handleDataIntegrityIssues(command, dve);
             return CommandProcessingResult.empty();
         }
-        final CommandProcessingResultBuilder builder = new CommandProcessingResultBuilder().withEntityId(standingInstructionId)
-                .withClientId(fromClientId);
+        final CommandProcessingResultBuilder builder = new CommandProcessingResultBuilder().withEntityId(standingInstructionId);
+        if(fromClientId != null){
+            builder.withClientId(fromClientId);
+        }else{
+            builder.withGroupId(fromGroupId);
+        }
         return builder.build();
     }
 

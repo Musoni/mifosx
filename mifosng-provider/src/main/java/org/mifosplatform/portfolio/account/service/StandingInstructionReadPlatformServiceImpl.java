@@ -47,6 +47,8 @@ import org.mifosplatform.portfolio.client.service.ClientReadPlatformService;
 import org.mifosplatform.portfolio.common.service.CommonEnumerations;
 import org.mifosplatform.portfolio.common.service.DropdownReadPlatformService;
 import org.mifosplatform.infrastructure.core.service.SearchParameters;
+import org.mifosplatform.portfolio.group.data.GroupGeneralData;
+import org.mifosplatform.portfolio.group.service.GroupReadPlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -59,6 +61,7 @@ public class StandingInstructionReadPlatformServiceImpl implements StandingInstr
 
     private final JdbcTemplate jdbcTemplate;
     private final ClientReadPlatformService clientReadPlatformService;
+    private final GroupReadPlatformService groupReadPlatformService;
     private final OfficeReadPlatformService officeReadPlatformService;
     private final PortfolioAccountReadPlatformService portfolioAccountReadPlatformService;
     private final DropdownReadPlatformService dropdownReadPlatformService;
@@ -73,9 +76,10 @@ public class StandingInstructionReadPlatformServiceImpl implements StandingInstr
     public StandingInstructionReadPlatformServiceImpl(final RoutingDataSource dataSource,
             final ClientReadPlatformService clientReadPlatformService, final OfficeReadPlatformService officeReadPlatformService,
             final PortfolioAccountReadPlatformService portfolioAccountReadPlatformService,
-            final DropdownReadPlatformService dropdownReadPlatformService) {
+            final DropdownReadPlatformService dropdownReadPlatformService, final GroupReadPlatformService groupReadPlatformService) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
         this.clientReadPlatformService = clientReadPlatformService;
+        this.groupReadPlatformService = groupReadPlatformService;
         this.officeReadPlatformService = officeReadPlatformService;
         this.portfolioAccountReadPlatformService = portfolioAccountReadPlatformService;
         this.dropdownReadPlatformService = dropdownReadPlatformService;
@@ -83,9 +87,9 @@ public class StandingInstructionReadPlatformServiceImpl implements StandingInstr
     }
 
     @Override
-    public StandingInstructionData retrieveTemplate(final Long fromOfficeId, final Long fromClientId, final Long fromAccountId,
-            final Integer fromAccountType, final Long toOfficeId, final Long toClientId, final Long toAccountId,
-            final Integer toAccountType, Integer transferType) {
+    public StandingInstructionData retrieveTemplate(final Long fromOfficeId, final Long fromClientId, final Long fromGroupId,
+            final Long fromAccountId, final Integer fromAccountType, final Long toOfficeId, final Long toClientId,
+            final Long toGroupId, final Long toAccountId, final Integer toAccountType, Integer transferType) {
 
         AccountTransferType accountTransferType = AccountTransferType.INVALID;
         if (transferType != null) {
@@ -117,10 +121,12 @@ public class StandingInstructionReadPlatformServiceImpl implements StandingInstr
         // from settings
         OfficeData fromOffice = null;
         ClientData fromClient = null;
+        GroupGeneralData fromGroup = null;
         PortfolioAccountData fromAccount = null;
 
         OfficeData toOffice = null;
         ClientData toClient = null;
+        GroupGeneralData toGroup = null;
         PortfolioAccountData toAccount = null;
 
         // template
@@ -129,9 +135,11 @@ public class StandingInstructionReadPlatformServiceImpl implements StandingInstr
 
         Long mostRelevantFromOfficeId = fromOfficeId;
         Long mostRelevantFromClientId = fromClientId;
+        Long mostRelevantFromGroupId = fromGroupId;
 
         Long mostRelevantToOfficeId = toOfficeId;
         Long mostRelevantToClientId = toClientId;
+        Long mostRelevantToGroupId = toGroupId;
 
         if (fromAccountId != null) {
             Integer accountType;
@@ -144,7 +152,12 @@ public class StandingInstructionReadPlatformServiceImpl implements StandingInstr
 
             // override provided fromClient with client of account
             mostRelevantFromClientId = fromAccount.clientId();
+            mostRelevantFromGroupId = fromAccount.groupId();
         }
+
+        Collection<OfficeData> fromOfficeOptions = this.officeReadPlatformService.retrieveAllOfficesForDropdown();
+        Collection<ClientData> fromClientOptions = null;
+        Collection<GroupGeneralData> fromGroupOptions = null;
 
         if (mostRelevantFromClientId != null) {
             fromClient = this.clientReadPlatformService.retrieveOne(mostRelevantFromClientId);
@@ -156,25 +169,44 @@ public class StandingInstructionReadPlatformServiceImpl implements StandingInstr
             PortfolioAccountDTO portfolioAccountDTO = new PortfolioAccountDTO(mostRelevantFromAccountType, mostRelevantFromClientId,
                     loanStatus);
             fromAccountOptions = this.portfolioAccountReadPlatformService.retrieveAllForLookup(portfolioAccountDTO);
+
+            if (mostRelevantFromOfficeId != null) {
+                fromClientOptions = this.clientReadPlatformService.retrieveAllForLookupByOfficeId(mostRelevantFromOfficeId);
+            }
         }
 
-        Collection<OfficeData> fromOfficeOptions = this.officeReadPlatformService.retrieveAllOfficesForDropdown();
-        Collection<ClientData> fromClientOptions = null;
+        if (mostRelevantFromGroupId != null) {
+            fromGroup = this.groupReadPlatformService.retrieveOne(mostRelevantFromGroupId);
+            mostRelevantFromOfficeId = fromGroup.officeId();
+            long[] loanStatus = null;
+            String currencyCode = fromAccount != null ? fromAccount.currencyCode() : null;
+            if (mostRelevantFromAccountType == 1) {
+                loanStatus = new long[] { 300, 700 };
+            }
+            PortfolioAccountDTO portfolioAccountDTO = new PortfolioAccountDTO(mostRelevantFromAccountType, currencyCode,
+                    loanStatus, null, mostRelevantFromGroupId);
+            fromAccountOptions = this.portfolioAccountReadPlatformService.retrieveAllForLookup(portfolioAccountDTO);
+
+            if (mostRelevantFromOfficeId != null) {
+                fromGroupOptions = this.groupReadPlatformService.retrieveGroupsForLookup(mostRelevantFromOfficeId);
+            }
+        }
 
         if (mostRelevantFromOfficeId != null) {
             fromOffice = this.officeReadPlatformService.retrieveOffice(mostRelevantFromOfficeId);
-            fromClientOptions = this.clientReadPlatformService.retrieveAllForLookupByOfficeId(mostRelevantFromOfficeId);
         }
 
         // defaults
         final LocalDate transferDate = DateUtils.getLocalDateOfTenant();
         Collection<OfficeData> toOfficeOptions = fromOfficeOptions;
         Collection<ClientData> toClientOptions = null;
+        Collection<GroupGeneralData> toGroupOptions = null;
 
         if (toAccountId != null && fromAccount != null) {
             toAccount = this.portfolioAccountReadPlatformService.retrieveOne(toAccountId, mostRelevantToAccountType,
                     fromAccount.currencyCode());
             mostRelevantToClientId = toAccount.clientId();
+            mostRelevantToGroupId = toAccount.groupId();
         }
 
         if (mostRelevantToClientId != null) {
@@ -183,18 +215,33 @@ public class StandingInstructionReadPlatformServiceImpl implements StandingInstr
 
             toClientOptions = this.clientReadPlatformService.retrieveAllForLookupByOfficeId(mostRelevantToOfficeId);
 
-            toAccountOptions = retrieveToAccounts(fromAccount, mostRelevantToAccountType, mostRelevantToClientId);
+            toAccountOptions = retrieveAccountOptions(fromAccount, mostRelevantToAccountType, mostRelevantToClientId, null);
+        }
+
+        if (mostRelevantToGroupId != null) {
+            toGroup = this.groupReadPlatformService.retrieveOne(mostRelevantToGroupId);
+            mostRelevantToOfficeId = toGroup.officeId();
+
+            toGroupOptions = this.groupReadPlatformService.retrieveGroupsForLookup(mostRelevantToOfficeId);
+
+            toAccountOptions = retrieveAccountOptions(fromAccount, mostRelevantToAccountType, null, mostRelevantToGroupId);
         }
 
         if (mostRelevantToOfficeId != null) {
             toOffice = this.officeReadPlatformService.retrieveOffice(mostRelevantToOfficeId);
             toOfficeOptions = this.officeReadPlatformService.retrieveAllOfficesForDropdown();
 
-            toClientOptions = this.clientReadPlatformService.retrieveAllForLookupByOfficeId(mostRelevantToOfficeId);
+            toClientOptions = toClientOptions != null ? toClientOptions : this.clientReadPlatformService.retrieveAllForLookupByOfficeId(mostRelevantToOfficeId);
+            toGroupOptions = toGroupOptions != null ? toGroupOptions : this.groupReadPlatformService.retrieveGroupsForLookup(mostRelevantToOfficeId);
             if (toClientOptions != null && toClientOptions.size() == 1) {
                 toClient = new ArrayList<>(toClientOptions).get(0);
 
-                toAccountOptions = retrieveToAccounts(fromAccount, mostRelevantToAccountType, mostRelevantToClientId);
+                toAccountOptions = retrieveAccountOptions(fromAccount, mostRelevantToAccountType, mostRelevantToClientId, null);
+            }
+            if (toGroupOptions != null && toGroupOptions.size() == 1) {
+                toGroup = new ArrayList<>(toGroupOptions).get(0);
+
+                toAccountOptions = retrieveAccountOptions(fromAccount, mostRelevantToAccountType, null, mostRelevantToGroupId);
             }
         }
 
@@ -219,18 +266,24 @@ public class StandingInstructionReadPlatformServiceImpl implements StandingInstr
                 recurrenceType(AccountTransferRecurrenceType.AS_PER_DUES));
         final Collection<EnumOptionData> recurrenceFrequencyOptions = this.dropdownReadPlatformService.retrievePeriodFrequencyTypeOptions();
 
-        return StandingInstructionData.template(fromOffice, fromClient, fromAccountTypeData, fromAccount, transferDate, toOffice, toClient,
-                toAccountTypeData, toAccount, fromOfficeOptions, fromClientOptions, fromAccountTypeOptions, fromAccountOptions,
-                toOfficeOptions, toClientOptions, toAccountTypeOptions, toAccountOptions, transferTypeOptions, statusOptions,
-                instructionTypeOptions, priorityOptions, recurrenceTypeOptions, recurrenceFrequencyOptions);
+        return StandingInstructionData.template(fromOffice, fromClient, fromGroup, fromAccountTypeData, fromAccount, transferDate,
+                toOffice, toClient, toGroup, toAccountTypeData, toAccount, fromOfficeOptions, fromClientOptions, fromGroupOptions,
+                fromAccountTypeOptions, fromAccountOptions, toOfficeOptions, toClientOptions, toGroupOptions, toAccountTypeOptions,
+                toAccountOptions, transferTypeOptions, statusOptions, instructionTypeOptions, priorityOptions, recurrenceTypeOptions,
+                recurrenceFrequencyOptions);
     }
 
-    private Collection<PortfolioAccountData> retrieveToAccounts(final PortfolioAccountData excludeThisAccountFromOptions,
-            final Integer toAccountType, final Long toClientId) {
+    private Collection<PortfolioAccountData> retrieveAccountOptions(final PortfolioAccountData excludeThisAccountFromOptions,
+            final Integer toAccountType, final Long toClientId, final Long toGroupId) {
 
         final String currencyCode = excludeThisAccountFromOptions != null ? excludeThisAccountFromOptions.currencyCode() : null;
 
-        PortfolioAccountDTO portfolioAccountDTO = new PortfolioAccountDTO(toAccountType, toClientId, currencyCode, null, null);
+        PortfolioAccountDTO portfolioAccountDTO = null;
+        if(toClientId != null) {
+            portfolioAccountDTO = new PortfolioAccountDTO(toAccountType, toClientId, currencyCode, null, null);
+        }else if(toGroupId != null){
+            portfolioAccountDTO = new PortfolioAccountDTO(toAccountType, currencyCode, null, null, toGroupId);
+        }
         Collection<PortfolioAccountData> accountOptions = this.portfolioAccountReadPlatformService
                 .retrieveAllForLookup(portfolioAccountDTO);
         if (!CollectionUtils.isEmpty(accountOptions)) {
@@ -249,7 +302,8 @@ public class StandingInstructionReadPlatformServiceImpl implements StandingInstr
         sqlBuilder.append("select SQL_CALC_FOUND_ROWS ");
         sqlBuilder.append(this.standingInstructionMapper.schema());
         if (standingInstructionDTO.transferType() != null || standingInstructionDTO.clientId() != null
-                || standingInstructionDTO.clientName() != null) {
+                || standingInstructionDTO.clientName() != null || standingInstructionDTO.groupId() != null
+                || standingInstructionDTO.groupName() != null) {
             sqlBuilder.append(" where ");
         }
         boolean addAndCaluse = false;
@@ -275,6 +329,22 @@ public class StandingInstructionReadPlatformServiceImpl implements StandingInstr
             }
             sqlBuilder.append(" fromclient.display_name=? ");
             paramObj.add(standingInstructionDTO.clientName());
+            addAndCaluse = true;
+        }
+
+        if (standingInstructionDTO.groupId() != null) {
+            if (addAndCaluse) {
+                sqlBuilder.append(" and ");
+            }
+            sqlBuilder.append(" fromgroup.id=? ");
+            paramObj.add(standingInstructionDTO.groupId());
+            addAndCaluse = true;
+        } else if (standingInstructionDTO.groupName() != null) {
+            if (addAndCaluse) {
+                sqlBuilder.append(" and ");
+            }
+            sqlBuilder.append(" fromgroup.display_name=? ");
+            paramObj.add(standingInstructionDTO.groupName());
             addAndCaluse = true;
         }
 
@@ -365,7 +435,9 @@ public class StandingInstructionReadPlatformServiceImpl implements StandingInstr
             sqlBuilder.append("fromoff.id as fromOfficeId, fromoff.name as fromOfficeName,");
             sqlBuilder.append("tooff.id as toOfficeId, tooff.name as toOfficeName,");
             sqlBuilder.append("fromclient.id as fromClientId, fromclient.display_name as fromClientName,");
+            sqlBuilder.append("fromgroup.id as fromGroupId, fromgroup.display_name as fromGroupName,");
             sqlBuilder.append("toclient.id as toClientId, toclient.display_name as toClientName,");
+            sqlBuilder.append("togroup.id as toGroupId, togroup.display_name as toGroupName,");
             sqlBuilder.append("fromsavacc.id as fromSavingsAccountId, fromsavacc.account_no as fromSavingsAccountNo,");
             sqlBuilder.append("fromsp.id as fromProductId, fromsp.name as fromProductName, ");
             sqlBuilder.append("fromloanacc.id as fromLoanAccountId, fromloanacc.account_no as fromLoanAccountNo,");
@@ -378,8 +450,10 @@ public class StandingInstructionReadPlatformServiceImpl implements StandingInstr
             sqlBuilder.append("join m_account_transfer_details atd on atd.id = atsi.account_transfer_details_id ");
             sqlBuilder.append("join m_office fromoff on fromoff.id = atd.from_office_id ");
             sqlBuilder.append("join m_office tooff on tooff.id = atd.to_office_id ");
-            sqlBuilder.append("join m_client fromclient on fromclient.id = atd.from_client_id ");
-            sqlBuilder.append("join m_client toclient on toclient.id = atd.to_client_id ");
+            sqlBuilder.append("left join m_client fromclient on fromclient.id = atd.from_client_id ");
+            sqlBuilder.append("left join m_client toclient on toclient.id = atd.to_client_id ");
+            sqlBuilder.append("left join m_group fromgroup on fromgroup.id = atd.from_group_id ");
+            sqlBuilder.append("left join m_group togroup on togroup.id = atd.to_group_id ");
             sqlBuilder.append("left join m_savings_account fromsavacc on fromsavacc.id = atd.from_savings_account_id ");
             sqlBuilder.append("left join m_savings_product fromsp ON fromsavacc.product_id = fromsp.id ");
             sqlBuilder.append("left join m_loan fromloanacc on fromloanacc.id = atd.from_loan_account_id ");
@@ -460,6 +534,14 @@ public class StandingInstructionReadPlatformServiceImpl implements StandingInstr
             final String toClientName = rs.getString("toClientName");
             final ClientData toClient = ClientData.lookup(toClientId, toClientName, toOfficeId, toOfficeName);
 
+            final Long fromGroupId = JdbcSupport.getLong(rs, "fromGroupId");
+            final String fromGroupName = rs.getString("fromGroupName");
+            final GroupGeneralData fromGroup = GroupGeneralData.lookup(fromGroupId, fromGroupName, fromOfficeId, fromOfficeName);
+
+            final Long toGroupId = JdbcSupport.getLong(rs, "toGroupId");
+            final String toGroupName = rs.getString("toGroupName");
+            final GroupGeneralData toGroup = GroupGeneralData.lookup(toGroupId, toGroupName, toOfficeId, toOfficeName);
+
             final Long fromSavingsAccountId = JdbcSupport.getLong(rs, "fromSavingsAccountId");
             final String fromSavingsAccountNo = rs.getString("fromSavingsAccountNo");
             final Long fromProductId = JdbcSupport.getLong(rs, "fromProductId");
@@ -503,7 +585,7 @@ public class StandingInstructionReadPlatformServiceImpl implements StandingInstr
             
             final Integer maximumIteration = JdbcSupport.getInteger(rs, "maximumIteration");
 
-            return StandingInstructionData.instance(id, accountDetailId, name, fromOffice, toOffice, fromClient, toClient, fromAccountType,
+            return StandingInstructionData.instance(id, accountDetailId, name, fromOffice, toOffice, fromClient, toClient, fromGroup, toGroup, fromAccountType,
                     fromAccount, toAccountType, toAccount, transferTypeEnum, priorityEnum, instructionTypeEnum, statusEnum, transferAmount,
                     validFrom, validTill, recurrenceTypeEnum, recurrenceFrequencyEnum, recurrenceInterval, recurrenceOnMonthDay, maximumIteration);
         }

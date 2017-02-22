@@ -242,7 +242,7 @@ public class GroupGeneralData {
 
     public static GroupGeneralData lookup (final Long id, final String displayName, final Long officeId, final String officeName){
 
-        return new GroupGeneralData(id, displayName, null, null, null, null, officeId, officeName, null, null,null,
+        return new GroupGeneralData(id, null, displayName, null, null, null, officeId, officeName, null, null,null,
                 null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null);
     }

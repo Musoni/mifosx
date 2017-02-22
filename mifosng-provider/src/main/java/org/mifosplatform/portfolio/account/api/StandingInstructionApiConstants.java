@@ -33,6 +33,7 @@ public class StandingInstructionApiConstants {
     public static final Set<String> CREATE_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(
             AccountDetailConstants.localeParamName, AccountDetailConstants.dateFormatParamName,
             AccountDetailConstants.fromOfficeIdParamName, AccountDetailConstants.fromClientIdParamName,
+            AccountDetailConstants.fromGroupIdParamName, AccountDetailConstants.toGroupIdParamName,
             AccountDetailConstants.fromAccountTypeParamName, AccountDetailConstants.fromAccountIdParamName,
             AccountDetailConstants.toOfficeIdParamName, AccountDetailConstants.toClientIdParamName,
             AccountDetailConstants.toAccountTypeParamName, AccountDetailConstants.toAccountIdParamName,
