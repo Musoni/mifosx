@@ -76,11 +76,13 @@ public class JournalEntryHelper {
 
     private String createURLForGettingAccountEntries(final Account account, final String date, final Integer officeId) {
         String url = new String("/mifosng-provider/api/v1/journalentries?glAccountId=" + account.getAccountID() + "&type="
-                + account.getAccountType() + "&fromDate=" + date + "&toDate=" + date + "&tenantIdentifier=default"
+                + account.getAccountType() + "&fromDate=" + date + "&toDate=" + date + "&"+Utils.TENANT_IDENTIFIER
                 + "&orderBy=id&sortOrder=desc&locale=en&dateFormat=dd MMMM yyyy");
         if (officeId != null) {
             url = url + "&officeId=" + officeId;
         }
+        System.out.println("----checking journals url call------------------"+ url);
+
         return url;
     }
 
@@ -91,7 +93,7 @@ public class JournalEntryHelper {
     }
 
     private String createURLForGettingAccountEntriesByTransactionId(final String transactionId) {
-        return new String("/mifosng-provider/api/v1/journalentries?transactionId=" + transactionId + "&tenantIdentifier=default"
+        return new String("/mifosng-provider/api/v1/journalentries?transactionId=" + transactionId + "&"+Utils.TENANT_IDENTIFIER
                 + "&orderBy=id&sortOrder=desc&locale=en&dateFormat=dd MMMM yyyy");
     }
 

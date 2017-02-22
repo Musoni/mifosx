@@ -50,7 +50,8 @@ public class LoanProductTestBuilder {
 
     private static final String NONE = "1";
     private static final String CASH_BASED = "2";
-    private static final String ACCRUAL_PERIODIC = "3";
+    private static final String
+            ACCRUAL_PERIODIC = "3";
     private static final String ACCRUAL_UPFRONT = "4";
 
     public static final String INTEREST_APPLICABLE_STRATEGY_REST_DATE = "2";
@@ -376,9 +377,12 @@ public class LoanProductTestBuilder {
                 map.put("incomeFromPenaltyAccountId", ID);
                 map.put("incomeFromRecoveryAccountId", ID);
             }
+
             if (this.accountList[i].getAccountType().equals(Account.AccountType.EXPENSE)) {
                 final String ID = this.accountList[i].getAccountID().toString();
                 map.put("writeOffAccountId", ID);
+                map.put("interestWriteOffAccountId", ID);
+
             }
             if (this.accountList[i].getAccountType().equals(Account.AccountType.LIABILITY)) {
                 final String ID = this.accountList[i].getAccountID().toString();

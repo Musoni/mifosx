@@ -48,6 +48,13 @@ public class AccountHelper {
         return new Account(accountID, Account.AccountType.EXPENSE);
     }
 
+    public Account createExpenseAccountInterestWriteOff() {
+        final String assetAccountJSON = new GLAccountBuilder().withAccountTypeAsExpenseAndInterestWriteOff().build();
+        final Integer accountID = Utils.performServerPost(this.requestSpec, this.responseSpec, this.CREATE_GL_ACCOUNT_URL,
+                assetAccountJSON, this.GL_ACCOUNT_ID_RESPONSE);
+        return new Account(accountID, Account.AccountType.EXPENSE);
+    }
+
     public Account createLiabilityAccount() {
         final String liabilityAccountJSON = new GLAccountBuilder().withAccountTypeAsLiability().build();
         final Integer accountID = Utils.performServerPost(this.requestSpec, this.responseSpec, this.CREATE_GL_ACCOUNT_URL,

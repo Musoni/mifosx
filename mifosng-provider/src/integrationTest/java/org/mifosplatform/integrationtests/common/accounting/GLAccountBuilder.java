@@ -85,6 +85,13 @@ public class GLAccountBuilder {
         return this;
     }
 
+    public GLAccountBuilder withAccountTypeAsExpenseAndInterestWriteOff() {
+        GLAccountBuilder.accountType = EXPENSE_ACCOUNT;
+        GLAccountBuilder.GLCode = Utils.randomStringGenerator("INTERESTWRITEOFF_", 2);
+        GLAccountBuilder.GLCode += Calendar.getInstance().getTimeInMillis() + "";
+        return this;
+    }
+
     public GLAccountBuilder withAccountUsageAsHeader() {
         GLAccountBuilder.accountUsage = ACCOUNT_USAGE_HEADER;
         return this;
