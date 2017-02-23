@@ -345,6 +345,12 @@ public final class LoanRepaymentScheduleInstallment extends AbstractAuditableCus
         this.obligationsMetOnDate = null;
     }
 
+    public void resetAccrualComponents() {
+        this.interestAccrued = null;
+        this.feeAccrued = null;
+        this.penaltyAccrued = null;
+    }
+
     public Money payPenaltyChargesComponent(final LocalDate transactionDate, final Money transactionAmountRemaining) {
 
         final MonetaryCurrency currency = transactionAmountRemaining.getCurrency();
