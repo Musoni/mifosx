@@ -1227,6 +1227,7 @@ public class Loan extends AbstractPersistable<Long> {
         updateLoanSummaryDerivedFields();
         applyAccurals(currentUser);
 
+
     }
 
     public void updateLoanSchedule(final Collection<LoanRepaymentScheduleInstallment> installments, AppUser currentUser) {
@@ -1277,6 +1278,7 @@ public class Loan extends AbstractPersistable<Long> {
             }
             installment.updateAccrualPortion(interest, fee, penality);
         }
+
     }
 
     private void updateAccrualsForNonPeriodicAccruals(final Collection<LoanTransaction> accruals, final AppUser currentUser) {
@@ -2923,13 +2925,19 @@ public class Loan extends AbstractPersistable<Long> {
                 if (isDisbursedAmountChanged) {
                     updateSummaryWithTotalFeeChargesDueAtDisbursement(deriveSumTotalOfChargesDueAtDisbursement());
                 }
+            }else if(isPeriodicAccrualAccountingEnabledOnLoanProduct()){
+                for (final LoanRepaymentScheduleInstallment period : getRepaymentScheduleInstallments()) {
+                    period.resetAccrualComponents();
+                }
             }
+
 
             actualChanges.put("actualDisbursementDate", "");
 
             existingTransactionIds.addAll(findExistingTransactionIds());
             existingReversedTransactionIds.addAll(findExistingReversedTransactionIds());
             this.accruedTill = null;
+            this.isSuspendedIncome  = false;
             reverseExistingTransactions();
             updateLoanSummaryDerivedFields();
 
@@ -4782,7 +4790,7 @@ public class Loan extends AbstractPersistable<Long> {
     private LocalDate getLastUserTransactionDate() {
         LocalDate currentTransactionDate = getDisbursementDate();
         for (final LoanTransaction previousTransaction : this.loanTransactions) {
-            if (!(previousTransaction.isReversed() || previousTransaction.isAccrual())) {
+            if (!(previousTransaction.isReversed() || previousTransaction.isAccrual() || previousTransaction.isSuspendIncome())) {
                 if (currentTransactionDate.isBefore(previousTransaction.getTransactionDate())) {
                     currentTransactionDate = previousTransaction.getTransactionDate();
                 }
