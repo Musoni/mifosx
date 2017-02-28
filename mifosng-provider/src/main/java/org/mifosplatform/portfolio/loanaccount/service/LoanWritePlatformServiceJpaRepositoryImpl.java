@@ -1276,7 +1276,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 .build();
     }
 
-    private void validateAddingNewChargeAllowed(List<LoanDisbursementDetails> loanDisburseDetails) {
+    private void validateAddingNewChargeAllowed(Set<LoanDisbursementDetails> loanDisburseDetails) {
         boolean pendingDisbursementAvailable = false;
         for (LoanDisbursementDetails disbursementDetail : loanDisburseDetails) {
             if (disbursementDetail.actualDisbursementDate() == null) {
@@ -1298,7 +1298,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         final Loan loan = this.loanAssembler.assembleFrom(loanId);
         checkClientOrGroupActive(loan);
 
-        List<LoanDisbursementDetails> loanDisburseDetails = loan.getDisbursementDetails();
+        Set<LoanDisbursementDetails> loanDisburseDetails = loan.getDisbursementDetails();
         final Long chargeDefinitionId = command.longValueOfParameterNamed("chargeId");
         final Charge chargeDefinition = this.chargeRepository.findOneWithNotFoundDetection(chargeDefinitionId);
 
@@ -2891,7 +2891,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
     @Transactional
     @Override
     public LoanCharge addLoanCharge(Loan loan, Charge charge, JsonCommand command, LoanCharge loanCharge) {
-        final List<LoanDisbursementDetails> loanDisburseDetails = loan.getDisbursementDetails();
+        final Set<LoanDisbursementDetails> loanDisburseDetails = loan.getDisbursementDetails();
         final List<Long> existingTransactionIds = new ArrayList<>(loan.findExistingTransactionIds());
         final List<Long> existingReversedTransactionIds = new ArrayList<>(loan.findExistingReversedTransactionIds());
 

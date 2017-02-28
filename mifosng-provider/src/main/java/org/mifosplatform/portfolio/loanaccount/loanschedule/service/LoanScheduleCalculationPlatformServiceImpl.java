@@ -215,7 +215,7 @@ public class LoanScheduleCalculationPlatformServiceImpl implements LoanScheduleC
         final MonetaryCurrency currency = loan.getCurrency();
         Money outstanding = loan.getPrincpal();
 
-        List<LoanDisbursementDetails> disbursementDetails = new ArrayList<>();
+        Set<LoanDisbursementDetails> disbursementDetails = new HashSet<>();
         if (loan.isMultiDisburmentLoan()) {
             disbursementDetails = loan.getDisbursementDetails();
             outstanding = outstanding.zero();

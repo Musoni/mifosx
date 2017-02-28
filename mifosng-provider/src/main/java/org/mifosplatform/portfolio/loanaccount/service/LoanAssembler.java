@@ -6,7 +6,12 @@
 package org.mifosplatform.portfolio.loanaccount.service;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
@@ -180,7 +185,7 @@ public class LoanAssembler {
         if (loanPurposeId != null) {
             loanPurpose = this.codeValueRepository.findOneWithNotFoundDetection(loanPurposeId);
         }
-        List<LoanDisbursementDetails> disbursementDetails = null;
+        Set<LoanDisbursementDetails> disbursementDetails = null;
         BigDecimal fixedEmiAmount = null;
         if (loanProduct.isMultiDisburseLoan() || loanProduct.canDefineInstallmentAmount()) {
             fixedEmiAmount = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(LoanApiConstants.emiAmountParameterName, element);
@@ -310,10 +315,10 @@ public class LoanAssembler {
         return loanApplication;
     }
 
-    public List<LoanDisbursementDetails> fetchDisbursementData(final JsonObject command) {
+    public Set<LoanDisbursementDetails> fetchDisbursementData(final JsonObject command) {
         final Locale locale = this.fromApiJsonHelper.extractLocaleParameter(command);
         final String dateFormat = this.fromApiJsonHelper.extractDateFormatParameter(command);
-        List<LoanDisbursementDetails> disbursementDatas = new ArrayList<>();
+        Set<LoanDisbursementDetails> disbursementDatas = new HashSet<>();
         if (command.has(LoanApiConstants.disbursementDataParameterName)) {
             final JsonArray disbursementDataArray = command.getAsJsonArray(LoanApiConstants.disbursementDataParameterName);
             if (disbursementDataArray != null && disbursementDataArray.size() > 0) {
