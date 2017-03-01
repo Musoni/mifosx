@@ -21,28 +21,16 @@ import static org.mifosplatform.portfolio.savings.DepositsApiConstants.minDeposi
 import static org.mifosplatform.portfolio.savings.DepositsApiConstants.preClosurePenalApplicableParamName;
 import static org.mifosplatform.portfolio.savings.DepositsApiConstants.preClosurePenalInterestOnTypeIdParamName;
 import static org.mifosplatform.portfolio.savings.DepositsApiConstants.preClosurePenalInterestParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.chargesParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.currencyCodeParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.descriptionParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.digitsAfterDecimalParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.idParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.inMultiplesOfParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.interestCalculationDaysInYearTypeParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.interestCalculationTypeParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.interestCompoundingPeriodTypeParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.interestPostingPeriodTypeParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.lockinPeriodFrequencyParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.lockinPeriodFrequencyTypeParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.minBalanceForInterestCalculationParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.nameParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.nominalAnnualInterestRateParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.shortNameParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.*;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.productGroupIdParamName;
 
 import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 
 import org.mifosplatform.accounting.common.AccountingRuleType;
+import org.mifosplatform.infrastructure.codes.domain.CodeValue;
+import org.mifosplatform.infrastructure.codes.domain.CodeValueRepositoryWrapper;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
 import org.mifosplatform.portfolio.charge.domain.Charge;
@@ -68,11 +56,14 @@ public class DepositProductAssembler {
 
     private final ChargeRepositoryWrapper chargeRepository;
     private final InterestRateChartAssembler chartAssembler;
+    private final CodeValueRepositoryWrapper codeValueRepository;
 
     @Autowired
-    public DepositProductAssembler(final ChargeRepositoryWrapper chargeRepository, final InterestRateChartAssembler chartAssembler) {
+    public DepositProductAssembler(final ChargeRepositoryWrapper chargeRepository, final InterestRateChartAssembler chartAssembler,
+                                   final CodeValueRepositoryWrapper codeValueRepository) {
         this.chargeRepository = chargeRepository;
         this.chartAssembler = chartAssembler;
+        this.codeValueRepository = codeValueRepository;
     }
 
     public FixedDepositProduct assembleFixedDepositProduct(final JsonCommand command) {
@@ -131,6 +122,12 @@ public class DepositProductAssembler {
         final DepositProductTermAndPreClosure productTermAndPreClosure = DepositProductTermAndPreClosure.createNew(preClosureDetail,
                 depositTermDetail, depositProductAmountDetails, null);
 
+        CodeValue productGroup = null;
+        if(command.parameterExists(productGroupIdParamName)){
+            Long productGroupId = command.longValueOfParameterNamed(productGroupIdParamName);
+            productGroup = this.codeValueRepository.findOneWithNotFoundDetection(productGroupId);
+        }
+
         // Savings product charges
         final Set<Charge> charges = assembleListOfSavingsProductCharges(command, currencyCode);
         // Interest rate charts
@@ -139,9 +136,9 @@ public class DepositProductAssembler {
             interestRate = BigDecimal.ZERO;
         }
         FixedDepositProduct fixedDepositProduct = FixedDepositProduct.createNew(name, shortName, description, currency, interestRate,
-                interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType,
-                lockinPeriodFrequency, lockinPeriodFrequencyType, accountingRuleType, charges, productTermAndPreClosure, charts,
-                minBalanceForInterestCalculation);
+                productGroup,interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType,
+                interestCalculationDaysInYearType, lockinPeriodFrequency, lockinPeriodFrequencyType, accountingRuleType,
+                charges, productTermAndPreClosure, charts, minBalanceForInterestCalculation);
 
         // update product reference
         productTermAndPreClosure.updateProductReference(fixedDepositProduct);
@@ -209,6 +206,12 @@ public class DepositProductAssembler {
         final DepositRecurringDetail recurringDetail = this.assembleRecurringDetail(command);
         final DepositProductRecurringDetail productRecurringDetail = DepositProductRecurringDetail.createNew(recurringDetail, null);
 
+        CodeValue productGroup = null;
+        if(command.parameterExists(productGroupIdParamName)){
+            Long productGroupId = command.longValueOfParameterNamed(productGroupIdParamName);
+            productGroup = this.codeValueRepository.findOneWithNotFoundDetection(productGroupId);
+        }
+
         // Savings product charges
         final Set<Charge> charges = assembleListOfSavingsProductCharges(command, currencyCode);
         // Interest rate charts
@@ -221,7 +224,7 @@ public class DepositProductAssembler {
         RecurringDepositProduct recurringDepositProduct = RecurringDepositProduct.createNew(name, shortName, description, currency,
                 interestRate, interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType,
                 interestCalculationDaysInYearType, lockinPeriodFrequency, lockinPeriodFrequencyType, accountingRuleType, charges,
-                productTermAndPreClosure, productRecurringDetail, charts, minBalanceForInterestCalculation);
+                productTermAndPreClosure, productRecurringDetail, charts, minBalanceForInterestCalculation, productGroup);
 
         // update product reference
         productTermAndPreClosure.updateProductReference(recurringDepositProduct);

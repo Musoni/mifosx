@@ -32,6 +32,8 @@ import org.mifosplatform.accounting.producttoaccountmapping.service.ProductToGLA
 import org.mifosplatform.commands.domain.CommandWrapper;
 import org.mifosplatform.commands.service.CommandWrapperBuilder;
 import org.mifosplatform.commands.service.PortfolioCommandSourceWritePlatformService;
+import org.mifosplatform.infrastructure.codes.data.CodeValueData;
+import org.mifosplatform.infrastructure.codes.service.CodeValueReadPlatformService;
 import org.mifosplatform.infrastructure.core.api.ApiRequestParameterHelper;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
@@ -47,12 +49,7 @@ import org.mifosplatform.portfolio.interestratechart.data.InterestRateChartData;
 import org.mifosplatform.portfolio.interestratechart.service.InterestRateChartReadPlatformService;
 import org.mifosplatform.portfolio.paymenttype.data.PaymentTypeData;
 import org.mifosplatform.portfolio.paymenttype.service.PaymentTypeReadPlatformService;
-import org.mifosplatform.portfolio.savings.DepositAccountType;
-import org.mifosplatform.portfolio.savings.DepositsApiConstants;
-import org.mifosplatform.portfolio.savings.SavingsCompoundingInterestPeriodType;
-import org.mifosplatform.portfolio.savings.SavingsInterestCalculationDaysInYearType;
-import org.mifosplatform.portfolio.savings.SavingsInterestCalculationType;
-import org.mifosplatform.portfolio.savings.SavingsPostingInterestPeriodType;
+import org.mifosplatform.portfolio.savings.*;
 import org.mifosplatform.portfolio.savings.data.FixedDepositProductData;
 import org.mifosplatform.portfolio.savings.service.DepositProductReadPlatformService;
 import org.mifosplatform.portfolio.savings.service.DepositsDropdownReadPlatformService;
@@ -71,6 +68,7 @@ public class FixedDepositProductsApiResource {
     private final DepositProductReadPlatformService depositProductReadPlatformService;
     private final SavingsDropdownReadPlatformService savingsDropdownReadPlatformService;
     private final CurrencyReadPlatformService currencyReadPlatformService;
+    private final CodeValueReadPlatformService codeValueReadPlatformService;
     private final PlatformSecurityContext context;
     private final DefaultToApiJsonSerializer<FixedDepositProductData> toApiJsonSerializer;
     private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
@@ -97,7 +95,8 @@ public class FixedDepositProductsApiResource {
             final InterestRateChartReadPlatformService interestRateChartReadPlatformService,
             final DepositsDropdownReadPlatformService depositsDropdownReadPlatformService,
             final DropdownReadPlatformService dropdownReadPlatformService,
-            final PaymentTypeReadPlatformService paymentTypeReadPlatformService) {
+            final PaymentTypeReadPlatformService paymentTypeReadPlatformService,
+            final CodeValueReadPlatformService codeValueReadPlatformService) {
         this.depositProductReadPlatformService = depositProductReadPlatformService;
         this.savingsDropdownReadPlatformService = savingsDropdownReadPlatformService;
         this.currencyReadPlatformService = currencyReadPlatformService;
@@ -113,6 +112,7 @@ public class FixedDepositProductsApiResource {
         this.depositsDropdownReadPlatformService = depositsDropdownReadPlatformService;
         this.dropdownReadPlatformService = dropdownReadPlatformService;
         this.paymentTypeReadPlatformService = paymentTypeReadPlatformService;
+        this.codeValueReadPlatformService = codeValueReadPlatformService;
     }
 
     @POST
@@ -266,6 +266,8 @@ public class FixedDepositProductsApiResource {
 
         final Collection<EnumOptionData> periodFrequencyTypeOptions = this.dropdownReadPlatformService.retrievePeriodFrequencyTypeOptions();
 
+        final Collection<CodeValueData> productGroupOptions = this.codeValueReadPlatformService.retrieveCodeValuesByCode(SavingsApiConstants.savingsProductGroupsCodeParamName);
+
         // charges
         final boolean feeChargesOnly = true;
         Collection<ChargeData> chargeOptions = this.chargeReadPlatformService.retrieveSavingsProductApplicableCharges(feeChargesOnly);
@@ -283,14 +285,14 @@ public class FixedDepositProductsApiResource {
                     interestCompoundingPeriodTypeOptions, interestPostingPeriodTypeOptions, interestCalculationTypeOptions,
                     interestCalculationDaysInYearTypeOptions, lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions,
                     paymentTypeOptions, accountingRuleOptions, accountingMappingOptions, chargeOptions, penaltyOptions, chartTemplate,
-                    preClosurePenalInterestOnTypeOptions, periodFrequencyTypeOptions);
+                    preClosurePenalInterestOnTypeOptions, periodFrequencyTypeOptions, productGroupOptions);
         } else {
             fixedDepositProductToReturn = FixedDepositProductData.template(currency, interestCompoundingPeriodType,
                     interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, accountingRule, currencyOptions,
                     interestCompoundingPeriodTypeOptions, interestPostingPeriodTypeOptions, interestCalculationTypeOptions,
                     interestCalculationDaysInYearTypeOptions, lockinPeriodFrequencyTypeOptions, withdrawalFeeTypeOptions,
                     paymentTypeOptions, accountingRuleOptions, accountingMappingOptions, chargeOptions, penaltyOptions, chartTemplate,
-                    preClosurePenalInterestOnTypeOptions, periodFrequencyTypeOptions);
+                    preClosurePenalInterestOnTypeOptions, periodFrequencyTypeOptions, productGroupOptions);
         }
 
         return fixedDepositProductToReturn;

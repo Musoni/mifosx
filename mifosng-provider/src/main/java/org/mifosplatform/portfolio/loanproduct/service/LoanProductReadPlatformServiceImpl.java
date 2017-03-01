@@ -13,6 +13,7 @@ import java.util.Collection;
 
 import org.joda.time.LocalDate;
 import org.mifosplatform.accounting.common.AccountingEnumerations;
+import org.mifosplatform.infrastructure.codes.data.CodeValueData;
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
 import org.mifosplatform.infrastructure.core.service.DateUtils;
@@ -175,7 +176,7 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
 
         public String loanProductSchema() {
             return "lp.id as id, lp.fund_id as fundId, f.name as fundName, lp.loan_transaction_strategy_id as transactionStrategyId, ltps.name as transactionStrategyName, "
-                    + "lp.name as name, lp.short_name as shortName, lp.description as description, "
+                    + "lp.name as name, lp.short_name as shortName, lp.description as description, lp.product_group as productGroupId, cv.code_value as productGroupValue, "
                     + "lp.principal_amount as principal, lp.min_principal_amount as minPrincipal, lp.max_principal_amount as maxPrincipal, lp.currency_code as currencyCode, lp.currency_digits as currencyDigits, lp.currency_multiplesof as inMultiplesOf, "
                     + "lp.nominal_interest_rate_per_period as interestRatePerPeriod, lp.min_nominal_interest_rate_per_period as minInterestRatePerPeriod, lp.max_nominal_interest_rate_per_period as maxInterestRatePerPeriod, lp.interest_period_frequency_enum as interestRatePerPeriodFreq, "
                     + "lp.annual_nominal_interest_rate as annualInterestRate, lp.interest_method_enum as interestMethod, lp.interest_calculated_in_period_enum as interestCalculationInPeriodMethod,lp.allow_partial_period_interest_calcualtion as allowPartialPeriodInterestCalcualtion, "
@@ -216,6 +217,7 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
                     + "lvi.maximum_gap as maximumGap "
                     + " from m_product_loan lp "
                     + " left join m_fund f on f.id = lp.fund_id "
+                    + " left join m_code_value cv on cv.id = lp.product_group"
                     + " left join m_product_loan_recalculation_details lpr on lpr.product_id=lp.id "
                     + " left join m_product_loan_guarantee_details lpg on lpg.loan_product_id=lp.id "
                     + " left join ref_loan_transaction_processing_strategy ltps on ltps.id = lp.loan_transaction_strategy_id"
@@ -238,6 +240,11 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
             final String fundName = rs.getString("fundName");
             final Long transactionStrategyId = JdbcSupport.getLong(rs, "transactionStrategyId");
             final String transactionStrategyName = rs.getString("transactionStrategyName");
+
+            final Long productGroupId = JdbcSupport.getLong(rs, "productGroupId");
+            final String productGroupValue = rs.getString("productGroupValue");
+            final boolean isActive = false;
+            final CodeValueData productGroup = CodeValueData.instance(productGroupId, productGroupValue, isActive);
 
             final String currencyCode = rs.getString("currencyCode");
             final String currencyName = rs.getString("currencyName");
@@ -423,7 +430,7 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
                     installmentAmountInMultiplesOf, allowAttributeOverrides, isLinkedToFloatingInterestRates, floatingRateId,
                     floatingRateName, interestRateDifferential, minDifferentialLendingRate, defaultDifferentialLendingRate,
                     maxDifferentialLendingRate, isFloatingInterestRateCalculationAllowed, isVariableIntallmentsAllowed, minimumGap,
-                    maximumGap, this.creditChecks, reverseOverdueDaysNPAInterest);
+                    maximumGap, this.creditChecks, reverseOverdueDaysNPAInterest, productGroup);
         }
     }
 
