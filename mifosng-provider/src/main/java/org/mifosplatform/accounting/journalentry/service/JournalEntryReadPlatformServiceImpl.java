@@ -144,7 +144,9 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
                         .append(" left join m_savings_account_transaction as st on journalEntry.savings_transaction_id = st.id ")
                         .append(" left join m_payment_detail as pd on journalEntry.payment_details_id = pd.id ")
                         .append(" left join m_payment_type as pt on pt.id = pd.payment_type_id ")
-                        .append(" left join m_cashier_transactions as ct on journalEntry.entity_id = ct.id ");
+                        .append(" left join m_cashier_transactions as ct on journalEntry.entity_id = ct.id ")
+                        .append(" AND journalEntry.transaction_id = CONCAT('C',ct.id) ");
+
             }
              if (associationParametersData.isNotesRequired()) {        
                 sb.append(" left join m_note as note on lt.id = note.loan_transaction_id or st.id = note.savings_account_transaction_id ");
@@ -408,7 +410,7 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
         if (searchParameters.isTellerIdPassed()) {
             sqlBuilder
                     .append(whereClose
-                            + " ch.teller_id = ? and pt.is_cash_payment=1 and  journalEntry.created_date >= ch.started_at and ( journalEntry.created_date <= ch.ended_at OR ch.ended_at IS NULL ) ");
+                            + " ( ch.teller_id = ?  OR ct.id IS NOT NULL) and ( pt.is_cash_payment=1 OR pt.is_cash_payment IS NULL ) and ( journalEntry.created_date >= ch.started_at OR ch.started_at IS NULL ) and ( journalEntry.created_date <= ch.ended_at OR ch.ended_at IS NULL ) ");
             objectArray[arrayPos] = searchParameters.getTellerId();
             arrayPos = arrayPos + 1;
 
