@@ -278,7 +278,7 @@ public class LoanScheduleAssembler {
         LocalDate interestChargedFromDate = this.fromApiJsonHelper.extractLocalDateNamed("interestChargedFromDate", element);
 
         // Override interestchargedfromdate if same as repayment period to avoid calculation collapses:
-        if(interestCalculationPeriodMethod.equals(interestCalculationPeriodMethod.SAME_AS_REPAYMENT_PERIOD)) {
+        if(interestCalculationPeriodMethod.equals(InterestCalculationPeriodMethod.SAME_AS_REPAYMENT_PERIOD)) {
             interestChargedFromDate = null;
         }
 
