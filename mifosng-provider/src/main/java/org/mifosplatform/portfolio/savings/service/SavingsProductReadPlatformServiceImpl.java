@@ -12,6 +12,7 @@ import java.util.Collection;
 
 import org.joda.time.LocalDate;
 import org.mifosplatform.accounting.common.AccountingEnumerations;
+import org.mifosplatform.infrastructure.codes.data.CodeValueData;
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
 import org.mifosplatform.infrastructure.core.service.DateUtils;
@@ -108,6 +109,7 @@ public class SavingsProductReadPlatformServiceImpl implements SavingsProductRead
             sqlBuilder
                     .append("sp.currency_code as currencyCode, sp.currency_digits as currencyDigits, sp.currency_multiplesof as inMultiplesOf, ");
             sqlBuilder.append("curr.name as currencyName, curr.internationalized_name_code as currencyNameCode, ");
+            sqlBuilder.append("sp.product_group as productGroupId, cv.code_value as productGroupValue, ");
             sqlBuilder.append("curr.display_symbol as currencyDisplaySymbol, ");
             sqlBuilder.append("sp.nominal_annual_interest_rate as nominalAnnualInterestRate, ");
             sqlBuilder.append("sp.interest_compounding_period_enum as compoundingInterestPeriodType, ");
@@ -130,6 +132,7 @@ public class SavingsProductReadPlatformServiceImpl implements SavingsProductRead
             sqlBuilder.append("sp.close_date as closeDate ");
             sqlBuilder.append("from m_savings_product sp ");
             sqlBuilder.append("join m_currency curr on curr.code = sp.currency_code ");
+            sqlBuilder.append("left join m_code_value cv on cv.id = sp.product_group ");
 
             this.schemaSql = sqlBuilder.toString();
         }
@@ -155,6 +158,11 @@ public class SavingsProductReadPlatformServiceImpl implements SavingsProductRead
             final CurrencyData currency = new CurrencyData(currencyCode, currencyName, currencyDigits, inMultiplesOf,
                     currencyDisplaySymbol, currencyNameCode);
             final BigDecimal nominalAnnualInterestRate = rs.getBigDecimal("nominalAnnualInterestRate");
+
+            final Long productGroupId = JdbcSupport.getLong(rs, "productGroupId");
+            final String productGroupValue = rs.getString("productGroupValue");
+            final boolean isActive = false;
+            final CodeValueData productGroup = CodeValueData.instance(productGroupId, productGroupValue, isActive);
 
             final Integer compoundingInterestPeriodTypeValue = JdbcSupport.getInteger(rs, "compoundingInterestPeriodType");
             final EnumOptionData compoundingInterestPeriodType = SavingsEnumerations
@@ -210,7 +218,7 @@ public class SavingsProductReadPlatformServiceImpl implements SavingsProductRead
                     minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers,
                     accountingRuleType, allowOverdraft, overdraftLimit, minRequiredBalance, enforceMinRequiredBalance,
                     minBalanceForInterestCalculation, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation,
-                    startDate, closeDate, status);
+                    startDate, closeDate, status, productGroup);
         }
     }
 
