@@ -465,10 +465,8 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 final String name = "To loan " + loan.getAccountNumber() + " from savings " + linkedSavingsAccount.getAccountNumber();
                 final Office fromOffice = loan.getOffice();
                 final Client fromClient = loan.getClient();
-                final Group fromGroup = loan.group();
                 final Office toOffice = loan.getOffice();
                 final Client toClient = loan.getClient();
-                final Group toGroup = loan.group();
                 final Integer priority = StandingInstructionPriority.MEDIUM.getValue();
                 final Integer transferType = AccountTransferType.LOAN_REPAYMENT.getValue();
                 final Integer instructionType = StandingInstructionType.DUES.getValue();
@@ -486,7 +484,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 
                 else {
                     AccountTransferDetails accountTransferDetails = AccountTransferDetails.savingsToLoanTransfer(fromOffice, fromClient,
-                            linkedSavingsAccount, toOffice, toClient, loan, transferType, toGroup, fromGroup);
+                            linkedSavingsAccount, toOffice, toClient, loan, transferType);
 
                     AccountTransferStandingInstruction accountTransferStandingInstruction = AccountTransferStandingInstruction.create(
                             accountTransferDetails, name, priority, instructionType, status, null, validFrom, null, 

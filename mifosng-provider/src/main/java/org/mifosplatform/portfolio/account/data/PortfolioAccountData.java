@@ -92,8 +92,6 @@ public class PortfolioAccountData {
         return this.clientId;
     }
 
-    public Long groupId() { return this.groupId; }
-
     public CurrencyData currency() {
         return this.currency;
     }

@@ -59,7 +59,6 @@ public class StandingInstructionHistoryApiResource {
             @QueryParam("limit") final Integer limit, @QueryParam("orderBy") final String orderBy,
             @QueryParam("sortOrder") final String sortOrder, @QueryParam("transferType") final Integer transferType,
             @QueryParam("clientName") final String clientName, @QueryParam("clientId") final Long clientId,
-            @QueryParam("groupName") final String groupName, @QueryParam("groupId") final Long groupId,
             @QueryParam("fromAccountId") final Long fromAccount, @QueryParam("fromAccountType") final Integer fromAccountType,
             @QueryParam("locale") final String locale, @QueryParam("dateFormat") final String dateFormat,
             @QueryParam("fromDate") final DateParam fromDateParam, @QueryParam("toDate") final DateParam toDateParam, 
@@ -79,7 +78,7 @@ public class StandingInstructionHistoryApiResource {
         }
 
         StandingInstructionDTO standingInstructionDTO = new StandingInstructionDTO(searchParameters, transferType, clientName, clientId,
-                groupName, groupId, fromAccount, fromAccountType, startDateRange, endDateRange, standingInstructionId);
+                fromAccount, fromAccountType, startDateRange, endDateRange, standingInstructionId);
 
         final Page<StandingInstructionHistoryData> history = this.standingInstructionHistoryReadPlatformService
                 .retrieveAll(standingInstructionDTO);
