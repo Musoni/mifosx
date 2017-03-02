@@ -1514,9 +1514,14 @@ public class Loan extends AbstractPersistable<Long> {
             actualChanges.put("dateFormat", dateFormatAsInput);
             actualChanges.put("locale", localeAsInput);
             actualChanges.put("recalculateLoanSchedule", true);
+            
+            final InterestCalculationPeriodMethod interestCalculationPeriodMethod = this.loanRepaymentScheduleDetail
+                    .getInterestCalculationPeriodMethod();
 
             final LocalDate newValue = command.localDateValueOfParameterNamed(interestChargedFromDateParamName);
-            if (newValue != null) {
+            
+            // Override interestchargedfromdate if same as repayment period to avoid calculation collapses:
+            if (newValue != null && !interestCalculationPeriodMethod.equals(InterestCalculationPeriodMethod.SAME_AS_REPAYMENT_PERIOD)) {
                 this.interestChargedFromDate = newValue.toDate();
             } else {
                 this.interestChargedFromDate = null;
