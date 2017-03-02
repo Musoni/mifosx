@@ -21,6 +21,8 @@ public class ExternalServicesConstants {
     public static final String SMTP_HOST = "host";
     public static final String SMTP_PORT = "port";
     public static final String SMTP_USE_TLS = "useTLS";
+    public static final String SMTP_CREDIT_EMAIL_REMINDER = "sms_credit_email_reminder";
+    public static final String SMTP_TARTGET_EMAIL_FOR_LOW_SMS_CREDIT = "target_email";
 
     public static enum EXTERNALSERVICEPROPERTIES_JSON_INPUT_PARAMS {
         EXTERNAL_SERVICE_ID("external_service_id"), NAME("name"), VALUE("value");
@@ -54,7 +56,8 @@ public class ExternalServicesConstants {
     }
 
     public static enum SMTP_JSON_INPUT_PARAMS {
-        USERNAME("username"), PASSWORD("password"), HOST("host"), PORT("port"), USETLS("useTLS");
+        USERNAME("username"), PASSWORD("password"), HOST("host"), PORT("port"), USETLS("useTLS"), SMSCREDITEMAILREMINDER("sms_credit_email_reminder"),
+        TARGETEMAIL("target_email");
 
         private final String value;
 

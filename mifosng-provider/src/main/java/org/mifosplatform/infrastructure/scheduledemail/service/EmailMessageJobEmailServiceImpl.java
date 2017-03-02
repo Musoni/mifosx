@@ -6,10 +6,15 @@
 package org.mifosplatform.infrastructure.scheduledemail.service;
 
 
+import org.apache.xmlbeans.impl.tool.XMLBean;
+import org.mifosplatform.infrastructure.configuration.data.SMTPCredentialsData;
+import org.mifosplatform.infrastructure.configuration.service.ExternalServicesPropertiesReadPlatformService;
 import org.mifosplatform.infrastructure.scheduledemail.EmailApiConstants;
 import org.mifosplatform.infrastructure.scheduledemail.data.EmailMessageWithAttachmentData;
 import org.mifosplatform.infrastructure.scheduledemail.domain.EmailConfiguration;
 import org.mifosplatform.infrastructure.scheduledemail.domain.EmailConfigurationRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -26,22 +31,26 @@ import java.util.Set;
 @Service
 public class EmailMessageJobEmailServiceImpl implements EmailMessageJobEmailService {
 
-    private EmailConfigurationRepository emailConfigurationRepository;
+    private final ExternalServicesPropertiesReadPlatformService externalServicesReadPlatformService;
+    private static final Logger logger = LoggerFactory.getLogger( EmailMessageJobEmailServiceImpl.class);
+
 
     @Autowired
-    private EmailMessageJobEmailServiceImpl(final EmailConfigurationRepository emailConfigurationRepository) {
-        this.emailConfigurationRepository = emailConfigurationRepository;
+    private EmailMessageJobEmailServiceImpl(final ExternalServicesPropertiesReadPlatformService externalServicesReadPlatformService) {
+        this.externalServicesReadPlatformService = externalServicesReadPlatformService;
     }
 
     @Override
     public void sendEmailWithAttachment(EmailMessageWithAttachmentData emailMessageWithAttachmentData) {
         try{
+            SMTPCredentialsData smtpCredentialsData = this.externalServicesReadPlatformService.getSMTPCredentials();
+
             JavaMailSenderImpl javaMailSenderImpl = new JavaMailSenderImpl();
-            javaMailSenderImpl.setHost(this.getGmailSmtpServer());
-            javaMailSenderImpl.setPort(this.getGmailSmtpPort());
-            javaMailSenderImpl.setUsername(this.getGmailSmtpUsername());
-            javaMailSenderImpl.setPassword(this.getGmailSmtpPassword());
-            javaMailSenderImpl.setJavaMailProperties(this.getJavaMailProperties());
+            javaMailSenderImpl.setHost(smtpCredentialsData.getHost());
+            javaMailSenderImpl.setPort(Integer.parseInt(smtpCredentialsData.getPort()));
+            javaMailSenderImpl.setUsername(smtpCredentialsData.getUsername());
+            javaMailSenderImpl.setPassword(smtpCredentialsData.getPassword());
+            javaMailSenderImpl.setJavaMailProperties(this.getJavaMailProperties(smtpCredentialsData.getHost()));
 
             MimeMessage mimeMessage = javaMailSenderImpl.createMimeMessage();
 
@@ -63,35 +72,17 @@ public class EmailMessageJobEmailServiceImpl implements EmailMessageJobEmailServ
             javaMailSenderImpl.send(mimeMessage);
 
         }catch(MessagingException e){
-
+            logger.error(e.getMessage(), e);
         }
 
     }
 
 
-    private String getGmailSmtpServer(){
-        final EmailConfiguration gmailSmtpServer = this.emailConfigurationRepository.findByName(EmailApiConstants.SMTP_SERVER);
-        return (gmailSmtpServer !=null) ? gmailSmtpServer.getValue() : null;
-    }
-    private Integer getGmailSmtpPort(){
-        final EmailConfiguration gmailSmtpPort = this.emailConfigurationRepository.findByName(EmailApiConstants.SMTP_PORT);
-        return (gmailSmtpPort !=null) ? Integer.parseInt(gmailSmtpPort.getValue()) : null;
-    }
-    private String getGmailSmtpUsername(){
-        final EmailConfiguration gmailSmtpUsername = this.emailConfigurationRepository.findByName(EmailApiConstants.SMTP_USERNAME);
-        return (gmailSmtpUsername !=null) ? gmailSmtpUsername.getValue() : null;
-    }
-
-    private String getGmailSmtpPassword(){
-        final EmailConfiguration gmailSmtpPassword = this.emailConfigurationRepository.findByName(EmailApiConstants.SMTP_PASSWORD);
-        return (gmailSmtpPassword !=null) ? gmailSmtpPassword.getValue() : null;
-    }
-
-    private Properties getJavaMailProperties() {
+    private Properties getJavaMailProperties(final String smtpHost) {
         Properties properties = new Properties();
         properties.setProperty("mail.smtp.starttls.enable", "true");
         properties.setProperty("mail.smtp.auth", "true");
-        properties.setProperty("mail.smtp.ssl.trust", this.getGmailSmtpServer());
+        properties.setProperty("mail.smtp.ssl.trust", smtpHost);
 
         return properties;
     }

@@ -19,11 +19,19 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+import org.mifosplatform.infrastructure.configuration.data.ExternalServicesData;
+import org.mifosplatform.infrastructure.configuration.data.ExternalServicesPropertiesData;
+import org.mifosplatform.infrastructure.configuration.service.ExternalServicesConstants;
+import org.mifosplatform.infrastructure.configuration.service.ExternalServicesPropertiesReadPlatformService;
+import org.mifosplatform.infrastructure.configuration.service.ExternalServicesReadPlatformService;
 import org.mifosplatform.infrastructure.core.domain.MifosPlatformTenant;
 import org.mifosplatform.infrastructure.core.service.ThreadLocalContextUtil;
 import org.mifosplatform.infrastructure.jobs.annotation.CronTarget;
 import org.mifosplatform.infrastructure.jobs.service.JobName;
 import org.mifosplatform.infrastructure.reportmailingjob.helper.IPv4Helper;
+import org.mifosplatform.infrastructure.scheduledemail.data.EmailMessageWithAttachmentData;
+import org.mifosplatform.infrastructure.scheduledemail.service.EmailMessageJobEmailService;
+import org.mifosplatform.infrastructure.scheduledemail.service.EmailMessageJobEmailServiceImpl;
 import org.mifosplatform.infrastructure.sms.data.SmsConfigurationData;
 import org.mifosplatform.infrastructure.sms.data.SmsData;
 import org.mifosplatform.infrastructure.sms.data.SmsMessageApiQueueResourceData;
@@ -62,19 +70,25 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
 	private final SmsConfigurationReadPlatformService configurationReadPlatformService;
 	private static final Logger logger = LoggerFactory.getLogger(SmsMessageScheduledJobServiceImpl.class);
 	private final RestTemplate restTemplate = new RestTemplate();
+	private final EmailMessageJobEmailService emailMessageJobEmailService;
+	private final ExternalServicesPropertiesReadPlatformService externalServicePropertiesReadPlatformService;
     
     /** 
 	 * SmsMessageScheduledJobServiceImpl constructor
 	 **/
 	@Autowired
-	public SmsMessageScheduledJobServiceImpl(SmsMessageRepository smsMessageRepository, 
-			SmsConfigurationReadPlatformService readPlatformService, 
-			SmsReadPlatformService smsReadPlatformService,
-			SmsConfigurationRepository smsConfigurationRepository) {
+	public SmsMessageScheduledJobServiceImpl(SmsMessageRepository smsMessageRepository,
+			 SmsConfigurationReadPlatformService readPlatformService,
+			 SmsReadPlatformService smsReadPlatformService,
+			 SmsConfigurationRepository smsConfigurationRepository,
+			 EmailMessageJobEmailService emailMessageJobEmailService,
+			 ExternalServicesPropertiesReadPlatformService externalServicePropertiesReadPlatformService) {
 		this.smsMessageRepository = smsMessageRepository;
 		this.smsConfigurationRepository = smsConfigurationRepository;
 		this.configurationReadPlatformService = readPlatformService;
 		this.smsReadPlatformService = smsReadPlatformService;
+		this.emailMessageJobEmailService = emailMessageJobEmailService;
+		this.externalServicePropertiesReadPlatformService = externalServicePropertiesReadPlatformService;
 	}
 	
 	/** 
@@ -233,7 +247,8 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
 	                    // ====================== end point json string ====================================
 	                    
 	                    smsCredits = this.sendMessages(httpEntity, apiAuthUsername, apiAuthPassword, apiBaseUrl, smsCredits, sourceAddress);
-	                    
+
+
 	                    logger.info(pendingMessages.size() + " pending message(s) successfully sent to the intermediate gateway - mlite-sms");
 	                    
 	                    SmsConfiguration smsConfiguration = this.smsConfigurationRepository.findByName("SMS_CREDITS");
@@ -241,7 +256,10 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
 	                    
 	                    // save the SmsConfiguration entity
 	                    this.smsConfigurationRepository.save(smsConfiguration);
-	                }
+
+						this.sendEmailLowSmsCreditReminder(smsCredits);
+
+					}
 	            }
 	            
 	            catch(Exception e) {
@@ -407,5 +425,51 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
 	            logger.error(e.getMessage(), e);
 	        }
 	    }
+	}
+
+	private void sendEmailLowSmsCreditReminder(final Integer smsCredits){
+
+		String port = null;
+		String username  = null;
+		String password = null;
+		Integer smsCreditEmailReminder = 0;
+		String host   = null;
+		String to  = null;
+
+		final Collection<ExternalServicesPropertiesData> externalServicesPropertiesDatas = this.externalServicePropertiesReadPlatformService.retrieveOne("SMTP");
+		for(final ExternalServicesPropertiesData externalServicesProperty : externalServicesPropertiesDatas){
+			if(externalServicesProperty.getName().equals(ExternalServicesConstants.SMTP_HOST)){
+				host = externalServicesProperty.getValue();
+			}
+			if(externalServicesProperty.getName().equals(ExternalServicesConstants.SMTP_PORT)){
+				port = externalServicesProperty.getValue();
+			}
+			if(externalServicesProperty.getName().equals(ExternalServicesConstants.SMTP_USERNAME)){
+				username = externalServicesProperty.getValue();
+			}
+			if(externalServicesProperty.getName().equals(ExternalServicesConstants.SMTP_PASSWORD)){
+				password = externalServicesProperty.getValue();
+			}
+			if(externalServicesProperty.getName().equals(ExternalServicesConstants.SMTP_CREDIT_EMAIL_REMINDER)){
+				smsCreditEmailReminder = Integer.valueOf(externalServicesProperty.getValue());
+			}
+			if(externalServicesProperty.getName().equals(ExternalServicesConstants.SMTP_TARTGET_EMAIL_FOR_LOW_SMS_CREDIT)){
+				to = externalServicesProperty.getValue();
+			}
+		}
+		if((smsCreditEmailReminder.compareTo(smsCredits)) == 0 || (smsCreditEmailReminder.compareTo(smsCredits) == 1 )){
+
+			if(port !=null && username !=null && host !=null && password !=null){
+
+				if(to == null){to = username;}
+				String text = "Please be aware that you have a limited number of SMS messages remaining. If you would like to continue sending out automated messages to your clients, please make sure to top up your SMS balance as soon as possible.\n" +
+						"Thank you,";
+				String subject = "Musoni SMS Balance Low";
+				EmailMessageWithAttachmentData emailMessageWithAttachmentData = EmailMessageWithAttachmentData.createNew(to,
+						text,subject,null);
+				this.emailMessageJobEmailService.sendEmailWithAttachment(emailMessageWithAttachmentData);
+			}
+		}
+
 	}
 }
