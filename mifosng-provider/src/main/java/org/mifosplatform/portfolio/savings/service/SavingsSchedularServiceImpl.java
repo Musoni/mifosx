@@ -39,7 +39,7 @@ public class SavingsSchedularServiceImpl implements SavingsSchedularService {
     @Override
     public void postInterestForAccounts() throws JobExecutionException {
         final List<SavingsAccount> accounts = new ArrayList<>();
-        final List<SavingsAccount> savingsAccounts = this.savingAccountRepository.findSavingAccountByStatus(SavingsAccountStatusType.ACTIVE
+        final List<SavingsAccount> savingsAccounts = this.savingAccountRepository.findSavingAccountByStatusAndInterest(SavingsAccountStatusType.ACTIVE
                 .getValue());
         StringBuffer sb = new StringBuffer();
         for (final SavingsAccount savingsAccount : savingsAccounts) {
