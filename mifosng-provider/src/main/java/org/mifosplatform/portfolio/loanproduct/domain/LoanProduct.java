@@ -40,7 +40,6 @@ import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 import org.joda.time.LocalDate;
 import org.mifosplatform.accounting.common.AccountingRuleType;
-import org.mifosplatform.infrastructure.codes.domain.CodeValue;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
 import org.mifosplatform.organisation.monetary.domain.Money;
@@ -180,13 +179,9 @@ public class LoanProduct extends AbstractPersistable<Long> {
     @Column(name = "reverse_overduedays_npa_interest")
     private boolean reverseOverdueDaysNPAInterest;
 
-    @ManyToOne
-    @JoinColumn(name = "product_group")
-    private CodeValue productGroup;
-
     public static LoanProduct assembleFromJson(final Fund fund, final LoanTransactionProcessingStrategy loanTransactionProcessingStrategy,
             final List<Charge> productCharges, final JsonCommand command, final AprCalculator aprCalculator, FloatingRate floatingRate, 
-            final List<CreditCheck> creditChecks, final CodeValue productGroup) {
+            final List<CreditCheck> creditChecks) {
 
         final String name = command.stringValueOfParameterNamed("name");
         final String shortName = command.stringValueOfParameterNamed(LoanProductConstants.shortName);
@@ -341,7 +336,7 @@ public class LoanProduct extends AbstractPersistable<Long> {
                 installmentAmountInMultiplesOf, loanConfigurableAttributes, isLinkedToFloatingInterestRates, floatingRate,
                 interestRateDifferential, minDifferentialLendingRate, maxDifferentialLendingRate, defaultDifferentialLendingRate,
                 isFloatingInterestRateCalculationAllowed, isVariableInstallmentsAllowed, minimumGapBetweenInstallments,
-                maximumGapBetweenInstallments, creditChecks, reverseOverdueDaysNPAInterest, productGroup);
+                maximumGapBetweenInstallments, creditChecks, reverseOverdueDaysNPAInterest);
     }
 
     public void updateLoanProductInRelatedClasses() {
@@ -572,7 +567,7 @@ public class LoanProduct extends AbstractPersistable<Long> {
             BigDecimal minDifferentialLendingRate, BigDecimal maxDifferentialLendingRate, BigDecimal defaultDifferentialLendingRate,
             Boolean isFloatingInterestRateCalculationAllowed, final Boolean isVariableInstallmentsAllowed,
             final Integer minimumGapBetweenInstallments, final Integer maximumGapBetweenInstallments, 
-            final List<CreditCheck> creditChecks, final boolean reverseOverdueDaysNPAInterest, final CodeValue productGroup) {
+            final List<CreditCheck> creditChecks, final boolean reverseOverdueDaysNPAInterest) {
         this.fund = fund;
         this.transactionProcessingStrategy = transactionProcessingStrategy;
         this.name = name.trim();
@@ -651,7 +646,6 @@ public class LoanProduct extends AbstractPersistable<Long> {
             this.creditChecks = creditChecks;
         }
         this.reverseOverdueDaysNPAInterest = reverseOverdueDaysNPAInterest;
-        this.productGroup = productGroup;
     }
 
     public MonetaryCurrency getCurrency() {
@@ -664,10 +658,6 @@ public class LoanProduct extends AbstractPersistable<Long> {
 
     public void update(final LoanTransactionProcessingStrategy strategy) {
         this.transactionProcessingStrategy = strategy;
-    }
-
-    public void update(final CodeValue productGroup){
-        this.productGroup = productGroup;
     }
 
     public LoanTransactionProcessingStrategy getRepaymentStrategy() {
@@ -806,16 +796,6 @@ public class LoanProduct extends AbstractPersistable<Long> {
         if (command.isChangeInLongParameterNamed(fundIdParamName, existingFundId)) {
             final Long newValue = command.longValueOfParameterNamed(fundIdParamName);
             actualChanges.put(fundIdParamName, newValue);
-        }
-
-        Long existingProductGroupId = null;
-        if (this.productGroup != null) {
-            existingProductGroupId = this.productGroup.getId();
-        }
-        final String productGroupIdParamName = "productGroupId";
-        if (command.isChangeInLongParameterNamed(productGroupIdParamName, existingProductGroupId)) {
-            final Long newValue = command.longValueOfParameterNamed(productGroupIdParamName);
-            actualChanges.put(productGroupIdParamName, newValue);
         }
 
         Long existingStrategyId = null;
@@ -1408,6 +1388,4 @@ public class LoanProduct extends AbstractPersistable<Long> {
     public boolean isReverseNPAInterestEnabled(){ return this.reverseOverdueDaysNPAInterest;}
 
     public Integer getOverdueDaysForNPA() {return this.overdueDaysForNPA;}
-
-    public CodeValue getProductGroup() { return this.productGroup; }
 }

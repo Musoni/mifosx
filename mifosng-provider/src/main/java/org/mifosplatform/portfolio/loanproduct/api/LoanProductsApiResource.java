@@ -13,8 +13,6 @@ import org.mifosplatform.accounting.producttoaccountmapping.service.ProductToGLA
 import org.mifosplatform.commands.domain.CommandWrapper;
 import org.mifosplatform.commands.service.CommandWrapperBuilder;
 import org.mifosplatform.commands.service.PortfolioCommandSourceWritePlatformService;
-import org.mifosplatform.infrastructure.codes.data.CodeValueData;
-import org.mifosplatform.infrastructure.codes.service.CodeValueReadPlatformService;
 import org.mifosplatform.infrastructure.core.api.ApiParameterHelper;
 import org.mifosplatform.infrastructure.core.api.ApiRequestParameterHelper;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
@@ -84,9 +82,9 @@ public class LoanProductsApiResource {
             "accountingRuleOptions", "accountingMappingOptions", "floatingRateOptions", "isLinkedToFloatingInterestRates",
             "floatingRatesId", "interestRateDifferential", "minDifferentialLendingRate", "defaultDifferentialLendingRate",
             "maxDifferentialLendingRate", "isFloatingInterestRateCalculationAllowed", CreditCheckConstants.CREDIT_CHECKS_PARAM_NAME, 
-            CreditCheckConstants.CREDIT_CHECK_OPTIONS_PARAM_NAME, "productGroup", "productGroupOptions"));
+            CreditCheckConstants.CREDIT_CHECK_OPTIONS_PARAM_NAME));
     private final Set<String> PRODUCT_MIX_DATA_PARAMETERS = new HashSet<>(Arrays.asList("productId", "productName", "restrictedProducts",
-            "productGroup", "allowedProducts", "productOptions", "productGroupOptions"));
+            "allowedProducts", "productOptions"));
 
     private final String resourceNameForPermissions = "LOANPRODUCT";
 
@@ -95,7 +93,6 @@ public class LoanProductsApiResource {
     private final ChargeReadPlatformService chargeReadPlatformService;
     private final CurrencyReadPlatformService currencyReadPlatformService;
     private final FundReadPlatformService fundReadPlatformService;
-    private final CodeValueReadPlatformService codeValueReadPlatformService;
     private final DefaultToApiJsonSerializer<LoanProductData> toApiJsonSerializer;
     private final ApiRequestParameterHelper apiRequestParameterHelper;
     private final LoanDropdownReadPlatformService dropdownReadPlatformService;
@@ -123,8 +120,7 @@ public class LoanProductsApiResource {
             final DropdownReadPlatformService commonDropdownReadPlatformService,
             PaymentTypeReadPlatformService paymentTypeReadPlatformService,
             final FloatingRatesReadPlatformService floatingRateReadPlatformService, 
-            final CreditCheckReadPlatformService creditCheckReadPlatformService,
-            final CodeValueReadPlatformService codeValueReadPlatformService) {
+            final CreditCheckReadPlatformService creditCheckReadPlatformService) {
         this.context = context;
         this.loanProductReadPlatformService = readPlatformService;
         this.chargeReadPlatformService = chargeReadPlatformService;
@@ -141,8 +137,7 @@ public class LoanProductsApiResource {
         this.commonDropdownReadPlatformService = commonDropdownReadPlatformService;
         this.paymentTypeReadPlatformService = paymentTypeReadPlatformService;
         this.floatingRateReadPlatformService = floatingRateReadPlatformService;
-        this.creditCheckReadPlatformService = creditCheckReadPlatformService;
-        this.codeValueReadPlatformService = codeValueReadPlatformService;
+        this.creditCheckReadPlatformService = creditCheckReadPlatformService; 
     }
 
     @POST
@@ -272,7 +267,6 @@ public class LoanProductsApiResource {
         final List<EnumOptionData> interestRateFrequencyTypeOptions = this.dropdownReadPlatformService
                 .retrieveInterestRateFrequencyTypeOptions();
         final Collection<PaymentTypeData> paymentTypeOptions = this.paymentTypeReadPlatformService.retrieveAllPaymentTypes(false);
-        final Collection<CodeValueData> productGroupOptions = this.codeValueReadPlatformService.retrieveCodeValuesByCode(LoanProductConstants.loanProductGroupsCodeParamName);
 
         Collection<FundData> fundOptions = this.fundReadPlatformService.retrieveAllFunds();
         if (fundOptions.isEmpty()) {
@@ -307,7 +301,7 @@ public class LoanProductsApiResource {
                 interestRateFrequencyTypeOptions, fundOptions, transactionProcessingStrategyOptions, accountOptions,
                 accountingRuleTypeOptions, loanCycleValueConditionTypeOptions, daysInMonthTypeOptions, daysInYearTypeOptions,
                 interestRecalculationCompoundingTypeOptions, rescheduleStrategyTypeOptions, interestRecalculationFrequencyTypeOptions,
-                preCloseInterestCalculationStrategyOptions, floatingRateOptions, creditCheckOptions, false, productGroupOptions);
+                preCloseInterestCalculationStrategyOptions, floatingRateOptions, creditCheckOptions, false);
     }
 
 }

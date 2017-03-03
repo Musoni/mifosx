@@ -11,8 +11,6 @@ import java.util.Map;
 
 import org.joda.time.LocalDate;
 import org.mifosplatform.accounting.producttoaccountmapping.service.ProductToGLAccountMappingWritePlatformService;
-import org.mifosplatform.infrastructure.codes.domain.CodeValue;
-import org.mifosplatform.infrastructure.codes.domain.CodeValueRepositoryWrapper;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResultBuilder;
@@ -60,7 +58,6 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
     private final LoanProductRepository loanProductRepository;
     private final AprCalculator aprCalculator;
     private final FundRepository fundRepository;
-    private final CodeValueRepositoryWrapper codeValueRepository;
     private final LoanTransactionProcessingStrategyRepository loanTransactionProcessingStrategyRepository;
     private final ChargeRepositoryWrapper chargeRepository;
     private final ProductToGLAccountMappingWritePlatformService accountMappingWritePlatformService;
@@ -79,8 +76,7 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
             final MifosEntityAccessUtil mifosEntityAccessUtil,
             final FloatingRateRepositoryWrapper floatingRateRepository,
             final LoanRepository loanRepository, 
-            final CreditCheckRepositoryWrapper creditCheckRepositoryWrapper,
-            final CodeValueRepositoryWrapper codeValueRepository) {
+            final CreditCheckRepositoryWrapper creditCheckRepositoryWrapper) {
         this.context = context;
         this.fromApiJsonDeserializer = fromApiJsonDeserializer;
         this.loanProductRepository = loanProductRepository;
@@ -93,7 +89,6 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
         this.floatingRateRepository = floatingRateRepository;
         this.loanRepository = loanRepository;
         this.creditCheckRepositoryWrapper = creditCheckRepositoryWrapper;
-        this.codeValueRepository = codeValueRepository;
     }
 
     @Transactional
@@ -109,7 +104,6 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
             validateInMultiplesOf(command);
 
             final Fund fund = findFundByIdIfProvided(command.longValueOfParameterNamed("fundId"));
-            final CodeValue productGroup = this.codeValueRepository.findOneWithNotFoundDetection(command.longValueOfParameterNamed("productGroupId"));
 
             final Long transactionProcessingStrategyId = command.longValueOfParameterNamed("transactionProcessingStrategyId");
             final LoanTransactionProcessingStrategy loanTransactionProcessingStrategy = findStrategyByIdIfProvided(transactionProcessingStrategyId);
@@ -124,7 +118,7 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
             			.findOneWithNotFoundDetection(command.longValueOfParameterNamed("floatingRatesId"));
             }
             final LoanProduct loanproduct = LoanProduct.assembleFromJson(fund, loanTransactionProcessingStrategy, charges, command,
-                    this.aprCalculator, floatingRate, creditChecks, productGroup);
+                    this.aprCalculator, floatingRate, creditChecks);
             
             loanproduct.updateLoanProductInRelatedClasses();
 
@@ -200,12 +194,6 @@ public class LoanProductWritePlatformServiceJpaRepositoryImpl implements LoanPro
                 final Long fundId = (Long) changes.get("fundId");
                 final Fund fund = findFundByIdIfProvided(fundId);
                 product.update(fund);
-            }
-
-            if (changes.containsKey("productGroupId")) {
-                final Long productGroupId = (Long) changes.get("productGroupId");
-                final CodeValue productGroup = this.codeValueRepository.findOneWithNotFoundDetection(productGroupId);
-                product.update(productGroup);
             }
 
             if (changes.containsKey("transactionProcessingStrategyId")) {
