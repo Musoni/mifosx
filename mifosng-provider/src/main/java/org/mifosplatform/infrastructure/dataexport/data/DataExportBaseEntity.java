@@ -6,14 +6,14 @@
 package org.mifosplatform.infrastructure.dataexport.data;
 
 public enum DataExportBaseEntity {
-    INVALID("invalid", null),
-    CLIENT("client", DataExportCoreTable.M_CLIENT.getName()),
-    GROUP("group", DataExportCoreTable.M_GROUP.getName()),
-    LOAN("loan", DataExportCoreTable.M_LOAN.getName()),
-    SAVINGS_ACCOUNT("savings_account", DataExportCoreTable.M_SAVINGS_ACCOUNT.getName()),
-    LOAN_TRANSACTION("loan_transaction", DataExportCoreTable.M_LOAN_TRANSACTION.getName()),
-    SAVINGS_ACCOUNT_TRANSACTION("savings_account_transaction", DataExportCoreTable.M_SAVINGS_ACCOUNT_TRANSACTION.getName()),
-    LOAN_REPAYMENT_SCHEDULE("loan_repayment_schedule", DataExportCoreTable.M_LOAN_REPAYMENT_SCHEDULE.getName());
+    INVALID("invalid", "invalid"),
+    CLIENT("client", "m_client"),
+    GROUP("group", "m_group"),
+    LOAN("loan", "m_loan"),
+    SAVINGS_ACCOUNT("savings_account", "m_savings_account"),
+    LOAN_TRANSACTION("loan_transaction", "m_loan_transaction"),
+    SAVINGS_ACCOUNT_TRANSACTION("savings_account_transaction", "m_savings_account_transaction"),
+    LOAN_REPAYMENT_SCHEDULE("loan_repayment_schedule", "m_loan_repayment_schedule");
     
     private String entityName;
     private String tableName;

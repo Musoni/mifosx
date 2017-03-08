@@ -27,7 +27,7 @@ public class AppUserData {
     private final Boolean passwordNeverExpires;
 
     @SuppressWarnings("unused")
-	private final Collection<OfficeData> allowedOffices;
+    private final Collection<OfficeData> allowedOffices;
     private final Collection<RoleData> availableRoles;
     private final Collection<RoleData> selectedRoles;
     private final StaffData staff;
@@ -108,17 +108,4 @@ public class AppUserData {
 		return this.isSelfServiceUser==null?false:this.isSelfServiceUser;
 	}
 
-	/**
-	 * @return the id
-	 */
-	public Long getId() {
-		return id;
-	}
-
-	/**
-	 * @return the username
-	 */
-	public String getUsername() {
-		return username;
-	}
 }

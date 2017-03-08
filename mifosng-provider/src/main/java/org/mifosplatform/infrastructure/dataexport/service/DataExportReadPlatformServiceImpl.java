@@ -9,22 +9,18 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 import javax.ws.rs.core.Response;
 
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
-import org.mifosplatform.infrastructure.codes.data.CodeValueData;
-import org.mifosplatform.infrastructure.codes.service.CodeValueReadPlatformService;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
 import org.mifosplatform.infrastructure.core.service.RoutingDataSource;
 import org.mifosplatform.infrastructure.dataexport.api.DataExportApiConstants;
 import org.mifosplatform.infrastructure.dataexport.data.DataExportBaseEntity;
 import org.mifosplatform.infrastructure.dataexport.data.DataExportCoreColumn;
 import org.mifosplatform.infrastructure.dataexport.data.DataExportCoreDatatable;
-import org.mifosplatform.infrastructure.dataexport.data.DataExportCoreTable;
 import org.mifosplatform.infrastructure.dataexport.data.DataExportData;
 import org.mifosplatform.infrastructure.dataexport.data.DataExportEntityData;
 import org.mifosplatform.infrastructure.dataexport.data.DataExportFileData;
@@ -39,8 +35,6 @@ import org.mifosplatform.infrastructure.dataexport.helper.FileHelper;
 import org.mifosplatform.infrastructure.dataqueries.data.DatatableData;
 import org.mifosplatform.infrastructure.dataqueries.domain.RegisteredTable;
 import org.mifosplatform.infrastructure.dataqueries.domain.RegisteredTableRepository;
-import org.mifosplatform.useradministration.data.AppUserData;
-import org.mifosplatform.useradministration.service.AppUserReadPlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -53,20 +47,14 @@ public class DataExportReadPlatformServiceImpl implements DataExportReadPlatform
    private final JdbcTemplate jdbcTemplate;
    private final RegisteredTableRepository registeredTableRepository;
    private final DataExportRepository dataExportRepository;
-   private final CodeValueReadPlatformService codeValueReadPlatformService;
-   private final AppUserReadPlatformService appUserReadPlatformService;
 
     @Autowired
     public DataExportReadPlatformServiceImpl(final RoutingDataSource dataSource, 
             final RegisteredTableRepository registeredTableRepository, 
-            final DataExportRepository dataExportRepository, 
-            final CodeValueReadPlatformService codeValueReadPlatformService, 
-            final AppUserReadPlatformService appUserReadPlatformService) {
+            final DataExportRepository dataExportRepository) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
         this.registeredTableRepository = registeredTableRepository;
         this.dataExportRepository = dataExportRepository;
-        this.codeValueReadPlatformService = codeValueReadPlatformService;
-        this.appUserReadPlatformService = appUserReadPlatformService;
     }
 
     @Override
@@ -102,35 +90,19 @@ public class DataExportReadPlatformServiceImpl implements DataExportReadPlatform
             
             final String sql = dataExport.getDataSql();
             final SqlRowSet sqlRowSet = this.jdbcTemplate.queryForRowSet(sql);
-            final DataExportBaseEntity baseEntity = DataExportBaseEntity.fromEntityName(dataExport.getBaseEntityName());
-            final DataExportCoreTable coreTable = DataExportCoreTable.newInstance(baseEntity.getTableName());
             
             DataExportFileData dataExportFileData = null;
             
             final DataExportFileFormat dataExportFileFormat = DataExportFileFormat.fromString(fileFormat);
             final String filename = dataExport.getFilename();
-            final Collection<CodeValueData> codeValues = this.codeValueReadPlatformService.retrieveAllCodeValues();
-            final Collection<AppUserData> appUsers = this.appUserReadPlatformService.retrieveAllUsers();
-            final HashMap<Long, CodeValueData> codeValueMap = new HashMap<>();
-            final HashMap<Long, AppUserData> appUserMap = new HashMap<>();
-            
-            for (CodeValueData codeValueData : codeValues) {
-            	codeValueMap.put(codeValueData.getId(), codeValueData);
-            }
-            
-            for (AppUserData appUserData : appUsers) {
-            	appUserMap.put(appUserData.getId(), appUserData);
-            }
             
             switch (dataExportFileFormat) {
             	case XLS:
-            		dataExportFileData = FileHelper.createDataExportXlsFile(sqlRowSet, filename, 
-            				codeValueMap, appUserMap, coreTable);
+            		dataExportFileData = FileHelper.createDataExportXlsFile(sqlRowSet, filename);
             		break;
             
             	default:
-            		dataExportFileData = FileHelper.createDataExportCsvFile(sqlRowSet, filename, 
-            				codeValueMap, appUserMap, coreTable);
+            		dataExportFileData = FileHelper.createDataExportCsvFile(sqlRowSet, filename);
             		break;
             }
             
@@ -192,7 +164,6 @@ public class DataExportReadPlatformServiceImpl implements DataExportReadPlatform
     public DataExportEntityData retrieveTemplate(String baseEntityName) {
         DataExportEntityData dataExportEntityData = null;
         DataExportBaseEntity dataExportBaseEntity = DataExportBaseEntity.fromEntityName(baseEntityName);
-        DataExportCoreTable dataExportCoreTable = DataExportCoreTable.newInstance(dataExportBaseEntity.getTableName());
         
         if (dataExportBaseEntity.isValid()) {
             Collection<DatatableData> datatables = new ArrayList<>();
@@ -236,11 +207,8 @@ public class DataExportReadPlatformServiceImpl implements DataExportReadPlatform
             for (DataExportCoreColumn coreColumn : DataExportCoreColumn.values()) {
             	if (coreColumn.getBaseEntity() == null || 
             			(coreColumn.getBaseEntity() != null && coreColumn.getBaseEntity().equals(dataExportBaseEntity))) {
-            		String columnLabel = DataExportUtils.createHumanReadableTableColumnLabel(coreColumn.getLabel(), 
-            				dataExportCoreTable);
-            		
             		EntityColumnMetaData metaData = EntityColumnMetaData.newInstance(coreColumn.getName(), 
-            				columnLabel, coreColumn.getType(), coreColumn.isNullable());
+            				coreColumn.getLabel(), coreColumn.getType(), coreColumn.isNullable());
             		
             		uniqueColumns.put(coreColumn.getName(), metaData);
             	}
@@ -248,12 +216,6 @@ public class DataExportReadPlatformServiceImpl implements DataExportReadPlatform
             
             // add the non-core columns
             for (EntityColumnMetaData nonCoreColumn : nonCoreColumns) {
-            	String columnLabel = DataExportUtils.createHumanReadableTableColumnLabel(nonCoreColumn.getLabel(), 
-        				dataExportCoreTable);
-            	
-            	// update the label property
-            	nonCoreColumn.updateLabel(columnLabel);
-            	
             	uniqueColumns.put(nonCoreColumn.getName(), nonCoreColumn);
             }
             

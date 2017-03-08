@@ -9,11 +9,7 @@ import au.com.bytecode.opencsv.CSVWriter;
 
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.WordUtils;
-import org.mifosplatform.infrastructure.codes.data.CodeValueData;
 import org.mifosplatform.infrastructure.dataexport.api.DataExportApiConstants;
-import org.mifosplatform.infrastructure.dataexport.data.DataExportCoreTable;
-import org.mifosplatform.infrastructure.dataexport.data.MysqlDataType;
-import org.mifosplatform.useradministration.data.AppUserData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
@@ -23,9 +19,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
-import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 /** 
@@ -45,9 +39,7 @@ public class CsvFileHelper {
      * @param sqlRowSet
      * @param file
      */
-    public static void createFile(final SqlRowSet sqlRowSet, final File file, 
-    		final HashMap<Long, CodeValueData> codeValueMap, final HashMap<Long, AppUserData> appUserMap, 
-    		final DataExportCoreTable coreTable) {
+    public static void createFile(final SqlRowSet sqlRowSet, final File file) {
     	try {
             // create a new CSVWriter object
             final CSVWriter csvWriter = new CSVWriter(new BufferedWriter(new OutputStreamWriter(
@@ -75,26 +67,7 @@ public class CsvFileHelper {
             	int rowIndex = 0;
             	
             	for (int i=1; i<=columnCount; i++) {
-            		String columnTypeName = sqlRowSetMetaData.getColumnTypeName(i);
-            		MysqlDataType mysqlDataType = MysqlDataType.newInstance(columnTypeName);
-            		String columnValue = sqlRowSet.getString(i);
-            		String columnName = sqlRowSetMetaData.getColumnName(i);
-            		
-            		// replace code value id with the code value name
-            		AbstractMap.SimpleEntry<String, MysqlDataType> columnValueDataType = 
-            				DataExportUtils.replaceCodeValueIdWithValue(codeValueMap, columnName, columnValue, mysqlDataType);
-            		
-            		// update the column value
-            		columnValue = columnValueDataType.getKey();
-            		
-            		// replace app user id with respective username
-            		columnValueDataType = 
-            				DataExportUtils.replaceAppUserIdWithUserName(appUserMap, columnName, columnValue, mysqlDataType);
-            		
-            		// update the column value
-            		columnValue = columnValueDataType.getKey();
-            		
-            		rowData[rowIndex++] = StringEscapeUtils.escapeCsv(columnValue);
+            		rowData[rowIndex++] = StringEscapeUtils.escapeCsv(sqlRowSet.getString(i));
             	}
             	
             	// add the row data to the array list of row data

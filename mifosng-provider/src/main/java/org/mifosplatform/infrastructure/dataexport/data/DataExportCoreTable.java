@@ -22,9 +22,6 @@ public enum DataExportCoreTable {
 	M_PAYMENT_DETAIL("m_payment_detail"),
 	M_PRODUCT_LOAN("m_product_loan"),
 	M_SAVINGS_PRODUCT("m_savings_product"),
-	M_APP_USER("m_appuser"),
-	R_ENUM_VALUE("r_enum_value"),
-	M_GUARANTOR("m_guarantor"),
 	M_PAYMENT_TYPE("m_payment_type");
 	
 	private String name;
@@ -66,10 +63,10 @@ public enum DataExportCoreTable {
 	/**
 	 * Creates a table alias
 	 * 
-	 * @param aliasPostfixNumber integer that would be appended to the table name
+	 * @param suffix integer that would be appended to the table name
 	 * @return
 	 */
-	public String getAlias(final int aliasPostfixNumber) {
-		return this.name + aliasPostfixNumber;
+	public String getAlias(final int suffix) {
+		return this.name + suffix;
 	}
 }

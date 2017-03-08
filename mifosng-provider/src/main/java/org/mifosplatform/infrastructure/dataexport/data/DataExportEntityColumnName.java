@@ -24,7 +24,7 @@ public class DataExportEntityColumnName {
 	public static final String SUSPENDED_FEE_CHARGES_PORTION_DERIVED = "suspended_fee_charges_portion_derived";
 	public static final String SUSPENDED_PENALTY_CHARGES_PORTION_DERIVED = "suspended_penalty_charges_portion_derived";
 	public static final String OUTSTANDING_LOAN_BALANCE_DERIVED = "outstanding_loan_balance_derived";
-	public static final String RECOVERED_PORTION_DERIVED = "recovered_portion_derived";
+	public static final String RECOVERED_PORTION_DERIVED = " 	recovered_portion_derived";
 	public static final String PAYMENT_DETAIL_ID = "payment_detail_id";
 	public static final String APPUSER_ID = "appuser_id";
 	public static final String IS_REVERSED = "is_reversed";
@@ -71,11 +71,6 @@ public class DataExportEntityColumnName {
 	public static final String LAST_MODIFIED_DATE = "lastmodified_date";
 	public static final String LAST_MODIFIED_BY_ID = "lastmodifiedby_id";
 	public static final String RECALCULATED_INTEREST_COMPONENT = "recalculated_interest_component";
-	public static final String PRINCIPAL_PORTION_DERIVED = "principal_portion_derived";
-	public static final String INTEREST_PORTION_DERIVED = "interest_portion_derived";
-	public static final String FEE_CHARGES_PORTION_DERIVED = "fee_charges_portion_derived";
-	public static final String PENALTY_CHARGES_PORTION_DERIVED = "penalty_charges_portion_derived";
-	public static final String OVERPAYMENT_PORTION_DERIVED = "overpayment_portion_derived";
 	
 	public static final Set<String> COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS = new HashSet<>(Arrays.asList(
 			TRANSFER_TO_OFFICE_ID, VERSION, IMAGE_ID, ACCOUNT_TYPE_ENUM, DEPOSIT_TYPE_ENUM, SUB_STATUS));

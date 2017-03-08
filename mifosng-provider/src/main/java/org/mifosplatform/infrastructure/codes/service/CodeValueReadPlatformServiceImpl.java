@@ -109,14 +109,4 @@ public class CodeValueReadPlatformServiceImpl implements CodeValueReadPlatformSe
         
         return activeCodeValues;
     }
-
-	@Override
-	public Collection<CodeValueData> retrieveAllCodeValues() {
-		this.context.authenticatedUser();
-
-        final CodeValueDataMapper rm = new CodeValueDataMapper();
-        final String sql = "select " + rm.schema() + " order by position";
-
-        return this.jdbcTemplate.query(sql, rm);
-	}
 }
