@@ -1698,6 +1698,28 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					}
 	    					// =============================================================================
 	    					break;
+	    				case LOAN_TRANSACTION_TOTAL_RECOVERED:
+	    					// =============================================================================
+	    					if (isSelectStatement) {
+	    						sqlStatement = "case when `" + baseEntityName + "`.`transaction_type_enum` = "
+										+ LoanTransactionType.RECOVERY_REPAYMENT.getValue() + " then `" 
+												+ baseEntityName + "`.`amount` else NULL end as `"
+														+ coreColumn.getLabel() + "`";
+	    						
+	    						// add the select statement
+	        					sqlBuilder.SELECT(sqlStatement);
+	    						
+	    					} else if (filterValue != null) {
+	    						sqlStatement = "case when `" + baseEntityName + "`.`transaction_type_enum` = "
+										+ LoanTransactionType.RECOVERY_REPAYMENT.getValue() + " then `" 
+												+ baseEntityName + "`.`amount` else NULL end `"
+														+ filterValue;
+	    						
+	    						// add a WHERE clause
+	    						sqlBuilder.WHERE(sqlStatement);
+	    					}
+	    					// =============================================================================
+	    					break;
 	    				case LOAN_TRANSACTION_PRODUCT_SHORT_NAME:
 	    				case LOAN_TRANSACTION_PRODUCT_NAME:
 	    				case LOAN_TRANSACTION_PRODUCT_ID:
@@ -4109,6 +4131,12 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
     private void handleDataIntegrityIssues(final JsonCommand jsonCommand, 
             final DataIntegrityViolationException dve) {
         final Throwable realCause = dve.getMostSpecificCause();
+        
+        if (realCause.getMessage().contains(DataExportApiConstants.NAME_PARAM_NAME)) {
+            final String name = jsonCommand.stringValueOfParameterNamed(DataExportApiConstants.NAME_PARAM_NAME);
+            throw new PlatformDataIntegrityException("error.msg.data.export.duplicate.name", "Data export with name `" + name + "` already exists",
+            		DataExportApiConstants.NAME_PARAM_NAME, name);
+        }
         
         logger.error(dve.getMessage(), dve);
         
