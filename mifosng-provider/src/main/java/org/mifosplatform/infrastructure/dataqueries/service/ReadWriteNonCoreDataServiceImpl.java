@@ -1256,15 +1256,17 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
 
             if(addJohnDoeColumns!=null){
 
+                final List<Map<String,Object>> fieldNameAndOrder2 = new ArrayList<Map<String, Object>>();
+
                 for (final JsonElement column : addJohnDoeColumns) {
                     if(metaData){
-                        fieldNameAndOrder.add(this.returnFieldNameAndOrder(column.getAsJsonObject(),isConstraintApproach));
+                        fieldNameAndOrder2.add(this.returnFieldNameAndOrder(column.getAsJsonObject(), isConstraintApproach));
                     }
                 }
 
                 if(metaData){
                     final RegisteredTable registeredTable = this.registeredTableRepository.findOneByRegisteredTableName(datatableName);
-                    for(Map<String,Object> map : fieldNameAndOrder){
+                    for(Map<String,Object> map : fieldNameAndOrder2){
                         this.registeredTableMetaDataRepository.save(RegisteredTableMetaData.createNewRegisterTableMetaData(registeredTable,datatableName,map));
                     }
                 }
