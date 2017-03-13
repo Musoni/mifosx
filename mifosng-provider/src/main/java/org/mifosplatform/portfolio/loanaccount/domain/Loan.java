@@ -2936,7 +2936,8 @@ public class Loan extends AbstractPersistable<Long> {
                 if (isDisbursedAmountChanged) {
                     updateSummaryWithTotalFeeChargesDueAtDisbursement(deriveSumTotalOfChargesDueAtDisbursement());
                 }
-            }else if(isPeriodicAccrualAccountingEnabledOnLoanProduct()){
+            }
+            if(isPeriodicAccrualAccountingEnabledOnLoanProduct()){
                 for (final LoanRepaymentScheduleInstallment period : getRepaymentScheduleInstallments()) {
                     period.resetAccrualComponents();
                 }
@@ -2949,6 +2950,7 @@ public class Loan extends AbstractPersistable<Long> {
             existingReversedTransactionIds.addAll(findExistingReversedTransactionIds());
             this.accruedTill = null;
             this.isSuspendedIncome  = false;
+            this.isNpa =false;
             reverseExistingTransactions();
             updateLoanSummaryDerivedFields();
 

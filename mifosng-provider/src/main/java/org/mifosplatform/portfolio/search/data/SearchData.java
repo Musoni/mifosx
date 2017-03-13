@@ -19,9 +19,16 @@ public class SearchData {
     private final String entityMobileNo;
     private final EnumOptionData entityStatus;
     private final String parentType;
+    private final Long groupId;
+    private final String groupName;
+    private final Long officeId;
+    private final String officeName;
+    private final String parentAccountNo;
 
     public SearchData(final Long entityId, final String entityAccountNo, final String entityExternalId, final String entityName,
-            final String entityType, final Long parentId, final String parentName, final String parentType, final String entityMobileNo, final EnumOptionData entityStatus) {
+            final String entityType, final Long parentId, final String parentName, final String parentType, 
+            final String entityMobileNo, final EnumOptionData entityStatus, final Long groupId, final String groupName, 
+            final Long officeId, final String officeName, final String parentAccountNo) {
 
         this.entityId = entityId;
         this.entityAccountNo = entityAccountNo;
@@ -33,6 +40,11 @@ public class SearchData {
         this.parentType = parentType;
         this.entityMobileNo=entityMobileNo;
         this.entityStatus = entityStatus;
+        this.groupId = groupId;
+        this.groupName = groupName;
+        this.officeId = officeId;
+        this.officeName = officeName;
+        this.parentAccountNo = parentAccountNo;
     }
 
     public Long getEntityId() {
@@ -74,5 +86,40 @@ public class SearchData {
 	public EnumOptionData getEntityStatus() {
         return this.entityStatus;
     }
+
+	/**
+	 * @return the groupId
+	 */
+	public Long getGroupId() {
+		return groupId;
+	}
+
+	/**
+	 * @return the groupName
+	 */
+	public String getGroupName() {
+		return groupName;
+	}
+
+	/**
+	 * @return the officeId
+	 */
+	public Long getOfficeId() {
+		return officeId;
+	}
+
+	/**
+	 * @return the officeName
+	 */
+	public String getOfficeName() {
+		return officeName;
+	}
+
+	/**
+	 * @return the parentAccountNo
+	 */
+	public String getParentAccountNo() {
+		return parentAccountNo;
+	}
 
 }

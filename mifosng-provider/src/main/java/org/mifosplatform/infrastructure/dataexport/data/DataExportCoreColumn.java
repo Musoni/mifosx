@@ -34,6 +34,7 @@ public enum DataExportCoreColumn {
 	LOAN_TRANSACTION_FEES_REPAID("fee_charges_portion_derived", "fees repaid", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_TRANSACTION),
 	LOAN_TRANSACTION_PENALTIES_REPAID("penalty_charges_portion_derived", "penalties repaid", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_TRANSACTION),
 	LOAN_TRANSACTION_OVERPAYMENT_REPAID("overpayment_portion_derived", "overpayment repaid", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_TRANSACTION),
+	LOAN_TRANSACTION_TOTAL_RECOVERED(DataExportEntityColumnName.RECOVERED_PORTION_DERIVED, "total recovered", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_TRANSACTION),
 	SAVINGS_TRANSACTION_DEPOSIT("savings_transaction_deposit", "deposit", "DECIMAL", true, null, null, null, DataExportBaseEntity.SAVINGS_ACCOUNT_TRANSACTION),
 	SAVINGS_TRANSACTION_CHARGE_APPLIED("savings_transaction_charge_applied", "charges applied", "DECIMAL", true, null, null, null, DataExportBaseEntity.SAVINGS_ACCOUNT_TRANSACTION),
 	SAVINGS_TRANSACTION_CHARGE_WAIVED("savings_transaction_charge_waived", "charges waived", "DECIMAL", true, null, null, null, DataExportBaseEntity.SAVINGS_ACCOUNT_TRANSACTION),

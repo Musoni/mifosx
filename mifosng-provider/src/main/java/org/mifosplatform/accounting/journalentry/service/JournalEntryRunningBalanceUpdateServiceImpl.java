@@ -74,7 +74,7 @@ public class JournalEntryRunningBalanceUpdateServiceImpl implements JournalEntry
 
     private final String getRowCountSQL = "SELECT FOUND_ROWS() ";
 
-    private final int limit = 20000;
+    private final int limit = 1000;
 
     @Autowired
     public JournalEntryRunningBalanceUpdateServiceImpl(final RoutingDataSource dataSource, final OfficeRepository officeRepository,
@@ -94,6 +94,7 @@ public class JournalEntryRunningBalanceUpdateServiceImpl implements JournalEntry
         try {
             Date entityDate = this.jdbcTemplate.queryForObject(dateFinder, Date.class);
             updateOrganizationRunningBalance(entityDate);
+            updateDerivedOrganizationRunningBalance();
         } catch (EmptyResultDataAccessException e) {
             logger.debug("No results found for updation of running balance ");
         }
@@ -126,6 +127,24 @@ public class JournalEntryRunningBalanceUpdateServiceImpl implements JournalEntry
         return commandProcessingResultBuilder.build();
     }
 
+    private void updateDerivedOrganizationRunningBalance() {
+        // Update all Organization balances after using the same (mapped) amount:
+        String updateSql = "update acc_gl_account as ac join\n" +
+                "(\n" +
+                "select je.account_id, \n" +
+                "SUM(IF(type_enum = 1, IF(accounts.classification_enum IN (1,5), amount *-1, amount), IF(accounts.classification_enum IN (1,5), amount, amount *-1))) as movement,\n" +
+                "max(je.id) as new_last_entry_id_derived\n" +
+                "from acc_gl_journal_entry as je\n" +
+                "left join acc_gl_account as accounts ON accounts.id = je.account_id \n" +
+                "WHERE je.id > IFNULL(accounts.last_entry_id_derived,0) \n" +
+                "group by je.account_id) as upd on ac.id = upd.account_id\n" +
+                "set `organization_running_balance_derived` = IFNULL(organization_running_balance_derived,0) + IFNULL(upd.movement,0),\n" +
+                "\tac.`last_entry_id_derived` = IFNULL(upd.new_last_entry_id_derived,0)\n" +
+                ";";
+
+        this.jdbcTemplate.update(updateSql);
+    }
+
     private void updateOrganizationRunningBalance(Date entityDate) {
         Map<Long, BigDecimal> runningBalanceMap = new HashMap<>(5);
         Map<Long, Map<Long, BigDecimal>> officesRunningBalance = new HashMap<>();
@@ -155,17 +174,15 @@ public class JournalEntryRunningBalanceUpdateServiceImpl implements JournalEntry
         }
 
         int startFrom = 0;
-        int totalFilteredRecords = 0;
+        int maxIterations = 100 * limit;
 
         // Get the first set of data:
         List<JournalEntryData> entryDatas = jdbcTemplate.query( entryMapper.organizationRunningBalanceSchema(), entryMapper,
                 new Object[] { entityDate, limit, startFrom });
-        totalFilteredRecords = jdbcTemplate.queryForInt(getRowCountSQL);
-        logger.debug("Update OrganizationRunningBalance: Found: " + totalFilteredRecords + " records to process.");
 
-        while (startFrom < totalFilteredRecords) {
+        while (startFrom < maxIterations) {
             if (entryDatas.size() > 0) {
-                String[] updateSql = new String[entryDatas.size() * 2];
+                String[] updateSql = new String[entryDatas.size() * 3];
                 int i = 0;
                 for (JournalEntryData entryData : entryDatas) {
                     Map<Long, BigDecimal> officeRunningBalanceMap = null;
@@ -188,12 +205,16 @@ public class JournalEntryRunningBalanceUpdateServiceImpl implements JournalEntry
                         BigDecimal movement = calculateMovement(entryData);
 
                         // Update all Organziation balances after using the same (mapped) amount:
-                        String AllSql = "UPDATE acc_gl_journal_entry je SET " +
+                        String OrgSql = "UPDATE acc_gl_journal_entry je SET " +
                                 "je.organization_running_balance= je.organization_running_balance + " + movement +
-                                ", je.office_running_balance = CASE WHEN je.office_id = " + entryData.getOfficeId() + " THEN je.office_running_balance + " + movement + " ELSE je.office_running_balance END " +
-                                "WHERE je.account_id = " + entryData.getGlAccountId() + " and (je.entry_date > '" + entryData.getTransactionDate() + "' OR (je.entry_date = '" + entryData.getTransactionDate() + "' and je.id > " + entryData.getId() + ")) and is_running_balance_calculated = 1";
+                                "WHERE je.account_id = " + entryData.getGlAccountId() + " and je.entry_date >= '" + entryData.getTransactionDate() + "' and je.id > " + entryData.getId() + " and is_running_balance_calculated = 1";
 
-                        updateSql[i++] = AllSql;
+                        String OfficeSql = "UPDATE acc_gl_journal_entry je SET " +
+                                " je.office_running_balance = je.office_running_balance + " + movement +
+                                "WHERE je.office_id = " + entryData.getOfficeId() + " and je.account_id = " + entryData.getGlAccountId() + " and je.entry_date >= '" + entryData.getTransactionDate() + "' and je.id > " + entryData.getId() + " and is_running_balance_calculated = 1";
+
+                        updateSql[i++] = OrgSql;
+                        updateSql[i++] = OfficeSql;
                     }
 
                 }
@@ -227,20 +248,13 @@ public class JournalEntryRunningBalanceUpdateServiceImpl implements JournalEntry
         }
 
         int startFrom = 0;
-        int totalFilteredRecords = 0;
+        int maxIterations = 100 * limit;
 
         // Get the first set of data:
         List<JournalEntryData> entryDatas = jdbcTemplate.query(entryMapper.officeRunningBalanceSchema(), entryMapper, new Object[] {
                 officeId, entityDate, limit, startFrom });
 
-        if(startFrom == 0)
-        {
-            totalFilteredRecords = jdbcTemplate.queryForInt(getRowCountSQL);
-            logger.debug("UpdateRunningBalance: Found: " + totalFilteredRecords + " records to process.");
-
-        }
-
-        while (startFrom < totalFilteredRecords)
+        while (startFrom < maxIterations)
         {
             if (entryDatas.size() > 0) {
                 String[] updateSql = new String[entryDatas.size()];
@@ -357,14 +371,14 @@ public class JournalEntryRunningBalanceUpdateServiceImpl implements JournalEntry
     private static final class GLJournalEntryMapper implements RowMapper<JournalEntryData> {
 
         public String officeRunningBalanceSchema() {
-            return "select SQL_CALC_FOUND_ROWS je.id as id,je.account_id as glAccountId,je.type_enum as entryType,je.amount as amount, "
+            return "select je.id as id,je.account_id as glAccountId,je.type_enum as entryType,je.amount as amount, "
                     + "glAccount.classification_enum as classification,je.office_id as officeId, je.entry_date as entryDate, je.is_running_balance_calculated as isCalculated  "
                     + "from acc_gl_journal_entry je , acc_gl_account glAccount " + "where je.account_id = glAccount.id "
                     + "and je.office_id=? and je.entry_date >= ?  order by je.entry_date,je.id LIMIT ? OFFSET ?";
         }
 
         public String organizationRunningBalanceSchema() {
-            return "select SQL_CALC_FOUND_ROWS je.id as id,je.account_id as glAccountId," + "je.type_enum as entryType,je.amount as amount, "
+            return "select je.id as id,je.account_id as glAccountId," + "je.type_enum as entryType,je.amount as amount, "
                     + "glAccount.classification_enum as classification,je.office_id as officeId, je.entry_date as entryDate, je.is_running_balance_calculated as isCalculated   "
                     + "from acc_gl_journal_entry je , acc_gl_account glAccount " + "where je.account_id = glAccount.id "
                     + "and je.entry_date >= ? order by je.entry_date,je.id LIMIT ? OFFSET ?";

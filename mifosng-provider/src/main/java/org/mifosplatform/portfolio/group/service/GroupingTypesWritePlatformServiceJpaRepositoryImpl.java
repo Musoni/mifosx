@@ -915,9 +915,9 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
                 final List<Loan> clientLoans = this.loanRepository.findLoanByClientId(client.getId());
                 for (final Loan clientLoan : clientLoans) {
                     if (activationDate.isAfter(clientLoan.getSubmittedOnDate())) {
-                        final String defaultUserMessage = "Activation date cannot be before a group client's loan submitted on date.";
+                        final String defaultUserMessage = "Activation date cannot be after a group client's loan submitted on date.";
                         final ApiParameterError error = ApiParameterError.parameterError(
-                                "error.msg.group.activationDate.cannot.be.before.group.clients.loan.submittedon.date", defaultUserMessage,
+                                "error.msg.group.activationDate.cannot.be.after.group.clients.loan.submittedon.date", defaultUserMessage,
                                 GroupingTypesApiConstants.activationDateParamName, activationDate);
                         dataValidationErrors.add(error);
                         break;
@@ -926,9 +926,9 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
                 final List<SavingsAccount> clientSavingsAccounts = this.savingsRepository.findSavingAccountByClientId(client.getId());
                 for (final SavingsAccount clientSavingsAccount : clientSavingsAccounts) {
                     if (activationDate.isAfter(clientSavingsAccount.getSubmittedOnDate())) {
-                        final String defaultUserMessage = "Activation date cannot be before a group client's savings submitted on date.";
+                        final String defaultUserMessage = "Activation date cannot be after a group client's savings submitted on date.";
                         final ApiParameterError error = ApiParameterError.parameterError(
-                                "error.msg.group.activationDate.cannot.be.before..group.clients.savings.submittedon.date", defaultUserMessage,
+                                "error.msg.group.activationDate.cannot.be.after.group.clients.savings.submittedon.date", defaultUserMessage,
                                 GroupingTypesApiConstants.activationDateParamName, activationDate);
                         dataValidationErrors.add(error);
                         break;
@@ -939,9 +939,9 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
             final List<Loan> groupLoans = this.loanRepository.findByGroupId(group.getId());
             for (final Loan groupLoan : groupLoans) {
                 if (activationDate.isAfter(groupLoan.getSubmittedOnDate())) {
-                    final String defaultUserMessage = "Activation date cannot be before a group's loan submitted on date.";
+                    final String defaultUserMessage = "Activation date cannot be after a group's loan submitted on date.";
                     final ApiParameterError error = ApiParameterError.parameterError(
-                            "error.msg.group.activationDate.cannot.be.before.groups.loan.submittedon.date", defaultUserMessage,
+                            "error.msg.group.activationDate.cannot.be.after.groups.loan.submittedon.date", defaultUserMessage,
                             GroupingTypesApiConstants.activationDateParamName, activationDate);
                     dataValidationErrors.add(error);
                     break;
@@ -951,9 +951,9 @@ public class GroupingTypesWritePlatformServiceJpaRepositoryImpl implements Group
             final List<SavingsAccount> groupSavingsAccounts = this.savingsRepository.findByGroupId(group.getId());
             for (final SavingsAccount groupSavingAccount : groupSavingsAccounts) {
                 if (activationDate.isAfter(groupSavingAccount.getSubmittedOnDate())) {
-                    final String defaultUserMessage = "Activation date cannot be before a group's savings submitted on date.";
+                    final String defaultUserMessage = "Activation date cannot be after a group's savings submitted on date.";
                     final ApiParameterError error = ApiParameterError.parameterError(
-                            "error.msg.group.activationDate.cannot.be.before.groups.savings.submittedon.date", defaultUserMessage,
+                            "error.msg.group.activationDate.cannot.be.after.groups.savings.submittedon.date", defaultUserMessage,
                             GroupingTypesApiConstants.activationDateParamName, activationDate);
                     dataValidationErrors.add(error);
                     break;
