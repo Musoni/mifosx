@@ -32,6 +32,8 @@ public final class ResultsetColumnHeaderData {
     private final String labelName;
     private final Integer order;
 
+    private final String columnDefaultValue;
+
     public static ResultsetColumnHeaderData basic(final String columnName, final String columnType) {
 
         final Long columnLength = null;
@@ -43,20 +45,21 @@ public final class ResultsetColumnHeaderData {
         final Integer order  = null;
         final String columnDisplayExpression = null;
         final String columnFormulaExpression = null;
+        final String columnDefaultValue = null;
         return new ResultsetColumnHeaderData(columnName, columnType, columnLength, columnNullable, columnIsPrimaryKey, columnValues,
-                columnCode,labelName,order, columnDisplayExpression, columnFormulaExpression);
+                columnCode,labelName,order, columnDisplayExpression, columnFormulaExpression, columnDefaultValue);
     }
 
     public static ResultsetColumnHeaderData detailed(final String columnName, final String columnType, final Long columnLength,
             final boolean columnNullable, final boolean columnIsPrimaryKey, final List<ResultsetColumnValueData> columnValues,
-            final String columnCode, final String columnDisplayExpression, final String columnFormulaExpression  ) {
+            final String columnCode, final String columnDisplayExpression, final String columnFormulaExpression, final String columnDefaultValue  ) {
         return new ResultsetColumnHeaderData(columnName, columnType, columnLength, columnNullable, columnIsPrimaryKey, columnValues,
-                columnCode,null,null, columnDisplayExpression, columnFormulaExpression);
+                columnCode,null,null, columnDisplayExpression, columnFormulaExpression, columnDefaultValue);
     }
 
     private ResultsetColumnHeaderData(final String columnName, final String columnType, final Long columnLength,
             final boolean columnNullable, final boolean columnIsPrimaryKey, final List<ResultsetColumnValueData> columnValues,
-            final String columnCode, final String labelName,final Integer order, final String columnDisplayExpression, final String columnFormulaExpression) {
+            final String columnCode, final String labelName,final Integer order, final String columnDisplayExpression, final String columnFormulaExpression, final String columnDefaultValue) {
         this.columnName = columnName;
         this.columnType = columnType;
         this.columnLength = columnLength;
@@ -68,6 +71,7 @@ public final class ResultsetColumnHeaderData {
         this.order   = order;
         this.columnDisplayExpression = columnDisplayExpression;
         this.columnFormulaExpression = columnFormulaExpression;
+        this.columnDefaultValue = columnDefaultValue;
 
         String displayType = null;
         if (this.columnCode == null) {

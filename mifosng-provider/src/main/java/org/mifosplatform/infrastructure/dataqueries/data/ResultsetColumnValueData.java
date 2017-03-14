@@ -5,6 +5,8 @@
  */
 package org.mifosplatform.infrastructure.dataqueries.data;
 
+import java.util.List;
+
 /**
  * Immutable data object representing a possible value for a given resultset
  * column.
