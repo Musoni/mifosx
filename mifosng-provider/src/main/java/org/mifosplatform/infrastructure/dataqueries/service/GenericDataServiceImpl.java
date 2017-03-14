@@ -206,9 +206,8 @@ public class GenericDataServiceImpl implements GenericDataService {
             final boolean columnNullable = "YES".equalsIgnoreCase(isNullable);
             final boolean columnIsPrimaryKey = "PRI".equalsIgnoreCase(isPrimaryKey);
 
-            ResultSetCodeValueData codeValueData = null;
+            List<ResultsetColumnValueData> columnValues = new ArrayList<>();
             String codeName = null;
-            String columnDefaultValue = null;
             if ("varchar".equalsIgnoreCase(columnType)) {
 
                 final int codePosition = columnName.indexOf("_cv");
@@ -217,12 +216,12 @@ public class GenericDataServiceImpl implements GenericDataService {
                 if (codePosition > 0) {
                     codeName = columnName.substring(0, codePosition);
 
-                    codeValueData = retrieveCodeValueData(codeName);
+                    columnValues = retreiveColumnValues(codeName);
                 }
                 else if(codePositionForCb >0 ){
 
                     codeName = columnName.substring(0, codePositionForCb);
-                    codeValueData = retrieveCodeValueData(codeName);
+                    columnValues = retreiveColumnValues(codeName);
                 }
 
             } else if ("int".equalsIgnoreCase(columnType)) {
@@ -231,7 +230,7 @@ public class GenericDataServiceImpl implements GenericDataService {
 
                 if (codePosition > 0) {
                     codeName = columnName.substring(0, codePosition);
-                    codeValueData = retrieveCodeValueData(codeName);
+                    columnValues = retreiveColumnValues(codeName);
                 }
 
             }
@@ -242,7 +241,7 @@ public class GenericDataServiceImpl implements GenericDataService {
                     codeId = rsValues.getInt("id");
                     codeName = rsValues.getString("code_name");
                 }
-                codeValueData = retrieveCodeValueData(codeId);
+                columnValues = retreiveColumnValues(codeId);
 
             }
 
@@ -256,87 +255,56 @@ public class GenericDataServiceImpl implements GenericDataService {
                 formulaExpression = columnData.get(0).getFormulaExpression();
             }
 
-            if(codeValueData != null) {
-                final ResultsetColumnHeaderData rsch = ResultsetColumnHeaderData.detailed(columnName, columnType, columnLength, columnNullable,
-                        columnIsPrimaryKey, codeValueData.getColumnValues(), codeName, displayExpression, formulaExpression, codeValueData.getDefaultValue());
-                columnHeaders.add(rsch);
+            final ResultsetColumnHeaderData rsch = ResultsetColumnHeaderData.detailed(columnName, columnType, columnLength, columnNullable,
+                    columnIsPrimaryKey, columnValues, codeName, displayExpression, formulaExpression );
 
-            }
-            else
-            {
-                final ResultsetColumnHeaderData rsch = ResultsetColumnHeaderData.detailed(columnName, columnType, columnLength, columnNullable,
-                        columnIsPrimaryKey, null, codeName, displayExpression, formulaExpression, null);
-                columnHeaders.add(rsch);
-            }
-
+            columnHeaders.add(rsch);
         }
         return columnHeaders;
     }
 
-
-    private ResultSetCodeValueData retrieveCodeValueData(final String getCodeName)
-    {
+    /*
+     * Candidate for using caching there to get allowed 'column values' from
+     * code/codevalue tables
+     */
+    private List<ResultsetColumnValueData> retreiveColumnValues(final String codeName) {
 
         final List<ResultsetColumnValueData> columnValues = new ArrayList<>();
-        final String sql = "select m.id as code_id, m.code_name as code_name, m.code_label as code_label, m.default_value as code_default_value, v.id, v.code_value " +
-                "from m_code as m left join m_code_value v on m.id = v.code_id where m.code_name ='" + getCodeName + "' and v.is_active = 1 order by v.order_position, v.id";
+
+        final String sql = "select v.id, v.code_score, v.code_value from m_code m " + " join m_code_value v on v.code_id = m.id "
+                + " where m.code_name = '" + codeName + "' and v.is_active = 1 order by v.order_position, v.id";
+
         final SqlRowSet rsValues = this.jdbcTemplate.queryForRowSet(sql);
 
-        Integer codeId = null;
-        String codeName = null;
-        String codeLabel = null;
-        String defaultValue = null;
-
-        if (!rsValues.isBeforeFirst() ) {
-            return null;
-        }
+        rsValues.beforeFirst();
         while (rsValues.next()) {
-
-            if(rsValues.isFirst())
-            {
-                codeId = rsValues.getInt("code_id");
-                codeName = rsValues.getString("code_name");
-                codeLabel = rsValues.getString("code_label");
-                defaultValue = rsValues.getString("code_default_value");
-            }
             final Integer id = rsValues.getInt("id");
             final String codeValue = rsValues.getString("code_value");
-            columnValues.add(new ResultsetColumnValueData(id, codeValue));
+            final Integer score = rsValues.getInt("code_score");
+
+            columnValues.add(new ResultsetColumnValueData(id, codeValue, score));
         }
 
-        return new ResultSetCodeValueData(codeId,codeName, codeLabel, defaultValue, columnValues);
+        return columnValues;
     }
 
-    private ResultSetCodeValueData retrieveCodeValueData(final Integer getCodeId)
-    {
+    private List<ResultsetColumnValueData> retreiveColumnValues(final Integer codeId) {
 
         final List<ResultsetColumnValueData> columnValues = new ArrayList<>();
-        if (getCodeId != null) {
-            final String sql = "select m.id as code_id, m.name as code_name, m.label as code_label, m.default_value as code_default_value, v.id, v.code_value from m_code as m left join m_code_value v on m.id = v.code_id where m.id =" + getCodeId
+        if (codeId != null) {
+            final String sql = "select v.id, v.code_value from m_code_value v where v.code_id =" + codeId
                     + " and v.is_active = 1 order by v.order_position, v.id";
             final SqlRowSet rsValues = this.jdbcTemplate.queryForRowSet(sql);
-
             rsValues.beforeFirst();
-
-            Integer codeId = rsValues.getInt("code_id");
-            String codeName = rsValues.getString("code_name");
-            String codeLabel = rsValues.getString("code_label");
-            String defaultValue = rsValues.getString("code_default_value");
-
             while (rsValues.next()) {
                 final Integer id = rsValues.getInt("id");
                 final String codeValue = rsValues.getString("code_value");
                 columnValues.add(new ResultsetColumnValueData(id, codeValue));
             }
-
-
-            return new ResultSetCodeValueData(codeId,codeName, codeLabel, defaultValue, columnValues);
-
         }
 
-        return null;
+        return columnValues;
     }
-
 
     private SqlRowSet getDatatableMetaData(final String datatable) {
 
