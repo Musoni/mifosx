@@ -5,38 +5,61 @@
  */
 package org.mifosplatform.portfolio.savings.domain;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.enforceMinRequiredBalanceParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.allowOverdraftParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.chargesParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.currencyCodeParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.descriptionParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.digitsAfterDecimalParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.idParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.inMultiplesOfParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.interestCalculationDaysInYearTypeParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.interestCalculationTypeParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.interestCompoundingPeriodTypeParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.interestPostingPeriodTypeParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.lockinPeriodFrequencyParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.lockinPeriodFrequencyTypeParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.minBalanceForInterestCalculationParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.minRequiredBalanceParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.minRequiredOpeningBalanceParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.nameParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.nominalAnnualInterestRateParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.overdraftLimitParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.nominalAnnualInterestRateOverdraftParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.minOverdraftForInterestCalculationParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.shortNameParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.withdrawalFeeForTransfersParamName;
+
+import java.math.BigDecimal;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.mifosplatform.accounting.common.AccountingRuleType;
-import org.mifosplatform.infrastructure.codes.domain.CodeValue;
-import org.mifosplatform.infrastructure.codes.domain.CodeValueRepositoryWrapper;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
 import org.mifosplatform.portfolio.charge.domain.Charge;
 import org.mifosplatform.portfolio.charge.domain.ChargeRepositoryWrapper;
 import org.mifosplatform.portfolio.charge.exception.ChargeCannotBeAppliedToException;
 import org.mifosplatform.portfolio.loanproduct.exception.InvalidCurrencyException;
-import org.mifosplatform.portfolio.savings.*;
+import org.mifosplatform.portfolio.savings.SavingsCompoundingInterestPeriodType;
+import org.mifosplatform.portfolio.savings.SavingsInterestCalculationDaysInYearType;
+import org.mifosplatform.portfolio.savings.SavingsInterestCalculationType;
+import org.mifosplatform.portfolio.savings.SavingsPeriodFrequencyType;
+import org.mifosplatform.portfolio.savings.SavingsPostingInterestPeriodType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
-import java.util.HashSet;
-import java.util.Set;
-
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 @Component
 public class SavingsProductAssembler {
 
     private final ChargeRepositoryWrapper chargeRepository;
-    private final CodeValueRepositoryWrapper codeValueRepository;
 
     @Autowired
-    public SavingsProductAssembler(final ChargeRepositoryWrapper chargeRepository,
-                                   final CodeValueRepositoryWrapper codeValueRepository) {
+    public SavingsProductAssembler(final ChargeRepositoryWrapper chargeRepository) {
         this.chargeRepository = chargeRepository;
-        this.codeValueRepository = codeValueRepository;
     }
 
     public SavingsProduct assemble(final JsonCommand command) {
@@ -94,12 +117,6 @@ public class SavingsProductAssembler {
 
         final AccountingRuleType accountingRuleType = AccountingRuleType.fromInt(command.integerValueOfParameterNamed("accountingRule"));
 
-        CodeValue productGroup = null;
-        if(command.parameterExists(productGroupIdParamName)){
-            Long productGroupId = command.longValueOfParameterNamed(productGroupIdParamName);
-            productGroup = this.codeValueRepository.findOneWithNotFoundDetection(productGroupId);
-        }
-
         // Savings product charges
         final Set<Charge> charges = assembleListOfSavingsProductCharges(command, currencyCode);
 
@@ -135,7 +152,7 @@ public class SavingsProductAssembler {
         final BigDecimal minBalanceForInterestCalculation = command
                 .bigDecimalValueOfParameterNamedDefaultToNullIfZero(minBalanceForInterestCalculationParamName);
 
-        return SavingsProduct.createNew(name, shortName, description, currency, interestRate, productGroup, interestCompoundingPeriodType,
+        return SavingsProduct.createNew(name, shortName, description, currency, interestRate, interestCompoundingPeriodType,
                 interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
                 lockinPeriodFrequency, lockinPeriodFrequencyType, iswithdrawalFeeApplicableForTransfer, accountingRuleType, charges,
                 allowOverdraft, overdraftLimit, enforceMinRequiredBalance, minRequiredBalance, minBalanceForInterestCalculation,

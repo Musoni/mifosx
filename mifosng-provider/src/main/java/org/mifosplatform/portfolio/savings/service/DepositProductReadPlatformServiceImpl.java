@@ -12,7 +12,6 @@ import java.util.Collection;
 
 import org.joda.time.LocalDate;
 import org.mifosplatform.accounting.common.AccountingEnumerations;
-import org.mifosplatform.infrastructure.codes.data.CodeValueData;
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
 import org.mifosplatform.infrastructure.core.service.DateUtils;
@@ -204,7 +203,6 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
             sqlBuilder.append(super.schema());
             sqlBuilder.append(", sp.start_date as startDate, ");
             sqlBuilder.append("sp.close_date as closeDate, ");
-            sqlBuilder.append("sp.product_group as productGroupId, cv.code_value as productGroupValue, ");
             sqlBuilder.append("dptp.pre_closure_penal_applicable as preClosurePenalApplicable, ");
             sqlBuilder.append("dptp.pre_closure_penal_interest as preClosurePenalInterest, ");
             sqlBuilder.append("dptp.pre_closure_penal_interest_on_enum as preClosurePenalInterestOnId, ");
@@ -219,7 +217,6 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
             sqlBuilder.append("from m_savings_product sp ");
             sqlBuilder.append("left join m_deposit_product_term_and_preclosure dptp on sp.id=dptp.savings_product_id ");
             sqlBuilder.append("join m_currency curr on curr.code = sp.currency_code ");
-            sqlBuilder.append("left join m_code_value cv on cv.id = sp.product_group ");
 
             this.schemaSql = sqlBuilder.toString();
         }
@@ -266,15 +263,10 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
                 status = "savingsProduct.active";
             }
 
-            final Long productGroupId = JdbcSupport.getLong(rs, "productGroupId");
-            final String productGroupValue = rs.getString("productGroupValue");
-            final boolean isActive = false;
-            final CodeValueData productGroup = CodeValueData.instance(productGroupId, productGroupValue, isActive);
-
             return FixedDepositProductData.instance(depositProductData, preClosurePenalApplicable, preClosurePenalInterest,
                     preClosurePenalInterestOnType, minDepositTerm, maxDepositTerm, minDepositTermType, maxDepositTermType,
                     inMultiplesOfDepositTerm, inMultiplesOfDepositTermType, minDepositAmount, depositAmount, maxDepositAmount,
-                    startDate, closeDate, status, productGroup);
+                    startDate, closeDate, status);
         }
     }
 
