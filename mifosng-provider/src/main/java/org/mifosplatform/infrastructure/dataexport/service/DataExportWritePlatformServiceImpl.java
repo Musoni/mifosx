@@ -61,11 +61,12 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
     private final JdbcTemplate jdbcTemplate;
 
     /**
-     * @param platformSecurityContext
+     * @param registeredTableMetaDataRepository
      * @param exportDataValidator
      * @param fromJsonHelper
      * @param dataExportRepository
      * @param dataExportReadPlatformService
+	 * @param dataSource
      */
     @Autowired
     public DataExportWritePlatformServiceImpl(final ExportDataValidator exportDataValidator, 
@@ -462,7 +463,7 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
      * This method prevents the addition of duplicate join statements
      * 
      * @param dataExportEntityData
-     * @param coreColumn
+     * @param aliasPostfixNumber
      * @param sqlBuilder
      * @param sqlJoinMap
      * @param isSelectStatement
@@ -4155,7 +4156,6 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 				throw new DataExportNotFoundException(id);
 			}
 
-			if(!jsonCommand.json().equals(dataExport.getUserRequestMap())) {
 				// validate the request to create a new data export entity
 				this.exportDataValidator.validateCreateDataExportRequest(jsonCommand);
 
@@ -4210,7 +4210,6 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 
 				// save the new data export entity
 				this.dataExportRepository.save(dataExport);
-			}
 
 			return new CommandProcessingResultBuilder()
 					.withCommandId(jsonCommand.commandId())
