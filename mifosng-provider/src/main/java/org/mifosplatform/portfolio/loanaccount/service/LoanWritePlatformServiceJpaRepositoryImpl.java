@@ -455,7 +455,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
      **/
     private void createStandingInstruction(Loan loan) {
         if (loan.shouldCreateStandingInstructionAtDisbursement()) {
-            AccountAssociations accountAssociations = this.accountAssociationRepository.findByLoanId(loan.getId());
+            AccountAssociations accountAssociations = this.accountAssociationRepository.findByLoanIdAndType(loan.getId(),AccountAssociationType.LINKED_ACCOUNT_ASSOCIATION.getValue());
 
             if (accountAssociations != null) {
 
