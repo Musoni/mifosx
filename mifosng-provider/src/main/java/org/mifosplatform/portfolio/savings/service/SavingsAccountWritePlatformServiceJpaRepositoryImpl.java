@@ -367,7 +367,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
 
         final LocalDate postInterestOnDate = null;
         account.calculateInterestUsing(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
-                financialYearBeginningMonth,postInterestOnDate);
+                financialYearBeginningMonth, postInterestOnDate);
 
         this.savingAccountRepository.save(account);
 
@@ -409,7 +409,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             if (transactionDate.isAfter(today)) { throw new PostInterestAsOnDateException(PostInterestAsOnDateException.PostInterestAsOnException_TYPE.FUTURE_DATE); }
 
         }
-        postInterest(account,postInterestAs,transactionDate);
+        postInterest(account, postInterestAs, transactionDate);
         return new CommandProcessingResultBuilder() //
                 .withEntityId(savingsId) //
                 .withOfficeId(account.officeId()) //
@@ -972,11 +972,16 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             depositAccountOnHoldTransactions = this.depositAccountOnHoldTransactionRepository.findBySavingsAccountAndReversedFalseOrderByCreatedDateAsc(account);
         }
 
-        account.validateAccountBalanceDoesNotBecomeNegative(SavingsApiConstants.waiveChargeTransactionAction,depositAccountOnHoldTransactions);
+        account.validateAccountBalanceDoesNotBecomeNegative(SavingsApiConstants.waiveChargeTransactionAction, depositAccountOnHoldTransactions);
 
         this.savingAccountRepository.saveAndFlush(account);
 
-        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
+        if(savingsAccountCharge.isPaid()){
+            
+            postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
+        }
+
+
 
         return new CommandProcessingResultBuilder() //
                 .withEntityId(savingsAccountChargeId) //
@@ -1040,7 +1045,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 && !this.workingDaysRepository.isWorkingDay(transactionDate)) {
             baseDataValidator.reset().parameter(dueAsOfDateParamName).value(transactionDate.toString(fmt))
                     .failWithCodeNoParameterAddedToErrorCode("transaction.not.allowed.transaction.date.is.a.nonworking.day");
-            if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
+            if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors);
+            }
         }
 
         this.payCharge(savingsAccountCharge, transactionDate, amountPaid, fmt, user);
