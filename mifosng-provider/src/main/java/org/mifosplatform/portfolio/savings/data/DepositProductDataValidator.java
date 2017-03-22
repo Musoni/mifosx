@@ -375,10 +375,6 @@ public class DepositProductDataValidator {
     }
 
     private void validateChartsData(JsonElement element, DataValidatorBuilder baseDataValidator) {
-
-//        final String shortName = fromApiJsonHelper.extractStringNamed(chartsParamName, element);
-//        baseDataValidator.reset().parameter(chartsParamName).value(shortName).notBlank();
-
         if (element.isJsonObject()) {
             final JsonObject topLevelJsonElement = element.getAsJsonObject();
             if (topLevelJsonElement.has(chartsParamName) && topLevelJsonElement.get(chartsParamName).isJsonArray()) {

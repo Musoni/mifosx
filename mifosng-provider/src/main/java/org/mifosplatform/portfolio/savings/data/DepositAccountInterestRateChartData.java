@@ -57,7 +57,7 @@ public class DepositAccountInterestRateChartData {
     }
 
     public static DepositAccountInterestRateChartData from(InterestRateChartData productChartData) {
-        final Long id = productChartData.getId();
+        final Long id = null;
         final Long accountId = null;
         final String accountNumber = null;
         Set<DepositAccountInterestRateChartSlabData> fromProdChartSlabs = new HashSet<>();

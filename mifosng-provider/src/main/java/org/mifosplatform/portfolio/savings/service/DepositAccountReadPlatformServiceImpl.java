@@ -1166,9 +1166,6 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             sqlBuilder.append(super.selectFieldsSql());
 
             sqlBuilder.append(", dptp.pre_closure_penal_applicable as preClosurePenalApplicable, ");
-            sqlBuilder.append(" dptp.deposit_amount as depositAmount, ");
-            sqlBuilder.append(" dptp.min_deposit_amount as minDepositAmount, ");
-            sqlBuilder.append(" dptp.max_deposit_amount as maxDepositAmount, ");
             sqlBuilder.append("dptp.pre_closure_penal_interest as preClosurePenalInterest, ");
             sqlBuilder.append("dptp.pre_closure_penal_interest_on_enum as preClosurePenalInterestOnId, ");
             sqlBuilder.append("dptp.min_deposit_term as minDepositTerm, ");
@@ -1212,7 +1209,7 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             final EnumOptionData inMultiplesOfDepositTermType = (inMultiplesOfDepositTermTypeId == null) ? null : SavingsEnumerations
                     .depositTermFrequencyType(inMultiplesOfDepositTermTypeId);
 
-            final BigDecimal depositAmount = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "depositAmount");;
+            final BigDecimal depositAmount = null;
             final BigDecimal maturityAmount = null;
             final LocalDate maturityDate = null;
             final Integer depositPeriod = null;
