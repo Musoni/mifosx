@@ -136,9 +136,13 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
                     .append(" left join acc_gl_account as glAccount on glAccount.id = journalEntry.account_id")
                     .append(" left join m_office as office on office.id = journalEntry.office_id")
                     .append(" left join m_appuser as creatingUser on creatingUser.id = journalEntry.createdby_id ")
-                    .append(" left join m_currency curr on curr.code = journalEntry.currency_code ")
-                    .append(" left join m_staff stf  on stf.id = creatingUser.staff_id ")
-                    .append(" left join m_cashiers ch on ch.staff_id = stf.id ");
+                    .append(" left join m_currency curr on curr.code = journalEntry.currency_code ");
+
+            if(associationParametersData.isTellerRequired()){
+
+                sb.append(" left join m_staff stf  on stf.id = creatingUser.staff_id ")
+                        .append(" left join m_cashiers ch on ch.staff_id = stf.id ");
+            }
             if (associationParametersData.isPaymentDetailsRequired()) {
                 sb.append(" left join m_loan_transaction as lt on journalEntry.loan_transaction_id = lt.id ")
                         .append(" left join m_savings_account_transaction as st on journalEntry.savings_transaction_id = st.id ")
@@ -592,7 +596,7 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
     @Override
     public Page<JournalEntryData> retrieveJournalEntriesByEntityId(String transactionId, Long entityId, Integer entityType) {
         JournalEntryAssociationParametersData associationParametersData = new JournalEntryAssociationParametersData(true,
-                true, true, true, true);
+                true, true, true, true,false);
         try {
             final GLJournalEntryMapper rm = new GLJournalEntryMapper(associationParametersData);
             final String sql = "select " + rm.schema() + " where journalEntry.transaction_id = ? and journalEntry.entity_id = ? and journalEntry.entity_type_enum = ?";
