@@ -500,7 +500,7 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
                 FinancialActivityAccount mainVaultFinancialActivityAccount = this.financialActivityAccountRepositoryWrapper
                         .findByFinancialActivityTypeWithNotFoundDetection(FINANCIAL_ACTIVITY.CASH_AT_MAINVAULT.getValue());
 
-                JournalEntryAssociationParametersData associationParametersData = new JournalEntryAssociationParametersData(false,true ,false,false,false);
+                JournalEntryAssociationParametersData associationParametersData = new JournalEntryAssociationParametersData(false,true ,false,false,false,false);
 
                 GLAccountData glAccountData = this.glAccountReadPlatformService.retrieveGLAccountById(mainVaultFinancialActivityAccount.getGlAccount().getId(), associationParametersData);
 

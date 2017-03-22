@@ -13,6 +13,7 @@ public class JournalEntryAssociationParametersData {
     private final boolean notesRequired;
     private final boolean glClosureRequired;
     private final boolean unReconciledBalanceRequired;
+    private final boolean tellerRequired;
 
     public JournalEntryAssociationParametersData() {
         this.transactionDetailsRequired = false;
@@ -21,10 +22,11 @@ public class JournalEntryAssociationParametersData {
         this.notesRequired = false;
         this.glClosureRequired = false;
         this.unReconciledBalanceRequired = false;
+        this.tellerRequired = false;
     }
 
     public JournalEntryAssociationParametersData(final boolean transactionDetailsRequired, final boolean runningBalanceRequired, final boolean paymentDetails,
-                                                 final boolean glClosureRequired, final boolean unReconciledBalanceRequired) {
+                                                 final boolean glClosureRequired, final boolean unReconciledBalanceRequired,final boolean tellerRequired) {
 
         
         Boolean notesRequired = false;
@@ -42,6 +44,7 @@ public class JournalEntryAssociationParametersData {
         this.runningBalanceRequired = runningBalanceRequired;
         this.glClosureRequired = glClosureRequired;
         this.unReconciledBalanceRequired = unReconciledBalanceRequired;
+        this.tellerRequired = tellerRequired;
 
     }
 
@@ -67,4 +70,6 @@ public class JournalEntryAssociationParametersData {
         return this.notesRequired;
     }
     public boolean isGlClosureRequired (){ return this.glClosureRequired;}
+
+    public boolean isTellerRequired(){return this.tellerRequired;}
 }
