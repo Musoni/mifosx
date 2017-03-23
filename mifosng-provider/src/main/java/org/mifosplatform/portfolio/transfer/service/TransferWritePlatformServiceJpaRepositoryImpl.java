@@ -760,9 +760,10 @@ public class TransferWritePlatformServiceJpaRepositoryImpl implements TransferWr
           reverse transaction made on initiate transfer and accept transfer
           Ideally this reversal would be inside the previous If, but we can't put it there because there are still transfers that did do the bookings, that can be reversed.
          */
-        this.reverseTransferTransaction(clientId);
 
-
+        if(!client.getOffice().getId().equals(clientUndoTransfer.getTransferFromOfficeId())){
+            this.reverseTransferTransaction(clientId);
+        }
 
 
         this.undoClientTransfer(client,clientId);
