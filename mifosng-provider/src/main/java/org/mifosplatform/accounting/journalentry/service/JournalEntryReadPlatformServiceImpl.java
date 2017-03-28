@@ -124,7 +124,7 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
                         .append(" st.transaction_type_enum as savingsTransactionType, ")
                         .append("  ct.txn_type as cashierTransactionType ");
             }            
-            if (associationParametersData.isNotesRequired()) {        
+            if (associationParametersData.isNotesRequired() && !associationParametersData.isTellerRequired()){
                 sb.append(" ,note.id as noteId, ")
                         .append(" note.note as transactionNote ");
             }
@@ -153,7 +153,7 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
                         .append(" left join m_cashiers as transactionCashier on transactionCashier.id = ct.cashier_id ");
 
             }
-             if (associationParametersData.isNotesRequired()) {        
+             if (associationParametersData.isNotesRequired() && !associationParametersData.isTellerRequired()) {
                 sb.append(" left join m_note as note on lt.id = note.loan_transaction_id or st.id = note.savings_account_transaction_id ");
              }
             if(associationParametersData.isGlClosureRequired()){
@@ -263,7 +263,7 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
                 
             }
             
-            if (associationParametersData.isNotesRequired()) {            
+            if (associationParametersData.isNotesRequired() && !associationParametersData.isTellerRequired()) {
                 
                 final Long noteId = JdbcSupport.getLong(rs, "noteId");
                 if (noteId != null) {
@@ -444,8 +444,6 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
                 sqlBuilder.append(" offset ").append(searchParameters.getOffset());
             }
         }
-
-        logger.debug(sqlBuilder.toString());
 
         final Object[] finalObjectArray = Arrays.copyOf(objectArray, arrayPos);
         final String sqlCountRows = "SELECT FOUND_ROWS()";
