@@ -227,23 +227,6 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
                 sqlBuilder.LEFT_OUTER_JOIN("`" + datatableName + "` `" + datatableName + "` on `"
                 		+ datatableName + "`.`" + baseEntityReferenceColumn + "` = `" + baseEntityName + "`.`id`");
                 
-                for (RegisteredTableMetaData metaData : registeredTablesMetaData) {
-                    String fieldName = metaData.getFieldName();
-
-                    if (fieldName.equalsIgnoreCase("submittedon_date") || fieldName.equalsIgnoreCase("submittedon_userid")) {
-                    	// skip
-                    } else if (fieldName.contains("userid") || fieldName.endsWith("_by")) {
-                    	// skip
-                    } else if (fieldName.equalsIgnoreCase(baseEntityReferenceColumn)) { 
-                    	// skip
-                    } else {
-                    	String columnLabel = datatableDisplayName + " - " + metaData.getLabelName();
-                    	
-                    	sqlBuilder.SELECT("`" + datatableName + "`.`" + metaData.getFieldName() + "` as `"
-                    			+ columnLabel + "`");
-                    }
-                }
-                
                 if (coreDatatable != null) {
                 	List<EntityColumnMetaData> columnsMetaData = DataExportUtils.getTableColumnsMetaData(
                 			coreDatatable.getTableName(), this.jdbcTemplate);
@@ -305,11 +288,23 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
         					// =============================================================================
                 			
                 			String[] excludeFields = {
-                				"loan_id", "type_enum", "entity_id", "address_line_2", "state", "zip", "mobile_number", "comment", "is_active"
+                				"loan_id", "address_line_2", "state", "zip", "mobile_number", "comment", "is_active"
                 			};
                 			
                 			if (ArrayUtils.contains(excludeFields, fieldName)) {
                 				// skip
+                			} else if (fieldName.equalsIgnoreCase("entity_id")) {
+                				String columnLabel = datatableDisplayName + " - client id";
+                				
+                				sqlBuilder.SELECT("case when `" + datatableName + "`.`type_enum`=1 then `"
+                    					+ datatableName + "`.`" + fieldName + "` else NULL end as `" + columnLabel + "`");
+                			} else if (fieldName.equalsIgnoreCase("type_enum")) {
+                				String columnLabel = datatableDisplayName + " - type";
+                				
+                				sqlBuilder.SELECT("case when `" + datatableName + "`.`type_enum`=1 then 'client' when `"
+                						+ datatableName + "`.`type_enum`=2 then 'staff' when `" + datatableName
+                								+ "`.`type_enum`=3 then 'external' end as `" + columnLabel + "`");
+                				
                 			} else if (fieldName.equalsIgnoreCase("firstname") || fieldName.equalsIgnoreCase("lastname")) {
                 				String columnLabel = datatableDisplayName + " - " + fieldName;
                 				String clientSqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
@@ -386,58 +381,23 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
                 		}
                 	}
                 	
-                	if (coreDatatable.equals(DataExportCoreDatatable.GUARANTORS)) {
-                		DataExportSqlJoin dataExportSqlJoin;
-                		String sqlStatement;
-                		
-                		// =============================================================================
-    					String sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
-    							DataExportCoreTable.M_GUARANTOR);
-    					
-    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
-    						// increment the alias postfix number
-        					aliasPostfixNumber.increment();
-                    		
-                    		String mClientAlias = DataExportCoreTable.M_CLIENT.getAlias(aliasPostfixNumber.intValue());
-    						
-    						sqlStatement = "`" + DataExportCoreTable.M_CLIENT.getName() + "` `" + mClientAlias + "` on `"
-                                    + mClientAlias + "`.`id` = `" + datatableName + "`.`entity_id`";
-    						
-    						dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_CLIENT, 
-        							DataExportCoreTable.M_GUARANTOR, sqlStatement, mClientAlias, 
-        							datatableName);
-    						
-    						sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
-    						
-    						// add the join to the map
-        					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
-    					}
-    					// =============================================================================
-    					
-    					// =============================================================================
-    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_STAFF, 
-    							DataExportCoreTable.M_GUARANTOR);
-    					
-    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
-    						// increment the alias postfix number
-        					aliasPostfixNumber.increment();
-        					
-        					String mStaffAlias = DataExportCoreTable.M_STAFF.getAlias(aliasPostfixNumber.intValue());
-    						
-    						sqlStatement = "`" + DataExportCoreTable.M_STAFF.getName() + "` `" + mStaffAlias + "` on `"
-                                    + mStaffAlias + "`.`id` = `" + datatableName + "`.`entity_id`";
-    						
-    						dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_STAFF, 
-        							DataExportCoreTable.M_GUARANTOR, sqlStatement, mStaffAlias, 
-        							datatableName);
-    						
-    						sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
-    						
-    						// add the join to the map
-        					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
-    					}
-    					// =============================================================================
-                	}
+                } else {
+                	for (RegisteredTableMetaData metaData : registeredTablesMetaData) {
+                        String fieldName = metaData.getFieldName();
+
+                        if (fieldName.equalsIgnoreCase("submittedon_date") || fieldName.equalsIgnoreCase("submittedon_userid")) {
+                        	// skip
+                        } else if (fieldName.contains("userid") || fieldName.endsWith("_by")) {
+                        	// skip
+                        } else if (fieldName.equalsIgnoreCase(baseEntityReferenceColumn)) { 
+                        	// skip
+                        } else {
+                        	String columnLabel = datatableDisplayName + " - " + metaData.getLabelName();
+                        	
+                        	sqlBuilder.SELECT("`" + datatableName + "`.`" + metaData.getFieldName() + "` as `"
+                        			+ columnLabel + "`");
+                        }
+                    }
                 }
             }
         }
