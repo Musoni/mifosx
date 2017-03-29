@@ -101,6 +101,8 @@ public interface LoanReadPlatformService {
 
     Collection<Long> fetchLoansForInterestRecalculation();
 
+    Collection<Long> fetchOverpayedLoansForAllocation();
+
     LoanTransactionData retrieveLoanPrePaymentTemplate(Long loanId, LocalDate onDate);
 
     Collection<LoanTransactionData> retrieveWaiverLoanTransactions(Long loanId);

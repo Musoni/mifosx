@@ -29,6 +29,7 @@ public enum JobName {
     SEND_MESSAGES_TO_SMS_GATEWAY("Send messages to SMS gateway"), 
     GET_DELIVERY_REPORTS_FROM_SMS_GATEWAY("Get delivery reports from SMS gateway"),
     UPDATE_SMS_OUTBOUND_WITH_CAMPAIGN_MESSAGE("Update Sms Outbound with campaign message"),
+    ALLOCATE_OVERPAYMENTS_TO_SAVINGS("Allocate overpayments to savings"),
 
     SEND_MESSAGES_TO_EMAIL_GATEWAY("Send messages to Email gateway"),
     UPDATE_EMAIL_OUTBOUND_WITH_CAMPAIGN_MESSAGE("Update Email Outbound with campaign message"),
