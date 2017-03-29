@@ -153,6 +153,7 @@ import org.mifosplatform.portfolio.note.domain.Note;
 import org.mifosplatform.portfolio.note.domain.NoteRepository;
 import org.mifosplatform.portfolio.paymentdetail.domain.PaymentDetail;
 import org.mifosplatform.portfolio.paymentdetail.service.PaymentDetailWritePlatformService;
+import org.mifosplatform.portfolio.savings.SavingsAccountTransactionType;
 import org.mifosplatform.portfolio.savings.domain.SavingsAccount;
 import org.mifosplatform.portfolio.savings.exception.InsufficientAccountBalanceException;
 import org.mifosplatform.useradministration.domain.AppUser;
@@ -1742,6 +1743,31 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 
         if (loanCharge.hasNotLoanIdentifiedBy(loanId)) { throw new LoanChargeNotFoundException(loanChargeId, loanId); }
         return loanCharge;
+    }
+
+    @Override
+    @CronTarget(jobName = JobName.ALLOCATE_OVERPAYMENTS_TO_SAVINGS)
+    public void allocateOverpayments() throws JobExecutionException {
+        final Collection<Long> loanIds = this.loanReadPlatformService.fetchOverpayedLoansForAllocation();
+
+        if(loanIds != null){
+            for(final Long loanId : loanIds){
+                final AccountAssociations accountAssociations = this.accountAssociationRepository.findByLoanIdAndType(loanId,AccountAssociationType.LINKED_ACCOUNT_ASSOCIATION.getValue());
+                final Loan loan = accountAssociations.getLoan();
+                final SavingsAccount toSavingsAccount = accountAssociations.linkedSavingsAccount();
+                final BigDecimal transactionAmount = loan.getTotalOverpaid();
+                final LocalDate transactionDate = LocalDate.now();
+
+                final boolean isRegularTransaction = true;
+                final boolean isExceptionForBalanceCheck = false;
+                final AccountTransferDTO accountTransferDTO = new AccountTransferDTO(transactionDate, transactionAmount,
+                        PortfolioAccountType.LOAN, PortfolioAccountType.SAVINGS, loanId, toSavingsAccount.getId(), "Loan overpayment allocation",
+                        null, null, null, LoanTransactionType.WITHDRAW_TRANSFER.getValue(), SavingsAccountTransactionType.DEPOSIT.getValue(), null, null,
+                        AccountTransferType.ACCOUNT_TRANSFER.getValue(), null, null, null, loan, toSavingsAccount, null, isRegularTransaction,
+                        isExceptionForBalanceCheck);
+                this.accountTransfersWritePlatformService.transferFunds(accountTransferDTO);
+            }
+        }
     }
 
     @Transactional

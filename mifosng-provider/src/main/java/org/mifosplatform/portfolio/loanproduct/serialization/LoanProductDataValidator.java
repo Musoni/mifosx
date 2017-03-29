@@ -90,7 +90,7 @@ public final class LoanProductDataValidator {
             LoanProductConstants.holdGuaranteeFundsParamName, LoanProductConstants.minimumGuaranteeFromGuarantorParamName,
             LoanProductConstants.minimumGuaranteeFromOwnFundsParamName, LoanProductConstants.principalThresholdForLastInstallmentParamName,
             LoanProductConstants.accountMovesOutOfNPAOnlyOnArrearsCompletionParamName, LoanProductConstants.canDefineEmiAmountParamName,
-            LoanProductConstants.installmentAmountInMultiplesOfParamName,
+            LoanProductConstants.installmentAmountInMultiplesOfParamName, LoanProductConstants.canAutoAllocateOverpaymentsParameterName,
             LoanProductConstants.preClosureInterestCalculationStrategyParamName, LoanProductConstants.allowAttributeOverridesParamName,
             LoanProductConstants.allowVariableInstallmentsParamName, LoanProductConstants.minimumGapBetweenInstallments,
             LoanProductConstants.maximumGapBetweenInstallments, CreditCheckConstants.CREDIT_CHECKS_PARAM_NAME,

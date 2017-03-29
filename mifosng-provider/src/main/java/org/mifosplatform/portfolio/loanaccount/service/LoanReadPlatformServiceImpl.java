@@ -42,6 +42,7 @@ import org.mifosplatform.organisation.monetary.domain.Money;
 import org.mifosplatform.organisation.staff.data.StaffData;
 import org.mifosplatform.organisation.staff.service.StaffReadPlatformService;
 import org.mifosplatform.portfolio.account.data.AccountTransferData;
+import org.mifosplatform.portfolio.account.domain.AccountAssociationType;
 import org.mifosplatform.portfolio.accountdetails.domain.AccountType;
 import org.mifosplatform.portfolio.accountdetails.service.AccountEnumerations;
 import org.mifosplatform.portfolio.calendar.data.CalendarData;
@@ -1868,6 +1869,22 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             String yesterday = formatter.print(DateUtils.getLocalDateOfTenant().minusDays(1));
             return this.jdbcTemplate.queryForList(sqlBuilder.toString(), Long.class, new Object[] { yesterday,
                     LoanStatus.ACTIVE.getValue(), currentdate, currentdate, currentdate, yesterday });
+        } catch (final EmptyResultDataAccessException e) {
+            return null;
+        }
+    }
+
+    @Override
+    public Collection<Long> fetchOverpayedLoansForAllocation() {
+        StringBuilder sqlBuilder = new StringBuilder();
+        sqlBuilder.append("SELECT ml.id FROM m_loan ml ");
+        sqlBuilder.append(" INNER JOIN m_portfolio_account_associations aa on aa.loan_account_id = ml.id and aa.is_active = 1 ");
+        sqlBuilder.append(" LEFT JOIN m_product_loan lp on ml.product_id = lp.id and lp.can_auto_allocate_overpayments = 1 ");
+        sqlBuilder.append(" WHERE ml.loan_status_id = ? ");
+        sqlBuilder.append(" and aa.association_type_enum = ? ");
+        sqlBuilder.append(" group by ml.id");
+        try {
+            return this.jdbcTemplate.queryForList(sqlBuilder.toString(), Long.class, new Object[] { LoanStatus.OVERPAID.getValue(), AccountAssociationType.LINKED_ACCOUNT_ASSOCIATION.getValue() });
         } catch (final EmptyResultDataAccessException e) {
             return null;
         }

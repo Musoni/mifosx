@@ -194,7 +194,7 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
                     + "lpr.rest_freqency_date as restFrequencyDate, lpr.arrears_based_on_original_schedule as isArrearsBasedOnOriginalSchedule, "
                     + "lpr.compounding_frequency_type_enum as compoundingFrequencyTypeEnum, lpr.compounding_frequency_interval as compoundingInterval, "
                     + "lpr.compounding_freqency_date as compoundingFrequencyDate,  "
-                    + "lp.hold_guarantee_funds as holdGuaranteeFunds, "
+                    + "lp.hold_guarantee_funds as holdGuaranteeFunds, lp.can_auto_allocate_overpayments as canAutoAllocateOverpayments, "
                     + "lp.principal_threshold_for_last_installment as principalThresholdForLastInstallment, "
                     + "lpg.id as lpgId, lpg.mandatory_guarantee as mandatoryGuarantee, lpg.split_interest_among_guarantors as splitInterestAmongGuarantors, "
                     + "lp.reverse_overduedays_npa_interest as reverseOverdueDaysNpaInterest, "
@@ -414,6 +414,7 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
             final BigDecimal principalThresholdForLastInstallment = rs.getBigDecimal("principalThresholdForLastInstallment");
             final boolean accountMovesOutOfNPAOnlyOnArrearsCompletion = rs.getBoolean("accountMovesOutOfNPAOnlyOnArrearsCompletion");
             final boolean reverseOverdueDaysNPAInterest = rs.getBoolean("reverseOverdueDaysNpaInterest");
+            final boolean canAutoAllocateOverpayments = rs.getBoolean("canAutoAllocateOverpayments");
 
             return new LoanProductData(id, name, shortName, description, currency, principal, minPrincipal, maxPrincipal, tolerance,
                     numberOfRepayments, minNumberOfRepayments, maxNumberOfRepayments, repaymentEvery, interestRatePerPeriod,
@@ -430,7 +431,7 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
                     installmentAmountInMultiplesOf, allowAttributeOverrides, isLinkedToFloatingInterestRates, floatingRateId,
                     floatingRateName, interestRateDifferential, minDifferentialLendingRate, defaultDifferentialLendingRate,
                     maxDifferentialLendingRate, isFloatingInterestRateCalculationAllowed, isVariableIntallmentsAllowed, minimumGap,
-                    maximumGap, this.creditChecks, reverseOverdueDaysNPAInterest, productGroup);
+                    maximumGap, this.creditChecks, reverseOverdueDaysNPAInterest, productGroup, canAutoAllocateOverpayments);
         }
     }
 
