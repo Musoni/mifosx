@@ -72,9 +72,7 @@ public class JournalEntryRunningBalanceUpdateServiceImpl implements JournalEntry
             + "inner join (select max(entry_date) as date from acc_gl_journal_entry where entry_date < ? group by office_id,account_id) je3 "
             + "where je2.id = je.id and je.entry_date = je3.date group by je.id order by je.entry_date DESC " ;
 
-    private final String getRowCountSQL = "SELECT FOUND_ROWS() ";
-
-    private final int limit = 1000;
+    private final int limit = 50;
 
     @Autowired
     public JournalEntryRunningBalanceUpdateServiceImpl(final RoutingDataSource dataSource, final OfficeRepository officeRepository,
@@ -174,7 +172,7 @@ public class JournalEntryRunningBalanceUpdateServiceImpl implements JournalEntry
         }
 
         int startFrom = 0;
-        int maxIterations = 100 * limit;
+        int maxIterations = 2000 * limit;
 
         // Get the first set of data:
         List<JournalEntryData> entryDatas = jdbcTemplate.query( entryMapper.organizationRunningBalanceSchema(), entryMapper,
@@ -207,14 +205,15 @@ public class JournalEntryRunningBalanceUpdateServiceImpl implements JournalEntry
                         // Update all Organziation balances after using the same (mapped) amount:
                         String OrgSql = "UPDATE acc_gl_journal_entry je SET " +
                                 "je.organization_running_balance= je.organization_running_balance + " + movement +
-                                "WHERE je.account_id = " + entryData.getGlAccountId() + " and je.entry_date >= '" + entryData.getTransactionDate() + "' and je.id > " + entryData.getId() + " and is_running_balance_calculated = 1";
+                                "WHERE je.account_id = " + entryData.getGlAccountId() + " and (je.entry_date > '" + entryData.getTransactionDate() + "' OR (je.entry_date = '" + entryData.getTransactionDate() + "' and je.id > " + entryData.getId() + ")) and is_running_balance_calculated = 1";
 
-                        String OfficeSql = "UPDATE acc_gl_journal_entry je SET " +
-                                " je.office_running_balance = je.office_running_balance + " + movement +
-                                "WHERE je.office_id = " + entryData.getOfficeId() + " and je.account_id = " + entryData.getGlAccountId() + " and je.entry_date >= '" + entryData.getTransactionDate() + "' and je.id > " + entryData.getId() + " and is_running_balance_calculated = 1";
+                        String OffSql = "UPDATE acc_gl_journal_entry je SET " +
+                                "je.office_running_balance = je.office_running_balance + " + movement +
+                                "WHERE je.office_id = " + entryData.getOfficeId()  + " AND je.account_id = " + entryData.getGlAccountId() + " and (je.entry_date > '" + entryData.getTransactionDate() + "' OR (je.entry_date = '" + entryData.getTransactionDate() + "' and je.id > " + entryData.getId() + ")) and is_running_balance_calculated = 1";
+
 
                         updateSql[i++] = OrgSql;
-                        updateSql[i++] = OfficeSql;
+                        updateSql[i++] = OffSql;
                     }
 
                 }
@@ -248,7 +247,7 @@ public class JournalEntryRunningBalanceUpdateServiceImpl implements JournalEntry
         }
 
         int startFrom = 0;
-        int maxIterations = 100 * limit;
+        int maxIterations = 1000 * limit;
 
         // Get the first set of data:
         List<JournalEntryData> entryDatas = jdbcTemplate.query(entryMapper.officeRunningBalanceSchema(), entryMapper, new Object[] {
