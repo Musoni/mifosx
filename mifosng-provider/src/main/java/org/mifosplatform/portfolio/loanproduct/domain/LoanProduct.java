@@ -184,10 +184,6 @@ public class LoanProduct extends AbstractPersistable<Long> {
     @JoinColumn(name = "product_group")
     private CodeValue productGroup;
 
-    @Column(name = "can_auto_allocate_overpayments")
-    private boolean canAutoAllocateOverpayments;
-
-
     public static LoanProduct assembleFromJson(final Fund fund, final LoanTransactionProcessingStrategy loanTransactionProcessingStrategy,
             final List<Charge> productCharges, final JsonCommand command, final AprCalculator aprCalculator, FloatingRate floatingRate, 
             final List<CreditCheck> creditChecks, final CodeValue productGroup) {
@@ -332,8 +328,6 @@ public class LoanProduct extends AbstractPersistable<Long> {
         
         final boolean reverseOverdueDaysNPAInterest = command.booleanPrimitiveValueOfParameterNamed("reverseOverdueDaysNPAInterest");
 
-        final boolean canAutoAllocateOverpayments = command.booleanPrimitiveValueOfParameterNamed("canAutoAllocateOverpayments");
-
         return new LoanProduct(fund, loanTransactionProcessingStrategy, name, shortName, description, currency, principal, minPrincipal,
                 maxPrincipal, interestRatePerPeriod, minInterestRatePerPeriod, maxInterestRatePerPeriod, interestFrequencyType,
                 annualInterestRate, interestMethod, interestCalculationPeriodMethod, allowPartialPeriodInterestCalcualtion, repaymentEvery,
@@ -347,7 +341,7 @@ public class LoanProduct extends AbstractPersistable<Long> {
                 installmentAmountInMultiplesOf, loanConfigurableAttributes, isLinkedToFloatingInterestRates, floatingRate,
                 interestRateDifferential, minDifferentialLendingRate, maxDifferentialLendingRate, defaultDifferentialLendingRate,
                 isFloatingInterestRateCalculationAllowed, isVariableInstallmentsAllowed, minimumGapBetweenInstallments,
-                maximumGapBetweenInstallments, creditChecks, reverseOverdueDaysNPAInterest, productGroup, canAutoAllocateOverpayments);
+                maximumGapBetweenInstallments, creditChecks, reverseOverdueDaysNPAInterest, productGroup);
     }
 
     public void updateLoanProductInRelatedClasses() {
@@ -577,9 +571,8 @@ public class LoanProduct extends AbstractPersistable<Long> {
             Boolean isLinkedToFloatingInterestRates, FloatingRate floatingRate, BigDecimal interestRateDifferential,
             BigDecimal minDifferentialLendingRate, BigDecimal maxDifferentialLendingRate, BigDecimal defaultDifferentialLendingRate,
             Boolean isFloatingInterestRateCalculationAllowed, final Boolean isVariableInstallmentsAllowed,
-            final Integer minimumGapBetweenInstallments, final Integer maximumGapBetweenInstallments,
-            final List<CreditCheck> creditChecks, final boolean reverseOverdueDaysNPAInterest, final CodeValue productGroup,
-            final boolean canAutoAllocateOverpayments) {
+            final Integer minimumGapBetweenInstallments, final Integer maximumGapBetweenInstallments, 
+            final List<CreditCheck> creditChecks, final boolean reverseOverdueDaysNPAInterest, final CodeValue productGroup) {
         this.fund = fund;
         this.transactionProcessingStrategy = transactionProcessingStrategy;
         this.name = name.trim();
@@ -659,7 +652,6 @@ public class LoanProduct extends AbstractPersistable<Long> {
         }
         this.reverseOverdueDaysNPAInterest = reverseOverdueDaysNPAInterest;
         this.productGroup = productGroup;
-        this.canAutoAllocateOverpayments = canAutoAllocateOverpayments;
     }
 
     public MonetaryCurrency getCurrency() {
@@ -1089,11 +1081,6 @@ public class LoanProduct extends AbstractPersistable<Long> {
             actualChanges.put(LoanProductConstants.reverseOverdueDaysNPAInterestParameterName, newValue);
             this.reverseOverdueDaysNPAInterest = newValue;
         }
-        if (command.isChangeInBooleanParameterNamed(LoanProductConstants.canAutoAllocateOverpaymentsParameterName, this.canAutoAllocateOverpayments)) {
-            final boolean newValue = command.booleanPrimitiveValueOfParameterNamed(LoanProductConstants.canAutoAllocateOverpaymentsParameterName);
-            actualChanges.put(LoanProductConstants.canAutoAllocateOverpaymentsParameterName, newValue);
-            this.canAutoAllocateOverpayments = newValue;
-        }
         return actualChanges;
     }
 
@@ -1419,8 +1406,6 @@ public class LoanProduct extends AbstractPersistable<Long> {
     }
 
     public boolean isReverseNPAInterestEnabled(){ return this.reverseOverdueDaysNPAInterest;}
-
-    public boolean canAutoAllocateOverpayments(){ return this.canAutoAllocateOverpayments; }
 
     public Integer getOverdueDaysForNPA() {return this.overdueDaysForNPA;}
 

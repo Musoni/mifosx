@@ -450,8 +450,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
                     fromLoanAccount = accountTransferDTO.getLoan();
                     this.loanAccountAssembler.setHelpers(fromLoanAccount);
                 }
-                toSavingsAccount = accountTransferDTO.getToSavingsAccount() != null ? accountTransferDTO.getToSavingsAccount() :
-                        this.savingsAccountAssembler.assembleFrom(accountTransferDTO.getToAccountId());
+                toSavingsAccount = this.savingsAccountAssembler.assembleFrom(accountTransferDTO.getToAccountId());
             } else {
                 fromLoanAccount = accountTransferDetails.fromLoanAccount();
                 this.loanAccountAssembler.setHelpers(fromLoanAccount);

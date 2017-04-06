@@ -67,8 +67,6 @@ public class AccountAssociations extends AbstractPersistable<Long> {
         return this.linkedSavingsAccount;
     }
 
-    public Loan getLoan() { return this.loanAccount; }
-
     public void updateLinkedSavingsAccount(final SavingsAccount savingsAccount) {
         this.linkedSavingsAccount = savingsAccount;
     }

@@ -107,7 +107,6 @@ public class LoanProductData {
     private final boolean canDefineInstallmentAmount;
     private final Integer installmentAmountInMultiplesOf;
     private final boolean reverseOverdueDaysNPAInterest;
-    private final boolean canAutoAllocateOverpayments;
 
     // charges
     private final Collection<ChargeData> charges;
@@ -249,7 +248,6 @@ public class LoanProductData {
         final LoanProductConfigurableAttributes loanProductConfigurableAttributes = null;
         final Collection<CreditCheckData> creditChecks = null;
         final boolean reverseOverdueDaysNPAInterest = false;
-        final boolean canAutoAllocateOverpayments = false;
 
         return new LoanProductData(id, name, shortName, description, currency, principal, minPrincipal, maxPrincipal, tolerance,
                 numberOfRepayments, minNumberOfRepayments, maxNumberOfRepayments, repaymentEvery, interestRatePerPeriod,
@@ -264,8 +262,8 @@ public class LoanProductData {
                 accountMovesOutOfNPAOnlyOnArrearsCompletion, canDefineInstallmentAmount, installmentAmountInMultiplesOf,
                 loanProductConfigurableAttributes, isLinkedToFloatingInterestRates, floatingRateId, floatingRateName,
                 interestRateDifferential, minDifferentialLendingRate, defaultDifferentialLendingRate, maxDifferentialLendingRate,
-                isFloatingInterestRateCalculationAllowed, isVariableInstallmentsAllowed, minimumGap, maximumGap,
-                creditChecks, reverseOverdueDaysNPAInterest, productGroup, canAutoAllocateOverpayments);
+                isFloatingInterestRateCalculationAllowed, isVariableInstallmentsAllowed, minimumGap, maximumGap, 
+                creditChecks, reverseOverdueDaysNPAInterest, productGroup);
     }
 
     public static LoanProductData lookupWithCurrency(final Long id, final String name, final CurrencyData currency) {
@@ -341,7 +339,6 @@ public class LoanProductData {
         final LoanProductConfigurableAttributes loanProductConfigurableAttributes = null;
         final Collection<CreditCheckData> creditChecks = null;
         final boolean reverseOverdueDaysNPAInterest = false;
-        final boolean canAutoAllocateOverpayments = false;
         
         return new LoanProductData(id, name, shortName, description, currency, principal, minPrincipal, maxPrincipal, tolerance,
                 numberOfRepayments, minNumberOfRepayments, maxNumberOfRepayments, repaymentEvery, interestRatePerPeriod,
@@ -356,8 +353,8 @@ public class LoanProductData {
                 accountMovesOutOfNPAOnlyOnArrearsCompletion, canDefineInstallmentAmount, installmentAmountInMultiplesOf,
                 loanProductConfigurableAttributes, isLinkedToFloatingInterestRates, floatingRateId, floatingRateName,
                 interestRateDifferential, minDifferentialLendingRate, defaultDifferentialLendingRate, maxDifferentialLendingRate,
-                isFloatingInterestRateCalculationAllowed, isVariableInstallmentsAllowed, minimumGap, maximumGap,
-                creditChecks, reverseOverdueDaysNPAInterest, productGroup, canAutoAllocateOverpayments);
+                isFloatingInterestRateCalculationAllowed, isVariableInstallmentsAllowed, minimumGap, maximumGap, 
+                creditChecks, reverseOverdueDaysNPAInterest, productGroup);
     }
 
     public static LoanProductData sensibleDefaultsForNewLoanProductCreation() {
@@ -440,7 +437,6 @@ public class LoanProductData {
         final LoanProductConfigurableAttributes loanProductConfigurableAttributes = null;
         final Collection<CreditCheckData> creditChecks = null;
         final boolean reverseOverdueDaysNPAInterest = false;
-        final boolean canAutoAllocateOverpayments = false;
 
         return new LoanProductData(id, name, shortName, description, currency, principal, minPrincipal, maxPrincipal, tolerance,
                 numberOfRepayments, minNumberOfRepayments, maxNumberOfRepayments, repaymentEvery, interestRatePerPeriod,
@@ -455,8 +451,8 @@ public class LoanProductData {
                 principalThresholdForLastInstallment, accountMovesOutOfNPAOnlyOnArrearsCompletion, canDefineInstallmentAmount,
                 installmentAmountInMultiplesOf, loanProductConfigurableAttributes, isLinkedToFloatingInterestRates, floatingRateId,
                 floatingRateName, interestRateDifferential, minDifferentialLendingRate, defaultDifferentialLendingRate,
-                maxDifferentialLendingRate, isFloatingInterestRateCalculationAllowed, isVariableInstallmentsAllowed, minimumGap, maximumGap,
-                creditChecks, reverseOverdueDaysNPAInterest, productGroup, canAutoAllocateOverpayments);
+                maxDifferentialLendingRate, isFloatingInterestRateCalculationAllowed, isVariableInstallmentsAllowed, minimumGap, maximumGap, 
+                creditChecks, reverseOverdueDaysNPAInterest, productGroup);
     }
 
     public static LoanProductData withAccountingDetails(final LoanProductData productData, final Map<String, Object> accountingMappings,
@@ -496,8 +492,7 @@ public class LoanProductData {
             boolean isFloatingInterestRateCalculationAllowed, final boolean isVariableInstallmentsAllowed,
             final Integer minimumGapBetweenInstallments, final Integer maximumGapBetweenInstallments, 
             final Collection<CreditCheckData> creditChecks, final boolean reverseOverdueDaysNPAInterest,
-            final CodeValueData productGroup, final boolean canAutoAllocateOverpayments) {
-
+            final CodeValueData productGroup) {
         this.id = id;
         this.name = name;
         this.shortName = shortName;
@@ -600,7 +595,6 @@ public class LoanProductData {
         this.preClosureInterestCalculationStrategyOptions = null;
         this.creditCheckOptions = null;
         this.reverseOverdueDaysNPAInterest = reverseOverdueDaysNPAInterest;
-        this.canAutoAllocateOverpayments = canAutoAllocateOverpayments;
     }
 
     public LoanProductData(final LoanProductData productData, final Collection<ChargeData> chargeOptions,
@@ -736,7 +730,6 @@ public class LoanProductData {
         this.canDefineInstallmentAmount = productData.canDefineInstallmentAmount;
         this.installmentAmountInMultiplesOf = productData.installmentAmountInMultiplesOf;
         this.preClosureInterestCalculationStrategyOptions = preCloseInterestCalculationStrategyOptions;
-        this.canAutoAllocateOverpayments = productData.canAutoAllocateOverpayments;
     }
 
     private Collection<ChargeData> nullIfEmpty(final Collection<ChargeData> charges) {
@@ -1075,10 +1068,4 @@ public class LoanProductData {
     public boolean isReverseOverdueDaysNPAInterest() {
         return reverseOverdueDaysNPAInterest;
     }
-
-    /**
-     * @return the canAutoAllocateOverpayments
-     */
-    public boolean isCanAutoAllocateOverpayments() { return canAutoAllocateOverpayments; }
-
 }
