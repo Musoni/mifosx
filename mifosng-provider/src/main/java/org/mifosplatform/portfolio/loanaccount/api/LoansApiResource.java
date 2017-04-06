@@ -604,12 +604,16 @@ public class LoansApiResource {
         return this.toApiJsonSerializer.serialize(settings, loanAccount, this.LOAN_DATA_PARAMETERS);
     }
 
+
     @GET
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public String retrieveAll(@Context final UriInfo uriInfo,
             @QueryParam("sqlSearch") final String sqlSearch,
             @QueryParam("externalId") final String externalId,
+            @QueryParam("officeId") final Long officeId,
+            @QueryParam("staffId") final Long staffId,
+            @QueryParam("loanStatus") final Integer loanStatus,
             // @QueryParam("underHierarchy") final String hierarchy,
             @QueryParam("offset") final Integer offset, @QueryParam("limit") final Integer limit,
             @QueryParam("orderBy") final String orderBy, @QueryParam("sortOrder") final String sortOrder,
@@ -617,8 +621,8 @@ public class LoansApiResource {
 
         this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
 
-        final SearchParameters searchParameters = SearchParameters.forLoans(sqlSearch, externalId, offset, limit, orderBy, sortOrder,
-                accountNo);
+        final SearchParameters searchParameters = SearchParameters.forLoans(sqlSearch,officeId, externalId, offset, limit, orderBy, sortOrder,
+                accountNo,staffId);
 
         final Page<LoanAccountData> loanBasicDetails = this.loanReadPlatformService.retrieveAll(searchParameters);
 
