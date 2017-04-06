@@ -275,6 +275,18 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             arrayPos = arrayPos + 1;
         }
 
+        if (searchParameters.getOfficeId() !=null && searchParameters.getOfficeId() > 0) {
+            sqlBuilder.append(" and o.id = ?");
+            extraCriterias.add(searchParameters.getOfficeId());
+            arrayPos = arrayPos + 1;
+        }
+
+        if (searchParameters.getStaffId() !=null && searchParameters.getStaffId() > 0) {
+            sqlBuilder.append(" and s.id = ?");
+            extraCriterias.add(searchParameters.getStaffId());
+            arrayPos = arrayPos + 1;
+        }
+
         if (searchParameters.isOrderByRequested()) {
             sqlBuilder.append(" order by ").append(searchParameters.getOrderBy());
 
