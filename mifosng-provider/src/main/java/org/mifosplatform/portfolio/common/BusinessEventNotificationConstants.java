@@ -21,7 +21,7 @@ public class BusinessEventNotificationConstants {
                 "loan_initiate_transfer"), LOAN_ACCEPT_TRANSFER("loan_accept_transfer"), LOAN_WITHDRAW_TRANSFER("loan_withdraw_transfer"), LOAN_REJECT_TRANSFER(
                 "loan_reject_transfer"), LOAN_REASSIGN_OFFICER("loan_reassign_officer"), LOAN_REMOVE_OFFICER("loan_remove_officer"), LOAN_APPLY_OVERDUE_CHARGE(
                 "loan_apply_overdue_charge"), LOAN_INTEREST_RECALCULATION("loan_interest_recalculation"), LOAN_REFUND("loan_refund"), SAVINGS_ACTIVATION(
-                "savings_activation"), SAVINGS_DEPOSIT("savings_deposit"), SAVINGS_WITHDRAWAL("savings_withdrawal");
+                "savings_activation"), SAVINGS_DEPOSIT("savings_deposit"), SAVINGS_WITHDRAWAL("savings_withdrawal"), LOAN_RESCHEDULE("loan_reschedule");
 
         private final String value;
 
