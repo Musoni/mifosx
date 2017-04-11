@@ -17,6 +17,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.PostConstruct;
+
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -25,8 +27,11 @@ import org.mifosplatform.infrastructure.codes.domain.CodeValue;
 import org.mifosplatform.infrastructure.codes.domain.CodeValueRepositoryWrapper;
 import org.mifosplatform.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
+import org.mifosplatform.infrastructure.core.data.ApiParameterError;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResultBuilder;
+import org.mifosplatform.infrastructure.core.data.DataValidatorBuilder;
+import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.mifosplatform.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.mifosplatform.infrastructure.core.service.DateUtils;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
@@ -49,6 +54,7 @@ import org.mifosplatform.portfolio.charge.domain.ChargePaymentMode;
 import org.mifosplatform.portfolio.charge.domain.ChargeTimeType;
 import org.mifosplatform.portfolio.common.BusinessEventNotificationConstants.BUSINESS_ENTITY;
 import org.mifosplatform.portfolio.common.BusinessEventNotificationConstants.BUSINESS_EVENTS;
+import org.mifosplatform.portfolio.common.service.BusinessEventListner;
 import org.mifosplatform.portfolio.common.service.BusinessEventNotifierService;
 import org.mifosplatform.portfolio.floatingrates.data.FloatingRateDTO;
 import org.mifosplatform.portfolio.floatingrates.data.FloatingRatePeriodData;
@@ -60,14 +66,14 @@ import org.mifosplatform.portfolio.loanaccount.data.ScheduleGeneratorDTO;
 import org.mifosplatform.portfolio.loanaccount.domain.ChangedTransactionDetail;
 import org.mifosplatform.portfolio.loanaccount.domain.DefaultLoanLifecycleStateMachine;
 import org.mifosplatform.portfolio.loanaccount.domain.Loan;
+import org.mifosplatform.portfolio.loanaccount.domain.LoanAccountDomainService;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanCharge;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanLifecycleStateMachine;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanRepaymentScheduleInstallment;
+import org.mifosplatform.portfolio.loanaccount.domain.LoanRepaymentScheduleInstallmentRepository;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanRepository;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanRepositoryWrapper;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanStatus;
-import org.mifosplatform.portfolio.loanaccount.domain.LoanSummary;
-import org.mifosplatform.portfolio.loanaccount.domain.LoanSummaryWrapper;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTransaction;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTransactionRepository;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTransactionType;
@@ -99,7 +105,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanRescheduleRequestWritePlatformService {
+public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanRescheduleRequestWritePlatformService, BusinessEventListner {
 
     private final static Logger logger = LoggerFactory.getLogger(LoanRescheduleRequestWritePlatformServiceImpl.class);
 
@@ -124,6 +130,8 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
     private final LoanUtilService loanUtilService;
     private final LoanWritePlatformService loanWritePlatformService;
     private final BusinessEventNotifierService businessEventNotifierService;
+    private final LoanRepaymentScheduleInstallmentRepository repaymentScheduleInstallmentRepository;
+    private final LoanAccountDomainService loanAccountDomainService;
     
     /**
      * LoanRescheduleRequestWritePlatformServiceImpl constructor
@@ -145,7 +153,9 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
             final LoanAssembler loanAssembler, final FloatingRatesReadPlatformService floatingRatesReadPlatformService,
             final LoanUtilService loanUtilService, 
             final LoanWritePlatformService loanWritePlatformService, 
-            final BusinessEventNotifierService businessEventNotifierService) {
+            final BusinessEventNotifierService businessEventNotifierService, 
+            final LoanRepaymentScheduleInstallmentRepository repaymentScheduleInstallmentRepository, 
+            final LoanAccountDomainService loanAccountDomainService) {
         this.loanRepositoryWrapper = loanRepositoryWrapper;
         this.codeValueRepositoryWrapper = codeValueRepositoryWrapper;
         this.platformSecurityContext = platformSecurityContext;
@@ -167,6 +177,13 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
         this.loanUtilService = loanUtilService;
         this.loanWritePlatformService = loanWritePlatformService;
         this.businessEventNotifierService = businessEventNotifierService;
+        this.repaymentScheduleInstallmentRepository = repaymentScheduleInstallmentRepository;
+        this.loanAccountDomainService = loanAccountDomainService;
+    }
+    
+    @PostConstruct
+    public void registerForNotification() {
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.LOAN_UNDO_DISBURSAL, this);
     }
 
     /**
@@ -329,7 +346,8 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
 
             if (!changes.isEmpty()) {
                 Loan loan = loanRescheduleRequest.getLoan();
-                final LoanSummary loanSummary = loan.getSummary();
+                final List<Long> existingTransactionIds = new ArrayList<>(loan.findExistingTransactionIds());
+                final List<Long> existingReversedTransactionIds = new ArrayList<>(loan.findExistingReversedTransactionIds());
 
                 final boolean isHolidayEnabled = this.configurationDomainService.isRescheduleRepaymentsOnHolidaysEnabled();
                 final List<Holiday> holidays = this.holidayRepository.findByOfficeIdAndGreaterThanDate(loan.getOfficeId(), loan
@@ -367,8 +385,13 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
                         loanCalendar, floatingRateDTO, loan.charges());
 
                 final Collection<LoanRescheduleModelRepaymentPeriod> periods = loanRescheduleModel.getPeriods();
-                List<LoanRepaymentScheduleInstallment> repaymentScheduleInstallments = loan.getRepaymentScheduleInstallments();
+                List<LoanRepaymentScheduleInstallment> currentRepaymentScheduleInstallments = loan.getRepaymentScheduleInstallments();
+                List<LoanRepaymentScheduleInstallment> repaymentScheduleInstallments = new ArrayList<>();
                 Collection<LoanRescheduleRepaymentPeriodChargeData> waiveLoanCharges = new ArrayList<>();
+                
+                for (LoanRepaymentScheduleInstallment installment : currentRepaymentScheduleInstallments) {
+                	repaymentScheduleInstallments.add(installment);
+                }
 
                 for (LoanRescheduleModelRepaymentPeriod period : periods) {
 
@@ -439,10 +462,6 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
                 // waive all loan charges of zero instalments
                 waiveLoanCharges(loan, waiveLoanCharges);
 
-                // update the Loan summary
-                loanSummary
-                        .updateSummary(currency, loan.getPrincpal(), repaymentScheduleInstallments, new LoanSummaryWrapper(), true, null);
-
                 // update the total number of schedule repayments
                 loan.updateNumberOfRepayments(periods.size());
 
@@ -458,11 +477,20 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
                 for (final LoanRepaymentScheduleInstallment repaymentScheduleInstallment : repaymentScheduleInstallments) {
                     repaymentScheduleInstallment.updateDerivedFields(currency, new LocalDate());
                 }
-
-                // updates maturity date
-                loan.updateLoanScheduleDependentDerivedFields();
+                
+                loan.updateLoanSchedule(repaymentScheduleInstallments, appUser);
+                loan.recalculateAllCharges();
+                
                 // update the loan object
-                this.loanRepository.save(loan);
+                saveAndFlushLoanWithDataIntegrityViolationChecks(loan);
+                
+                postJournalEntries(loan, existingTransactionIds, existingReversedTransactionIds);
+                
+                this.loanAccountDomainService.recalculateAccruals(loan);
+                
+                // send a notification that a loan reschedule event has just taken place
+                this.businessEventNotifierService.notifyBusinessEventWasExecuted(BUSINESS_EVENTS.LOAN_RESCHEDULE,
+                        constructEntityMap(BUSINESS_ENTITY.LOAN, loan));
             }
 
             return new CommandProcessingResultBuilder().withCommandId(jsonCommand.commandId()).withEntityId(loanRescheduleRequestId)
@@ -479,6 +507,27 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
 
             // return an empty command processing result object
             return CommandProcessingResult.empty();
+        }
+    }
+    
+    private void saveAndFlushLoanWithDataIntegrityViolationChecks(final Loan loan) {
+        try {
+            List<LoanRepaymentScheduleInstallment> installments = loan.getRepaymentScheduleInstallments();
+            for (LoanRepaymentScheduleInstallment installment : installments) {
+                if (installment.getId() == null) {
+                    this.repaymentScheduleInstallmentRepository.save(installment);
+                }
+            }
+            this.loanRepository.saveAndFlush(loan);
+        } catch (final DataIntegrityViolationException e) {
+            final Throwable realCause = e.getCause();
+            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+            final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("loan.transaction");
+            if (realCause.getMessage().toLowerCase().contains("external_id_unique")) {
+                baseDataValidator.reset().parameter("externalId").failWithCode("value.must.be.unique");
+            }
+            if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist",
+                    "Validation errors exist.", dataValidationErrors); }
         }
     }
 
@@ -672,4 +721,34 @@ public class LoanRescheduleRequestWritePlatformServiceImpl implements LoanResche
         map.put(entityEvent, entity);
         return map;
     }
+
+	@Override
+	public void businessEventToBeExecuted(Map<BUSINESS_ENTITY, Object> businessEventEntity) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void businessEventWasExecuted(Map<BUSINESS_ENTITY, Object> businessEventEntity) {
+		Loan loan = null;
+		Object loanEntity = businessEventEntity.get(BUSINESS_ENTITY.LOAN);
+		
+		if (loanEntity != null) {
+            loan = (Loan) loanEntity;
+        }
+		
+		// check if loan status has changed from active to approved
+		if (loan != null && loan.isApproved()) {
+			// retrieve any approved reschedule request
+			final LoanRescheduleRequest loanRescheduleRequest = this.loanRescheduleRequestRepository.
+					findByLoanAndStatusEnum(loan, LoanStatus.APPROVED.getValue());
+			
+			if (loanRescheduleRequest != null) {
+				// reject the reschedule request, so a new one can be created after the loan is re-disbursed
+				loanRescheduleRequest.reject(null, new LocalDate());
+				
+				this.loanRescheduleRequestRepository.saveAndFlush(loanRescheduleRequest);
+			}
+		}
+	}
 }
