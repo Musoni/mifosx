@@ -96,7 +96,7 @@ public class SearchReadPlatformServiceImpl implements SearchReadPlatformService 
                     + " left join m_product_loan pl on pl.id=l.product_id"
                     + " where (o.hierarchy IS NULL OR o.hierarchy like :hierarchy) and (l.account_no like :search or l.external_id like :search)" + limitClause + ") ";
 
-            final String savingMatchSql = " (select 'SAVING' as entityType, s.id as entityId, sp.name as entityName, s.external_id as entityExternalId, s.account_no as entityAccountNo,"
+            final String savingMatchSql = " (select CASE WHEN s.deposit_type_enum=200 THEN 'FTD_SAVING' ELSE 'SAVING' END as entityType, s.id as entityId, sp.name as entityName, s.external_id as entityExternalId, s.account_no as entityAccountNo,"
                     + " IFNULL(c.id,g.id) as parentId, IFNULL(c.display_name,g.display_name) as parentName, null as entityMobileNo, s.status_enum as entityStatusEnum, IF(g.id is null, 'client', 'group') as parentType,"
                     + " g.display_name as groupName, g.id as groupId, o.name as officeName, o.id as officeId,"
                     + " null as parentAccountNo"
