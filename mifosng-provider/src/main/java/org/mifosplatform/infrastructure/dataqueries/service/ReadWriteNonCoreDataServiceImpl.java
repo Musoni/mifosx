@@ -1879,7 +1879,16 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
 
                 columnName = "`" + key + "`";
                 insertColumns += ", " + columnName;
-                selectColumns += "," + pValueWrite + " as " + columnName;
+
+                if(pColumnHeader.isString()){
+
+                    selectColumns += ", '" + pValueWrite+ "' as " + columnName;
+
+                }else{
+                    selectColumns += "," + pValueWrite + " as " + columnName;
+                }
+
+
             }
             else if (affectedColumns.containsKey(key)) {
             	
