@@ -6,9 +6,17 @@
 
 package org.mifosplatform.portfolio.loanaccount.rescheduleloan.domain;
 
+import org.mifosplatform.portfolio.loanaccount.domain.Loan;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 public interface LoanRescheduleRequestRepository extends JpaRepository<LoanRescheduleRequest, Long>, JpaSpecificationExecutor<LoanRescheduleRequest> {
-
+	/**
+	 * Retrieves a {@link LoanRescheduleRequest} by loan and statusEnum
+	 * 
+	 * @param loan
+	 * @param statusEnum
+	 * @return {@link LoanRescheduleRequest} object
+	 */
+	LoanRescheduleRequest findByLoanAndStatusEnum(final Loan loan, final Integer statusEnum);
 }
