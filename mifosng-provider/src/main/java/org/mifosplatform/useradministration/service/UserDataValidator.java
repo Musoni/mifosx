@@ -36,7 +36,7 @@ public final class UserDataValidator {
      */
     private final Set<String> supportedParameters = new HashSet<>(Arrays.asList("username", "firstname", "lastname", "password",
             "repeatPassword", "email", "officeId", "notSelectedRoles", "roles", "sendPasswordToEmail", "staffId", "passwordNeverExpires",
-            AppUserConstants.IS_SELF_SERVICE_USER, AppUserConstants.CLIENTS));
+            "enabled", AppUserConstants.IS_SELF_SERVICE_USER, AppUserConstants.CLIENTS));
 
     private final FromJsonHelper fromApiJsonHelper;
 
@@ -199,6 +199,11 @@ public final class UserDataValidator {
         if (this.fromApiJsonHelper.parameterExists("passwordNeverExpire", element)) {
             final boolean passwordNeverExpire = this.fromApiJsonHelper.extractBooleanNamed("passwordNeverExpire", element);
             baseDataValidator.reset().parameter("passwordNeverExpire").value(passwordNeverExpire).validateForBooleanValue();
+        }
+
+        if (this.fromApiJsonHelper.parameterExists("enabled", element)) {
+            final boolean enabled = this.fromApiJsonHelper.extractBooleanNamed("enabled", element);
+            baseDataValidator.reset().parameter("enabled").value(enabled).validateForBooleanValue();
         }
         
         Boolean isSelfServiceUser = null;

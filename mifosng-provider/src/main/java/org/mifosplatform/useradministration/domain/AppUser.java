@@ -291,6 +291,16 @@ public class AppUser extends AbstractPersistable<Long> implements PlatformUser {
                 this.passwordNeverExpires = newValue;
             }
         }
+
+        final String enabledParamName = "enabled";
+
+        if (command.hasParameter(enabledParamName)) {
+            if (command.isChangeInBooleanParameterNamed(enabledParamName, this.enabled)) {
+                final boolean newValue = command.booleanPrimitiveValueOfParameterNamed(enabledParamName);
+                actualChanges.put(enabledParamName, newValue);
+                this.enabled = newValue;
+            }
+        }
         
         if(command.hasParameter(AppUserConstants.IS_SELF_SERVICE_USER)){
         	if (command.isChangeInBooleanParameterNamed(AppUserConstants.IS_SELF_SERVICE_USER, this.isSelfServiceUser)){
