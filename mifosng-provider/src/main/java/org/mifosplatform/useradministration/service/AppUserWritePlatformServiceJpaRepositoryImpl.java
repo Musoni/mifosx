@@ -317,6 +317,12 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
                     .append(" already exists.");
             throw new PlatformDataIntegrityException("error.msg.user.duplicate.username", defaultMessageBuilder.toString(), "username",
                     username);
+        } else if (realCause.getMessage().contains("staff_id")) { 
+        	final Long staffId = command.longValueOfParameterNamed("staffId");
+        	final StringBuilder defaultMessageBuilder = new StringBuilder("Staff with id ").append(staffId)
+                    .append(" already linked to another user.");
+            throw new PlatformDataIntegrityException("error.msg.user.duplicate.staff.link", defaultMessageBuilder.toString(), "username",
+                    staffId);
         }
 
         logger.error(dve.getMessage(), dve);
