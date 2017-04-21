@@ -131,7 +131,7 @@ public class AppUser extends AbstractPersistable<Long> implements PlatformUser {
             passwordNeverExpire = command.booleanPrimitiveValueOfParameterNamed(AppUserConstants.PASSWORD_NEVER_EXPIRES);
         }
 
-        final boolean userEnabled = command.booleanObjectValueOfParameterNamed(AppUserConstants.IS_ENABLED);
+        final boolean userEnabled = true;
         final boolean userAccountNonExpired = true;
         final boolean userCredentialsNonExpired = true;
         final boolean userAccountNonLocked = true;
@@ -290,15 +290,6 @@ public class AppUser extends AbstractPersistable<Long> implements PlatformUser {
                 actualChanges.put(passwordNeverExpire, newValue);
                 this.passwordNeverExpires = newValue;
             }
-        }
-        
-        if (command.hasParameter(AppUserConstants.IS_ENABLED)) {
-        	if (command.isChangeInBooleanParameterNamed(AppUserConstants.IS_ENABLED, this.enabled)) {
-        		final boolean enabled = command.booleanPrimitiveValueOfParameterNamed(AppUserConstants.IS_ENABLED);
-        		actualChanges.put(AppUserConstants.IS_ENABLED, enabled);
-        		
-        		this.enabled = enabled;
-        	}
         }
         
         if(command.hasParameter(AppUserConstants.IS_SELF_SERVICE_USER)){
