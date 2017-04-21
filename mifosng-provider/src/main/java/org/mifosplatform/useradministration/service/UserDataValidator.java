@@ -36,7 +36,7 @@ public final class UserDataValidator {
      */
     private final Set<String> supportedParameters = new HashSet<>(Arrays.asList("username", "firstname", "lastname", "password",
             "repeatPassword", "email", "officeId", "notSelectedRoles", "roles", "sendPasswordToEmail", "staffId", "passwordNeverExpires",
-            AppUserConstants.IS_SELF_SERVICE_USER, AppUserConstants.CLIENTS, AppUserConstants.IS_ENABLED));
+            AppUserConstants.IS_SELF_SERVICE_USER, AppUserConstants.CLIENTS));
 
     private final FromJsonHelper fromApiJsonHelper;
 
@@ -101,11 +101,6 @@ public final class UserDataValidator {
             final boolean passwordNeverExpire = this.fromApiJsonHelper
                     .extractBooleanNamed(AppUserConstants.PASSWORD_NEVER_EXPIRES, element);
             baseDataValidator.reset().parameter("passwordNeverExpire").value(passwordNeverExpire).validateForBooleanValue();
-        }
-        
-        if (this.fromApiJsonHelper.parameterExists(AppUserConstants.IS_ENABLED, element)) {
-        	final boolean isEnabled = this.fromApiJsonHelper.extractBooleanNamed(AppUserConstants.IS_ENABLED, element);
-        	baseDataValidator.reset().parameter(AppUserConstants.IS_ENABLED).value(isEnabled).validateForBooleanValue();
         }
         
         Boolean isSelfServiceUser = null;
@@ -204,11 +199,6 @@ public final class UserDataValidator {
         if (this.fromApiJsonHelper.parameterExists("passwordNeverExpire", element)) {
             final boolean passwordNeverExpire = this.fromApiJsonHelper.extractBooleanNamed("passwordNeverExpire", element);
             baseDataValidator.reset().parameter("passwordNeverExpire").value(passwordNeverExpire).validateForBooleanValue();
-        }
-        
-        if (this.fromApiJsonHelper.parameterExists(AppUserConstants.IS_ENABLED, element)) {
-        	final boolean isEnabled = this.fromApiJsonHelper.extractBooleanNamed(AppUserConstants.IS_ENABLED, element);
-        	baseDataValidator.reset().parameter(AppUserConstants.IS_ENABLED).value(isEnabled).validateForBooleanValue();
         }
         
         Boolean isSelfServiceUser = null;
