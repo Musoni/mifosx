@@ -1917,6 +1917,9 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
                 columnName = "`" + key + "`";
                 insertColumns += ", " + columnName;
                 selectColumns += "," + pValueWrite + " as " + columnName;
+
+                //reset pvalue
+                pValue = null;
             }
         }
 
