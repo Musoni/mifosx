@@ -54,7 +54,12 @@ public enum DataExportCoreColumn {
 	REPAYMENT_SCHEDULE_PRINCIPAL_EXPECTED("principal_amount", "principal expected", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE),
 	REPAYMENT_SCHEDULE_INTEREST_EXPECTED("interest_amount", "interest expected", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE),
 	REPAYMENT_SCHEDULE_FEES_EXPECTED("fee_charges_amount", "fees expected", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE),
-	REPAYMENT_SCHEDULE_PENALTIES_EXPECTED("penalty_charges_amount", "penalties expected", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE);
+	REPAYMENT_SCHEDULE_PENALTIES_EXPECTED("penalty_charges_amount", "penalties expected", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE),
+	REPAYMENT_SCHEDULE_PRINCIPAL_OUTSTANDING("repayment_schedule_principal_outstanding", "principal outstanding", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE),
+	REPAYMENT_SCHEDULE_INTEREST_OUTSTANDING("repayment_schedule_interest_outstanding", "interest outstanding", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE),
+	REPAYMENT_SCHEDULE_PENALTIES_OUTSTANDING("repayment_schedule_penalties_outstanding", "penalties outstanding", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE),
+	REPAYMENT_SCHEDULE_FEES_OUTSTANDING("repayment_schedule_fees_outstanding", "fees outstanding", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE),
+	REPAYMENT_SCHEDULE_TOTAL_OUTSTANDING("repayment_schedule_total_outstanding", "total outstanding", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE);
 	
 	private String name;
 	private String label;
