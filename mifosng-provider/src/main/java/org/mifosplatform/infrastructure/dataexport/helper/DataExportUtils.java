@@ -57,13 +57,13 @@ public class DataExportUtils {
 		
 		switch (coreTable) {
 	    	case M_LOAN_TRANSACTION:
-	    		searchArrayList.add("principal_portion_derived");
-	    		searchArrayList.add("interest_portion_derived");
-	    		searchArrayList.add("fee_charges_portion_derived");
-	    		searchArrayList.add("penalty_charges_portion_derived");
-	    		searchArrayList.add("overpayment_portion_derived");
-	    		searchArrayList.add("amount");
-	    		searchArrayList.add("transaction_date");
+	    		searchArrayList.add(DataExportEntityColumnName.PRINCIPAL_PORTION_DERIVED);
+	    		searchArrayList.add(DataExportEntityColumnName.INTEREST_PORTION_DERIVED);
+	    		searchArrayList.add(DataExportEntityColumnName.FEE_CHARGES_PORTION_DERIVED);
+	    		searchArrayList.add(DataExportEntityColumnName.PENALTY_CHARGES_PORTION_DERIVED);
+	    		searchArrayList.add(DataExportEntityColumnName.OVERPAYMENT_PORTION_DERIVED);
+	    		searchArrayList.add(DataExportEntityColumnName.AMOUNT);
+	    		searchArrayList.add(DataExportEntityColumnName.TRANSACTION_DATE);
 	    		
 	    		replacementArrayList.add("Principal Repaid");
 	    		replacementArrayList.add("Interest Repaid");
@@ -75,23 +75,25 @@ public class DataExportUtils {
 	    		break;
 	    		
 	    	case M_SAVINGS_ACCOUNT_TRANSACTION:
-	    		searchArrayList.add("transaction_date");
+	    		searchArrayList.add(DataExportEntityColumnName.TRANSACTION_DATE);
 	    		
 	    		replacementArrayList.add("effective date");
 	    		break;
 	    		
 	    	case M_LOAN_REPAYMENT_SCHEDULE:
-	    		searchArrayList.add("duedate");
-	    		searchArrayList.add("principal_amount");
-	    		searchArrayList.add("interest_amount");
-	    		searchArrayList.add("fee_charges_amount");
-	    		searchArrayList.add("penalty_charges_amount");
+	    		searchArrayList.add(DataExportEntityColumnName.DUEDATE);
+	    		searchArrayList.add(DataExportEntityColumnName.PRINCIPAL_AMOUNT);
+	    		searchArrayList.add(DataExportEntityColumnName.INTEREST_AMOUNT);
+	    		searchArrayList.add(DataExportEntityColumnName.FEE_CHARGES_AMOUNT);
+	    		searchArrayList.add(DataExportEntityColumnName.PENALTY_CHARGES_AMOUNT);
+	    		searchArrayList.add(DataExportEntityColumnName.OBLIGATION_MET_ON_DATE);
 	    		
 	    		replacementArrayList.add("due date");
 	    		replacementArrayList.add("principal expected");
 	    		replacementArrayList.add("interest expected");
 	    		replacementArrayList.add("fees expected");
 	    		replacementArrayList.add("penalties expected");
+	    		replacementArrayList.add("repayment date");
 	    		break;
 	    		
 	    	default:
@@ -100,8 +102,8 @@ public class DataExportUtils {
 		
 		// ==============================================================================
 		// List of partial or full field names that needs to be replace by another string
-		searchArrayList.add("transaction_date");
-		searchArrayList.add("activation_date");
+		searchArrayList.add(DataExportEntityColumnName.TRANSACTION_DATE);
+		searchArrayList.add(DataExportEntityColumnName.ACTIVATION_DATE);
 		searchArrayList.add("_on_userid");
 		searchArrayList.add("on_userid");
 		searchArrayList.add("_on_date");
@@ -246,7 +248,7 @@ public class DataExportUtils {
 	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
 	                    				DataExportEntityColumnName.LOAN_ID);
 	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
-	                    				DataExportEntityColumnName.FROM_DATE);
+	                    				DataExportEntityColumnName.FROMDATE);
 	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
 	                    				DataExportEntityColumnName.INSTALLMENT);
 	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
@@ -289,8 +291,6 @@ public class DataExportUtils {
 	                    				DataExportEntityColumnName.TOTAL_PAID_LATE_DERIVED);
 	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
 	                    				DataExportEntityColumnName.COMPLETED_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
-	                    				DataExportEntityColumnName.OBLIGATIONS_MET_ON_DATE);
 	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
 	                    				DataExportEntityColumnName.CREATED_BY_ID);
 	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(

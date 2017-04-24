@@ -54,7 +54,8 @@ public enum DataExportCoreColumn {
 	REPAYMENT_SCHEDULE_PRINCIPAL_EXPECTED("principal_amount", "principal expected", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE),
 	REPAYMENT_SCHEDULE_INTEREST_EXPECTED("interest_amount", "interest expected", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE),
 	REPAYMENT_SCHEDULE_FEES_EXPECTED("fee_charges_amount", "fees expected", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE),
-	REPAYMENT_SCHEDULE_PENALTIES_EXPECTED("penalty_charges_amount", "penalties expected", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE);
+	REPAYMENT_SCHEDULE_PENALTIES_EXPECTED("penalty_charges_amount", "penalties expected", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE),
+	REPAYMENT_SCHEDULE_AMOUNT_OUTSTANDING("repayment_schedule_amount_outstanding", "amount outstanding", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE);
 	
 	private String name;
 	private String label;
