@@ -277,11 +277,11 @@ public class LoanSuspendAccruedIncomeWritePlatformServiceImpl implements LoanSus
     @Override
     public void suspendedIncomeOutOfNPA(Loan loan, LoanTransaction newTransaction)
     {
-        if(!loan.isNpa() && newTransaction.isAnyTypeOfRepayment())
+        if(!loan.isNpa())
         {
             return;
         }
-        else
+        else if (newTransaction.isAnyTypeOfRepayment())
         {
             suspendedIncomeOutOfNPA(loan);
         }

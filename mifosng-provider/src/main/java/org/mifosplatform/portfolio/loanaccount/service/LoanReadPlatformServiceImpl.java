@@ -2192,7 +2192,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                 .append(" OR (IFNULL(ls.suspended_fee_charges_derived,0) <> (IFNULL(ls.`fee_charges_amount`,0) - IFNULL(ls.fee_charges_completed_derived,0) - IFNULL(ls.fee_charges_waived_derived,0) - IFNULL(ls.fee_charges_writtenoff_derived,0)))")
                 .append(" OR (IFNULL(ls.suspended_penalty_charges_derived,0) <> (IFNULL(ls.`penalty_charges_amount`,0) - IFNULL(ls.penalty_charges_completed_derived,0) - IFNULL(ls.penalty_charges_waived_derived,0) - IFNULL(ls.penalty_charges_writtenoff_derived,0)))) and ")
                 .append(" loan.is_npa=1) or (loan.is_npa = 0 and (IFNULL(ls.`suspended_fee_charges_derived`,0) > 0  or IFNULL(ls.`suspended_interest_derived`,0) > 0 or IFNULL(ls.`suspended_penalty_charges_derived`,0) > 0 )))")
-                .append(" and loan.loan_status_id=? and mpl.accounting_type=? and loan.id = ? and mpl.reverse_overduedays_npa_interest=1 and ls.duedate <= CURDATE() order by loan.id,ls.duedate");
+                .append(" and (loan.loan_status_id=? or loan.loan_status_id = 600 or loan.loan_status_id = 700) and mpl.accounting_type=? and loan.id = ? and mpl.reverse_overduedays_npa_interest=1 and ls.duedate <= CURDATE() order by loan.id,ls.duedate");
 
         return this.jdbcTemplate.query(sqlBuilder.toString(), mapper, new Object[] { LoanStatus.ACTIVE.getValue(),
                 AccountingRuleType.ACCRUAL_PERIODIC.getValue(), loanId });
