@@ -229,7 +229,7 @@ public class SavingsAccountChargeReadPlatformServiceImpl implements SavingsAccou
     @Override
     public Collection<SavingsAccountAnnualFeeData> retrieveChargesWithDue() {
         final String sql = "select " + this.chargeDueMapper.schema()
-                + " where sac.charge_due_date is not null and sac.charge_due_date <= NOW() and sac.waived = 0 and sac.is_paid_derived=0 and sac.is_active=1 and sa.status_enum = "
+                + " where sac.charge_due_date is not null and sac.charge_due_date <= NOW() and sac.charge_time_enum !=5 and sac.waived = 0 and sac.is_paid_derived=0 and sac.is_active=1 and sa.status_enum = "
                 + SavingsAccountStatusType.ACTIVE.getValue() + " order by sac.charge_due_date, sac.id";
 
         return this.jdbcTemplate.query(sql, this.chargeDueMapper, new Object[] {});
