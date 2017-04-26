@@ -3209,6 +3209,44 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    			break;
 	    		case LOAN_REPAYMENT_SCHEDULE:
 	    			switch (coreColumn) {
+	    				case REPAYMENT_SCHEDULE_AMOUNT_OUTSTANDING:
+	    					// =============================================================================
+	    					String outstandingInterest = "((ifnull(`" + baseEntityName + "`.`interest_amount`, 0)"
+	    							+ " - ifnull(`" + baseEntityName + "`.`interest_writtenoff_derived`, 0)"
+	    									+ " - ifnull(`" + baseEntityName + "`.`interest_waived_derived`, 0)" 
+	    											+ " - ifnull(`" + baseEntityName + "`.`interest_completed_derived`, 0))";
+	    					
+	    					String outstandingPrincipal = "(ifnull(`" + baseEntityName + "`.`principal_amount`, 0)"
+	    							+ " - ifnull(`" + baseEntityName + "`.`principal_completed_derived`, 0)"
+											+ " - ifnull(`" + baseEntityName + "`.`principal_writtenoff_derived`, 0))";
+	    					
+	    					String outstandingFees = "(ifnull(`" + baseEntityName + "`.`fee_charges_amount`, 0)"
+	    							+ " - ifnull(`" + baseEntityName + "`.`fee_charges_completed_derived`, 0)"
+	    									+ " - ifnull(`" + baseEntityName + "`.`fee_charges_writtenoff_derived`, 0)" 
+	    											+ " - ifnull(`" + baseEntityName + "`.`fee_charges_waived_derived`, 0))";
+	    					
+	    					String outstandingPenalties = "(ifnull(`" + baseEntityName + "`.`penalty_charges_amount`, 0)"
+	    							+ " - ifnull(`" + baseEntityName + "`.`penalty_charges_completed_derived`, 0)"
+	    									+ " - ifnull(`" + baseEntityName + "`.`penalty_charges_writtenoff_derived`, 0)" 
+	    											+ " - ifnull(`" + baseEntityName + "`.`penalty_charges_waived_derived`, 0)))";
+	    					
+	    					
+	    					if (isSelectStatement) {
+	    						sqlStatement = outstandingInterest + " + " + outstandingPrincipal + " + " + outstandingFees
+	    								 + " + " + outstandingPenalties + " as `" + coreColumn.getLabel() + "`";
+	    						
+	    						// add the select statement
+	        					sqlBuilder.SELECT(sqlStatement);
+	    					} else if (filterValue != null) {
+	    						sqlStatement = outstandingInterest + " + " + outstandingPrincipal + " + " + outstandingFees
+	    								 + " + " + outstandingPenalties + filterValue;
+	    						
+	    						// add a WHERE clause
+	    						sqlBuilder.WHERE(sqlStatement);
+	    					}
+	    					// =============================================================================
+	    					break;
+	    			
 	    				case REPAYMENT_SCHEDULE_TOTAL_EXPECTED:
 	    					// =============================================================================
 	    					if (isSelectStatement) {
