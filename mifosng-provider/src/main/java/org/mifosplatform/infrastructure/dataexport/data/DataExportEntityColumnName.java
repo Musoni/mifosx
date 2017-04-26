@@ -39,8 +39,8 @@ public class DataExportEntityColumnName {
 	public static final String LOAN_ID = "loan_id";
 	public static final String AMOUNT = "amount";
 	public static final String ID = "id";
-	public static final String FROMDATE = "fromdate";
-	public static final String DUEDATE = "duedate";
+	public static final String FROM_DATE = "fromdate";
+	public static final String DUE_DATE = "due_date";
 	public static final String INSTALLMENT = "installment";
 	public static final String PRINCIPAL_AMOUNT = "principal_amount";
 	public static final String PRINCIPAL_COMPLETED_DERIVED = "principal_completed_derived";
@@ -76,9 +76,6 @@ public class DataExportEntityColumnName {
 	public static final String FEE_CHARGES_PORTION_DERIVED = "fee_charges_portion_derived";
 	public static final String PENALTY_CHARGES_PORTION_DERIVED = "penalty_charges_portion_derived";
 	public static final String OVERPAYMENT_PORTION_DERIVED = "overpayment_portion_derived";
-	public static final String OBLIGATION_MET_ON_DATE = "obligations_met_on_date";
-	public static final String TRANSACTION_DATE = "transaction_date";
-	public static final String ACTIVATION_DATE = "activation_date";
 	
 	public static final Set<String> COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS = new HashSet<>(Arrays.asList(
 			TRANSFER_TO_OFFICE_ID, VERSION, IMAGE_ID, ACCOUNT_TYPE_ENUM, DEPOSIT_TYPE_ENUM, SUB_STATUS));
