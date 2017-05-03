@@ -42,6 +42,7 @@ import org.mifosplatform.organisation.monetary.domain.Money;
 import org.mifosplatform.organisation.staff.data.StaffData;
 import org.mifosplatform.organisation.staff.service.StaffReadPlatformService;
 import org.mifosplatform.portfolio.account.data.AccountTransferData;
+import org.mifosplatform.portfolio.account.domain.AccountAssociationType;
 import org.mifosplatform.portfolio.accountdetails.domain.AccountType;
 import org.mifosplatform.portfolio.accountdetails.service.AccountEnumerations;
 import org.mifosplatform.portfolio.calendar.data.CalendarData;
@@ -271,6 +272,18 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
         if (StringUtils.isNotBlank(searchParameters.getAccountNo())) {
             sqlBuilder.append(" and l.account_no = ?");
             extraCriterias.add(searchParameters.getAccountNo());
+            arrayPos = arrayPos + 1;
+        }
+
+        if (searchParameters.getOfficeId() !=null && searchParameters.getOfficeId() > 0) {
+            sqlBuilder.append(" and o.id = ?");
+            extraCriterias.add(searchParameters.getOfficeId());
+            arrayPos = arrayPos + 1;
+        }
+
+        if (searchParameters.getStaffId() !=null && searchParameters.getStaffId() > 0) {
+            sqlBuilder.append(" and s.id = ?");
+            extraCriterias.add(searchParameters.getStaffId());
             arrayPos = arrayPos + 1;
         }
 
@@ -1874,6 +1887,22 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
     }
 
     @Override
+    public Collection<Long> fetchOverpayedLoansForAllocation() {
+        StringBuilder sqlBuilder = new StringBuilder();
+        sqlBuilder.append("SELECT ml.id FROM m_loan ml ");
+        sqlBuilder.append(" INNER JOIN m_portfolio_account_associations aa on aa.loan_account_id = ml.id and aa.is_active = 1 ");
+        sqlBuilder.append(" LEFT JOIN m_product_loan lp on ml.product_id = lp.id and lp.can_auto_allocate_overpayments = 1 ");
+        sqlBuilder.append(" WHERE ml.loan_status_id = ? ");
+        sqlBuilder.append(" and aa.association_type_enum = ? ");
+        sqlBuilder.append(" group by ml.id");
+        try {
+            return this.jdbcTemplate.queryForList(sqlBuilder.toString(), Long.class, new Object[] { LoanStatus.OVERPAID.getValue(), AccountAssociationType.LINKED_ACCOUNT_ASSOCIATION.getValue() });
+        } catch (final EmptyResultDataAccessException e) {
+            return null;
+        }
+    }
+
+    @Override
     public Collection<LoanTransactionData> retrieveWaiverLoanTransactions(final Long loanId) {
         try {
 
@@ -2138,7 +2167,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                 .append(" OR (IFNULL(ls.suspended_fee_charges_derived,0) <> (IFNULL(ls.`fee_charges_amount`,0) - IFNULL(ls.fee_charges_completed_derived,0) - IFNULL(ls.fee_charges_waived_derived,0) - IFNULL(ls.fee_charges_writtenoff_derived,0)))")
                 .append(" OR (IFNULL(ls.suspended_penalty_charges_derived,0) <> (IFNULL(ls.`penalty_charges_amount`,0) - IFNULL(ls.penalty_charges_completed_derived,0) - IFNULL(ls.penalty_charges_waived_derived,0) - IFNULL(ls.penalty_charges_writtenoff_derived,0)))) and ")
                 .append(" loan.is_npa=1) or (loan.is_npa = 0 and (IFNULL(ls.`suspended_fee_charges_derived`,0) > 0  or IFNULL(ls.`suspended_interest_derived`,0) > 0 or IFNULL(ls.`suspended_penalty_charges_derived`,0) > 0 )))")
-                .append(" and loan.loan_status_id=? and mpl.accounting_type=? and mpl.reverse_overduedays_npa_interest=1 and ls.duedate <= CURDATE() order by loan.id,ls.duedate");
+                .append(" and (loan.loan_status_id=? or loan.loan_status_id = 600 or loan.loan_status_id = 700) and mpl.accounting_type=? and mpl.reverse_overduedays_npa_interest=1 and ls.duedate <= CURDATE() order by loan.id,ls.duedate");
         return this.jdbcTemplate.query(sqlBuilder.toString(), mapper, new Object[] { LoanStatus.ACTIVE.getValue(),
                 AccountingRuleType.ACCRUAL_PERIODIC.getValue() });
     }
@@ -2163,7 +2192,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                 .append(" OR (IFNULL(ls.suspended_fee_charges_derived,0) <> (IFNULL(ls.`fee_charges_amount`,0) - IFNULL(ls.fee_charges_completed_derived,0) - IFNULL(ls.fee_charges_waived_derived,0) - IFNULL(ls.fee_charges_writtenoff_derived,0)))")
                 .append(" OR (IFNULL(ls.suspended_penalty_charges_derived,0) <> (IFNULL(ls.`penalty_charges_amount`,0) - IFNULL(ls.penalty_charges_completed_derived,0) - IFNULL(ls.penalty_charges_waived_derived,0) - IFNULL(ls.penalty_charges_writtenoff_derived,0)))) and ")
                 .append(" loan.is_npa=1) or (loan.is_npa = 0 and (IFNULL(ls.`suspended_fee_charges_derived`,0) > 0  or IFNULL(ls.`suspended_interest_derived`,0) > 0 or IFNULL(ls.`suspended_penalty_charges_derived`,0) > 0 )))")
-                .append(" and loan.loan_status_id=? and mpl.accounting_type=? and loan.id = ? and mpl.reverse_overduedays_npa_interest=1 and ls.duedate <= CURDATE() order by loan.id,ls.duedate");
+                .append(" and (loan.loan_status_id=? or loan.loan_status_id = 600 or loan.loan_status_id = 700) and mpl.accounting_type=? and loan.id = ? and mpl.reverse_overduedays_npa_interest=1 and ls.duedate <= CURDATE() order by loan.id,ls.duedate");
 
         return this.jdbcTemplate.query(sqlBuilder.toString(), mapper, new Object[] { LoanStatus.ACTIVE.getValue(),
                 AccountingRuleType.ACCRUAL_PERIODIC.getValue(), loanId });

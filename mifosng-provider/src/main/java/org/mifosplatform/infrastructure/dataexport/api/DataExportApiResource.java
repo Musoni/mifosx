@@ -59,8 +59,9 @@ public class DataExportApiResource {
         this.platformSecurityContext.authenticatedUser().validateHasReadPermission(DataExportApiConstants.DATA_EXPORT_ENTITY_NAME);
 
         final Collection<DataExportData> dataExports = this.dataExportReadPlatformService.retrieveAll();
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
 
-        return this.toApiJsonSerializer.serialize(dataExports);
+        return this.toApiJsonSerializer.serialize(settings, dataExports);
     }
 
     @GET
@@ -72,8 +73,9 @@ public class DataExportApiResource {
         this.platformSecurityContext.authenticatedUser().validateHasReadPermission(DataExportApiConstants.DATA_EXPORT_ENTITY_NAME);
 
         final DataExportData dataExport = this.dataExportReadPlatformService.retrieveOne(resourceId);
+        final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
 
-        return this.toApiJsonSerializer.serialize(dataExport);
+        return this.toApiJsonSerializer.serialize(settings, dataExport);
     }
 
     @GET
@@ -89,6 +91,19 @@ public class DataExportApiResource {
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         
         return this.toApiJsonSerializer.serialize(settings, dataExportEntityData);
+    }
+    
+    @GET
+    @Path("baseentities")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String retrieveDataExportBaseEntities(@Context final UriInfo uriInfo) {
+    	this.platformSecurityContext.authenticatedUser().validateHasReadPermission(DataExportApiConstants.DATA_EXPORT_ENTITY_NAME);
+    	
+    	final Collection<DataExportEntityData> dataExportEntityDataList = this.dataExportReadPlatformService.retrieveAllBaseEntities();
+    	final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+    	
+    	return this.toApiJsonSerializer.serialize(settings, dataExportEntityDataList);
     }
 
     @POST

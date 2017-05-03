@@ -87,15 +87,16 @@ public class StandingInstructionApiResource {
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public String template(@QueryParam("fromOfficeId") final Long fromOfficeId, @QueryParam("fromClientId") final Long fromClientId,
-            @QueryParam("fromAccountId") final Long fromAccountId, @QueryParam("fromAccountType") final Integer fromAccountType,
-            @QueryParam("toOfficeId") final Long toOfficeId, @QueryParam("toClientId") final Long toClientId,
+            @QueryParam("fromGroupId") final Long fromGroupId, @QueryParam("fromAccountId") final Long fromAccountId,
+            @QueryParam("fromAccountType") final Integer fromAccountType, @QueryParam("toOfficeId") final Long toOfficeId,
+            @QueryParam("toClientId") final Long toClientId, @QueryParam("toGroupId") final Long toGroupId,
             @QueryParam("toAccountId") final Long toAccountId, @QueryParam("toAccountType") final Integer toAccountType,
             @QueryParam("transferType") final Integer transferType, @Context final UriInfo uriInfo) {
 
         this.context.authenticatedUser().validateHasReadPermission(StandingInstructionApiConstants.STANDING_INSTRUCTION_RESOURCE_NAME);
 
         final StandingInstructionData standingInstructionData = this.standingInstructionReadPlatformService.retrieveTemplate(fromOfficeId,
-                fromClientId, fromAccountId, fromAccountType, toOfficeId, toClientId, toAccountId, toAccountType, transferType);
+                fromClientId, fromGroupId, fromAccountId, fromAccountType, toOfficeId, toClientId, toGroupId, toAccountId, toAccountType, transferType);
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.toApiJsonSerializer.serialize(settings, standingInstructionData,
@@ -169,6 +170,7 @@ public class StandingInstructionApiResource {
             @QueryParam("limit") final Integer limit, @QueryParam("orderBy") final String orderBy,
             @QueryParam("sortOrder") final String sortOrder, @QueryParam("transferType") final Integer transferType,
             @QueryParam("clientName") final String clientName, @QueryParam("clientId") final Long clientId,
+            @QueryParam("groupName") final String groupName, @QueryParam("groupId") final Long groupId,
             @QueryParam("fromAccountId") final Long fromAccount, @QueryParam("fromAccountType") final Integer fromAccountType) {
 
         this.context.authenticatedUser().validateHasReadPermission(StandingInstructionApiConstants.STANDING_INSTRUCTION_RESOURCE_NAME);
@@ -179,7 +181,7 @@ public class StandingInstructionApiResource {
         final Date startDateRange = null;
         final Date endDateRange = null;
         StandingInstructionDTO standingInstructionDTO = new StandingInstructionDTO(searchParameters, transferType, clientName, clientId,
-                fromAccount, fromAccountType, startDateRange, endDateRange, null);
+                groupName, groupId, fromAccount, fromAccountType, startDateRange, endDateRange, null);
 
         final Page<StandingInstructionData> transfers = this.standingInstructionReadPlatformService.retrieveAll(standingInstructionDTO);
 
@@ -213,11 +215,12 @@ public class StandingInstructionApiResource {
             }
             if (associationParameters.contains("template")) {
                 final StandingInstructionData templateData = this.standingInstructionReadPlatformService.retrieveTemplate(
-                        standingInstructionData.fromClient().officeId(), standingInstructionData.fromClient().id(), standingInstructionData
-                                .fromAccount().accountId(), standingInstructionData.fromAccountType().getValue(), standingInstructionData
-                                .toClient().officeId(), standingInstructionData.toClient().id(), standingInstructionData.toAccount()
-                                .accountId(), standingInstructionData.toAccountType().getValue(), standingInstructionData.transferType()
-                                .getValue());
+                        standingInstructionData.fromClient().officeId(), standingInstructionData.fromClient().id(),
+                        standingInstructionData.fromGroup().getId(), standingInstructionData.fromAccount().accountId(),
+                        standingInstructionData.fromAccountType().getValue(), standingInstructionData.toClient().officeId(),
+                        standingInstructionData.toClient().id(), standingInstructionData.toGroup().getId(),
+                        standingInstructionData.toAccount().accountId(), standingInstructionData.toAccountType().getValue(),
+                        standingInstructionData.transferType().getValue());
                 standingInstructionData = StandingInstructionData.withTemplateData(standingInstructionData, templateData);
             }
         }

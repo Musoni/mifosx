@@ -55,6 +55,7 @@ public interface LoanProductConstants {
     public static final String VALUE_CONDITION_END_WITH_ERROR = "condition.type.must.end.with.greterthan";
     public static final String VALUE_CONDITION_START_WITH_ERROR = "condition.type.must.start.with.equal";
     public static final String shortName = "shortName";
+    public static final String loanProductGroupsCodeParamName = "loanProductGroups";
 
     public static final String multiDisburseLoanParameterName = "multiDisburseLoan";
     public static final String maxTrancheCountParameterName = "maxTrancheCount";
@@ -65,6 +66,7 @@ public interface LoanProductConstants {
     public static final String reverseOverdueDaysNPAInterestParameterName  = "reverseOverdueDaysNPAInterest";
     public static final String minimumDaysBetweenDisbursalAndFirstRepayment = "minimumDaysBetweenDisbursalAndFirstRepayment";
     public static final String accountMovesOutOfNPAOnlyOnArrearsCompletionParamName = "accountMovesOutOfNPAOnlyOnArrearsCompletion";
+    public static final String canAutoAllocateOverpaymentsParameterName = "canAutoAllocateOverpayments";
 
     // Interest recalculation related
     public static final String isInterestRecalculationEnabledParameterName = "isInterestRecalculationEnabled";
@@ -104,6 +106,7 @@ public interface LoanProductConstants {
     public static final String inArrearsToleranceParamName = "inArrearsTolerance";
     public static final String repaymentEveryParamName = "repaymentEvery";
     public static final String graceOnPrincipalAndInterestPaymentParamName = "graceOnPrincipalAndInterestPayment";
+    public static final String standingInstructionParamName = "standingInstruction";
     
     //Variable Installments Settings
     public static final String allowVariableInstallmentsParamName = "allowVariableInstallments" ;

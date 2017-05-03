@@ -5,6 +5,9 @@
  */
 package org.mifosplatform.infrastructure.dataexport.data;
 
+/**
+ * TODO - Add an id property that will uniquely identifier each core column 
+ */
 public enum DataExportCoreColumn {
 	BRANCH_NAME("branch_name", "branch name", "VARCHAR", true, "office_id", "name", "m_office", null),
 	LOAN_OFFICER_NAME("loan_officer_name", "loan officer name", "VARCHAR", true, "loan_officer_id", "display_name", "m_staff", null),
@@ -15,7 +18,48 @@ public enum DataExportCoreColumn {
 	DATE_OF_BIRTH("date_of_birth", "date of birth", "DATE", true, null, null, null, null),
 	GENDER("gender_cv_id", "gender", "VARCHAR", true, "gender_cv_id", "code_value", "m_code_value", null),
 	PHONE_NUMBER("mobile_no", "phone number", "VARCHAR", true, null, null, null, null),
-	STAFF_NAME("staff_name", "staff name", "VARCHAR", true, "staff_id", "display_name", "m_staff", null);
+	STAFF_NAME("staff_name", "staff name", "VARCHAR", true, "staff_id", "display_name", "m_staff", null),
+	LOAN_TRANSACTION_INTEREST_ACCRUED("loan_transaction_interest_accrued", "interest accrued", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_TRANSACTION),
+	LOAN_TRANSACTION_INTEREST_WAIVED("loan_transaction_interest_waived", "interest waived", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_TRANSACTION),
+	LOAN_TRANSACTION_TRANSFER_AMOUNT("loan_transaction_transfer_amount", "transfer amount", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_TRANSACTION),
+	LOAN_TRANSACTION_PRODUCT_SHORT_NAME("loan_transaction_product_short_name", "product short name", "VARCHAR", true, "product_id", "short_name", "m_product_loan", DataExportBaseEntity.LOAN_TRANSACTION),
+	LOAN_TRANSACTION_PRODUCT_NAME("loan_transaction_product_name", "product name", "VARCHAR", true, "product_id", "name", "m_product_loan", DataExportBaseEntity.LOAN_TRANSACTION),
+	LOAN_TRANSACTION_PRODUCT_ID("loan_transaction_product_id", "product id", "BIGINT", true, "product_id", "id", "m_product_loan", DataExportBaseEntity.LOAN_TRANSACTION),
+	LOAN_TRANSACTION_LOAN_ACCOUNT_NUMBER("loan_transaction_loan_account_number", "account number", "VARCHAR", true, "loan_id", "account_no", "m_loan", DataExportBaseEntity.LOAN_TRANSACTION),
+	LOAN_TRANSACTION_PAYMENT_CHANNEL("loan_transaction_payment_channel", "payment channel", "VARCHAR", true, "payment_type_id", "value", "m_payment_type", DataExportBaseEntity.LOAN_TRANSACTION),
+	LOAN_TRANSACTION_REFERENCE("loan_transaction_reference", "reference", "VARCHAR", true, "payment_detail_id", "receipt_number", "m_payment_detail", DataExportBaseEntity.LOAN_TRANSACTION),
+	LOAN_TRANSACTION_TOTAL_REPAID("loan_transaction_total_repaid", "total repaid", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_TRANSACTION),
+	LOAN_TRANSACTION_PRINCIPAL_REPAID("principal_portion_derived", "principal repaid", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_TRANSACTION),
+	LOAN_TRANSACTION_INTEREST_REPAID("interest_portion_derived", "interest repaid", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_TRANSACTION),
+	LOAN_TRANSACTION_FEES_REPAID("fee_charges_portion_derived", "fees repaid", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_TRANSACTION),
+	LOAN_TRANSACTION_PENALTIES_REPAID("penalty_charges_portion_derived", "penalties repaid", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_TRANSACTION),
+	LOAN_TRANSACTION_OVERPAYMENT_REPAID("overpayment_portion_derived", "overpayment repaid", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_TRANSACTION),
+	LOAN_TRANSACTION_TOTAL_RECOVERED(DataExportEntityColumnName.RECOVERED_PORTION_DERIVED, "total recovered", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_TRANSACTION),
+	SAVINGS_TRANSACTION_DEPOSIT("savings_transaction_deposit", "deposit", "DECIMAL", true, null, null, null, DataExportBaseEntity.SAVINGS_ACCOUNT_TRANSACTION),
+	SAVINGS_TRANSACTION_CHARGE_APPLIED("savings_transaction_charge_applied", "charges applied", "DECIMAL", true, null, null, null, DataExportBaseEntity.SAVINGS_ACCOUNT_TRANSACTION),
+	SAVINGS_TRANSACTION_CHARGE_WAIVED("savings_transaction_charge_waived", "charges waived", "DECIMAL", true, null, null, null, DataExportBaseEntity.SAVINGS_ACCOUNT_TRANSACTION),
+	SAVINGS_TRANSACTION_TRANSFER_AMOUNT("savings_transaction_transfer_amount", "transfer amount", "DECIMAL", true, null, null, null, DataExportBaseEntity.SAVINGS_ACCOUNT_TRANSACTION),
+	SAVINGS_TRANSACTION_PRODUCT_SHORT_NAME("savings_transaction_product_short_name", "product short name", "VARCHAR", true, "product_id", "short_name", "m_savings_product", DataExportBaseEntity.SAVINGS_ACCOUNT_TRANSACTION),
+	SAVINGS_TRANSACTION_PRODUCT_NAME("savings_transaction_product_name", "product name", "VARCHAR", true, "product_id", "name", "m_savings_product", DataExportBaseEntity.SAVINGS_ACCOUNT_TRANSACTION),
+	SAVINGS_TRANSACTION_PRODUCT_ID("savings_transaction_product_id", "product id", "BIGINT", true, "product_id", "id", "m_savings_product", DataExportBaseEntity.SAVINGS_ACCOUNT_TRANSACTION),
+	SAVINGS_TRANSACTION_ACCOUNT_NUMBER("savings_transaction_account_number", "account number", "VARCHAR", true, "savings_account_id", "account_no", "m_savings_account", DataExportBaseEntity.SAVINGS_ACCOUNT_TRANSACTION),
+	SAVINGS_TRANSACTION_PAYMENT_CHANNEL("savings_transaction_payment_channel", "payment channel", "VARCHAR", true, "payment_type_id", "value", "m_payment_type", DataExportBaseEntity.SAVINGS_ACCOUNT_TRANSACTION),
+	SAVINGS_TRANSACTION_REFERENCE("savings_transaction_reference", "reference", "VARCHAR", true, "payment_detail_id", "receipt_number", "m_payment_detail", DataExportBaseEntity.SAVINGS_ACCOUNT_TRANSACTION),
+	SAVINGS_TRANSACTION_WITHDRAWAL("savings_transaction_withdrawal", "withdrawal", "DECIMAL", true, null, null, null, DataExportBaseEntity.SAVINGS_ACCOUNT_TRANSACTION),
+	REPAYMENT_SCHEDULE_LOAN_ACCOUNT_NUMBER("repayment_schedule_loan_account_number", "account number", "VARCHAR", true, "loan_id", "account_no", "m_loan", DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE),
+	REPAYMENT_SCHEDULE_PRODUCT_SHORT_NAME("repayment_schedule_product_short_name", "product short name", "VARCHAR", true, "product_id", "short_name", "m_product_loan", DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE),
+	REPAYMENT_SCHEDULE_PRODUCT_NAME("repayment_schedule_product_name", "product name", "VARCHAR", true, "product_id", "name", "m_product_loan", DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE),
+	REPAYMENT_SCHEDULE_PRODUCT_ID("repayment_schedule_product_id", "product id", "BIGINT", true, "product_id", "id", "m_product_loan", DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE),
+	REPAYMENT_SCHEDULE_TOTAL_EXPECTED("repayment_schedule_total_expected", "total expected", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE),
+	REPAYMENT_SCHEDULE_PRINCIPAL_EXPECTED("principal_amount", "principal expected", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE),
+	REPAYMENT_SCHEDULE_INTEREST_EXPECTED("interest_amount", "interest expected", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE),
+	REPAYMENT_SCHEDULE_FEES_EXPECTED("fee_charges_amount", "fees expected", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE),
+	REPAYMENT_SCHEDULE_PENALTIES_EXPECTED("penalty_charges_amount", "penalties expected", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE),
+	REPAYMENT_SCHEDULE_PRINCIPAL_OUTSTANDING("repayment_schedule_principal_outstanding", "principal outstanding", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE),
+	REPAYMENT_SCHEDULE_INTEREST_OUTSTANDING("repayment_schedule_interest_outstanding", "interest outstanding", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE),
+	REPAYMENT_SCHEDULE_PENALTIES_OUTSTANDING("repayment_schedule_penalties_outstanding", "penalties outstanding", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE),
+	REPAYMENT_SCHEDULE_FEES_OUTSTANDING("repayment_schedule_fees_outstanding", "fees outstanding", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE),
+	REPAYMENT_SCHEDULE_TOTAL_OUTSTANDING("repayment_schedule_total_outstanding", "total outstanding", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE);
 	
 	private String name;
 	private String label;

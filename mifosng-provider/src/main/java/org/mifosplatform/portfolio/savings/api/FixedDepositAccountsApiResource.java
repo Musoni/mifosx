@@ -269,7 +269,11 @@ public class FixedDepositAccountsApiResource {
         } else if (is(commandParam, "activate")) {
             final CommandWrapper commandRequest = builder.fixedDepositAccountActivation(accountId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
-        } else if (is(commandParam, "calculateInterest")) {
+        } else if (is(commandParam, "undoactivate")) {
+        final CommandWrapper commandRequest = builder.fixedDepositAccountUndoActivation(accountId).build();
+         result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+
+        }else if (is(commandParam, "calculateInterest")) {
             final CommandWrapper commandRequest = builder.withNoJsonBody().fixedDepositAccountInterestCalculation(accountId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         } else if (is(commandParam, "postInterest")) {

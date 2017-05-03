@@ -6,11 +6,7 @@
 package org.mifosplatform.batch.exception;
 
 import org.mifosplatform.commands.exception.UnsupportedCommandException;
-import org.mifosplatform.infrastructure.core.exception.AbstractPlatformResourceNotFoundException;
-import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidationException;
-import org.mifosplatform.infrastructure.core.exception.PlatformDataIntegrityException;
-import org.mifosplatform.infrastructure.core.exception.PlatformInternalServerException;
-import org.mifosplatform.infrastructure.core.exception.UnsupportedParameterException;
+import org.mifosplatform.infrastructure.core.exception.*;
 import org.mifosplatform.infrastructure.core.exceptionmapper.*;
 import org.mifosplatform.portfolio.loanaccount.exception.MultiDisbursementDataRequiredException;
 import org.mifosplatform.portfolio.loanproduct.exception.LinkedAccountRequiredException;
@@ -51,7 +47,12 @@ public class ErrorHandler extends RuntimeException {
      */
     public static ErrorInfo handler(final RuntimeException exception) {
 
-        if (exception instanceof AbstractPlatformResourceNotFoundException) {
+        if(exception instanceof AbstractPlatformDomainRuleException) {
+            PlatformDomainRuleExceptionMapper mapper = new PlatformDomainRuleExceptionMapper() ;
+            final String errorBody = jsonHelper
+                    .toJson(mapper.toResponse((AbstractPlatformDomainRuleException) exception).getEntity());
+            return new ErrorInfo(500, 9999, errorBody);
+        }else if (exception instanceof AbstractPlatformResourceNotFoundException) {
 
             final PlatformResourceNotFoundExceptionMapper mapper = new PlatformResourceNotFoundExceptionMapper();
             final String errorBody = jsonHelper

@@ -45,4 +45,11 @@ public interface DataExportReadPlatformService {
      * @return
      */
     Response downloadDataExportFile(final Long id, final String fileFormat);
+    
+    /**
+     * Retrieves all base entities
+     * 
+     * @return {@link DataExportEntityData} objects
+     */
+    Collection<DataExportEntityData> retrieveAllBaseEntities();
 }

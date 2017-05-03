@@ -8,41 +8,130 @@ package org.mifosplatform.infrastructure.dataexport.helper;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.mifosplatform.infrastructure.codes.data.CodeValueData;
+import org.mifosplatform.infrastructure.dataexport.data.DataExportCoreTable;
 import org.mifosplatform.infrastructure.dataexport.data.DataExportEntityColumnName;
 import org.mifosplatform.infrastructure.dataexport.data.EntityColumnMetaData;
+import org.mifosplatform.infrastructure.dataexport.data.MysqlDataType;
+import org.mifosplatform.useradministration.data.AppUserData;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 
 public class DataExportUtils {
 	/**
+	 * Search and replace string using the searchList string array and replacementList string array
+	 * 
+	 * @param string
+	 * @param searchList
+	 * @param replacementList
+	 * @return replacement string for the specified string
+	 */
+	public static String searchAndReplaceString(final String string, 
+			final String[] searchList, final String[] replacementList) {
+		// replace all occurrences of the strings the "searchList" array with 
+        // their corresponding string in the "replacementList" array
+        final String replacementString = StringUtils.replaceEach(string, searchList, replacementList);
+        
+        // finally, trim the string
+        return StringUtils.trim(replacementString);
+	}
+	
+	/**
 	 * Creates a human readable label for the specified column name
 	 * 
 	 * @param columnName
+	 * @param coreTable
 	 * @return string
 	 */
-	public static String createHumanReadableTableColumnLabel(final String columnName) {
-        final String[] searchList = {
-        	"activation_date", "_on_userid", "on_userid", "_on_date", "on_date", "_cv_id", "_enum", "_"
-        };
+	public static String createHumanReadableTableColumnLabel(final String columnName, 
+			final DataExportCoreTable coreTable) {
+		List<String> searchArrayList = new ArrayList<>();
+		List<String> replacementArrayList = new ArrayList<>();
+		
+		switch (coreTable) {
+	    	case M_LOAN_TRANSACTION:
+	    		searchArrayList.add(DataExportEntityColumnName.PRINCIPAL_PORTION_DERIVED);
+	    		searchArrayList.add(DataExportEntityColumnName.INTEREST_PORTION_DERIVED);
+	    		searchArrayList.add(DataExportEntityColumnName.FEE_CHARGES_PORTION_DERIVED);
+	    		searchArrayList.add(DataExportEntityColumnName.PENALTY_CHARGES_PORTION_DERIVED);
+	    		searchArrayList.add(DataExportEntityColumnName.OVERPAYMENT_PORTION_DERIVED);
+	    		searchArrayList.add(DataExportEntityColumnName.AMOUNT);
+	    		searchArrayList.add(DataExportEntityColumnName.TRANSACTION_DATE);
+	    		
+	    		replacementArrayList.add("Principal Repaid");
+	    		replacementArrayList.add("Interest Repaid");
+	    		replacementArrayList.add("Fees Repaid");
+	    		replacementArrayList.add("Penalties Repaid");
+	    		replacementArrayList.add("Overpayments Repaid");
+	    		replacementArrayList.add("Total Repaid");
+	    		replacementArrayList.add("effective date");
+	    		break;
+	    		
+	    	case M_SAVINGS_ACCOUNT_TRANSACTION:
+	    		searchArrayList.add(DataExportEntityColumnName.TRANSACTION_DATE);
+	    		
+	    		replacementArrayList.add("effective date");
+	    		break;
+	    		
+	    	case M_LOAN_REPAYMENT_SCHEDULE:
+	    		searchArrayList.add(DataExportEntityColumnName.DUEDATE);
+	    		searchArrayList.add(DataExportEntityColumnName.PRINCIPAL_AMOUNT);
+	    		searchArrayList.add(DataExportEntityColumnName.INTEREST_AMOUNT);
+	    		searchArrayList.add(DataExportEntityColumnName.FEE_CHARGES_AMOUNT);
+	    		searchArrayList.add(DataExportEntityColumnName.PENALTY_CHARGES_AMOUNT);
+	    		searchArrayList.add(DataExportEntityColumnName.OBLIGATION_MET_ON_DATE);
+	    		
+	    		replacementArrayList.add("due date");
+	    		replacementArrayList.add("principal expected");
+	    		replacementArrayList.add("interest expected");
+	    		replacementArrayList.add("fees expected");
+	    		replacementArrayList.add("penalties expected");
+	    		replacementArrayList.add("repayment date");
+	    		break;
+	    		
+	    	default:
+	    		break;
+	    }
+		
+		// ==============================================================================
+		// List of partial or full field names that needs to be replace by another string
+		searchArrayList.add(DataExportEntityColumnName.TRANSACTION_DATE);
+		searchArrayList.add(DataExportEntityColumnName.ACTIVATION_DATE);
+		searchArrayList.add("_on_userid");
+		searchArrayList.add("on_userid");
+		searchArrayList.add("_on_date");
+		searchArrayList.add("on_date");
+		searchArrayList.add("_cv_id");
+		searchArrayList.add("_enum");
+		searchArrayList.add("_");
+		searchArrayList.add("is_reversed");
+		// ===============================================================================
+		
+		// ===============================================================================
+		// List of replacement strings for the strings in the "searchList" array list
+		replacementArrayList.add("transaction date");
+		replacementArrayList.add("activation date");
+		replacementArrayList.add(" by user");
+		replacementArrayList.add(" by user");
+		replacementArrayList.add(" on date");
+		replacementArrayList.add(" on date");
+		replacementArrayList.add("");
+		replacementArrayList.add("");
+		replacementArrayList.add(" ");
+		replacementArrayList.add("reversed");
+		// ===============================================================================
+		
+		String[] searchList = searchArrayList.toArray(new String[searchArrayList.size()]);
+		String[] replacementList = replacementArrayList.toArray(new String[replacementArrayList.size()]);
         
-        final String[] replacementList = {
-        	"activation date", " by user id", " by user id", " on date", " on date", "", "", " "
-        };
-        
-        // replace all occurrences of the strings the "searchList" array with 
-        // their corresponding string in the "replacementList" array
-        String columnLabel = StringUtils.replaceEach(columnName, searchList, replacementList);
-        
-        // remove the "id" string from the end of the label
-        // columnLabel = StringUtils.removeEndIgnoreCase(columnLabel, " id");
-        
-        // finally, trim the string
-        return StringUtils.trim(columnLabel);
+        return searchAndReplaceString(columnName, searchList, replacementList);
 	}
 	
 	/**
@@ -56,6 +145,7 @@ public class DataExportUtils {
 			final JdbcTemplate jdbcTemplate) {
 		final List<EntityColumnMetaData> entityColumnsMetaData = new ArrayList<>();
         final List<String> columnNames = new ArrayList<>();
+        final DataExportCoreTable coreTable = DataExportCoreTable.newInstance(tableName);
         
         try {
             // see - http://dev.mysql.com/doc/refman/5.7/en/limit-optimization.html
@@ -79,12 +169,149 @@ public class DataExportUtils {
                     String columnType = resultSetMetaData.getColumnTypeName(i);
                     Integer columnIsNullable = resultSetMetaData.isNullable(i);
                     boolean isNullable = (columnIsNullable != 0);
-                    String columnLabel = createHumanReadableTableColumnLabel(columnName);
+                    
+                    if (coreTable != null) {
+                    	switch (coreTable) {
+	                    	case M_LOAN_TRANSACTION:
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.UNRECOGNIZED_INCOME_PORTION);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.SUSPENDED_INTEREST_PORTION_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.SUSPENDED_FEE_CHARGES_PORTION_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.SUSPENDED_PENALTY_CHARGES_PORTION_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.OUTSTANDING_LOAN_BALANCE_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.RECOVERED_PORTION_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.PAYMENT_DETAIL_ID);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.OFFICE_ID);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.IS_ACCCOUNT_TRANSFER);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.APPUSER_ID);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.EXTERNAL_ID);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.CREATED_DATE);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.TRANSACTION_TYPE_ENUM);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.LOAN_ID);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.AMOUNT);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.ID);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.PRINCIPAL_PORTION_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.INTEREST_PORTION_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.FEE_CHARGES_PORTION_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.PENALTY_CHARGES_PORTION_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.OVERPAYMENT_PORTION_DERIVED);
+	                    		break;
+	                    		
+	                    	case M_SAVINGS_ACCOUNT_TRANSACTION:
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.OVERDRAFT_AMOUNT_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.RUNNING_BALANCE_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.CUMULATIVE_BALANCE_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.BALANCE_NUMBER_OF_DAYS_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.BALANCE_END_DATE_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.CREATED_DATE);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.TRANSACTION_TYPE_ENUM);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.APPUSER_ID);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.SAVINGS_ACCOUNT_ID);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.AMOUNT);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.ID);
+	            	    		break;
+	            	    		
+	                    	case M_LOAN_REPAYMENT_SCHEDULE:
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.ID);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.LOAN_ID);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.FROMDATE);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.INSTALLMENT);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.PRINCIPAL_COMPLETED_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.PRINCIPAL_WRITTENOFF_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.INTEREST_COMPLETED_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.INTEREST_WAIVED_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.INTEREST_WRITTENOFF_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.ACCRUAL_INTEREST_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.SUSPENDED_INTEREST_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.FEE_CHARGES_WRITTENOFF_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.FEE_CHARGES_COMPLETED_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.FEE_CHARGES_WAIVED_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.ACCRUAL_FEE_CHARGES_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.SUSPENDED_FEE_CHARGES_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.PENALTY_CHARGES_COMPLETED_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.PENALTY_CHARGES_WAIVED_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.PENALTY_CHARGES_WRITTEN_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.ACCRUAL_PENALTY_CHARGES_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.SUSPENDED_PENALTY_CHARGES_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.TOTAL_PAID_IN_ADVANCE_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.TOTAL_PAID_LATE_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.COMPLETED_DERIVED);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.CREATED_BY_ID);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.CREATED_DATE);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.LAST_MODIFIED_BY_ID);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.LAST_MODIFIED_DATE);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.RECALCULATED_INTEREST_COMPONENT);
+	                    		break;
+	                    		
+	                    	default:
+	                    		break;
+	                    }
+                    }
                     
                     if (!DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.
                     		contains(columnName)) {
                     	EntityColumnMetaData entityColumnMetaData = EntityColumnMetaData.newInstance(columnName, 
-                                columnLabel, columnType, isNullable);
+                    			columnName, columnType, isNullable);
                         
                         entityColumnsMetaData.add(entityColumnMetaData);
                         columnNames.add(columnName);
@@ -98,5 +325,99 @@ public class DataExportUtils {
         }
         
         return entityColumnsMetaData;
+	}
+	
+	/**
+	 * Searches for the CodeValueData object mapped to key similar to specified column value
+	 * 
+	 * @param codeValueMap
+	 * @param columnName
+	 * @param columnValue
+	 * @param mysqlDataType
+	 * @return AbstractMap.SimpleEntry object
+	 */
+	public static AbstractMap.SimpleEntry<String, MysqlDataType> replaceCodeValueIdWithValue(final HashMap<Long, CodeValueData> codeValueMap, 
+			final String columnName, String columnValue, MysqlDataType mysqlDataType) {
+		if (columnName != null && StringUtils.isNotBlank(columnValue)) {
+			if (StringUtils.endsWith(columnName, "_cv_id") || StringUtils.contains(columnName, "_cd_")) {
+				Long codeValueId = null;
+				
+				try {
+					codeValueId = Long.valueOf(columnValue);
+					
+				} catch (Exception e) { }
+				
+				CodeValueData codeValueData = codeValueMap.get(codeValueId);
+				
+				if (codeValueData != null) {
+					columnValue = codeValueData.getName();
+					
+					// change the data type from integer to string
+					mysqlDataType = MysqlDataType.VARCHAR;
+				}
+			} else if (StringUtils.contains(columnName, "_cb_")) {
+				final String[] csvToArray = StringUtils.split(columnValue, ",");
+				
+				if (csvToArray != null) {
+					final String[] cleanCsvToArray = new String[csvToArray.length];
+							
+					for (int i=0; i<csvToArray.length; i++) {
+						Long codeValueId = null;
+						
+						try {
+							codeValueId = Long.valueOf(csvToArray[i]);
+							
+						} catch (Exception e) { }
+						
+						CodeValueData codeValueData = codeValueMap.get(codeValueId);
+						
+						cleanCsvToArray[i] = null;
+						
+						if (codeValueData != null) {
+							cleanCsvToArray[i] = codeValueData.getName();
+						}
+					}
+					
+					columnValue = StringUtils.join(cleanCsvToArray, ", ");
+				}
+			}
+		}
+		
+		return new AbstractMap.SimpleEntry<String, MysqlDataType>(columnValue, mysqlDataType);
+	}
+	
+	/**
+	 * Searches for the AppUserData object mapped to key similar to the specified column value
+	 * 
+	 * @param appUserMap
+	 * @param columnName
+	 * @param columnValue
+	 * @param mysqlDataType
+	 * @return AbstractMap.SimpleEntry object
+	 */
+	public static AbstractMap.SimpleEntry<String, MysqlDataType> replaceAppUserIdWithUserName(
+			final HashMap<Long, AppUserData> appUserMap, 
+			final String columnName, String columnValue, MysqlDataType mysqlDataType) {
+		if (columnName != null) {
+			if (columnName.contains("userid") || columnName.contains("_by")) {
+				Long userId = null;
+				
+				try {
+					userId = Long.valueOf(columnValue);
+					
+				} catch (Exception e) { }
+				
+				AppUserData appUserData = appUserMap.get(userId);
+				
+				if (appUserData != null) {
+					columnValue = appUserData.getUsername();
+					
+					// change the data type from integer to string
+					mysqlDataType = MysqlDataType.VARCHAR;
+				}
+			}
+		}
+		
+		return new AbstractMap.SimpleEntry<String, MysqlDataType>(columnValue, mysqlDataType);
 	}
 }

@@ -117,6 +117,7 @@ public class AccountingScenarioIntegrationTest {
         final Account expenseAccount = this.accountHelper.createExpenseAccount();
         final Account overpaymentAccount = this.accountHelper.createLiabilityAccount();
         final Account suspendedIncomeAccount = this.accountHelper.createLiabilityAccount();
+        final Account interestWriteOff  = this.accountHelper.createExpenseAccountInterestWriteOff();
 
         final Integer loanProductID = createLoanProductWithUpfrontAccrualAccountingEnabled(assetAccount, incomeAccount, expenseAccount,
                 overpaymentAccount, suspendedIncomeAccount);
@@ -549,6 +550,7 @@ public class AccountingScenarioIntegrationTest {
         final Account overpaymentAccount = this.accountHelper.createLiabilityAccount();
         final Account suspendedIncomeAccount = this.accountHelper.createLiabilityAccount();
 
+
         final Integer loanProductID = createLoanProductWithPeriodicAccrualAccountingEnabled(assetAccount, incomeAccount, expenseAccount,
                 overpaymentAccount, suspendedIncomeAccount);
 
@@ -571,6 +573,7 @@ public class AccountingScenarioIntegrationTest {
         final float TOTAL_INTEREST = 1000.0f;
         final JournalEntry[] assetAccountInitialEntry = { new JournalEntry(this.LP_PRINCIPAL, JournalEntry.TransactionType.CREDIT),
                 new JournalEntry(this.LP_PRINCIPAL, JournalEntry.TransactionType.DEBIT), };
+
         this.journalEntryHelper.checkJournalEntryForAssetAccount(assetAccount, this.EXPECTED_DISBURSAL_DATE, assetAccountInitialEntry);
 
         final String jobName = "Add Accrual Transactions";
@@ -935,7 +938,7 @@ public class AccountingScenarioIntegrationTest {
     }
 
     private Integer createLoanProductWithPeriodicAccrualAccountingEnabled(final Account... accounts) {
-        System.out.println("------------------------------CREATING NEW LOAN PRODUCT ---------------------------------------");
+        System.out.println("------------------------------CREATING NEW LOAN PRODUCT---------------------------------------");
         final String loanProductJSON = new LoanProductTestBuilder().withPrincipal(this.LP_PRINCIPAL.toString()).withRepaymentTypeAsMonth()
                 .withRepaymentAfterEvery(this.LP_REPAYMENT_PERIOD).withNumberOfRepayments(this.LP_REPAYMENTS).withRepaymentTypeAsMonth()
                 .withinterestRatePerPeriod(this.LP_INTEREST_RATE).withInterestRateFrequencyTypeAsMonths()

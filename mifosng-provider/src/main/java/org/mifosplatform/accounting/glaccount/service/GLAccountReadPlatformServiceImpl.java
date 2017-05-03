@@ -60,22 +60,12 @@ public class GLAccountReadPlatformServiceImpl implements GLAccountReadPlatformSe
                     .append(nameDecoratedBaseOnHierarchy).append(" as nameDecorated, ")
                     .append("cv.id as codeId, cv.code_value as codeValue, cv.is_active as codeValueIsActive ");
             if (this.associationParametersData.isRunningBalanceRequired()) {
-                sb.append(",gl_j.organization_running_balance as organizationRunningBalance ");
+                sb.append(",gl.organization_running_balance_derived as organizationRunningBalance ");
             }
             if (this.associationParametersData.isUnReconciledBalanceRequired()) {
-                sb.append(", ( select SUM(IF(type_enum = 1, IF \t(gl.account_usage IN (1,5), amount *-1, amount), IF(gl.account_usage IN (1,5), amount, amount * -1))) from acc_gl_journal_entry gl_j where  gl_j.is_reconciled=0 and gl_j.reversed=0 and gl_j.account_id = gl.id ) as unReconciledBalance ");
+                sb.append(", IF(gl.reconciliation_enabled = 1, ( select SUM(IF(type_enum = 1, IF \t(gl.account_usage IN (1,5), amount *-1, amount), IF(gl.account_usage IN (1,5), amount, amount * -1))) from acc_gl_journal_entry gl_j where  gl_j.is_reconciled=0 and gl_j.reversed=0 and gl_j.account_id = gl.id ),0) as unReconciledBalance ");
             }
             sb.append("from acc_gl_account gl left join m_code_value cv on tag_id=cv.id ");
-
-//            if (this.associationParametersData.isUnReconciledBalanceRequired()) {
-//                sb.append(" left Join (" +
-//                        " select gl_j.account_id, sum( CASE WHEN type_enum=1 Then amount ELSE 0 END ) - sum( CASE WHEN type_enum=2 Then amount ELSE 0 END ) as unReconciledBalance from acc_gl_journal_entry gl_j where  gl_j.is_reconciled=0 and gl_j.reversed=0 group by gl_j.account_id " +
-//                        ") as un on un.account_id = gl.id ");
-//            }
-
-            if (this.associationParametersData.isRunningBalanceRequired()) {
-                sb.append("left outer Join acc_gl_journal_entry gl_j on gl_j.account_id = gl.id");
-            }
 
 
 
@@ -130,12 +120,6 @@ public class GLAccountReadPlatformServiceImpl implements GLAccountReadPlatformSe
         final GLAccountMapper rm = new GLAccountMapper(associationParametersData);
         String sql = "select " + rm.schema();
         // append SQL statement for fetching account totals
-        if (associationParametersData.isRunningBalanceRequired()) {
-            sql = sql + " and gl_j.id in (select t1.id from (select t2.account_id, max(t2.id) as id from "
-                    + "(select id, max(entry_date) as entry_date, account_id from acc_gl_journal_entry where is_running_balance_calculated = 1 "
-                    + "group by account_id desc) t3 inner join acc_gl_journal_entry t2 on t2.account_id = t3.account_id and t2.entry_date = t3.entry_date "
-                    + "group by t2.account_id desc) t1)";
-        }
 
 
         final Object[] paramaterArray = new Object[3];
@@ -226,13 +210,9 @@ public class GLAccountReadPlatformServiceImpl implements GLAccountReadPlatformSe
             final GLAccountMapper rm = new GLAccountMapper(associationParametersData);
             final StringBuilder sql = new StringBuilder();
             sql.append("select ").append(rm.schema());
-            if (associationParametersData.isRunningBalanceRequired()) {
-                sql.append(" and gl_j.is_running_balance_calculated = 1 ");
-            }
+
             sql.append("where gl.id = ?");
-            if (associationParametersData.isRunningBalanceRequired()) {
-                sql.append("  ORDER BY gl_j.entry_date DESC,gl_j.id DESC LIMIT 1");
-            }
+
             final GLAccountData glAccountData = this.jdbcTemplate.queryForObject(sql.toString(), rm, new Object[] { glAccountId });
 
             return glAccountData;

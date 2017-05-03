@@ -20,6 +20,7 @@ import org.mifosplatform.portfolio.account.domain.AccountTransferType;
 import org.mifosplatform.portfolio.account.domain.StandingInstructionType;
 import org.mifosplatform.portfolio.client.data.ClientData;
 import org.mifosplatform.portfolio.common.domain.PeriodFrequencyType;
+import org.mifosplatform.portfolio.group.data.GroupGeneralData;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTransactionType;
 
 /**
@@ -33,10 +34,12 @@ public class StandingInstructionData {
     private final String name;
     private final OfficeData fromOffice;
     private final ClientData fromClient;
+    private final GroupGeneralData fromGroup;
     private final EnumOptionData fromAccountType;
     private final PortfolioAccountData fromAccount;
     private final OfficeData toOffice;
     private final ClientData toClient;
+    private final GroupGeneralData toGroup;
     private final EnumOptionData toAccountType;
     private final PortfolioAccountData toAccount;
     private final EnumOptionData transferType;
@@ -54,10 +57,12 @@ public class StandingInstructionData {
 
     private final Collection<OfficeData> fromOfficeOptions;
     private final Collection<ClientData> fromClientOptions;
+    private final Collection<GroupGeneralData> fromGroupOptions;
     private final Collection<EnumOptionData> fromAccountTypeOptions;
     private final Collection<PortfolioAccountData> fromAccountOptions;
     private final Collection<OfficeData> toOfficeOptions;
     private final Collection<ClientData> toClientOptions;
+    private final Collection<GroupGeneralData> toGroupOptions;
     private final Collection<EnumOptionData> toAccountTypeOptions;
     private final Collection<PortfolioAccountData> toAccountOptions;
     private final Collection<EnumOptionData> transferTypeOptions;
@@ -69,9 +74,10 @@ public class StandingInstructionData {
     private final Integer maximumIterations;
 
     public static StandingInstructionData template(final Collection<OfficeData> fromOfficeOptions,
-            final Collection<ClientData> fromClientOptions, final Collection<EnumOptionData> fromAccountTypeOptions,
-            final Collection<PortfolioAccountData> fromAccountOptions, final Collection<OfficeData> toOfficeOptions,
-            final Collection<ClientData> toClientOptions, final Collection<EnumOptionData> toAccountTypeOptions,
+            final Collection<ClientData> fromClientOptions, final Collection<GroupGeneralData> fromGroupOptions,
+            final Collection<EnumOptionData> fromAccountTypeOptions, final Collection<PortfolioAccountData> fromAccountOptions,
+            final Collection<OfficeData> toOfficeOptions, final Collection<ClientData> toClientOptions,
+            final Collection<GroupGeneralData> toGroupOptions, final Collection<EnumOptionData> toAccountTypeOptions,
             final Collection<PortfolioAccountData> toAccountOptions, final Collection<EnumOptionData> transferTypeOptions,
             final Collection<EnumOptionData> statusOptions, final Collection<EnumOptionData> instructionTypeOptions,
             final Collection<EnumOptionData> priorityOptions, final Collection<EnumOptionData> recurrenceTypeOptions,
@@ -83,7 +89,9 @@ public class StandingInstructionData {
         final OfficeData fromOffice = null;
         final OfficeData toOffice = null;
         final ClientData fromClient = null;
+        final GroupGeneralData fromGroup = null;
         final ClientData toClient = null;
+        final GroupGeneralData toGroup = null;
         final EnumOptionData fromAccountType = null;
         final PortfolioAccountData fromAccount = null;
         final EnumOptionData toAccountType = null;
@@ -107,23 +115,26 @@ public class StandingInstructionData {
                 recurrenceType, recurrenceFrequency, recurrenceInterval, recurrenceOnMonthDay, transactions, fromOfficeOptions,
                 fromClientOptions, fromAccountTypeOptions, fromAccountOptions, toOfficeOptions, toClientOptions, toAccountTypeOptions,
                 toAccountOptions, transferTypeOptions, statusOptions, instructionTypeOptions, priorityOptions, recurrenceTypeOptions,
-                recurrenceFrequencyOptions, maximumIterations);
+                recurrenceFrequencyOptions, maximumIterations, fromGroup, toGroup, fromGroupOptions, toGroupOptions);
     }
 
     public static StandingInstructionData instance(final Long id, final Long accountDetailId, final String name,
             final OfficeData fromOffice, final OfficeData toOffice, final ClientData fromClient, final ClientData toClient,
-            final EnumOptionData fromAccountType, final PortfolioAccountData fromAccount, final EnumOptionData toAccountType,
-            final PortfolioAccountData toAccount, final EnumOptionData transferType, final EnumOptionData priority,
-            final EnumOptionData instructionType, final EnumOptionData status, final BigDecimal amount, final LocalDate validFrom,
-            final LocalDate validTill, final EnumOptionData recurrenceType, final EnumOptionData recurrenceFrequency,
-            final Integer recurrenceInterval, final MonthDay recurrenceOnMonthDay, final Integer maximumIterations) {
+            final GroupGeneralData fromGroup, final GroupGeneralData toGroup, final EnumOptionData fromAccountType,
+            final PortfolioAccountData fromAccount, final EnumOptionData toAccountType, final PortfolioAccountData toAccount,
+            final EnumOptionData transferType, final EnumOptionData priority, final EnumOptionData instructionType,
+            final EnumOptionData status, final BigDecimal amount, final LocalDate validFrom, final LocalDate validTill,
+            final EnumOptionData recurrenceType, final EnumOptionData recurrenceFrequency, final Integer recurrenceInterval,
+            final MonthDay recurrenceOnMonthDay, final Integer maximumIterations) {
         final Page<AccountTransferData> transactions = null;
         final Collection<OfficeData> fromOfficeOptions = null;
         final Collection<ClientData> fromClientOptions = null;
+        final Collection<GroupGeneralData> fromGroupOptions = null;
         final Collection<EnumOptionData> fromAccountTypeOptions = null;
         final Collection<PortfolioAccountData> fromAccountOptions = null;
         final Collection<OfficeData> toOfficeOptions = null;
         final Collection<ClientData> toClientOptions = null;
+        final Collection<GroupGeneralData> toGroupOptions = null;
         final Collection<EnumOptionData> toAccountTypeOptions = null;
         final Collection<PortfolioAccountData> toAccountOptions = null;
         final Collection<EnumOptionData> transferTypeOptions = null;
@@ -138,7 +149,7 @@ public class StandingInstructionData {
                 recurrenceType, recurrenceFrequency, recurrenceInterval, recurrenceOnMonthDay, transactions, fromOfficeOptions,
                 fromClientOptions, fromAccountTypeOptions, fromAccountOptions, toOfficeOptions, toClientOptions, toAccountTypeOptions,
                 toAccountOptions, transferTypeOptions, statusOptions, instructionTypeOptions, priorityOptions, recurrenceTypeOptions,
-                recurrenceFrequencyOptions, maximumIterations);
+                recurrenceFrequencyOptions, maximumIterations, fromGroup, toGroup, fromGroupOptions, toGroupOptions);
     }
 
     public static StandingInstructionData withTemplateData(StandingInstructionData instructionData, StandingInstructionData templateData) {
@@ -153,7 +164,8 @@ public class StandingInstructionData {
                 templateData.toClientOptions, templateData.toAccountTypeOptions, templateData.toAccountOptions,
                 templateData.transferTypeOptions, templateData.statusOptions, templateData.instructionTypeOptions,
                 templateData.priorityOptions, templateData.recurrenceTypeOptions, templateData.recurrenceFrequencyOptions, 
-                templateData.maximumIterations);
+                templateData.maximumIterations, instructionData.fromGroup, instructionData.toGroup, instructionData.fromGroupOptions,
+                instructionData.toGroupOptions);
     }
 
     private StandingInstructionData(final Long id, final Long accountDetailId, final String name, final OfficeData fromOffice,
@@ -170,16 +182,19 @@ public class StandingInstructionData {
             final Collection<EnumOptionData> transferTypeOptions, final Collection<EnumOptionData> statusOptions,
             final Collection<EnumOptionData> instructionTypeOptions, final Collection<EnumOptionData> priorityOptions,
             final Collection<EnumOptionData> recurrenceTypeOptions, final Collection<EnumOptionData> recurrenceFrequencyOptions, 
-            final Integer maximumIterations) {
+            final Integer maximumIterations, final GroupGeneralData fromGroup, final GroupGeneralData toGroup,
+            final Collection<GroupGeneralData> fromGroupOptions, final Collection<GroupGeneralData> toGroupOptions) {
         this.id = id;
         this.accountDetailId = accountDetailId;
         this.name = name;
         this.fromOffice = fromOffice;
         this.fromClient = fromClient;
+        this.fromGroup = fromGroup;
         this.fromAccountType = fromAccountType;
         this.fromAccount = fromAccount;
         this.toOffice = toOffice;
         this.toClient = toClient;
+        this.toGroup = toGroup;
         this.toAccountType = toAccountType;
         this.toAccount = toAccount;
         this.transferType = transferType;
@@ -197,10 +212,12 @@ public class StandingInstructionData {
 
         this.fromOfficeOptions = fromOfficeOptions;
         this.fromClientOptions = fromClientOptions;
+        this.fromGroupOptions = fromGroupOptions;
         this.fromAccountTypeOptions = fromAccountTypeOptions;
         this.fromAccountOptions = fromAccountOptions;
         this.toOfficeOptions = toOfficeOptions;
         this.toClientOptions = toClientOptions;
+        this.toGroupOptions = toGroupOptions;
         this.toAccountTypeOptions = toAccountTypeOptions;
         this.toAccountOptions = toAccountOptions;
         this.transferTypeOptions = transferTypeOptions;
@@ -213,16 +230,17 @@ public class StandingInstructionData {
         this.maximumIterations = maximumIterations;
     }
 
-    public static StandingInstructionData template(OfficeData fromOffice, ClientData fromClient, EnumOptionData fromAccountType,
-            PortfolioAccountData fromAccount, LocalDate transferDate, OfficeData toOffice, ClientData toClient,
-            EnumOptionData toAccountType, PortfolioAccountData toAccount, final Collection<OfficeData> fromOfficeOptions,
-            final Collection<ClientData> fromClientOptions, final Collection<EnumOptionData> fromAccountTypeOptions,
+    public static StandingInstructionData template(OfficeData fromOffice, ClientData fromClient, GroupGeneralData fromGroup,
+            EnumOptionData fromAccountType, PortfolioAccountData fromAccount, LocalDate transferDate, OfficeData toOffice,
+            ClientData toClient, GroupGeneralData toGroup, EnumOptionData toAccountType, PortfolioAccountData toAccount,
+            final Collection<OfficeData> fromOfficeOptions, final Collection<ClientData> fromClientOptions,
+            final Collection<GroupGeneralData> fromGroupOptions, final Collection<EnumOptionData> fromAccountTypeOptions,
             final Collection<PortfolioAccountData> fromAccountOptions, final Collection<OfficeData> toOfficeOptions,
-            final Collection<ClientData> toClientOptions, final Collection<EnumOptionData> toAccountTypeOptions,
-            final Collection<PortfolioAccountData> toAccountOptions, final Collection<EnumOptionData> transferTypeOptions,
-            final Collection<EnumOptionData> statusOptions, final Collection<EnumOptionData> instructionTypeOptions,
-            final Collection<EnumOptionData> priorityOptions, final Collection<EnumOptionData> recurrenceTypeOptions,
-            final Collection<EnumOptionData> recurrenceFrequencyOptions) {
+            final Collection<ClientData> toClientOptions, final Collection<GroupGeneralData> toGroupOptions,
+            final Collection<EnumOptionData> toAccountTypeOptions, final Collection<PortfolioAccountData> toAccountOptions,
+            final Collection<EnumOptionData> transferTypeOptions, final Collection<EnumOptionData> statusOptions,
+            final Collection<EnumOptionData> instructionTypeOptions, final Collection<EnumOptionData> priorityOptions,
+            final Collection<EnumOptionData> recurrenceTypeOptions, final Collection<EnumOptionData> recurrenceFrequencyOptions) {
         final Long id = null;
         final Long accountDetailId = null;
         final String name = null;
@@ -245,7 +263,7 @@ public class StandingInstructionData {
                 recurrenceType, recurrenceFrequency, recurrenceInterval, recurrenceOnMonthDay, transactions, fromOfficeOptions,
                 fromClientOptions, fromAccountTypeOptions, fromAccountOptions, toOfficeOptions, toClientOptions, toAccountTypeOptions,
                 toAccountOptions, transferTypeOptions, statusOptions, instructionTypeOptions, priorityOptions, recurrenceTypeOptions,
-                recurrenceFrequencyOptions, maximumIterations);
+                recurrenceFrequencyOptions, maximumIterations, fromGroup, toGroup, fromGroupOptions, toGroupOptions);
     }
 
     public static StandingInstructionData withTransferData(StandingInstructionData instructionData,
@@ -260,7 +278,8 @@ public class StandingInstructionData {
                 instructionData.fromAccountOptions, instructionData.toOfficeOptions, instructionData.toClientOptions,
                 instructionData.toAccountTypeOptions, instructionData.toAccountOptions, instructionData.transferTypeOptions,
                 instructionData.statusOptions, instructionData.instructionTypeOptions, instructionData.priorityOptions,
-                instructionData.recurrenceTypeOptions, instructionData.recurrenceFrequencyOptions, instructionData.maximumIterations);
+                instructionData.recurrenceTypeOptions, instructionData.recurrenceFrequencyOptions, instructionData.maximumIterations,
+                instructionData.fromGroup, instructionData.toGroup, instructionData.fromGroupOptions, instructionData.toGroupOptions);
     }
 
     public StandingInstructionType instructionType() {
@@ -374,6 +393,9 @@ public class StandingInstructionData {
         return this.toClient;
     }
 
+    public GroupGeneralData fromGroup() { return this.fromGroup; }
+
+    public GroupGeneralData toGroup() { return this.toGroup; }
     
     public Long getId() {
         return this.id;

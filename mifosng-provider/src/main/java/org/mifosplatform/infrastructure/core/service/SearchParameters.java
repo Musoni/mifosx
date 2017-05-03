@@ -86,17 +86,17 @@ public final class SearchParameters {
                 orphansOnly, isSelfUser,null);
     }
 
-    public static SearchParameters forLoans(final String sqlSearch, final String externalId, final Integer offset, final Integer limit,
-            final String orderBy, final String sortOrder, final String accountNo) {
+    public static SearchParameters forLoans(final String sqlSearch,final Long officeId, final String externalId, final Integer offset, final Integer limit,
+            final String orderBy, final String sortOrder, final String accountNo,final Long staffId) {
 
         final Integer maxLimitAllowed = getCheckedLimit(limit);
-        final Long staffId = null;
+        //final Long staffId =staffId;
         final Long loanId = null;
         final Long savingsId = null;
         final Boolean orphansOnly = false;
         final boolean isSelfUser = false;
 
-        return new SearchParameters(sqlSearch, null, externalId, null, null, null, null, offset, maxLimitAllowed, orderBy, sortOrder,
+        return new SearchParameters(sqlSearch, officeId, externalId, null, null, null, null, offset, maxLimitAllowed, orderBy, sortOrder,
                 staffId, accountNo, loanId, savingsId, orphansOnly, isSelfUser,null);
     }
 

@@ -15,8 +15,8 @@ import org.mifosplatform.portfolio.account.data.StandingInstructionDuesData;
 
 public interface StandingInstructionReadPlatformService {
 
-    StandingInstructionData retrieveTemplate(Long fromOfficeId, Long fromClientId, Long fromAccountId, Integer fromAccountType,
-            Long toOfficeId, Long toClientId, Long toAccountId, Integer toAccountType, Integer transferType);
+    StandingInstructionData retrieveTemplate(Long fromOfficeId, Long fromClientId, Long fromGroupId, Long fromAccountId, Integer fromAccountType,
+            Long toOfficeId, Long toClientId, Long toGroupid, Long toAccountId, Integer toAccountType, Integer transferType);
 
     Page<StandingInstructionData> retrieveAll(StandingInstructionDTO standingInstructionDTO);
 

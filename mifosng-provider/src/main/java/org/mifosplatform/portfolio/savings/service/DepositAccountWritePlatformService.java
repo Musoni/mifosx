@@ -18,6 +18,7 @@ import org.mifosplatform.portfolio.savings.domain.SavingsAccountTransaction;
 public interface DepositAccountWritePlatformService {
 
     CommandProcessingResult activateFDAccount(Long savingsId, JsonCommand command);
+    CommandProcessingResult undoActivateFDAccount(Long savingsId, JsonCommand command);
 
     CommandProcessingResult activateRDAccount(Long savingsId, JsonCommand command);
 

@@ -153,6 +153,7 @@ import org.mifosplatform.portfolio.note.domain.Note;
 import org.mifosplatform.portfolio.note.domain.NoteRepository;
 import org.mifosplatform.portfolio.paymentdetail.domain.PaymentDetail;
 import org.mifosplatform.portfolio.paymentdetail.service.PaymentDetailWritePlatformService;
+import org.mifosplatform.portfolio.savings.SavingsAccountTransactionType;
 import org.mifosplatform.portfolio.savings.domain.SavingsAccount;
 import org.mifosplatform.portfolio.savings.exception.InsufficientAccountBalanceException;
 import org.mifosplatform.useradministration.domain.AppUser;
@@ -345,7 +346,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 existingTransactionIds.addAll(loan.findExistingTransactionIds());
                 existingReversedTransactionIds.addAll(loan.findExistingReversedTransactionIds());
                 LoanTransaction disbursementTransaction = LoanTransaction.disbursement(loan.getOffice(), disburseAmount, paymentDetail,
-                        actualDisbursementDate, txnExternalId, DateUtils.getLocalDateTimeOfTenant(), currentUser);
+                        actualDisbursementDate, txnExternalId, new LocalDateTime(), currentUser);
                 disbursementTransaction.updateLoan(loan);
                 loan.getLoanTransactions().add(disbursementTransaction);
             }
@@ -468,8 +469,10 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 final String name = "To loan " + loan.getAccountNumber() + " from savings " + linkedSavingsAccount.getAccountNumber();
                 final Office fromOffice = loan.getOffice();
                 final Client fromClient = loan.getClient();
+                final Group fromGroup = loan.group();
                 final Office toOffice = loan.getOffice();
                 final Client toClient = loan.getClient();
+                final Group toGroup = loan.group();
                 final Integer priority = StandingInstructionPriority.MEDIUM.getValue();
                 final Integer transferType = AccountTransferType.LOAN_REPAYMENT.getValue();
                 final Integer instructionType = StandingInstructionType.DUES.getValue();
@@ -487,7 +490,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 
                 else {
                     AccountTransferDetails accountTransferDetails = AccountTransferDetails.savingsToLoanTransfer(fromOffice, fromClient,
-                            linkedSavingsAccount, toOffice, toClient, loan, transferType);
+                            linkedSavingsAccount, toOffice, toClient, loan, transferType, toGroup, fromGroup);
 
                     AccountTransferStandingInstruction accountTransferStandingInstruction = AccountTransferStandingInstruction.create(
                             accountTransferDetails, name, priority, instructionType, status, null, validFrom, null, 
@@ -615,7 +618,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                     existingTransactionIds.addAll(loan.findExistingTransactionIds());
                     existingReversedTransactionIds.addAll(loan.findExistingReversedTransactionIds());
                     LoanTransaction disbursementTransaction = LoanTransaction.disbursement(loan.getOffice(), disburseAmount, paymentDetail,
-                            actualDisbursementDate, txnExternalId, DateUtils.getLocalDateTimeOfTenant(), currentUser);
+                            actualDisbursementDate, txnExternalId, new LocalDateTime(), currentUser);
                     disbursementTransaction.updateLoan(loan);
                     loan.getLoanTransactions().add(disbursementTransaction);
                 }
@@ -1743,6 +1746,31 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 
         if (loanCharge.hasNotLoanIdentifiedBy(loanId)) { throw new LoanChargeNotFoundException(loanChargeId, loanId); }
         return loanCharge;
+    }
+
+    @Override
+    @CronTarget(jobName = JobName.ALLOCATE_OVERPAYMENTS_TO_SAVINGS)
+    public void allocateOverpayments() throws JobExecutionException {
+        final Collection<Long> loanIds = this.loanReadPlatformService.fetchOverpayedLoansForAllocation();
+
+        if(loanIds != null){
+            for(final Long loanId : loanIds){
+                final AccountAssociations accountAssociations = this.accountAssociationRepository.findByLoanIdAndType(loanId,AccountAssociationType.LINKED_ACCOUNT_ASSOCIATION.getValue());
+                final Loan loan = accountAssociations.getLoan();
+                final SavingsAccount toSavingsAccount = accountAssociations.linkedSavingsAccount();
+                final BigDecimal transactionAmount = loan.getTotalOverpaid();
+                final LocalDate transactionDate = LocalDate.now();
+
+                final boolean isRegularTransaction = true;
+                final boolean isExceptionForBalanceCheck = false;
+                final AccountTransferDTO accountTransferDTO = new AccountTransferDTO(transactionDate, transactionAmount,
+                        PortfolioAccountType.LOAN, PortfolioAccountType.SAVINGS, loanId, toSavingsAccount.getId(), "Loan overpayment allocation",
+                        null, null, null, LoanTransactionType.WITHDRAW_TRANSFER.getValue(), SavingsAccountTransactionType.DEPOSIT.getValue(), null, null,
+                        AccountTransferType.ACCOUNT_TRANSFER.getValue(), null, null, null, loan, toSavingsAccount, null, isRegularTransaction,
+                        isExceptionForBalanceCheck);
+                this.accountTransfersWritePlatformService.transferFunds(accountTransferDTO);
+            }
+        }
     }
 
     @Transactional

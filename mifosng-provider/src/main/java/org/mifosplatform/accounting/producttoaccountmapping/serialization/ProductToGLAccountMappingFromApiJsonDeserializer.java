@@ -145,6 +145,12 @@ public final class ProductToGLAccountMappingFromApiJsonDeserializer {
                     LOAN_PRODUCT_ACCOUNTING_PARAMS.SUSPENDED_INCOME.getValue(), element);
             baseDataValidator.reset().parameter(LOAN_PRODUCT_ACCOUNTING_PARAMS.SUSPENDED_INCOME.getValue()).value(suspendedIncomeAccountId)
                     .notNull().integerGreaterThanZero();
+
+
+            final Long interestWrittenOffAccountId = this.fromApiJsonHelper.extractLongNamed(
+                    LOAN_PRODUCT_ACCOUNTING_PARAMS.INTEREST_WRITTEN_OFF.getValue(), element);
+            baseDataValidator.reset().parameter(LOAN_PRODUCT_ACCOUNTING_PARAMS.INTEREST_WRITTEN_OFF.getValue()).value(interestWrittenOffAccountId)
+                    .notNull().integerGreaterThanZero();
         }
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);

@@ -5,56 +5,14 @@
  */
 package org.mifosplatform.portfolio.savings.domain;
 
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.SAVINGS_PRODUCT_RESOURCE_NAME;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.accountingRuleParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.allowOverdraftParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.chargesParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.currencyCodeParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.descriptionParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.digitsAfterDecimalParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.enforceMinRequiredBalanceParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.inMultiplesOfParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.interestCalculationDaysInYearTypeParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.interestCalculationTypeParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.interestCompoundingPeriodTypeParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.interestPostingPeriodTypeParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.localeParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.lockinPeriodFrequencyParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.lockinPeriodFrequencyTypeParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.minBalanceForInterestCalculationParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.minRequiredBalanceParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.minRequiredOpeningBalanceParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.nameParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.nominalAnnualInterestRateParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.overdraftLimitParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.nominalAnnualInterestRateOverdraftParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.minOverdraftForInterestCalculationParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.shortNameParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.withdrawalFeeForTransfersParamName;
-
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorColumn;
-import javax.persistence.DiscriminatorType;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Embedded;
-import javax.persistence.Entity;
-import javax.persistence.Inheritance;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
+import javax.persistence.*;
 
 import org.joda.time.LocalDate;
 import org.mifosplatform.accounting.common.AccountingRuleType;
+import org.mifosplatform.infrastructure.codes.domain.CodeValue;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.ApiParameterError;
 import org.mifosplatform.infrastructure.core.data.DataValidatorBuilder;
@@ -71,6 +29,8 @@ import org.mifosplatform.portfolio.savings.SavingsPostingInterestPeriodType;
 import org.springframework.data.jpa.domain.AbstractPersistable;
 
 import com.google.gson.JsonArray;
+
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.*;
 
 @Entity
 @Table(name = "m_savings_product", uniqueConstraints = { @UniqueConstraint(columnNames = { "name" }, name = "sp_unq_name"),
@@ -167,8 +127,20 @@ public class SavingsProduct extends AbstractPersistable<Long> {
     @Column(name = "min_balance_for_interest_calculation", scale = 6, precision = 19, nullable = true)
     private BigDecimal minBalanceForInterestCalculation;
 
+    @Column(name = "start_date", nullable = true)
+    @Temporal(TemporalType.DATE)
+    private Date startDate;
+
+    @Column(name = "close_date", nullable = true)
+    @Temporal(TemporalType.DATE)
+    private Date closeDate;
+
+    @ManyToOne
+    @JoinColumn(name = "product_group")
+    private CodeValue productGroup;
+
     public static SavingsProduct createNew(final String name, final String shortName, final String description,
-            final MonetaryCurrency currency, final BigDecimal interestRate,
+            final MonetaryCurrency currency, final BigDecimal interestRate, final CodeValue productGroup,
             final SavingsCompoundingInterestPeriodType interestCompoundingPeriodType,
             final SavingsPostingInterestPeriodType interestPostingPeriodType, final SavingsInterestCalculationType interestCalculationType,
             final SavingsInterestCalculationDaysInYearType interestCalculationDaysInYearType, final BigDecimal minRequiredOpeningBalance,
@@ -182,7 +154,7 @@ public class SavingsProduct extends AbstractPersistable<Long> {
                 interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
                 lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeApplicableForTransfer, accountingRuleType, charges,
                 allowOverdraft, overdraftLimit, enforceMinRequiredBalance, minRequiredBalance, minBalanceForInterestCalculation, 
-                nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation);
+                nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, null, null, productGroup);
     }
 
     protected SavingsProduct() {
@@ -196,11 +168,12 @@ public class SavingsProduct extends AbstractPersistable<Long> {
             final SavingsInterestCalculationDaysInYearType interestCalculationDaysInYearType, final BigDecimal minRequiredOpeningBalance,
             final Integer lockinPeriodFrequency, final SavingsPeriodFrequencyType lockinPeriodFrequencyType,
             final boolean withdrawalFeeApplicableForTransfer, final AccountingRuleType accountingRuleType, final Set<Charge> charges,
-            final boolean allowOverdraft, final BigDecimal overdraftLimit, BigDecimal minBalanceForInterestCalculation) {
+            final boolean allowOverdraft, final BigDecimal overdraftLimit, BigDecimal minBalanceForInterestCalculation,
+            final CodeValue productGroup) {
         this(name, shortName, description, currency, interestRate, interestCompoundingPeriodType, interestPostingPeriodType,
                 interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency,
                 lockinPeriodFrequencyType, withdrawalFeeApplicableForTransfer, accountingRuleType, charges, allowOverdraft, overdraftLimit,
-                false, null, minBalanceForInterestCalculation, null, null);
+                false, null, minBalanceForInterestCalculation, null, null, null, null, productGroup);
     }
 
     protected SavingsProduct(final String name, final String shortName, final String description, final MonetaryCurrency currency,
@@ -211,7 +184,8 @@ public class SavingsProduct extends AbstractPersistable<Long> {
             final boolean withdrawalFeeApplicableForTransfer, final AccountingRuleType accountingRuleType, final Set<Charge> charges,
             final boolean allowOverdraft, final BigDecimal overdraftLimit, final boolean enforceMinRequiredBalance,
             final BigDecimal minRequiredBalance, BigDecimal minBalanceForInterestCalculation,
-            final BigDecimal nominalAnnualInterestRateOverdraft, final BigDecimal minOverdraftForInterestCalculation) {
+            final BigDecimal nominalAnnualInterestRateOverdraft, final BigDecimal minOverdraftForInterestCalculation,
+            final LocalDate startDate, final LocalDate closeDate, final CodeValue productGroup) {
 
         this.name = name;
         this.shortName = shortName;
@@ -254,6 +228,9 @@ public class SavingsProduct extends AbstractPersistable<Long> {
         this.enforceMinRequiredBalance = enforceMinRequiredBalance;
         this.minRequiredBalance = minRequiredBalance;
         this.minBalanceForInterestCalculation = minBalanceForInterestCalculation;
+        this.startDate = startDate != null ? startDate.toDateTimeAtStartOfDay().toDate() : null;
+        this.closeDate = closeDate != null ? closeDate.toDateTimeAtCurrentTime().toDate() : null;
+        this.productGroup = productGroup;
     }
 
     /**
@@ -429,6 +406,11 @@ public class SavingsProduct extends AbstractPersistable<Long> {
             this.accountingRule = newValue;
         }
 
+        if(this.productGroup != null && command.isChangeInLongParameterNamed(productGroupIdParamName, this.productGroup.getId())){
+            final Long newValue = command.longValueOfParameterNamed(productGroupIdParamName);
+            actualChanges.put(productGroupIdParamName, newValue);
+        }
+
         // charges
         if (command.hasParameter(chargesParamName)) {
             final JsonArray jsonArray = command.arrayOfParameterNamed(chargesParamName);
@@ -490,6 +472,40 @@ public class SavingsProduct extends AbstractPersistable<Long> {
             actualChanges.put(minBalanceForInterestCalculationParamName, newValue);
             actualChanges.put(localeParamName, localeAsInput);
             this.minBalanceForInterestCalculation = newValue;
+        }
+        final String dateFormatAsInput = command.dateFormat();
+
+        final String localeParamName = "locale";
+        final String dateFormatParamName = "dateFormat";
+
+        final String startDateParamName = "startDate";
+        if (command.isChangeInLocalDateParameterNamed(startDateParamName, getStartDate())) {
+            final String valueAsInput = command.stringValueOfParameterNamed(startDateParamName);
+            actualChanges.put(startDateParamName, valueAsInput);
+            actualChanges.put(dateFormatParamName, dateFormatAsInput);
+            actualChanges.put(localeParamName, localeAsInput);
+
+            final LocalDate newValue = command.localDateValueOfParameterNamed(startDateParamName);
+            if (newValue != null) {
+                this.startDate = newValue.toDate();
+            } else {
+                this.startDate = null;
+            }
+        }
+
+        final String closeDateParamName = "closeDate";
+        if (command.isChangeInLocalDateParameterNamed(closeDateParamName, getCloseDate())) {
+            final String valueAsInput = command.stringValueOfParameterNamed(closeDateParamName);
+            actualChanges.put(closeDateParamName, valueAsInput);
+            actualChanges.put(dateFormatParamName, dateFormatAsInput);
+            actualChanges.put(localeParamName, localeAsInput);
+
+            final LocalDate newValue = command.localDateValueOfParameterNamed(closeDateParamName);
+            if (newValue != null) {
+                this.closeDate = newValue.toDate();
+            } else {
+                this.closeDate = null;
+            }
         }
 
         validateLockinDetails();
@@ -563,6 +579,10 @@ public class SavingsProduct extends AbstractPersistable<Long> {
         return updated;
     }
 
+    public void update(final CodeValue productGroup){
+        this.productGroup = productGroup;
+    }
+
     public BigDecimal overdraftLimit() {
         return this.overdraftLimit;
     }
@@ -582,6 +602,8 @@ public class SavingsProduct extends AbstractPersistable<Long> {
     public boolean isMinRequiredBalanceEnforced() {
         return this.enforceMinRequiredBalance;
     }
+
+    public CodeValue getProductGroup(){ return this.productGroup; }
 
     public Set<Charge> charges() {
         return this.charges;
@@ -610,5 +632,21 @@ public class SavingsProduct extends AbstractPersistable<Long> {
 	public BigDecimal minOverdraftForInterestCalculation() {
 		return this.minOverdraftForInterestCalculation;
 	}
+
+    public LocalDate getStartDate() {
+        LocalDate startLocalDate = null;
+        if (this.startDate != null) {
+            startLocalDate = LocalDate.fromDateFields(this.startDate);
+        }
+        return startLocalDate;
+    }
+
+    public LocalDate getCloseDate() {
+        LocalDate closeLocalDate = null;
+        if (this.closeDate != null) {
+            closeLocalDate = LocalDate.fromDateFields(this.closeDate);
+        }
+        return closeLocalDate;
+    }
 
 }

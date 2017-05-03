@@ -1,0 +1,2 @@
+ALTER TABLE `m_data_export` CHANGE `name` `name` VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL;
+ALTER TABLE `m_data_export` CHANGE `base_entity_name` `base_entity_name` VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL;

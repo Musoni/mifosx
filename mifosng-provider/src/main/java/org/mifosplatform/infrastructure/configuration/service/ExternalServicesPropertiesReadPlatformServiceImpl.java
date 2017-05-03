@@ -86,9 +86,9 @@ public class ExternalServicesPropertiesReadPlatformServiceImpl implements Extern
             final String name = rs.getString("name");
             String value = rs.getString("value");
             // Masking the password as we should not send the password back
-            if (name != null && "password".equalsIgnoreCase(name)) {
-                value = "XXXX";
-            }
+//            if (name != null && "password".equalsIgnoreCase(name)) {
+//                value = "XXXX";
+//            }
             return new ExternalServicesPropertiesData(name, value);
         }
 

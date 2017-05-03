@@ -24,6 +24,7 @@ public class SavingsApiConstants {
     public static String summitalAction = ".summital";
     public static String approvalAction = ".approval";
     public static String undoApprovalAction = ".undoApproval";
+    public static String undoActivateAction = ".undoApproval";
     public static String undoRejectionAction = ".undoRejection";
     public static String rejectAction = ".reject";
     public static String withdrawnByApplicantAction = ".withdrawnByApplicant";
@@ -106,6 +107,8 @@ public class SavingsApiConstants {
     public static final String minBalanceForInterestCalculationParamName = "minBalanceForInterestCalculation";
     public static final String withdrawBalanceParamName = "withdrawBalance";
     public static final String onHoldFundsParamName = "onHoldFunds";
+    public static final String productGroupIdParamName = "productGroupId";
+    public static final String savingsProductGroupsCodeParamName = "savingsProductGroups";
 
     // transaction parameters
     public static final String transactionDateParamName = "transactionDate";
@@ -150,7 +153,7 @@ public class SavingsApiConstants {
 
     public static final Set<String> SAVINGS_PRODUCT_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(localeParamName,
             monthDayFormatParamName, nameParamName, shortNameParamName, descriptionParamName, currencyCodeParamName,
-            digitsAfterDecimalParamName, inMultiplesOfParamName, nominalAnnualInterestRateParamName,
+            digitsAfterDecimalParamName, inMultiplesOfParamName, nominalAnnualInterestRateParamName, productGroupIdParamName,
             interestCompoundingPeriodTypeParamName, interestPostingPeriodTypeParamName, interestCalculationTypeParamName,
             interestCalculationDaysInYearTypeParamName, minRequiredOpeningBalanceParamName, lockinPeriodFrequencyParamName,
             lockinPeriodFrequencyTypeParamName, withdrawalFeeAmountParamName, withdrawalFeeTypeParamName,
@@ -182,7 +185,7 @@ public class SavingsApiConstants {
             withdrawalFeeForTransfersParamName, feeAmountParamName, feeOnMonthDayParamName, "currencyOptions",
             "interestCompoundingPeriodTypeOptions", "interestPostingPeriodTypeOptions", "interestCalculationTypeOptions",
             "interestCalculationDaysInYearTypeOptions", "lockinPeriodFrequencyTypeOptions", "withdrawalFeeTypeOptions",
-            nominalAnnualInterestRateOverdraftParamName, minOverdraftForInterestCalculationParamName));
+            nominalAnnualInterestRateOverdraftParamName, minOverdraftForInterestCalculationParamName, productGroupIdParamName));
 
     public static final Set<String> SAVINGS_ACCOUNT_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(localeParamName,
             dateFormatParamName, monthDayFormatParamName, staffIdParamName, accountNoParamName, externalIdParamName, clientIdParamName,

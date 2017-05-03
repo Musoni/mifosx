@@ -91,7 +91,7 @@ public class RolesApiResource {
 
         this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
 
-        final Collection<RoleData> roles = this.roleReadPlatformService.retrieveAll();
+        final Collection<RoleData> roles = this.roleReadPlatformService.retrieveAllActiveRoles();
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
         return this.toApiJsonSerializer.serialize(settings, roles, this.RESPONSE_DATA_PARAMETERS);

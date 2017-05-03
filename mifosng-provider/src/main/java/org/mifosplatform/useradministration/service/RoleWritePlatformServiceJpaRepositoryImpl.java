@@ -215,7 +215,7 @@ public class RoleWritePlatformServiceJpaRepositoryImpl implements RoleWritePlatf
              */
             final Role role = this.roleRepository.findOne(roleId);
             if (role == null) { throw new RoleNotFoundException(roleId); }
-            //if(role.isDisabled()){throw new RoleNotFoundException(roleId);}
+            if(role.isDisabled()){throw new RoleNotFoundException(roleId);}
             
             /**
              * Roles associated with users can't be disable

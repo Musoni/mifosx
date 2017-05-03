@@ -10,9 +10,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 
+import org.joda.time.LocalDate;
 import org.mifosplatform.accounting.common.AccountingEnumerations;
+import org.mifosplatform.infrastructure.codes.data.CodeValueData;
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
+import org.mifosplatform.infrastructure.core.service.DateUtils;
 import org.mifosplatform.infrastructure.core.service.RoutingDataSource;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.organisation.monetary.data.CurrencyData;
@@ -69,6 +72,8 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
         sqlBuilder.append("select ");
         sqlBuilder.append(this.depositProductLookupsRowMapper.schema());
         sqlBuilder.append(" where sp.deposit_type_enum = ? ");
+        sqlBuilder.append(" and (sp.start_date is null or sp.start_date <= CURDATE())");
+        sqlBuilder.append(" and (sp.close_date is null or sp.close_date >= CURDATE()) ");
 
         return this.jdbcTemplate.query(sqlBuilder.toString(), this.depositProductLookupsRowMapper,
                 new Object[] { depositAccountType.getValue() });
@@ -197,7 +202,10 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
         public FixedDepositProductMapper() {
             final StringBuilder sqlBuilder = new StringBuilder(400);
             sqlBuilder.append(super.schema());
-            sqlBuilder.append(", dptp.pre_closure_penal_applicable as preClosurePenalApplicable, ");
+            sqlBuilder.append(", sp.start_date as startDate, ");
+            sqlBuilder.append("sp.close_date as closeDate, ");
+            sqlBuilder.append("sp.product_group as productGroupId, cv.code_value as productGroupValue, ");
+            sqlBuilder.append("dptp.pre_closure_penal_applicable as preClosurePenalApplicable, ");
             sqlBuilder.append("dptp.pre_closure_penal_interest as preClosurePenalInterest, ");
             sqlBuilder.append("dptp.pre_closure_penal_interest_on_enum as preClosurePenalInterestOnId, ");
             sqlBuilder.append("dptp.min_deposit_term as minDepositTerm, ");
@@ -211,6 +219,7 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
             sqlBuilder.append("from m_savings_product sp ");
             sqlBuilder.append("left join m_deposit_product_term_and_preclosure dptp on sp.id=dptp.savings_product_id ");
             sqlBuilder.append("join m_currency curr on curr.code = sp.currency_code ");
+            sqlBuilder.append("left join m_code_value cv on cv.id = sp.product_group ");
 
             this.schemaSql = sqlBuilder.toString();
         }
@@ -247,9 +256,25 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
             final BigDecimal depositAmount = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "depositAmount");
             final BigDecimal maxDepositAmount = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "maxDepositAmount");
 
+            final LocalDate startDate = JdbcSupport.getLocalDate(rs, "startDate");
+            final LocalDate closeDate = JdbcSupport.getLocalDate(rs, "closeDate");
+            String status = "";
+            if ((closeDate != null && closeDate.isBefore(DateUtils.getLocalDateOfTenant()))
+                    || (startDate != null && startDate.isAfter(DateUtils.getLocalDateOfTenant()))) {
+                status = "savingsProduct.inActive";
+            } else {
+                status = "savingsProduct.active";
+            }
+
+            final Long productGroupId = JdbcSupport.getLong(rs, "productGroupId");
+            final String productGroupValue = rs.getString("productGroupValue");
+            final boolean isActive = false;
+            final CodeValueData productGroup = CodeValueData.instance(productGroupId, productGroupValue, isActive);
+
             return FixedDepositProductData.instance(depositProductData, preClosurePenalApplicable, preClosurePenalInterest,
                     preClosurePenalInterestOnType, minDepositTerm, maxDepositTerm, minDepositTermType, maxDepositTermType,
-                    inMultiplesOfDepositTerm, inMultiplesOfDepositTermType, minDepositAmount, depositAmount, maxDepositAmount);
+                    inMultiplesOfDepositTerm, inMultiplesOfDepositTermType, minDepositAmount, depositAmount, maxDepositAmount,
+                    startDate, closeDate, status, productGroup);
         }
     }
 

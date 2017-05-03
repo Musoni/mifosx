@@ -1133,6 +1133,12 @@ public class Loan extends AbstractPersistable<Long> {
         this.transactionProcessingStrategy = strategy;
     }
 
+    public void setCreateStandingInstructionAtDisbursement(Boolean createStandingInstructionAtDisbursement) {
+        this.createStandingInstructionAtDisbursement = createStandingInstructionAtDisbursement;
+    }
+
+    public Boolean getCreateStandingInstructionAtDisbursement() {return this.createStandingInstructionAtDisbursement;}
+
     public void updateLoanCharges(final Set<LoanCharge> loanCharges) {
         List<Long> existingCharges = fetchAllLoanChargeIds();
 
@@ -2935,6 +2941,12 @@ public class Loan extends AbstractPersistable<Long> {
                     period.resetAccrualComponents();
                 }
             }
+            if(isPeriodicAccrualAccountingEnabledOnLoanProduct()){
+                for (final LoanRepaymentScheduleInstallment period : getRepaymentScheduleInstallments()) {
+                    period.resetAccrualComponents();
+                }
+            }
+
 
 
             actualChanges.put("actualDisbursementDate", "");
@@ -2943,6 +2955,8 @@ public class Loan extends AbstractPersistable<Long> {
             existingReversedTransactionIds.addAll(findExistingReversedTransactionIds());
             this.accruedTill = null;
             this.isSuspendedIncome  = false;
+            this.isNpa =false;
+
             reverseExistingTransactions();
             updateLoanSummaryDerivedFields();
 
@@ -3672,7 +3686,7 @@ public class Loan extends AbstractPersistable<Long> {
                 throw new InvalidLoanStateTransitionException("writeoff", "cannot.be.a.future.date", errorMessage, writtenOffOnLocalDate);
             }
 
-            LocalDateTime createdDate = DateUtils.getLocalDateTimeOfTenant();
+            LocalDateTime createdDate = new LocalDateTime();
             loanTransaction = LoanTransaction.writeoff(this, getOffice(), writtenOffOnLocalDate, txnExternalId, createdDate, currentUser);
             LocalDate lastTransactionDate = getLastUserTransactionDate();
             if (lastTransactionDate.isAfter(writtenOffOnLocalDate)) {
@@ -3774,7 +3788,7 @@ public class Loan extends AbstractPersistable<Long> {
                 }
                 this.closedOnDate = closureDate.toDate();
                 loanTransaction = LoanTransaction.writeoff(this, getOffice(), closureDate, txnExternalId,
-                        DateUtils.getLocalDateTimeOfTenant(), currentUser);
+                        new LocalDateTime(), currentUser);
                 final boolean isLastTransaction = isChronologicallyLatestTransaction(loanTransaction, this.loanTransactions);
                 if (!isLastTransaction) {
                     final String errorMessage = "The closing date of the loan must be on or after latest transaction date.";

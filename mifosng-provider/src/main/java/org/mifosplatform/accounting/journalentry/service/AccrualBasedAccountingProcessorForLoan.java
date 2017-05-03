@@ -246,9 +246,16 @@ public class AccrualBasedAccountingProcessorForLoan implements AccountingProcess
          ***/
         if (!(totalDebitAmount.compareTo(BigDecimal.ZERO) == 0)) {
             if (writeOff) {
-                this.helper.createDebitJournalEntryOrReversalForLoan(office, currencyCode,
-                        ACCRUAL_ACCOUNTS_FOR_LOAN.LOSSES_WRITTEN_OFF.getValue(), loanProductId, paymentTypeId, loanId, transactionId,
-                        transactionDate, totalDebitAmount, isReversal);
+                if(loanTransactionDTO.getTransactionType().isWaiveInterest()){
+                    this.helper.createDebitJournalEntryOrReversalForLoan(office, currencyCode,
+                            ACCRUAL_ACCOUNTS_FOR_LOAN.INTEREST_WRITTEN_OFF.getValue(), loanProductId, paymentTypeId, loanId, transactionId,
+                            transactionDate, totalDebitAmount, isReversal);
+                }else{
+                    this.helper.createDebitJournalEntryOrReversalForLoan(office, currencyCode,
+                            ACCRUAL_ACCOUNTS_FOR_LOAN.LOSSES_WRITTEN_OFF.getValue(), loanProductId, paymentTypeId, loanId, transactionId,
+                            transactionDate, totalDebitAmount, isReversal);
+                }
+
             } else {
                 if (loanTransactionDTO.isAccountTransfer()) {
                     this.helper.createDebitJournalEntryOrReversalForLoan(office, currencyCode,

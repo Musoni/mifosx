@@ -7,7 +7,7 @@ package org.mifosplatform.infrastructure.dataexport.data;
 
 public class EntityColumnMetaData {
     private final String name;
-    private final String label;
+    private String label;
     private final String type;
     private final boolean isNullable;
     
@@ -65,5 +65,14 @@ public class EntityColumnMetaData {
      */
     public boolean isNullable() {
         return isNullable;
+    }
+    
+    /**
+     * Updates the value of the label property
+     * 
+     * @param label
+     */
+    public void updateLabel(final String label) {
+    	this.label = label;
     }
 }

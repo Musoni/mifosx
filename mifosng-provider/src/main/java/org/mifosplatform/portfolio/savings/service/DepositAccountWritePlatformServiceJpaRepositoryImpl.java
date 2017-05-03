@@ -261,6 +261,52 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
 
     @Transactional
     @Override
+    public CommandProcessingResult undoActivateFDAccount(Long savingsId, JsonCommand command) {
+
+        this.context.authenticatedUser();
+
+        final FixedDepositAccount account = (FixedDepositAccount) this.depositAccountAssembler.assembleFrom(savingsId,
+                DepositAccountType.FIXED_DEPOSIT);
+
+        checkClientOrGroupActive(account);
+
+        final Set<Long> existingTransactionIds = new HashSet<>();
+        final Set<Long> existingReversedTransactionIds = new HashSet<>();
+
+        updateExistingTransactionsDetails(account, existingTransactionIds, existingReversedTransactionIds);
+
+
+        final Map<String, Object> changes = account.undoApplicationActivate(DateUtils.getLocalDateOfTenant());
+
+        if (!changes.isEmpty()) {
+
+            account.undoAllTransaction();
+
+            this.savingAccountRepository.save(account);
+
+            final String noteText = command.stringValueOfParameterNamed("note");
+            if (StringUtils.isNotBlank(noteText)) {
+                final Note note = Note.savingNote(account, noteText);
+                changes.put("note", noteText);
+                this.noteRepository.save(note);
+            }
+        }
+
+        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
+
+        return new CommandProcessingResultBuilder() //
+                .withCommandId(command.commandId()) //
+                .withEntityId(savingsId) //
+                .withOfficeId(account.officeId()) //
+                .withClientId(account.clientId()) //
+                .withGroupId(account.groupId()) //
+                .withSavingsId(savingsId) //
+                .with(changes) //
+                .build();
+    }
+
+    @Transactional
+    @Override
     public CommandProcessingResult activateRDAccount(final Long savingsId, final JsonCommand command) {
         boolean isRegularTransaction = false;
 

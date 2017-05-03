@@ -78,6 +78,8 @@ public interface LoanWritePlatformService {
 
     void transferFeeCharges() throws JobExecutionException;
 
+    void allocateOverpayments() throws JobExecutionException;
+
     CommandProcessingResult undoWriteOff(Long loanId);
 
     CommandProcessingResult updateDisbursementDateAndAmountForTranche(Long loanId, Long disbursementId, JsonCommand command);
