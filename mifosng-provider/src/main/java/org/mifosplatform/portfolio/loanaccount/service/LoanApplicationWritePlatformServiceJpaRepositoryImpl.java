@@ -666,11 +666,6 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
                 existingLoanApplication.updateLoanCollateral(loanCollateral);
             }
 
-            final String chargesParamName = "charges";
-            if (changes.containsKey(chargesParamName)) {
-                existingLoanApplication.updateLoanCharges(possiblyModifedLoanCharges);
-            }
-
             if (changes.containsKey("recalculateLoanSchedule")) {
                 changes.remove("recalculateLoanSchedule");
 
@@ -809,6 +804,13 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
                 }
 
             }
+            
+            final String chargesParamName = "charges";
+            if (changes.containsKey(chargesParamName)) {
+                existingLoanApplication.updateLoanCharges(possiblyModifedLoanCharges);
+            }
+            
+            saveAndFlushLoanWithDataIntegrityViolationChecks(existingLoanApplication);
 
             return new CommandProcessingResultBuilder() //
                     .withEntityId(loanId) //
