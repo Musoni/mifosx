@@ -1363,7 +1363,14 @@ public class Loan extends AbstractPersistable<Long> {
                 .localDateValueOfParameterNamed(LoanProductConstants.recalculationCompoundingFrequencyDateParamName);
         updateLoanInterestRecalculationSettings(recalculationRestFrequencyDate, recalculationCompoundingFrequencyDate, command,
                 actualChanges);
-
+        
+        final String numberOfRepayments = "numberOfRepayments";
+        if (command.isChangeInIntegerParameterNamed(numberOfRepayments, this.fetchNumberOfInstallmensAfterExceptions())) {
+        	final Integer newValue = command.integerValueOfParameterNamed(numberOfRepayments);
+        	actualChanges.put(numberOfRepayments, newValue);
+        	isChargesModified = true;
+        }
+        
         final String accountNoParamName = "accountNo";
         if (command.isChangeInStringParameterNamed(accountNoParamName, this.accountNumber)) {
             final String newValue = command.stringValueOfParameterNamed(accountNoParamName);
