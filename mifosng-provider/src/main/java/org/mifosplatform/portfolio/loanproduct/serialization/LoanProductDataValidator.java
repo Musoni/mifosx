@@ -94,7 +94,7 @@ public final class LoanProductDataValidator {
             LoanProductConstants.preClosureInterestCalculationStrategyParamName, LoanProductConstants.allowAttributeOverridesParamName,
             LoanProductConstants.allowVariableInstallmentsParamName, LoanProductConstants.minimumGapBetweenInstallments,
             LoanProductConstants.maximumGapBetweenInstallments, CreditCheckConstants.CREDIT_CHECKS_PARAM_NAME,
-            LOAN_PRODUCT_ACCOUNTING_PARAMS.INTEREST_WRITTEN_OFF.getValue(),
+            LOAN_PRODUCT_ACCOUNTING_PARAMS.INTEREST_WRITTEN_OFF.getValue(), LoanProductConstants.allowAdditionalChargesParameterName,
             LoanProductConstants.splitInterestAmongGuarantorsParamName, LoanProductConstants.reverseOverdueDaysNPAInterestParameterName));
 
     private final FromJsonHelper fromApiJsonHelper;
