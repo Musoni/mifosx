@@ -195,7 +195,7 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
                     + "lpr.compounding_frequency_type_enum as compoundingFrequencyTypeEnum, lpr.compounding_frequency_interval as compoundingInterval, "
                     + "lpr.compounding_freqency_date as compoundingFrequencyDate,  "
                     + "lp.hold_guarantee_funds as holdGuaranteeFunds, lp.can_auto_allocate_overpayments as canAutoAllocateOverpayments, "
-                    + "lp.principal_threshold_for_last_installment as principalThresholdForLastInstallment, "
+                    + "lp.allow_additional_charges as allowAdditionalCharges, lp.principal_threshold_for_last_installment as principalThresholdForLastInstallment, "
                     + "lpg.id as lpgId, lpg.mandatory_guarantee as mandatoryGuarantee, lpg.split_interest_among_guarantors as splitInterestAmongGuarantors, "
                     + "lp.reverse_overduedays_npa_interest as reverseOverdueDaysNpaInterest, "
                     + "lpg.minimum_guarantee_from_own_funds as minimumGuaranteeFromOwnFunds, lpg.minimum_guarantee_from_guarantor_funds as minimumGuaranteeFromGuarantor, "
@@ -415,6 +415,7 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
             final boolean accountMovesOutOfNPAOnlyOnArrearsCompletion = rs.getBoolean("accountMovesOutOfNPAOnlyOnArrearsCompletion");
             final boolean reverseOverdueDaysNPAInterest = rs.getBoolean("reverseOverdueDaysNpaInterest");
             final boolean canAutoAllocateOverpayments = rs.getBoolean("canAutoAllocateOverpayments");
+            final boolean allowAdditionalCharges = rs.getBoolean("allowAdditionalCharges");
 
             return new LoanProductData(id, name, shortName, description, currency, principal, minPrincipal, maxPrincipal, tolerance,
                     numberOfRepayments, minNumberOfRepayments, maxNumberOfRepayments, repaymentEvery, interestRatePerPeriod,
@@ -431,7 +432,8 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
                     installmentAmountInMultiplesOf, allowAttributeOverrides, isLinkedToFloatingInterestRates, floatingRateId,
                     floatingRateName, interestRateDifferential, minDifferentialLendingRate, defaultDifferentialLendingRate,
                     maxDifferentialLendingRate, isFloatingInterestRateCalculationAllowed, isVariableIntallmentsAllowed, minimumGap,
-                    maximumGap, this.creditChecks, reverseOverdueDaysNPAInterest, productGroup, canAutoAllocateOverpayments);
+                    maximumGap, this.creditChecks, reverseOverdueDaysNPAInterest, productGroup, canAutoAllocateOverpayments,
+                    allowAdditionalCharges);
         }
     }
 
