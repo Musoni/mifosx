@@ -51,6 +51,9 @@ public interface ConfigurationDomainService {
 
     int getRoundingMode();
 
+    public Integer getCurrencyDigits();
+
+
     boolean isBackdatePenaltiesEnabled();
     
     boolean storeJournalEntryBalanceAtPeriodClosure();
