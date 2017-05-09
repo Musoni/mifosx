@@ -203,6 +203,21 @@ public class ConfigurationDomainServiceJpa implements ConfigurationDomainService
         return defaultValue;
     }
 
+    @Override
+    public int getCurrencyDigits() {
+        final String propertyName = "currency_digit";
+        int defaultValue = 2; // 6 Stands for HALF-EVEN
+        final GlobalConfigurationProperty property = this.globalConfigurationRepository.findOneByNameWithNotFoundDetection(propertyName);
+        if (property.isEnabled()) {
+            int value = property.getValue().intValue();
+            if (value < 0 || value > 2) {
+                return defaultValue;
+            }
+            return value;
+        }
+        return defaultValue;
+    }
+
     public boolean isBackdatePenaltiesEnabled() {
         final String propertyName = "backdate-penalties-enabled";
         final GlobalConfigurationProperty property = this.globalConfigurationRepository.findOneByNameWithNotFoundDetection(propertyName);
