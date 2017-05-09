@@ -3208,38 +3208,100 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    			}
 	    			break;
 	    		case LOAN_REPAYMENT_SCHEDULE:
+	    			String outstandingInterest = "(ifnull(`" + baseEntityName + "`.`interest_amount`, 0)"
+							+ " - ifnull(`" + baseEntityName + "`.`interest_writtenoff_derived`, 0)"
+									+ " - ifnull(`" + baseEntityName + "`.`interest_waived_derived`, 0)" 
+											+ " - ifnull(`" + baseEntityName + "`.`interest_completed_derived`, 0))";
+					
+					String outstandingPrincipal = "(ifnull(`" + baseEntityName + "`.`principal_amount`, 0)"
+							+ " - ifnull(`" + baseEntityName + "`.`principal_completed_derived`, 0)"
+									+ " - ifnull(`" + baseEntityName + "`.`principal_writtenoff_derived`, 0))";
+					
+					String outstandingFees = "(ifnull(`" + baseEntityName + "`.`fee_charges_amount`, 0)"
+							+ " - ifnull(`" + baseEntityName + "`.`fee_charges_completed_derived`, 0)"
+									+ " - ifnull(`" + baseEntityName + "`.`fee_charges_writtenoff_derived`, 0)" 
+											+ " - ifnull(`" + baseEntityName + "`.`fee_charges_waived_derived`, 0))";
+					
+					String outstandingPenalties = "(ifnull(`" + baseEntityName + "`.`penalty_charges_amount`, 0)"
+							+ " - ifnull(`" + baseEntityName + "`.`penalty_charges_completed_derived`, 0)"
+									+ " - ifnull(`" + baseEntityName + "`.`penalty_charges_writtenoff_derived`, 0)" 
+											+ " - ifnull(`" + baseEntityName + "`.`penalty_charges_waived_derived`, 0))";
+	    			
 	    			switch (coreColumn) {
-	    				case REPAYMENT_SCHEDULE_AMOUNT_OUTSTANDING:
+		    			case REPAYMENT_SCHEDULE_TOTAL_OUTSTANDING:
 	    					// =============================================================================
-	    					String outstandingInterest = "((ifnull(`" + baseEntityName + "`.`interest_amount`, 0)"
-	    							+ " - ifnull(`" + baseEntityName + "`.`interest_writtenoff_derived`, 0)"
-	    									+ " - ifnull(`" + baseEntityName + "`.`interest_waived_derived`, 0)" 
-	    											+ " - ifnull(`" + baseEntityName + "`.`interest_completed_derived`, 0))";
-	    					
-	    					String outstandingPrincipal = "(ifnull(`" + baseEntityName + "`.`principal_amount`, 0)"
-	    							+ " - ifnull(`" + baseEntityName + "`.`principal_completed_derived`, 0)"
-											+ " - ifnull(`" + baseEntityName + "`.`principal_writtenoff_derived`, 0))";
-	    					
-	    					String outstandingFees = "(ifnull(`" + baseEntityName + "`.`fee_charges_amount`, 0)"
-	    							+ " - ifnull(`" + baseEntityName + "`.`fee_charges_completed_derived`, 0)"
-	    									+ " - ifnull(`" + baseEntityName + "`.`fee_charges_writtenoff_derived`, 0)" 
-	    											+ " - ifnull(`" + baseEntityName + "`.`fee_charges_waived_derived`, 0))";
-	    					
-	    					String outstandingPenalties = "(ifnull(`" + baseEntityName + "`.`penalty_charges_amount`, 0)"
-	    							+ " - ifnull(`" + baseEntityName + "`.`penalty_charges_completed_derived`, 0)"
-	    									+ " - ifnull(`" + baseEntityName + "`.`penalty_charges_writtenoff_derived`, 0)" 
-	    											+ " - ifnull(`" + baseEntityName + "`.`penalty_charges_waived_derived`, 0)))";
-	    					
-	    					
 	    					if (isSelectStatement) {
-	    						sqlStatement = outstandingInterest + " + " + outstandingPrincipal + " + " + outstandingFees
-	    								 + " + " + outstandingPenalties + " as `" + coreColumn.getLabel() + "`";
+	    						sqlStatement = "(" + outstandingInterest + " + " + outstandingPrincipal + " + " + outstandingFees
+	    								 + " + " + outstandingPenalties + ") as `" + coreColumn.getLabel() + "`";
 	    						
 	    						// add the select statement
 	        					sqlBuilder.SELECT(sqlStatement);
 	    					} else if (filterValue != null) {
-	    						sqlStatement = outstandingInterest + " + " + outstandingPrincipal + " + " + outstandingFees
-	    								 + " + " + outstandingPenalties + filterValue;
+	    						sqlStatement = "(" + outstandingInterest + " + " + outstandingPrincipal + " + " + outstandingFees
+	    								 + " + " + outstandingPenalties + ")" + filterValue;
+	    						
+	    						// add a WHERE clause
+	    						sqlBuilder.WHERE(sqlStatement);
+	    					}
+	    					// =============================================================================
+	    					break;
+	    				case REPAYMENT_SCHEDULE_PRINCIPAL_OUTSTANDING:
+	    					// =============================================================================
+	    					if (isSelectStatement) {
+	    						sqlStatement = outstandingPrincipal + " as `" + coreColumn.getLabel() + "`";
+	    						
+	    						// add the select statement
+	        					sqlBuilder.SELECT(sqlStatement);
+	    					} else if (filterValue != null) {
+	    						sqlStatement = outstandingPrincipal + filterValue;
+	    						
+	    						// add a WHERE clause
+	    						sqlBuilder.WHERE(sqlStatement);
+	    					}
+	    					// =============================================================================
+	    					break;
+	    					
+	    				case REPAYMENT_SCHEDULE_INTEREST_OUTSTANDING:
+	    					// =============================================================================
+	    					if (isSelectStatement) {
+	    						sqlStatement = outstandingInterest + " as `" + coreColumn.getLabel() + "`";
+	    						
+	    						// add the select statement
+	        					sqlBuilder.SELECT(sqlStatement);
+	    					} else if (filterValue != null) {
+	    						sqlStatement = outstandingInterest + filterValue;
+	    						
+	    						// add a WHERE clause
+	    						sqlBuilder.WHERE(sqlStatement);
+	    					}
+	    					// =============================================================================
+	    					break;
+	    					
+	    				case REPAYMENT_SCHEDULE_FEES_OUTSTANDING:
+	    					// =============================================================================
+	    					if (isSelectStatement) {
+	    						sqlStatement = outstandingFees + " as `" + coreColumn.getLabel() + "`";
+	    						
+	    						// add the select statement
+	        					sqlBuilder.SELECT(sqlStatement);
+	    					} else if (filterValue != null) {
+	    						sqlStatement = outstandingFees + filterValue;
+	    						
+	    						// add a WHERE clause
+	    						sqlBuilder.WHERE(sqlStatement);
+	    					}
+	    					// =============================================================================
+	    					break;
+	    					
+	    				case REPAYMENT_SCHEDULE_PENALTIES_OUTSTANDING:
+	    					// =============================================================================
+	    					if (isSelectStatement) {
+	    						sqlStatement = outstandingPenalties + " as `" + coreColumn.getLabel() + "`";
+	    						
+	    						// add the select statement
+	        					sqlBuilder.SELECT(sqlStatement);
+	    					} else if (filterValue != null) {
+	    						sqlStatement = outstandingPenalties + filterValue;
 	    						
 	    						// add a WHERE clause
 	    						sqlBuilder.WHERE(sqlStatement);
@@ -3315,6 +3377,9 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    						// add the join to the map
 	        					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
 	    					}
+	    					
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					mLoanTableAlias = dataExportSqlJoin.getParentTableAlias();
 	    					// =============================================================================
 	    					
 	    					// =============================================================================
@@ -3359,10 +3424,10 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    						// m_loan and m_group table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_GROUP.getName() + "` `"
 	                        			+ mGroupTableAlias + "` on `" + mGroupTableAlias + "`.`id` = `"
-	                					+ baseEntityName + "`.`group_id`";
+	                					+ mLoanTableAlias + "`.`group_id`";
 	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_GROUP, 
 	        							DataExportCoreTable.M_LOAN, sqlStatement, mGroupTableAlias, 
-	        							baseEntityName);
+	        							mLoanTableAlias);
 	        					
 	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
 	    						
@@ -3395,12 +3460,12 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    						// m_staff and m_client/m_group table join
 	        					sqlStatement = "`" + DataExportCoreTable.M_STAFF.getName() + "` `"
 	                    			+ mStaffTableAlias + "` on `" + mStaffTableAlias + "`.`id` = case when "
-	            					+ "isnull(`" + baseEntityName + "`.`group_id`) then `"
+	            					+ "isnull(`" + mLoanTableAlias + "`.`group_id`) then `"
 	            							+ clientLoanSqlJoin.getParentTableAlias() + "`.`staff_id` else `"
 	            									+ groupLoanSqlJoin.getParentTableAlias() + "`.`staff_id` end";
 	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_STAFF, 
 	        							DataExportCoreTable.M_LOAN, sqlStatement, mStaffTableAlias, 
-	        							baseEntityName);
+	        							mLoanTableAlias);
 	        					
 	        					sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
 	    						
