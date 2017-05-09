@@ -50,7 +50,6 @@ public interface ConfigurationDomainService {
     boolean isMeetingMandatoryForJLGLoans();
 
     int getRoundingMode();
-    int getCurrencyDigits();
 
     boolean isBackdatePenaltiesEnabled();
     

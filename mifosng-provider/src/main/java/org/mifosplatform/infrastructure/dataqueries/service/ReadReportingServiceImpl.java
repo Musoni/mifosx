@@ -28,7 +28,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
 import org.apache.commons.lang.StringUtils;
-import org.mifosplatform.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
 import org.mifosplatform.infrastructure.core.domain.MifosPlatformTenant;
 import org.mifosplatform.infrastructure.core.domain.MifosPlatformTenantConnection;
@@ -82,12 +81,10 @@ public class ReadReportingServiceImpl implements ReadReportingService {
     private final PlatformSecurityContext context;
     private final GenericDataService genericDataService;
     private boolean noPentaho = false;
-    private final ConfigurationDomainService configurationDomainService;
-
 
     @Autowired
     public ReadReportingServiceImpl(final PlatformSecurityContext context, final RoutingDataSource dataSource,
-            final GenericDataService genericDataService, final ConfigurationDomainService configurationDomainService) {
+            final GenericDataService genericDataService) {
         // kick off pentaho reports server
         ClassicEngineBoot.getInstance().start();
         this.noPentaho = false;
@@ -96,8 +93,6 @@ public class ReadReportingServiceImpl implements ReadReportingService {
         this.dataSource = dataSource;
         this.jdbcTemplate = new JdbcTemplate(this.dataSource);
         this.genericDataService = genericDataService;
-        this.configurationDomainService = configurationDomainService;
-
     }
 
     @Override
@@ -422,12 +417,6 @@ public class ReadReportingServiceImpl implements ReadReportingService {
             rptParamValues.put("tenantUrl", tenantUrl);
             rptParamValues.put("username", tenantConnection.getSchemaUsername());
             rptParamValues.put("password", tenantConnection.getSchemaPassword());
-
-            // Add currencyDigit param by default:
-            if(rptParamValues.get("currencyDigit") == null) {
-                rptParamValues.put("currencyDigit", this.configurationDomainService.getCurrencyDigits());
-            }
-
         } catch (final Exception e) {
             logger.error("error.msg.reporting.error:" + e.getMessage(), e.getMessage());
             errorLog.append("ReadReportingServiceImpl.addParametersToReport method threw an Exception: "
