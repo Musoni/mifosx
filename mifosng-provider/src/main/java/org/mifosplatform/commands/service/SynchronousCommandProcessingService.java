@@ -89,7 +89,7 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
         }
 
         if (!result.hasChanges() && wrapper.isUpdateOperation() && !wrapper.isUpdateDatatable()) {
-            commandSourceResult.updateJsonTo(null);
+            commandSourceResult.updateJsonTo("{}");
         }
 
         if (commandSourceResult.hasJson()) {
