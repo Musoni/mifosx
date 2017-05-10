@@ -108,7 +108,6 @@ public class LoanProductData {
     private final Integer installmentAmountInMultiplesOf;
     private final boolean reverseOverdueDaysNPAInterest;
     private final boolean canAutoAllocateOverpayments;
-    private final boolean allowAdditionalCharges;
 
     // charges
     private final Collection<ChargeData> charges;
@@ -251,7 +250,6 @@ public class LoanProductData {
         final Collection<CreditCheckData> creditChecks = null;
         final boolean reverseOverdueDaysNPAInterest = false;
         final boolean canAutoAllocateOverpayments = false;
-        final boolean allowAdditionalCharges = true;
 
         return new LoanProductData(id, name, shortName, description, currency, principal, minPrincipal, maxPrincipal, tolerance,
                 numberOfRepayments, minNumberOfRepayments, maxNumberOfRepayments, repaymentEvery, interestRatePerPeriod,
@@ -267,7 +265,7 @@ public class LoanProductData {
                 loanProductConfigurableAttributes, isLinkedToFloatingInterestRates, floatingRateId, floatingRateName,
                 interestRateDifferential, minDifferentialLendingRate, defaultDifferentialLendingRate, maxDifferentialLendingRate,
                 isFloatingInterestRateCalculationAllowed, isVariableInstallmentsAllowed, minimumGap, maximumGap,
-                creditChecks, reverseOverdueDaysNPAInterest, productGroup, canAutoAllocateOverpayments, allowAdditionalCharges);
+                creditChecks, reverseOverdueDaysNPAInterest, productGroup, canAutoAllocateOverpayments);
     }
 
     public static LoanProductData lookupWithCurrency(final Long id, final String name, final CurrencyData currency) {
@@ -344,7 +342,6 @@ public class LoanProductData {
         final Collection<CreditCheckData> creditChecks = null;
         final boolean reverseOverdueDaysNPAInterest = false;
         final boolean canAutoAllocateOverpayments = false;
-        final boolean allowAdditionalCharges = true;
         
         return new LoanProductData(id, name, shortName, description, currency, principal, minPrincipal, maxPrincipal, tolerance,
                 numberOfRepayments, minNumberOfRepayments, maxNumberOfRepayments, repaymentEvery, interestRatePerPeriod,
@@ -360,7 +357,7 @@ public class LoanProductData {
                 loanProductConfigurableAttributes, isLinkedToFloatingInterestRates, floatingRateId, floatingRateName,
                 interestRateDifferential, minDifferentialLendingRate, defaultDifferentialLendingRate, maxDifferentialLendingRate,
                 isFloatingInterestRateCalculationAllowed, isVariableInstallmentsAllowed, minimumGap, maximumGap,
-                creditChecks, reverseOverdueDaysNPAInterest, productGroup, canAutoAllocateOverpayments, allowAdditionalCharges);
+                creditChecks, reverseOverdueDaysNPAInterest, productGroup, canAutoAllocateOverpayments);
     }
 
     public static LoanProductData sensibleDefaultsForNewLoanProductCreation() {
@@ -444,7 +441,6 @@ public class LoanProductData {
         final Collection<CreditCheckData> creditChecks = null;
         final boolean reverseOverdueDaysNPAInterest = false;
         final boolean canAutoAllocateOverpayments = false;
-        final boolean allowAdditionalCharges = true;
 
         return new LoanProductData(id, name, shortName, description, currency, principal, minPrincipal, maxPrincipal, tolerance,
                 numberOfRepayments, minNumberOfRepayments, maxNumberOfRepayments, repaymentEvery, interestRatePerPeriod,
@@ -460,7 +456,7 @@ public class LoanProductData {
                 installmentAmountInMultiplesOf, loanProductConfigurableAttributes, isLinkedToFloatingInterestRates, floatingRateId,
                 floatingRateName, interestRateDifferential, minDifferentialLendingRate, defaultDifferentialLendingRate,
                 maxDifferentialLendingRate, isFloatingInterestRateCalculationAllowed, isVariableInstallmentsAllowed, minimumGap, maximumGap,
-                creditChecks, reverseOverdueDaysNPAInterest, productGroup, canAutoAllocateOverpayments, allowAdditionalCharges);
+                creditChecks, reverseOverdueDaysNPAInterest, productGroup, canAutoAllocateOverpayments);
     }
 
     public static LoanProductData withAccountingDetails(final LoanProductData productData, final Map<String, Object> accountingMappings,
@@ -500,7 +496,7 @@ public class LoanProductData {
             boolean isFloatingInterestRateCalculationAllowed, final boolean isVariableInstallmentsAllowed,
             final Integer minimumGapBetweenInstallments, final Integer maximumGapBetweenInstallments, 
             final Collection<CreditCheckData> creditChecks, final boolean reverseOverdueDaysNPAInterest,
-            final CodeValueData productGroup, final boolean canAutoAllocateOverpayments, final boolean allowAdditionalCharges) {
+            final CodeValueData productGroup, final boolean canAutoAllocateOverpayments) {
 
         this.id = id;
         this.name = name;
@@ -605,7 +601,6 @@ public class LoanProductData {
         this.creditCheckOptions = null;
         this.reverseOverdueDaysNPAInterest = reverseOverdueDaysNPAInterest;
         this.canAutoAllocateOverpayments = canAutoAllocateOverpayments;
-        this.allowAdditionalCharges = allowAdditionalCharges;
     }
 
     public LoanProductData(final LoanProductData productData, final Collection<ChargeData> chargeOptions,
@@ -742,7 +737,6 @@ public class LoanProductData {
         this.installmentAmountInMultiplesOf = productData.installmentAmountInMultiplesOf;
         this.preClosureInterestCalculationStrategyOptions = preCloseInterestCalculationStrategyOptions;
         this.canAutoAllocateOverpayments = productData.canAutoAllocateOverpayments;
-        this.allowAdditionalCharges = productData.allowAdditionalCharges;
     }
 
     private Collection<ChargeData> nullIfEmpty(final Collection<ChargeData> charges) {
@@ -1086,10 +1080,5 @@ public class LoanProductData {
      * @return the canAutoAllocateOverpayments
      */
     public boolean isCanAutoAllocateOverpayments() { return canAutoAllocateOverpayments; }
-
-    /**
-     * @return the allowAdditionalCharges
-     */
-    public boolean allowsAdditionalCharges() { return allowAdditionalCharges; }
 
 }
