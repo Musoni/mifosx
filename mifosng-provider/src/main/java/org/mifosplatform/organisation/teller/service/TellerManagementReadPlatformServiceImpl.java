@@ -183,7 +183,12 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             sqlBuilder.append(" and ( sav_txn.created_date <= c.ended_at OR c.ended_at IS NULL) ");
             sqlBuilder.append(" and exists ( select pd.id from m_payment_detail pd left join  m_payment_type pt on pt.id = pd.payment_type_id where pt.is_cash_payment=1 ");
             sqlBuilder.append(" and sav_txn.payment_detail_id = pd.id  ) ");
-            sqlBuilder.append(" and renum.enum_value in ('deposit','withdrawal fee', 'Pay Charge', 'withdrawal') ");
+
+            sqlBuilder.append(" and  EXISTS ( select renum.enum_value from r_enum_value renum where renum.enum_value in " );
+            sqlBuilder.append(" ('deposit','withdrawal fee', 'Pay Charge', 'withdrawal') ");
+            sqlBuilder.append(" and sav_txn.transaction_type_enum  = renum.enum_id and  renum.enum_name = 'savings_transaction_type_enum' ) ");
+
+           // sqlBuilder.append(" and renum.enum_value in ('deposit','withdrawal fee', 'Pay Charge', 'withdrawal') ");
             sqlBuilder.append(" and c.teller_id = ?  ");
 
             sqlBuilder.append(" group by c.teller_id ) as sav on sav.teller_id = t.id ");
@@ -193,7 +198,7 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             sqlBuilder.append(" c.teller_id as teller_id ");
             sqlBuilder.append(" from m_cashier_transactions txn ");
             sqlBuilder.append(" left join m_cashiers c on c.id = txn.cashier_id ");
-            sqlBuilder.append(" left join m_staff s on s.id = c.staff_id ");
+           // sqlBuilder.append(" left join m_staff s on s.id = c.staff_id ");
             sqlBuilder.append(" where  txn.created_date >= c.started_at ");
 
             sqlBuilder.append(" and(txn.created_date <= c.ended_at OR c.end_date IS NULL)" );
@@ -466,25 +471,34 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
 
             final String sql = " select * from (select *, @balance:= CASE WHEN txn_type IN (103,101) THEN @balance+ txn_amount ELSE @balance-txn_amount END as balance " +
                     "from (select @balance:=0) as p, (select * from (select " + ctm.cashierTxnSchema()
-                    + " where t.id = ? and (txn.currency_code = ?  or ? IS NULL ) and o.hierarchy like ? " +
-                    " and ( (txn.created_date BETWEEN ? and ? ) OR ( ? IS NULL  AND ? IS NULL ) ) ) cashier_txns " + " union (select "
+                    + " where t.id = ? and (txn.currency_code = ?  or ? IS NULL ) and o.hierarchy like ? "
+
+                    +" ) cashier_txns " + " union (select "
                     + ctm.savingsTxnSchema()
-                    + " where pt.is_cash_payment=1 and sav_txn.is_reversed = 0 and t.id = ? and ( sav.currency_code = ? OR ? IS NULL ) and o.hierarchy like ? and "
-                    + " sav_txn.created_date >= c.started_at and ( sav_txn.created_date <= c.ended_at OR c.ended_at IS NULL) " +
-                    " and ( (sav_txn.created_date BETWEEN ? and ? ) OR ( ? IS NULL  AND ? IS NULL ) ) "
-                    + " and renum.enum_value in ('deposit','withdrawal fee', 'Pay Charge', 'withdrawal') ) " + " union (select "
+                    + " where  EXISTS ( select renum.enum_value from r_enum_value renum " +
+                    "             where renum.enum_value in  ('deposit','withdrawal fee', 'Pay Charge', 'withdrawal') )"
+                    + " and exists ( select pd.id from m_payment_detail pd left join  m_payment_type pt on pt.id = pd.payment_type_id " +
+                    "  where pt.is_cash_payment=1  and sav_txn.payment_detail_id = pd.id  ) "
+                    + " and sav_txn.is_reversed = 0 and t.id = ? and ( sav.currency_code = ? OR ? IS NULL ) and o.hierarchy like ? and "
+                    + " sav_txn.created_date >= c.started_at and ( sav_txn.created_date <= c.ended_at OR c.ended_at IS NULL) "
+
+                    + "  ) " + " union (select "
                     + ctm.loansTxnSchema()
-                    + " where pt.is_cash_payment=1 and loan_txn.is_reversed = 0 and t.id = ? and (loan.currency_code = ?  OR ? IS NULL )and o.hierarchy like ? and "
-                    + " loan_txn.created_date >= c.started_at and ( loan_txn.created_date <= c.ended_at OR c.ended_at IS NULL) " +
-                    "  and ( (loan_txn.created_date BETWEEN ? and ? ) OR ( ? IS NULL  AND ? IS NULL ) ) "
-                    + " and renum.enum_value in ('Repayment At Disbursement','Repayment', 'Recovery Payment','Disbursement') ) "
+                    +" where  EXISTS ( select renum.enum_value from r_enum_value renum " +
+                    "             where renum.enum_value in  ('Repayment At Disbursement','Repayment', 'Recovery Payment','Disbursement') )"
+                    + " and exists ( select pd.id from m_payment_detail pd left join  m_payment_type pt on pt.id = pd.payment_type_id " +
+                    "   where pt.is_cash_payment=1  and loan_txn.payment_detail_id = pd.id  )  "
+                    + " and loan_txn.is_reversed = 0 and t.id = ? and (loan.currency_code = ?  OR ? IS NULL )and o.hierarchy like ? and "
+                    + " loan_txn.created_date >= c.started_at and ( loan_txn.created_date <= c.ended_at OR c.ended_at IS NULL) "
+
+                    + " ) "
                     + " order by created_date ) as t ) as z order by created_date desc ";
 
             // logger.info(sql);
 
-            return this.jdbcTemplate.query(sql, ctm, new Object[] { tellerId, null, null, hierarchySearchString, fromDate,toDate,fromDate,toDate,
-                    tellerId, null,null,hierarchySearchString, fromDate,toDate,fromDate,toDate,
-                    tellerId, null,null, hierarchySearchString, fromDate,toDate,fromDate,toDate });
+            return this.jdbcTemplate.query(sql, ctm, new Object[] { tellerId, null, null, hierarchySearchString,
+                    tellerId, null,null,hierarchySearchString,
+                    tellerId, null,null, hierarchySearchString });
     }
 
     @Override
@@ -727,12 +741,13 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             sqlBuilder.append(" txn.txn_amount as txn_amount, txn.txn_date as txn_date, txn.txn_note as txn_note, ");
             sqlBuilder.append(" txn.entity_type as entity_type, txn.entity_id as entity_id, txn.created_date as created_date, ");
             sqlBuilder
-                    .append(" o.id as office_id, o.name as office_name, t.id as teller_id, t.name as teller_name, s.display_name as cashier_name ");
+                    .append(" o.id as office_id, o.name as office_name, t.id as teller_id, t.name as teller_name,");
+            sqlBuilder.append("  ( select display_name from m_staff st where st.id =c.staff_id  ) as cashier_name ");
             sqlBuilder.append(" from m_cashier_transactions txn ");
             sqlBuilder.append(" left join m_cashiers c on c.id = txn.cashier_id ");
             sqlBuilder.append(" left join m_tellers t on t.id = c.teller_id ");
             sqlBuilder.append(" left join m_office o on o.id = t.office_id ");
-            sqlBuilder.append(" left join m_staff s on s.id = c.staff_id ");
+
 
             return sqlBuilder.toString();
         }
@@ -757,7 +772,9 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
                     .append(" concat (renum.enum_value, ', Sav:', sav.id, '-', sav.account_no, ',Client:', cl.id, '-',cl.display_name) as txn_note, ");
             sqlBuilder.append(" 'savings' as entity_type, sav.id as entity_id, sav_txn.created_date as created_date, ");
             sqlBuilder
-                    .append(" o.id as office_id, o.name as office_name, t.id as teller_id, t.name as teller_name, staff.display_name as cashier_name ");
+                    .append(" o.id as office_id, o.name as office_name, t.id as teller_id, t.name as teller_name, ");
+            sqlBuilder.append("  (select display_name from m_staff st where st.id =c.staff_id  ) as cashier_name ");
+
             sqlBuilder.append(" from m_savings_account_transaction sav_txn ");
             sqlBuilder
                     .append(" left join r_enum_value renum on sav_txn.transaction_type_enum = renum.enum_id and renum.enum_name = 'savings_transaction_type_enum' ");
@@ -767,10 +784,9 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             sqlBuilder.append(" left join m_office o on CASE WHEN  cl.office_id IS NULL THEN mc.office_id ELSE cl.office_id END = o.id ");
             sqlBuilder.append(" left join m_appuser user on sav_txn.appuser_id = user.id ");
             sqlBuilder.append(" left join m_cashiers c on c.appuser_id = user.id ");
-            sqlBuilder.append(" left join m_staff staff on c.staff_id = staff.id ");
+
             sqlBuilder.append(" left join m_tellers t on t.id = c.teller_id ");
-            sqlBuilder.append(" left join m_payment_detail pd on sav_txn.payment_detail_id = pd.id ");
-            sqlBuilder.append(" left join m_payment_type as pt on pt.id = pd.payment_type_id ");
+
 
 
             return sqlBuilder.toString();
@@ -796,7 +812,9 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
                     .append(" concat (renum.enum_value, ', Loan:', loan.id, '-', loan.account_no, ',Client:', cl.id, '-',cl.display_name) as txn_note, ");
             sqlBuilder.append(" 'loans' as entity_type, loan.id as entity_id, loan_txn.created_date as created_date, ");
             sqlBuilder
-                    .append(" o.id as office_id, o.name as office_name, t.id as teller_id, t.name as teller_name, staff.display_name as cashier_name ");
+                    .append(" o.id as office_id, o.name as office_name, t.id as teller_id, t.name as teller_name,");
+
+            sqlBuilder.append("  (select display_name from m_staff st where st.id =c.staff_id  ) as cashier_name ");
             sqlBuilder.append(" from m_loan_transaction loan_txn ");
             sqlBuilder
                     .append(" left join r_enum_value renum on loan_txn.transaction_type_enum = renum.enum_id and renum.enum_name = 'transaction_type_enum' ");
@@ -806,10 +824,9 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             sqlBuilder.append(" left join m_office o on CASE WHEN  cl.office_id IS NULL THEN mc.office_id ELSE cl.office_id END = o.id ");
             sqlBuilder.append(" left join m_appuser user on loan_txn.appuser_id = user.id ");
             sqlBuilder.append(" left join m_cashiers c on c.appuser_id = user.id ");
-            sqlBuilder.append(" left join m_staff staff on c.staff_id = staff.id ");
+
             sqlBuilder.append(" left join m_tellers t on t.id = c.teller_id ");
-            sqlBuilder.append(" left join m_payment_detail pd on loan_txn.payment_detail_id = pd.id ");
-            sqlBuilder.append(" left join m_payment_type as pt on pt.id = pd.payment_type_id ");
+
 
             return sqlBuilder.toString();
         }
