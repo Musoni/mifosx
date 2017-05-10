@@ -174,7 +174,7 @@ public class LoanAssembler {
 
         Boolean standingInstructionConfiguration = loanProduct.getLoanProductConfigurableAttributes().getStandingInstruction();
         /* production does not allow standing instruction to be created with a loan*/
-        if((!standingInstructionConfiguration) && createStandingInstructionAtDisbursement){
+        if((!standingInstructionConfiguration) && createStandingInstructionAtDisbursement != null && createStandingInstructionAtDisbursement){
             throw new StandingInstructionNotAllowedException(productId);
         }
 
