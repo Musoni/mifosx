@@ -69,6 +69,7 @@ import org.mifosplatform.portfolio.account.domain.StandingInstructionPriority;
 import org.mifosplatform.portfolio.account.domain.StandingInstructionRepository;
 import org.mifosplatform.portfolio.account.domain.StandingInstructionStatus;
 import org.mifosplatform.portfolio.account.domain.StandingInstructionType;
+import org.mifosplatform.portfolio.account.exception.AccountAssociationNotFoundException;
 import org.mifosplatform.portfolio.account.service.AccountAssociationsReadPlatformService;
 import org.mifosplatform.portfolio.account.service.AccountTransfersReadPlatformService;
 import org.mifosplatform.portfolio.account.service.AccountTransfersWritePlatformService;
@@ -157,6 +158,7 @@ import org.mifosplatform.portfolio.paymentdetail.service.PaymentDetailWritePlatf
 import org.mifosplatform.portfolio.savings.SavingsAccountTransactionType;
 import org.mifosplatform.portfolio.savings.domain.SavingsAccount;
 import org.mifosplatform.portfolio.savings.exception.InsufficientAccountBalanceException;
+import org.mifosplatform.portfolio.savings.exception.SavingsAccountNotActiveException;
 import org.mifosplatform.useradministration.domain.AppUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -1760,8 +1762,14 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 
                 try{
                     final AccountAssociations accountAssociations = this.accountAssociationRepository.findByLoanIdAndType(loanId,AccountAssociationType.LINKED_ACCOUNT_ASSOCIATION.getValue());
+
+                    if(accountAssociations == null || accountAssociations.linkedSavingsAccount() == null){ throw new AccountAssociationNotFoundException(loanId,AccountAssociationType.LINKED_ACCOUNT_ASSOCIATION.getValue()); }
+
                     final Loan loan = accountAssociations.getLoan();
                     final SavingsAccount toSavingsAccount = accountAssociations.linkedSavingsAccount();
+
+                    if(!toSavingsAccount.isActive()){ throw new SavingsAccountNotActiveException(toSavingsAccount.getId()); }
+
                     final BigDecimal transactionAmount = loan.getTotalOverpaid();
                     final LocalDate transactionDate = LocalDate.now();
 
