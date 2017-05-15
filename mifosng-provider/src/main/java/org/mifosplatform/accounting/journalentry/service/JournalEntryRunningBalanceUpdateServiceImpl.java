@@ -72,7 +72,7 @@ public class JournalEntryRunningBalanceUpdateServiceImpl implements JournalEntry
             + "inner join (select max(entry_date) as date from acc_gl_journal_entry where entry_date < ? group by office_id,account_id) je3 "
             + "where je2.id = je.id and je.entry_date = je3.date group by je.id order by je.entry_date DESC " ;
 
-    private final int limit = 50;
+    private final int limit = 100000;
 
     @Autowired
     public JournalEntryRunningBalanceUpdateServiceImpl(final RoutingDataSource dataSource, final OfficeRepository officeRepository,
@@ -172,7 +172,8 @@ public class JournalEntryRunningBalanceUpdateServiceImpl implements JournalEntry
         }
 
         int startFrom = 0;
-        int maxIterations = 2000 * limit;
+        int maxIterations = 10;
+        int updateLimit = 10;
 
         // Get the first set of data:
         List<JournalEntryData> entryDatas = jdbcTemplate.query( entryMapper.organizationRunningBalanceSchema(), entryMapper,
@@ -180,7 +181,7 @@ public class JournalEntryRunningBalanceUpdateServiceImpl implements JournalEntry
 
         while (startFrom < maxIterations) {
             if (entryDatas.size() > 0) {
-                String[] updateSql = new String[entryDatas.size() * 3];
+                String[] updateSql = new String[updateLimit * 3];
                 int i = 0;
                 for (JournalEntryData entryData : entryDatas) {
                     Map<Long, BigDecimal> officeRunningBalanceMap = null;
@@ -216,10 +217,16 @@ public class JournalEntryRunningBalanceUpdateServiceImpl implements JournalEntry
                         updateSql[i++] = OffSql;
                     }
 
+                    if(i == updateLimit)
+                    {
+                        this.jdbcTemplate.batchUpdate(updateSql);
+                        updateSql = new String[updateLimit * 3];
+                        i = 0;
+                    }
+
                 }
 
 
-                this.jdbcTemplate.batchUpdate(updateSql);
             } else {
 
                 logger.debug("No more entries found, startFrom: " + startFrom);
@@ -247,7 +254,7 @@ public class JournalEntryRunningBalanceUpdateServiceImpl implements JournalEntry
         }
 
         int startFrom = 0;
-        int maxIterations = 1000 * limit;
+        int maxIterations = 500 * limit;
 
         // Get the first set of data:
         List<JournalEntryData> entryDatas = jdbcTemplate.query(entryMapper.officeRunningBalanceSchema(), entryMapper, new Object[] {
