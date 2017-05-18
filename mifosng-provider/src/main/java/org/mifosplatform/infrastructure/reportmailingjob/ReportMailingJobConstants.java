@@ -62,8 +62,9 @@ public class ReportMailingJobConstants {
             PREVIOUS_RUN_ERROR_LOG, PREVIOUS_RUN_ERROR_MESSAGE, NUMBER_OF_RUNS));
     
     // report mailing job configuration names
-    public static final String GMAIL_SMTP_SERVER = "GMAIL_SMTP_SERVER";
-    public static final String GMAIL_SMTP_PORT = "GMAIL_SMTP_PORT";
-    public static final String GMAIL_SMTP_USERNAME = "GMAIL_SMTP_USERNAME";
-    public static final String GMAIL_SMTP_PASSWORD = "GMAIL_SMTP_PASSWORD";
+    public static final String REPORT_SMTP_SERVER = "REPORT_SMTP_SERVER";
+    public static final String REPORT_SMTP_PORT = "REPORT_SMTP_PORT";
+    public static final String REPORT_SMTP_USERNAME = "REPORT_SMTP_USERNAME";
+    public static final String REPORT_SMTP_PASSWORD = "REPORT_SMTP_PASSWORD";
+    public static final String REPORT_SMTP_FROMADDRESS = "REPORT_SMTP_FROMADDRESS";
 }
