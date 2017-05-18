@@ -79,7 +79,8 @@ public class DataExportEntityColumnName {
 	public static final String OBLIGATION_MET_ON_DATE = "obligations_met_on_date";
 	public static final String TRANSACTION_DATE = "transaction_date";
 	public static final String ACTIVATION_DATE = "activation_date";
+	public static final String FULL_NAME = "fullname";
 	
 	public static final Set<String> COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS = new HashSet<>(Arrays.asList(
-			TRANSFER_TO_OFFICE_ID, VERSION, IMAGE_ID, ACCOUNT_TYPE_ENUM, DEPOSIT_TYPE_ENUM, SUB_STATUS));
+			TRANSFER_TO_OFFICE_ID, VERSION, IMAGE_ID, ACCOUNT_TYPE_ENUM, DEPOSIT_TYPE_ENUM, SUB_STATUS, FULL_NAME));
 }
