@@ -9,7 +9,6 @@ import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import org.joda.time.LocalDate;
 import org.mifosplatform.accounting.common.AccountingEnumerations;
@@ -72,7 +71,7 @@ public class JournalEntryRunningBalanceUpdateServiceImpl implements JournalEntry
             + "inner join (select max(entry_date) as date from acc_gl_journal_entry where entry_date < ? group by office_id,account_id) je3 "
             + "where je2.id = je.id and je.entry_date = je3.date group by je.id order by je.entry_date, je.id DESC " ;
 
-    private final int limit = 200000;
+    private final int limit = 500000;
 
     @Autowired
     public JournalEntryRunningBalanceUpdateServiceImpl(final RoutingDataSource dataSource, final OfficeRepository officeRepository,
@@ -204,7 +203,7 @@ public class JournalEntryRunningBalanceUpdateServiceImpl implements JournalEntry
         List<JournalEntryData> entryDatas = jdbcTemplate.query( entryMapper.organizationRunningBalanceSchema(), entryMapper,
                 new Object[] { entityDate, limit, startFrom });
 
-        while (startFrom < maxIterations) {
+        while (startFrom < (maxIterations * limit)) {
 
             if (entryDatas.size() > 0) {
                 // run a batch update of many SQL statements at a time
@@ -242,8 +241,6 @@ public class JournalEntryRunningBalanceUpdateServiceImpl implements JournalEntry
 
             // Update startFrom & Fetch next set of data::
             startFrom = startFrom + limit;
-            logger.debug("Runningbalances - Fetching next with limit " + limit + " and startFrom " + startFrom);
-
             entryDatas = jdbcTemplate.query(entryMapper.organizationRunningBalanceSchema(), entryMapper,
                     new Object[]{entityDate, limit, startFrom});
 
@@ -278,7 +275,7 @@ public class JournalEntryRunningBalanceUpdateServiceImpl implements JournalEntry
         List<JournalEntryData> entryDatas = jdbcTemplate.query(entryMapper.officeRunningBalanceSchema(), entryMapper, new Object[] {
                 officeId, entityDate, limit, startFrom });
 
-        while (startFrom < maxIterations)
+        while (startFrom <= (maxIterations * limit))
         {
             if (entryDatas.size() > 0) {
                 String[] updateSql = new String[entryDatas.size()];
