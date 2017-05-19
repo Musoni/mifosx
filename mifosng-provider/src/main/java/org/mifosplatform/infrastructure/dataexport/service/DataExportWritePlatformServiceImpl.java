@@ -1111,6 +1111,53 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    						sqlBuilder.WHERE(sqlStatement);
 	    					}
 	    					break;
+						case LOAN_ARREARS_AMOUNT:
+						case LOAN_ARREARS_DATE:
+							// =============================================================================
+							sqlJoinKey = DataExportSqlJoin.createId(referencedTable,
+									DataExportCoreTable.M_LOAN);
+
+							// only add the join statement if it hasn't been previously added
+							if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+								// increment the alias postfix number
+								aliasPostfixNumber.increment();
+
+								parentTableAlias = referencedTable.getAlias(aliasPostfixNumber.intValue());
+
+								// m_client/m_staff and m_loan
+								sqlStatement = "`" + referencedTable.getName() + "` `" + parentTableAlias
+										+ "` on `" + parentTableAlias + "`.`loan_id` = `" + baseEntityName + "`.`"
+										+ foreignKeyIndexColumnName + "`";
+								dataExportSqlJoin = DataExportSqlJoin.newInstance(referencedTable,
+										DataExportCoreTable.M_LOAN, sqlStatement, parentTableAlias,
+										baseEntityName);
+
+								sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+
+								// add the join to the map
+								sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+							}
+							// =============================================================================
+
+							// =============================================================================
+							dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+
+							if (isSelectStatement) {
+								sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`"
+										+ referencedColumnName + "` as `" + coreColumn.getLabel() + "`";
+
+								// add the select statement
+								sqlBuilder.SELECT(sqlStatement);
+
+							} else if (filterValue != null) {
+								sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`"
+										+ referencedColumnName + "` " + filterValue;
+
+								// add a WHERE clause
+								sqlBuilder.WHERE(sqlStatement);
+							}
+							// =============================================================================
+							break;
 	    				default:
 	    					// =============================================================================
 	    					if (isSelectStatement) {
