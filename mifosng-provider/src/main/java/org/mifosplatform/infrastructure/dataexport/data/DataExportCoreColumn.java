@@ -61,7 +61,10 @@ public enum DataExportCoreColumn {
 	REPAYMENT_SCHEDULE_INTEREST_OUTSTANDING("repayment_schedule_interest_outstanding", "interest outstanding", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE),
 	REPAYMENT_SCHEDULE_PENALTIES_OUTSTANDING("repayment_schedule_penalties_outstanding", "penalties outstanding", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE),
 	REPAYMENT_SCHEDULE_FEES_OUTSTANDING("repayment_schedule_fees_outstanding", "fees outstanding", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE),
-	REPAYMENT_SCHEDULE_TOTAL_OUTSTANDING("repayment_schedule_total_outstanding", "total outstanding", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE);
+	REPAYMENT_SCHEDULE_TOTAL_OUTSTANDING("repayment_schedule_total_outstanding", "total outstanding", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE),
+	LOAN_ARREARS_DATE("overdue_since_date_derived", "arrears date", "DATE", true, "id", "overdue_since_date_derived", "m_loan_arrears_aging", DataExportBaseEntity.LOAN),
+	LOAN_ARREARS_DAYS("arrears_days", "arrears days", "INTEGER", true, "id", "overdue_since_date_derived", "m_loan_arrears_aging", DataExportBaseEntity.LOAN),
+	LOAN_ARREARS_AMOUNT("total_overdue_derived", "arrears amount", "DECIMAL", true, "id", "total_overdue_derived", "m_loan_arrears_aging", DataExportBaseEntity.LOAN);
 	
 	private String name;
 	private String label;
