@@ -127,6 +127,7 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
     }
 
     @Override
+
     public Collection<LoanProductData> retrieveAllLoanProductsForLookup(final boolean activeOnly) {
         this.context.authenticatedUser();
 
