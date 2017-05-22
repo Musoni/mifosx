@@ -444,7 +444,7 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
     	String sqlStatement, mClientTableAlias, mGroupTableAlias, mGroupClientTableAlias, 
     	mOfficeTableAlias, mStaffTableAlias, mLoanTableAlias, mProductLoanTableAlias, 
     	mPaymentDetailTableAlias, mSavingsProductTableAlias, sqlJoinKey, parentTableAlias, 
-    	mSavingsAccountTableAlias;
+    	mSavingsAccountTableAlias, mAppUserTableAlias;
     	DataExportSqlJoin dataExportSqlJoin;
     	
     	if (coreColumn != null) {
@@ -2424,6 +2424,52 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					}
 	    					// =============================================================================
 	    					break;
+						case TRANSACTION_CREATED_BY:
+							// =============================================================================
+							sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_APP_USER,
+									DataExportCoreTable.M_LOAN_TRANSACTION);
+
+							// only add the join statement if it hasn't been previously added
+							if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+								// increment the alias postfix number
+								aliasPostfixNumber.increment();
+
+								mAppUserTableAlias = DataExportCoreTable.M_APP_USER.getAlias(aliasPostfixNumber.intValue());
+
+								sqlStatement = "`" + DataExportCoreTable.M_APP_USER.getName() + "` `"
+										+ mAppUserTableAlias + "` on `" + mAppUserTableAlias + "`.`id` = `"
+										+ baseEntityName + "`.`" + coreColumn.getForeignKeyIndexColumnName() + "` ";
+								dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_APP_USER,
+										DataExportCoreTable.M_LOAN_TRANSACTION, sqlStatement, mAppUserTableAlias,
+										baseEntityName);
+
+								sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+
+								// add the join to the map
+								sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+							}
+							// =============================================================================
+
+
+							// =============================================================================
+							dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+
+							if (isSelectStatement) {
+								sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`"
+										+ referencedColumnName + "` as `" + coreColumn.getLabel() + "`";
+
+								// add the select statement
+								sqlBuilder.SELECT(sqlStatement);
+
+							} else if (filterValue != null) {
+								sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`"
+										+ referencedColumnName + "` " + filterValue;
+
+								// add a WHERE clause
+								sqlBuilder.WHERE(sqlStatement);
+							}
+							// =============================================================================
+							break;
 	    				default:
 	    					// =============================================================================
 	    					if (isSelectStatement) {
@@ -3242,6 +3288,52 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					}
 	    					// =============================================================================
 	    					break;
+						case TRANSACTION_CREATED_BY:
+							// =============================================================================
+							sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_APP_USER,
+									DataExportCoreTable.M_SAVINGS_ACCOUNT_TRANSACTION);
+
+							// only add the join statement if it hasn't been previously added
+							if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+								// increment the alias postfix number
+								aliasPostfixNumber.increment();
+
+								mAppUserTableAlias = DataExportCoreTable.M_APP_USER.getAlias(aliasPostfixNumber.intValue());
+
+								sqlStatement = "`" + DataExportCoreTable.M_APP_USER.getName() + "` `"
+										+ mAppUserTableAlias + "` on `" + mAppUserTableAlias + "`.`id` = `"
+										+ baseEntityName + "`.`" + coreColumn.getForeignKeyIndexColumnName() + "` ";
+								dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_APP_USER,
+										DataExportCoreTable.M_SAVINGS_ACCOUNT_TRANSACTION, sqlStatement, mAppUserTableAlias,
+										baseEntityName);
+
+								sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+
+								// add the join to the map
+								sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+							}
+							// =============================================================================
+
+
+							// =============================================================================
+							dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+
+							if (isSelectStatement) {
+								sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`"
+										+ referencedColumnName + "` as `" + coreColumn.getLabel() + "`";
+
+								// add the select statement
+								sqlBuilder.SELECT(sqlStatement);
+
+							} else if (filterValue != null) {
+								sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`"
+										+ referencedColumnName + "` " + filterValue;
+
+								// add a WHERE clause
+								sqlBuilder.WHERE(sqlStatement);
+							}
+							// =============================================================================
+							break;
 	    				default:
 	    					// =============================================================================
 	    					if (isSelectStatement) {
