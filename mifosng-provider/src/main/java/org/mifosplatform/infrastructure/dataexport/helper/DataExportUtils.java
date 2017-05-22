@@ -166,6 +166,7 @@ public class DataExportUtils {
                 
                 for (int i = 1; i <= numberOfColumns; i++) {
                     String columnName = resultSetMetaData.getColumnName(i);
+					String columnLabel = resultSetMetaData.getColumnName(i);
                     String columnType = resultSetMetaData.getColumnTypeName(i);
                     Integer columnIsNullable = resultSetMetaData.isNullable(i);
                     boolean isNullable = (columnIsNullable != 0);
@@ -204,8 +205,6 @@ public class DataExportUtils {
 	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
 	                    				DataExportEntityColumnName.AMOUNT);
 	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
-	                    				DataExportEntityColumnName.ID);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
 	                    				DataExportEntityColumnName.PRINCIPAL_PORTION_DERIVED);
 	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
 	                    				DataExportEntityColumnName.INTEREST_PORTION_DERIVED);
@@ -238,8 +237,6 @@ public class DataExportUtils {
 	                    				DataExportEntityColumnName.SAVINGS_ACCOUNT_ID);
 	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
 	                    				DataExportEntityColumnName.AMOUNT);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
-	                    				DataExportEntityColumnName.ID);
 	            	    		break;
 	            	    		
 	                    	case M_LOAN_REPAYMENT_SCHEDULE:
@@ -310,8 +307,11 @@ public class DataExportUtils {
                     
                     if (!DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.
                     		contains(columnName)) {
+						if(columnName.equals(DataExportEntityColumnName.ID)){
+							columnLabel = DataExportEntityColumnName.TRANSACTION_ID;
+						}
                     	EntityColumnMetaData entityColumnMetaData = EntityColumnMetaData.newInstance(columnName, 
-                    			columnName, columnType, isNullable);
+                    			columnLabel, columnType, isNullable);
                         
                         entityColumnsMetaData.add(entityColumnMetaData);
                         columnNames.add(columnName);
