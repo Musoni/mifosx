@@ -586,11 +586,11 @@ public final class LoanTransaction extends AbstractPersistable<Long> {
         if(transactionType.isSuspendedIncome() || transactionType.isReverseSuspendedIncome()){
             thisTransactionData.put("interestPortion", this.suspendedInterestPortion);
             thisTransactionData.put("feeChargesPortion", this.suspendedFeePortion);
-            thisTransactionData.put("penaltyChargesPortion", this.penaltyChargesPortion);
+            thisTransactionData.put("penaltyChargesPortion", this.suspendedPenaltyPortion);
         }else{
             thisTransactionData.put("interestPortion", this.interestPortion);
             thisTransactionData.put("feeChargesPortion", this.feeChargesPortion);
-            thisTransactionData.put("penaltyChargesPortion", this.suspendedFeePortion);
+            thisTransactionData.put("penaltyChargesPortion", this.penaltyChargesPortion);
         }
 
         thisTransactionData.put("overPaymentPortion", this.overPaymentPortion);
