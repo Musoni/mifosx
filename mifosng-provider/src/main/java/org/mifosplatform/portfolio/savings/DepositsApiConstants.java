@@ -14,8 +14,8 @@ import org.mifosplatform.accounting.common.AccountingConstants.SAVINGS_PRODUCT_A
 public class DepositsApiConstants {
 
     // Deposit products
-    public static final String FIXED_DEPOSIT_PRODUCT_RESOURCE_NAME = "fixeddeposit";
-    public static final String RECURRING_DEPOSIT_PRODUCT_RESOURCE_NAME = "recurringdeposit";
+    public static final String FIXED_DEPOSIT_PRODUCT_RESOURCE_NAME = "fixeddepositproduct";
+    public static final String RECURRING_DEPOSIT_PRODUCT_RESOURCE_NAME = "recurringdepositproduct";
 
     // Deposit accounts
     public static final String FIXED_DEPOSIT_ACCOUNT_RESOURCE_NAME = "fixeddepositaccount";
