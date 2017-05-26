@@ -15,6 +15,7 @@ import java.util.Map.Entry;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.mutable.MutableInt;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.LocalDateTime;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
@@ -3338,15 +3339,20 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    				case REPAYMENT_SCHEDULE_PENALTIES_EXPECTED:
 	    				case REPAYMENT_SCHEDULE_PRINCIPAL_EXPECTED:
 	    					// =============================================================================
+	    					final String actualColumnName = StringUtils.replace(coreColumn.getName(), 
+    								"repayment_schedule_", "");
+	    					
 	    					if (isSelectStatement) {
-	    						sqlStatement = "`" + baseEntityName + "`.`" + coreColumn.getName() + "` "
+	    						
+	    						sqlStatement = "`" + baseEntityName + "`.`" + actualColumnName + "` "
 	    								+ "as `" + coreColumn.getLabel() + "`";
 	    						
 	    						// add the select statement
 	        					sqlBuilder.SELECT(sqlStatement);
 	    						
 	    					} else if (filterValue != null) {
-	    						sqlStatement = "`" + baseEntityName + "`.`" + coreColumn.getName() + "` "
+	    						
+	    						sqlStatement = "`" + baseEntityName + "`.`" + actualColumnName + "` "
 	    								+ filterValue;
 	    						
 	    						// add a WHERE clause
