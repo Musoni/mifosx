@@ -368,7 +368,7 @@ public class ReadReportingServiceImpl implements ReadReportingService {
                 final String paramName = paramDefEntry.getName();
 
                 if (!((paramName.equals("tenantdb")) || (paramName.equals("tenantUrl")) || (paramName.equals("userhierarchy") || (paramName.equals("username")) || (paramName
-                        .equals("password") || (paramName.equals("userid") || (paramName.equals("currencyDigit"))))))) {
+                        .equals("password") || (paramName.equals("userid") || (paramName.equals("currencyDigit")|| (paramName.equals("showCompanyDetails")))))))) {
                     logger.info("paramName:" + paramName);
                     final String pValue = queryParams.get(paramName);
                     if (StringUtils.isBlank(pValue)) { throw new PlatformDataIntegrityException("error.msg.reporting.error",
@@ -423,6 +423,7 @@ public class ReadReportingServiceImpl implements ReadReportingService {
             rptParamValues.put("username", tenantConnection.getSchemaUsername());
             rptParamValues.put("password", tenantConnection.getSchemaPassword());
             rptParamValues.put("currencyDigit", this.configurationDomainService.getCurrencyDigits().longValue());
+            rptParamValues.put("showCompanyDetails", this.configurationDomainService.getShowCompanyDetails().longValue());
 
         } catch (final Exception e) {
             logger.error("error.msg.reporting.error:" + e.getMessage(), e.getMessage());
