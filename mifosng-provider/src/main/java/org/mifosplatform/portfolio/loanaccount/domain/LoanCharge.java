@@ -672,14 +672,23 @@ public class LoanCharge extends AbstractPersistable<Long> {
         if (this.minCap != null) {
             final int minimumCap = percentageOf.compareTo(this.minCap);
             if (minimumCap == -1) {
-                minMaxCap = this.minCap;
+                if(this.loan !=null){
+                    minMaxCap = Money.of(this.loan.getCurrency(),this.minCap).getAmount();
+                }else{
+                    minMaxCap = this.minCap;
+                }
                 return minMaxCap;
             }
         }
         if (this.maxCap != null) {
             final int maximumCap = percentageOf.compareTo(this.maxCap);
             if (maximumCap == 1) {
-                minMaxCap = this.maxCap;
+                if(this.loan != null){
+                    minMaxCap = Money.of(this.loan.getCurrency(),this.maxCap).getAmount();
+                }else{
+                    minMaxCap = this.maxCap;
+                }
+
                 return minMaxCap;
             }
         }
