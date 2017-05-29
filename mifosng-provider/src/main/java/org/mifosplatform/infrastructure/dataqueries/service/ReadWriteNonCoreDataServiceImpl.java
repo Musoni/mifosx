@@ -1877,7 +1877,12 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
                 pValueWrite = this.getFormulaExpressionValue(affectedColumns, metaData, pColumnHeader.getColumnFormulaExpression(), columnHeaders);
 
                 // Write back the new value so it can be used in other fields:
-                affectedColumns.put(key,  getObjectValueforColumn(pColumnHeader,pValueWrite,clientApplicationLocale));
+                try{
+                    affectedColumns.put(key,  getObjectValueforColumn(pColumnHeader,pValueWrite,clientApplicationLocale));
+                }catch(NumberFormatException e){
+                    throw new PlatformDataIntegrityException("error.msg.invalid.column.type", "Invalid column type for " + pColumnHeader.getColumnName() + " expects "
+                            + "column of type " + pColumnHeader.getColumnDisplayType() + " column type has "+pValueWrite  );
+                }
 
                 columnName = "`" + key + "`";
                 insertColumns += ", " + columnName;
