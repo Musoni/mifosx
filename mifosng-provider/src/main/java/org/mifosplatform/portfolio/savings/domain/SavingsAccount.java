@@ -2467,10 +2467,11 @@ public class SavingsAccount extends AbstractPersistable<Long> {
 
         if (savingsAccountCharge.isAnnualFee() || savingsAccountCharge.isMonthlyFee() || savingsAccountCharge.isWeeklyFee()) {
             // update due date
+            LocalDate localDateTenantDate = DateUtils.getLocalDateOfTenant();
             if (isActive()) {
-                savingsAccountCharge.updateToNextDueDateFrom(getActivationLocalDate());
+                savingsAccountCharge.updateToNextDueDateFrom(localDateTenantDate);
             } else if (isApproved()) {
-                savingsAccountCharge.updateToNextDueDateFrom(getApprovedOnLocalDate());
+                savingsAccountCharge.updateToNextDueDateFrom(localDateTenantDate);
             }
         }
 

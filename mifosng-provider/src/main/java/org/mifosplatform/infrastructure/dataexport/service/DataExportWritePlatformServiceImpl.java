@@ -2506,6 +2506,28 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					}
 	    					// =============================================================================
 	    					break;
+						case SAVINGS_TRANSACTION_INTEREST_POSTING:
+							// =============================================================================
+							if (isSelectStatement) {
+								sqlStatement = "case when `" + baseEntityName + "`.`transaction_type_enum` = "
+										+ SavingsAccountTransactionType.INTEREST_POSTING.getValue() + " then `"
+										+ baseEntityName + "`.`amount` else NULL end as `"
+										+ coreColumn.getLabel() + "`";
+
+								// add the select statement
+								sqlBuilder.SELECT(sqlStatement);
+
+							} else if (filterValue != null) {
+								sqlStatement = "case when `" + baseEntityName + "`.`transaction_type_enum` = "
+										+ SavingsAccountTransactionType.INTEREST_POSTING.getValue() + " then `"
+										+ baseEntityName + "`.`amount` else NULL end "
+										+ filterValue;
+
+								// add a WHERE clause
+								sqlBuilder.WHERE(sqlStatement);
+							}
+							// =============================================================================
+							break;
 	    				case SAVINGS_TRANSACTION_CHARGE_APPLIED:
 	    					// =============================================================================
 	    					if (isSelectStatement) {
