@@ -962,9 +962,9 @@ public class SavingsAccount extends AbstractPersistable<Long> {
             if (depositAccountOnHoldTransactions != null) {
                 for (final DepositAccountOnHoldTransaction onHoldTransaction : depositAccountOnHoldTransactions) {
                     // Compare the balance of the on hold:
-                    if ((onHoldTransaction.getTransactionDate().isBefore(transaction.transactionLocalDate()) || onHoldTransaction
-                            .getTransactionDate().isEqual(transaction.transactionLocalDate()))
-                            && (lastSavingsDate == null || onHoldTransaction.getTransactionDate().isAfter(lastSavingsDate))) {
+                    if ((onHoldTransaction.getTransactionDate().isBefore(transaction.transactionLocalDate()) || (onHoldTransaction
+                            .getTransactionDate().isEqual(transaction.transactionLocalDate()) && onHoldTransaction.getCreatedData().isBefore(transaction.getCreatedDate()))
+                            && (lastSavingsDate == null || onHoldTransaction.getTransactionDate().isAfter(lastSavingsDate)))) {
                         if (onHoldTransaction.getTransactionType().isHold()) {
                             minRequiredBalance = minRequiredBalance.plus(onHoldTransaction.getAmountMoney(this.currency));
                         } else {
@@ -1007,9 +1007,9 @@ public class SavingsAccount extends AbstractPersistable<Long> {
             if (depositAccountOnHoldTransactions != null) {
                 for (final DepositAccountOnHoldTransaction onHoldTransaction : depositAccountOnHoldTransactions) {
                     // Compare the balance of the on hold:
-                    if ((onHoldTransaction.getTransactionDate().isBefore(transaction.transactionLocalDate()) || onHoldTransaction
-                            .getTransactionDate().isEqual(transaction.transactionLocalDate()))
-                            && (lastSavingsDate == null || onHoldTransaction.getTransactionDate().isAfter(lastSavingsDate))) {
+                    if ((onHoldTransaction.getTransactionDate().isBefore(transaction.transactionLocalDate()) || (onHoldTransaction
+                            .getTransactionDate().isEqual(transaction.transactionLocalDate()) && onHoldTransaction.getCreatedData().isBefore(transaction.getCreatedDate()))
+                            && (lastSavingsDate == null || onHoldTransaction.getTransactionDate().isAfter(lastSavingsDate)))) {
                         if (onHoldTransaction.getTransactionType().isHold()) {
                             minRequiredBalance = minRequiredBalance.plus(onHoldTransaction.getAmountMoney(this.currency));
                         } else {

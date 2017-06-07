@@ -27,6 +27,7 @@ import javax.persistence.TemporalType;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
 import org.mifosplatform.infrastructure.core.domain.LocalDateInterval;
 import org.mifosplatform.organisation.monetary.data.CurrencyData;
 import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
@@ -361,6 +362,14 @@ public final class SavingsAccountTransaction extends AbstractPersistable<Long> {
 
     public LocalDate getTransactionLocalDate() {
         return new LocalDate(this.dateOf);
+    }
+
+    public LocalDateTime getCreatedDate(){
+        LocalDateTime createdDate = null ;
+        if(this.createdDate != null){
+            createdDate = new LocalDateTime(this.createdDate);
+        }
+        return createdDate;
     }
 
     private LocalDate getEndOfBalanceLocalDate() {
