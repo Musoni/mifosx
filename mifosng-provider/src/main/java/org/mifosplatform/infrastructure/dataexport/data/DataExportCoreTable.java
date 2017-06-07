@@ -25,8 +25,7 @@ public enum DataExportCoreTable {
 	M_APP_USER("m_appuser"),
 	R_ENUM_VALUE("r_enum_value"),
 	M_GUARANTOR("m_guarantor"),
-	M_PAYMENT_TYPE("m_payment_type"),
-	M_LOAN_ARREARS_AGING("m_loan_arrears_aging");
+	M_PAYMENT_TYPE("m_payment_type");
 	
 	private String name;
 
