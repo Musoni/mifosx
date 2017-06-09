@@ -7,11 +7,15 @@ package org.mifosplatform.portfolio.savings.domain;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
 public interface DepositAccountOnHoldTransactionRepository extends JpaRepository<DepositAccountOnHoldTransaction, Long>,
         JpaSpecificationExecutor<DepositAccountOnHoldTransaction> {
 
-        List<DepositAccountOnHoldTransaction> findBySavingsAccountAndReversedFalseOrderByCreatedDateAsc(SavingsAccount account);
+        @Query("from DepositAccountOnHoldTransaction sa where sa.savingsAccount = :savingsAccount and sa.reversed = false order by sa.transactionDate, sa.createdDate")
+        List<DepositAccountOnHoldTransaction> findBySavingsAccountAndReversedFalseOrderByCreatedDateAsc(@Param("savingsAccount") SavingsAccount account );
+
 }
