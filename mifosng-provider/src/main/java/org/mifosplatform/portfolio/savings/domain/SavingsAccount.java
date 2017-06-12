@@ -943,6 +943,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         Money runningBalance = Money.zero(this.currency);
         Money minRequiredBalance = minRequiredBalanceDerived(getCurrency());
         LocalDate lastSavingsDate = null;
+        Set<Long> onHoldTransactionsId = new HashSet<>();
         for (final SavingsAccountTransaction transaction : transactionsSortedByDate) {
             if (transaction.isNotReversed() && transaction.isCredit()) {
                 runningBalance = runningBalance.plus(transaction.getAmount(this.currency));
@@ -970,6 +971,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
                         } else {
                             minRequiredBalance = minRequiredBalance.minus(onHoldTransaction.getAmountMoney(this.currency));
                         }
+
                     }
                 }
             }
