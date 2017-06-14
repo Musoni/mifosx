@@ -1361,11 +1361,11 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
         Collection<ChargeData> chargeOptions = null;
         if (loanProduct.getMultiDisburseLoan()) {
             chargeOptions = this.chargeReadPlatformService.retrieveLoanProductApplicableCharges(productId,
-                    new ChargeTimeType[] { ChargeTimeType.OVERDUE_INSTALLMENT,ChargeTimeType.OVERDUE_ON_MATURITY });
+                    new ChargeTimeType[] { ChargeTimeType.OVERDUE_INSTALLMENT });
         } else {
             chargeOptions = this.chargeReadPlatformService.retrieveLoanProductApplicableCharges(productId, new ChargeTimeType[] {
                     ChargeTimeType.OVERDUE_INSTALLMENT, ChargeTimeType.TRANCHE_DISBURSEMENT, 
-                    ChargeTimeType.LOAN_RESCHEDULING_FEE,ChargeTimeType.OVERDUE_ON_MATURITY });
+                    ChargeTimeType.LOAN_RESCHEDULING_FEE });
         }
         Integer loanCycleCounter = null;
         if (loanProduct.useBorrowerCycle()) {
