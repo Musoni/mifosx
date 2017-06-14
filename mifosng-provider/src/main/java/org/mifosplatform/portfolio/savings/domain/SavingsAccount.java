@@ -943,6 +943,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         Money runningBalance = Money.zero(this.currency);
         Money minRequiredBalance = minRequiredBalanceDerived(getCurrency());
         LocalDate lastSavingsDate = null;
+        Set<Long> onHoldTransactionsId = new HashSet<>();
         for (final SavingsAccountTransaction transaction : transactionsSortedByDate) {
             if (transaction.isNotReversed() && transaction.isCredit()) {
                 runningBalance = runningBalance.plus(transaction.getAmount(this.currency));
@@ -962,14 +963,18 @@ public class SavingsAccount extends AbstractPersistable<Long> {
             if (depositAccountOnHoldTransactions != null) {
                 for (final DepositAccountOnHoldTransaction onHoldTransaction : depositAccountOnHoldTransactions) {
                     // Compare the balance of the on hold:
-                    if ((onHoldTransaction.getTransactionDate().isBefore(transaction.transactionLocalDate()) || onHoldTransaction
-                            .getTransactionDate().isEqual(transaction.transactionLocalDate()))
-                            && (lastSavingsDate == null || onHoldTransaction.getTransactionDate().isAfter(lastSavingsDate))) {
-                        if (onHoldTransaction.getTransactionType().isHold()) {
-                            minRequiredBalance = minRequiredBalance.plus(onHoldTransaction.getAmountMoney(this.currency));
-                        } else {
-                            minRequiredBalance = minRequiredBalance.minus(onHoldTransaction.getAmountMoney(this.currency));
+                    if ((onHoldTransaction.getTransactionDate().isBefore(transaction.transactionLocalDate()) || (onHoldTransaction
+                            .getTransactionDate().isEqual(transaction.transactionLocalDate()) && onHoldTransaction.getCreatedData().isBefore(transaction.getCreatedDate()))
+                            && (lastSavingsDate == null || onHoldTransaction.getTransactionDate().isAfter(lastSavingsDate)))) {
+                        if(!onHoldTransactionsId.contains(onHoldTransaction.getId())){
+                            if (onHoldTransaction.getTransactionType().isHold()) {
+                                minRequiredBalance = minRequiredBalance.plus(onHoldTransaction.getAmountMoney(this.currency));
+                            } else {
+                                minRequiredBalance = minRequiredBalance.minus(onHoldTransaction.getAmountMoney(this.currency));
+                            }
+                            onHoldTransactionsId.add(onHoldTransaction.getId());
                         }
+
                     }
                 }
             }
@@ -1007,9 +1012,9 @@ public class SavingsAccount extends AbstractPersistable<Long> {
             if (depositAccountOnHoldTransactions != null) {
                 for (final DepositAccountOnHoldTransaction onHoldTransaction : depositAccountOnHoldTransactions) {
                     // Compare the balance of the on hold:
-                    if ((onHoldTransaction.getTransactionDate().isBefore(transaction.transactionLocalDate()) || onHoldTransaction
-                            .getTransactionDate().isEqual(transaction.transactionLocalDate()))
-                            && (lastSavingsDate == null || onHoldTransaction.getTransactionDate().isAfter(lastSavingsDate))) {
+                    if ((onHoldTransaction.getTransactionDate().isBefore(transaction.transactionLocalDate()) || (onHoldTransaction
+                            .getTransactionDate().isEqual(transaction.transactionLocalDate()) && onHoldTransaction.getCreatedData().isBefore(transaction.getCreatedDate()))
+                            && (lastSavingsDate == null || onHoldTransaction.getTransactionDate().isAfter(lastSavingsDate)))) {
                         if (onHoldTransaction.getTransactionType().isHold()) {
                             minRequiredBalance = minRequiredBalance.plus(onHoldTransaction.getAmountMoney(this.currency));
                         } else {

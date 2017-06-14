@@ -6,6 +6,7 @@
 package org.mifosplatform.portfolio.savings.domain;
 
 import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
 import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
 import org.mifosplatform.organisation.monetary.domain.Money;
 import org.mifosplatform.portfolio.loanaccount.guarantor.domain.GuarantorFundingTransaction;
@@ -106,5 +107,14 @@ public class DepositAccountOnHoldTransaction extends AbstractPersistable<Long> {
         }
         return transactionDate;
     }
+
+    public LocalDateTime getCreatedData(){
+        LocalDateTime createdDate = null;
+        if(this.createdDate !=null){
+            createdDate = LocalDateTime.fromDateFields(this.createdDate);
+        }
+        return createdDate;
+    }
+
 
 }
