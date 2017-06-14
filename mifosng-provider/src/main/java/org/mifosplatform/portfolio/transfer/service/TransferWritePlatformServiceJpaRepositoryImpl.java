@@ -496,7 +496,11 @@ public class TransferWritePlatformServiceJpaRepositoryImpl implements TransferWr
                 this.undoTransferRepositoryWrapper.saveAndFlush(undoTransfer);
                 client.updateTransferToOffice(null);
                 client.updateOffice(destinationOffice);
-                client.updateOfficeJoiningDate(todaysDate);
+
+                if(isOfficeTransfer){
+                    client.updateOfficeJoiningDate(todaysDate);
+                }
+
                 if (client.getGroups().size() == 1) {
                     if (destinationGroup == null) {
                         throw new TransferNotSupportedException(TRANSFER_NOT_SUPPORTED_REASON.CLIENT_DESTINATION_GROUP_NOT_SPECIFIED,
