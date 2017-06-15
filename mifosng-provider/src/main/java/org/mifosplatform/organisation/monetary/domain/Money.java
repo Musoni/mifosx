@@ -190,7 +190,7 @@ public class Money implements Comparable<Money> {
     }
 
     public Money dividedBy(final long valueToDivideBy, final RoundingMode roundingMode) {
-        if (valueToDivideBy == 1) { return this; }
+        if (valueToDivideBy == 1 || valueToDivideBy == 0) { return this; }
         final BigDecimal newAmount = this.amount.divide(BigDecimal.valueOf(valueToDivideBy), roundingMode);
         return Money.of(monetaryCurrency(), newAmount);
     }
