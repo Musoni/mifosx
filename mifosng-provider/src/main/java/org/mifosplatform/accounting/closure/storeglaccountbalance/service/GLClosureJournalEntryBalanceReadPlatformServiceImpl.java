@@ -222,6 +222,7 @@ public class GLClosureJournalEntryBalanceReadPlatformServiceImpl implements GLCl
         final Long startClosureId = UriQueryParameterHelper.getStartClosureId(uriQueryParameters);
         final Long endClosureId = UriQueryParameterHelper.getEndClosureId(uriQueryParameters);
         final String reference = UriQueryParameterHelper.getReference(uriQueryParameters);
+        final String fileFormat = UriQueryParameterHelper.getFileFormat(uriQueryParameters);
         
         GLClosureData endClosure = null;
         GLClosureData startClosure = null;
@@ -265,8 +266,13 @@ public class GLClosureJournalEntryBalanceReadPlatformServiceImpl implements GLCl
         
         final Collection<GLClosureAccountBalanceReportData> reportDataList = this.namedParameterJdbcTemplate.query(sql, 
                 sqlParameterSource, mapper);
-        
-        return this.createGLClosureAccountBalanceReportCsvFile(reportDataList);
+        if(fileFormat.equalsIgnoreCase("csv")) {
+            return this.createGLClosureAccountBalanceReportCsvFile(reportDataList);
+        }else if(fileFormat.equalsIgnoreCase("gp")){
+            return this.createGLClosureAccountBalanceReportGreatPlainsFile(reportDataList);
+        }
+
+        return null;
     }
     
     /**
@@ -523,3 +529,74 @@ public class GLClosureJournalEntryBalanceReadPlatformServiceImpl implements GLCl
         return file;
     }
 }
+
+    /**
+     * Create the csv file with the balance report data
+     *
+     * @param reportDataList
+     * @return {@link File} object
+     */
+    private File createGLClosureAccountBalanceReportGreatPlainsFile(
+            final Collection<GLClosureAccountBalanceReportData> reportDataList) {
+        File file = null;
+
+        try {
+            final String fileDirectory = FileSystemContentRepository.MIFOSX_BASE_DIR + File.separator + "";
+
+            if (!new File(fileDirectory).isDirectory()) {
+                new File(fileDirectory).mkdirs();
+            }
+
+            file = new File(fileDirectory + "JRNL_" + );
+
+            // use FileWriter constructor that specifies open for appending
+
+
+            for (GLClosureAccountBalanceReportData reportData : reportDataList) {
+                String transactionType = "";
+                String transactionDate = "";
+                String goodsAmount = "";
+                String postedDate = "";
+
+                if (reportData.getTransactionType() != null) {
+                    transactionType = reportData.getTransactionType().getValue().toString();
+                }
+
+                if (reportData.getTransactionDate() != null) {
+                    transactionDate = this.fileOutputDateFormatter.print(reportData.getTransactionDate());
+                }
+
+                if (reportData.getAmount() != null) {
+                    goodsAmount = reportData.getAmount().setScale(2, RoundingMode.CEILING).
+                            stripTrailingZeros().toPlainString();
+                }
+
+                if (reportData.getPostedDate() != null) {
+                    postedDate = this.fileOutputDateFormatter.print(reportData.getPostedDate());
+                }
+
+                csvWriter.write("");
+                csvWriter.write("");
+                csvWriter.write(reportData.getAccountNumber());
+                csvWriter.write(transactionType);
+                csvWriter.write(transactionDate);
+                csvWriter.write(goodsAmount);
+                csvWriter.write(reportData.getReference());
+                csvWriter.write("");
+                csvWriter.write("");
+                csvWriter.write("");
+                csvWriter.write("");
+                csvWriter.write(postedDate);
+                csvWriter.write("");
+                csvWriter.endRecord();
+            }
+
+            csvWriter.close();
+        }
+
+        catch (Exception exception) {
+            logger.error(exception.getMessage(), exception);
+        }
+
+        return file;
+    }
