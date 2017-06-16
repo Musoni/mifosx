@@ -55,6 +55,7 @@ public interface ConfigurationDomainService {
 
     public Integer getShowCompanyDetails();
 
+    public String getCompanyId();
 
     boolean isBackdatePenaltiesEnabled();
     

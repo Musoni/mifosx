@@ -12,6 +12,7 @@ import org.joda.time.LocalDate;
 
 public class GLClosureAccountBalanceReportData {
     private final String accountNumber;
+    private final Long closureId;
     private final LocalDate transactionDate;
     private final LocalDate postedDate;
     private final GLClosureAccountBalanceReportTransactionType transactionType;
@@ -28,13 +29,14 @@ public class GLClosureAccountBalanceReportData {
      */
     private GLClosureAccountBalanceReportData(final String accountNumber, final LocalDate transactionDate, 
             final LocalDate postedDate, final GLClosureAccountBalanceReportTransactionType transactionType, 
-            final BigDecimal amount, final String reference) {
+            final BigDecimal amount, final String reference, final Long closureId) {
         this.accountNumber = accountNumber;
         this.transactionDate = transactionDate;
         this.postedDate = postedDate;
         this.transactionType = transactionType;
         this.amount = amount;
         this.reference = reference;
+        this.closureId = closureId;
     }
     
     /**
@@ -48,9 +50,9 @@ public class GLClosureAccountBalanceReportData {
      * @return {@link GLClosureAccountBalanceReportData} object
      */
     public static GLClosureAccountBalanceReportData instance(final String accountNumber, final LocalDate transactionDate, 
-            final LocalDate postedDate, final BigDecimal amount, final String reference) {
+            final LocalDate postedDate, final BigDecimal amount, final String reference, final Long closureId) {
         return new GLClosureAccountBalanceReportData(accountNumber, transactionDate, postedDate, 
-                GLClosureAccountBalanceReportTransactionType.NEW, amount, reference);
+                GLClosureAccountBalanceReportTransactionType.NEW, amount, reference, closureId);
     }
 
     /**
@@ -94,6 +96,11 @@ public class GLClosureAccountBalanceReportData {
     public String getReference() {
         return reference;
     }
+
+    /**
+     * @return the closureId
+     */
+    public Long getClosureId() { return closureId; }
 
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
