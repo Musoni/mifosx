@@ -22,23 +22,28 @@ public class GlobalConfigurationPropertyData {
     private final String description;
     @SuppressWarnings("unused")
     private final boolean trapDoor;
+    @SuppressWarnings("unused")
+    private final String textValue;
 
-    public GlobalConfigurationPropertyData(final String name, final boolean enabled, final Long value, final String description, final boolean trapDoor) {
+    public GlobalConfigurationPropertyData(final String name, final boolean enabled, final Long value, 
+    		final String description, final boolean trapDoor, final String textValue) {
         this.name = name;
         this.enabled = enabled;
         this.value = value;
         this.id = null;
         this.description = description;
         this.trapDoor = trapDoor;
+        this.textValue = textValue;
     }
 
     public GlobalConfigurationPropertyData(final String name, final boolean enabled, final Long value, final Long id,
-            final String description, final boolean isTrapDoor) {
+            final String description, final boolean isTrapDoor, final String textValue) {
         this.name = name;
         this.enabled = enabled;
         this.value = value;
         this.id = id;
         this.description = description;
         this.trapDoor = isTrapDoor;
+        this.textValue = textValue;
     }
 }
