@@ -39,7 +39,7 @@ public class ConfigurationReadPlatformServiceImpl implements ConfigurationReadPl
 
         this.context.authenticatedUser();
 
-        String sql = "SELECT c.id, c.name, c.enabled, c.value, c.text_value, c.description, c.is_trap_door FROM c_configuration c ";
+        String sql = "SELECT c.id, c.name, c.enabled, c.value, c.description, c.is_trap_door FROM c_configuration c ";
 
         if (survey) {
             sql += " JOIN x_registered_table on x_registered_table.registered_table_name = c.name ";
@@ -58,7 +58,7 @@ public class ConfigurationReadPlatformServiceImpl implements ConfigurationReadPl
 
         this.context.authenticatedUser();
 
-        final String sql = "SELECT c.id, c.name, c.enabled, c.value, c.text_value, c.description, c.is_trap_door FROM "
+        final String sql = "SELECT c.id, c.name, c.enabled, c.value, c.description, c.is_trap_door FROM "
                 + "c_configuration c where c.id=? order by c.id";
         final GlobalConfigurationPropertyData globalConfiguration = this.jdbcTemplate.queryForObject(sql, this.rm,
                 new Object[] { configId });
@@ -78,8 +78,7 @@ public class ConfigurationReadPlatformServiceImpl implements ConfigurationReadPl
             final String description = rs.getString("description");
             final Long id = rs.getLong("id");
             final boolean isTrapDoor = rs.getBoolean("is_trap_door");
-            final String textValue = rs.getString("text_value");
-            return new GlobalConfigurationPropertyData(name, enabled, value, id, description, isTrapDoor, textValue);
+            return new GlobalConfigurationPropertyData(name, enabled, value, id, description, isTrapDoor);
         }
     }
 
