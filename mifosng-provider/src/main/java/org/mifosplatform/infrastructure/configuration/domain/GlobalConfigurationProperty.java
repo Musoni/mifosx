@@ -29,6 +29,9 @@ public class GlobalConfigurationProperty extends AbstractPersistable<Long> {
 
     @Column(name = "value", nullable = true)
     private Long value;
+    
+    @Column(name = "text_value", nullable = true)
+    private String textValue;
 
     @Column(name = "description", nullable = true)
     private final String description;
@@ -40,17 +43,19 @@ public class GlobalConfigurationProperty extends AbstractPersistable<Long> {
         this.name = null;
         this.enabled = false;
         this.value = null;
+        this.textValue = null;
         this.description = null;
         this.isTrapDoor = false;
     }
 
-    public GlobalConfigurationProperty(final String name, final boolean enabled, final Long value, final String description,
-            final boolean isTrapDoor) {
+    public GlobalConfigurationProperty(final String name, final boolean enabled, final Long value, 
+    		final String description, final boolean isTrapDoor, final String textValue) {
         this.name = name;
         this.enabled = enabled;
         this.value = value;
         this.description = description;
         this.isTrapDoor = isTrapDoor;
+        this.textValue = textValue;
     }
 
     public boolean isEnabled() {
@@ -65,6 +70,13 @@ public class GlobalConfigurationProperty extends AbstractPersistable<Long> {
         final boolean updated = this.enabled != value;
         this.enabled = value;
         return updated;
+    }
+    
+    /**
+     * @return the textValue
+     */
+    public String getTextValue() {
+    	return this.textValue;
     }
 
     public Map<String, Object> update(final JsonCommand command) {
@@ -87,6 +99,13 @@ public class GlobalConfigurationProperty extends AbstractPersistable<Long> {
             actualChanges.put(valueParamName, newValue);
             this.value = newValue;
         }
+        
+        final String textValueParamName = "textValue";
+        if (command.isChangeInStringParameterNamed(textValueParamName, this.textValue)) {
+        	final String newValue = command.stringValueOfParameterNamed(textValueParamName);
+        	actualChanges.put(textValueParamName, newValue);
+            this.textValue = newValue;
+        }
 
         final String passwordPropertyName = "force-password-reset-days";
         if (this.name.equalsIgnoreCase(passwordPropertyName)) {
@@ -99,7 +118,7 @@ public class GlobalConfigurationProperty extends AbstractPersistable<Long> {
     }
 
     public static GlobalConfigurationProperty newSurveyConfiguration(final String name) {
-        return new GlobalConfigurationProperty(name, false, null, null, false);
+        return new GlobalConfigurationProperty(name, false, null, null, false, null);
     }
 
 }
