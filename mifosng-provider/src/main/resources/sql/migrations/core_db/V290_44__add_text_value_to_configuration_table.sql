@@ -1,0 +1,1 @@
+ALTER TABLE `c_configuration` ADD `text_value` TEXT NULL AFTER `value`;
