@@ -12,7 +12,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
 
 import javax.ws.rs.core.MultivaluedMap;
 
@@ -34,7 +36,6 @@ import org.mifosplatform.accounting.closure.storeglaccountbalance.data.GLClosure
 import org.mifosplatform.accounting.closure.storeglaccountbalance.data.GLClosureJournalEntryBalanceValidator;
 import org.mifosplatform.accounting.closure.storeglaccountbalance.data.GLClosureJournalEntryData;
 import org.mifosplatform.accounting.closure.storeglaccountbalance.helper.UriQueryParameterHelper;
-import org.mifosplatform.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
 import org.mifosplatform.infrastructure.core.service.RoutingDataSource;
 import org.mifosplatform.infrastructure.documentmanagement.contentrepository.FileSystemContentRepository;
@@ -60,24 +61,21 @@ public class GLClosureJournalEntryBalanceReadPlatformServiceImpl implements GLCl
     private final OfficeReadPlatformService officeReadPlatformService;
     private final GLClosureReadPlatformService glClosureReadPlatformService;
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
-    private final ConfigurationDomainService configurationDomainService;
     private final static Logger logger = LoggerFactory.getLogger(GLClosureJournalEntryBalanceReadPlatformServiceImpl.class);
 
     /**
-     *
+     * @param jdbcTemplate
      */
     @Autowired
     public GLClosureJournalEntryBalanceReadPlatformServiceImpl(final RoutingDataSource routingDataSource, 
             final GLClosureJournalEntryBalanceValidator glClosureJournalEntryBalanceValidator, 
             final OfficeReadPlatformService officeReadPlatformService, 
-            final GLClosureReadPlatformService glClosureReadPlatformService,
-            final ConfigurationDomainService configurationDomainService) {
+            final GLClosureReadPlatformService glClosureReadPlatformService) {
         this.jdbcTemplate = new JdbcTemplate(routingDataSource);
         this.glClosureJournalEntryBalanceValidator = glClosureJournalEntryBalanceValidator;
         this.officeReadPlatformService = officeReadPlatformService;
         this.glClosureReadPlatformService = glClosureReadPlatformService;
         this.namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(routingDataSource);
-        this.configurationDomainService = configurationDomainService;
     }
     
     public static final class GLClosureJournalEntryDataMapper implements RowMapper<GLClosureJournalEntryData> {
@@ -142,9 +140,9 @@ public class GLClosureJournalEntryBalanceReadPlatformServiceImpl implements GLCl
          * @return SQL statement string
          */
         public String sql() {
-            String sql = "sc.account_id, sc.account_number, (ec.amount - sc.amount) as amount, sc.closureId as closureId "
+            String sql = "sc.account_id, sc.account_number, (ec.amount - sc.amount) as amount "
                     + "from "
-                    + "(select je.account_id as account_id, ga.gl_code as account_number, sum(amount) as amount, je.closure_id as closureId "
+                    + "(select je.account_id as account_id, ga.gl_code as account_number, sum(amount) as amount "
                     + "from acc_gl_closure_journal_entry_balance je "
                     + "inner join acc_gl_closure gc "
                     + "on gc.id = je.closure_id "
@@ -171,7 +169,7 @@ public class GLClosureJournalEntryBalanceReadPlatformServiceImpl implements GLCl
                     + "order by account_number ";
             
             if (this.startClosure == null) {
-                sql = "je.account_id as account_id, ga.gl_code as account_number, sum(amount) as amount, je.closure_id as closureId "
+                sql = "je.account_id as account_id, ga.gl_code as account_number, sum(amount) as amount "
                     + "from acc_gl_closure_journal_entry_balance je "
                     + "inner join acc_gl_closure gc "
                     + "on gc.id = je.closure_id "
@@ -204,7 +202,6 @@ public class GLClosureJournalEntryBalanceReadPlatformServiceImpl implements GLCl
             final String accountNumber = rs.getString("account_number");
             final LocalDate postedDate = new LocalDate();
             final BigDecimal amount = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "amount");
-            final Long closureId = rs.getLong("closureId");
             
             LocalDate transactionDate = null;
             
@@ -213,7 +210,7 @@ public class GLClosureJournalEntryBalanceReadPlatformServiceImpl implements GLCl
             }
             
             return GLClosureAccountBalanceReportData.instance(accountNumber, transactionDate, postedDate, amount, 
-                    this.reference, closureId);
+                    this.reference);
         }
     }
 
@@ -225,7 +222,6 @@ public class GLClosureJournalEntryBalanceReadPlatformServiceImpl implements GLCl
         final Long startClosureId = UriQueryParameterHelper.getStartClosureId(uriQueryParameters);
         final Long endClosureId = UriQueryParameterHelper.getEndClosureId(uriQueryParameters);
         final String reference = UriQueryParameterHelper.getReference(uriQueryParameters);
-        final String fileFormat = UriQueryParameterHelper.getFileFormat(uriQueryParameters);
         
         GLClosureData endClosure = null;
         GLClosureData startClosure = null;
@@ -269,13 +265,8 @@ public class GLClosureJournalEntryBalanceReadPlatformServiceImpl implements GLCl
         
         final Collection<GLClosureAccountBalanceReportData> reportDataList = this.namedParameterJdbcTemplate.query(sql, 
                 sqlParameterSource, mapper);
-        if(fileFormat.equalsIgnoreCase("csv")) {
-            return this.createGLClosureAccountBalanceReportCsvFile(reportDataList);
-        } else if(fileFormat.equalsIgnoreCase("gp")){
-            return this.createGLClosureAccountBalanceReportGreatPlainsFile(reportDataList);
-        }
-
-        return null;
+        
+        return this.createGLClosureAccountBalanceReportCsvFile(reportDataList);
     }
     
     /**
@@ -529,118 +520,6 @@ public class GLClosureJournalEntryBalanceReadPlatformServiceImpl implements GLCl
             logger.error(exception.getMessage(), exception);
         }
         
-        return file;
-    }
-
-    /**
-     * Create the csv file with the balance report data
-     *
-     * @param reportDataList
-     * @return {@link File} object
-     */
-    private File createGLClosureAccountBalanceReportGreatPlainsFile(
-            final Collection<GLClosureAccountBalanceReportData> reportDataList) {
-        File file = null;
-
-        try {
-            final String fileDirectory = FileSystemContentRepository.MIFOSX_BASE_DIR + File.separator + "";
-
-            if (!new File(fileDirectory).isDirectory()) {
-                new File(fileDirectory).mkdirs();
-            }
-
-            DateTime dateTime = DateTime.now();
-            String year = dateTime.year().getAsString();
-            String month = String.format("%02d", dateTime.monthOfYear().get());
-            String day = String.format("%02d", dateTime.dayOfMonth().get());
-            String hour = String.format("%02d", dateTime.hourOfDay().get());
-            String minute = String.format("%02d", dateTime.minuteOfHour().get());
-            String second = String.format("%02d", dateTime.secondOfMinute().get());
-
-            file = new File(fileDirectory + "JRNL_" + year + month + day + hour + minute + second + "_001" + ".txt");
-
-            // use FileWriter constructor that specifies open for appending
-
-            FileWriter fileWriter = new FileWriter(file);
-
-            for (GLClosureAccountBalanceReportData reportData : reportDataList) {
-                final LinkedHashMap<String, String> fields = new LinkedHashMap<>();
-                fields.put("companyId",this.configurationDomainService.getCompanyId());
-                fields.put("batchNumber","GLPOS" + year.substring(year.length() - 2) + month + day + hour + minute);
-                fields.put("reference","");
-                fields.put("transactionDate","");
-                fields.put("transactionType","0"); //transactionType (0 = regular, 1 = reversing) is always 0
-                fields.put("transactionId","");
-                fields.put("series","2"); // Always Financial (1=All; 2=Financial; 3=Sales; 4=Purchasing; 5=Inventory; 6=Payroll; 7=Project;)
-                fields.put("currencyId","");
-                fields.put("exchangeRate","");
-                fields.put("rateTypeId","");
-                fields.put("expirationDate","");
-                fields.put("exchangeDate","");
-                fields.put("exchangeId","");
-                fields.put("exchangeRateSource","");
-                fields.put("rateExpiration","0"); // no rate expiration (0=None; 1=Daily; 2=Weekly; 3=Bi-weekly; 4=Semiweekly; 5=Monthly; 6=Quarterly; 7=Annually; 8=Misc.; 9=None;)
-                fields.put("transactionTime","");
-                fields.put("userId","");
-                fields.put("creditAmount","");
-                fields.put("debitAmount","");
-                fields.put("accountNoString","");
-                fields.put("description","");
-                fields.put("originatingControlNo","");
-                fields.put("originatingDocNo","");
-                fields.put("originatingMasterId","");
-                fields.put("originatingMasterName","");
-                fields.put("originatingTransationType","");
-                fields.put("originatingSequenceNo","");
-                fields.put("originatingTransactionDescription","");
-                fields.put("taxDetailId","");
-                fields.put("taxAmount","");
-                fields.put("taxAccount","");
-
-
-                if (reportData.getTransactionDate() != null) {
-                    String transactionDate = year + month + day;
-                    fields.put("transactionDate", transactionDate);
-                }
-
-                if (reportData.getAmount() != null) {
-                    String goodsAmount = reportData.getAmount().setScale(2, RoundingMode.CEILING).
-                            stripTrailingZeros().toPlainString();
-                    if(reportData.getAmount().compareTo(BigDecimal.ZERO) > 0){
-                        fields.put("creditAmount", goodsAmount);
-                    }else{
-                        fields.put("debitAmount", goodsAmount);
-                    }
-                }
-
-                if (reportData.getReference() != null) {
-                    String reference = reportData.getReference();
-                    fields.put("reference", reference);
-                    fields.put("description", reference);
-                }
-
-                if (reportData.getAccountNumber() != null){
-                    fields.put("accountNoString", reportData.getAccountNumber());
-                }
-
-                if(reportData.getClosureId() != null){
-                    fields.put("transactionId", reportData.getClosureId().toString());
-                }
-
-                for(String key : fields.keySet()) {
-                    fileWriter.write(fields.get(key) + "|");
-                }
-
-                fileWriter.write(System.lineSeparator());
-            }
-
-            fileWriter.close();
-        }
-
-        catch (Exception exception) {
-            logger.error(exception.getMessage(), exception);
-        }
-
         return file;
     }
 }

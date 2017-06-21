@@ -16,7 +16,6 @@ public class UriQueryParameterHelper {
     public static final String END_CLOSURE_ID_PARAMETER_NAME = "endClosureId";
     public static final String REFERENCE_PARAMETER_NAME = "reference";
     public static final String BOOLEAN_TRUE_AS_STRING = "true";
-    public static final String FILE_FORMAT_PARAMETER_NAME = "fileFormat";
     
     /**
      * Checks if the parameter "aggregateBalanceOfSubOffices" is part of the query string and set to true
@@ -104,15 +103,5 @@ public class UriQueryParameterHelper {
      */
     public static String getReference(final MultivaluedMap<String, String> uriQueryParameters) {
         return uriQueryParameters.getFirst(REFERENCE_PARAMETER_NAME);
-    }
-
-    /**
-     * Get the value of the "reference" query string parameter
-     *
-     * @param uriQueryParameters
-     * @return reference string
-     */
-    public static String getFileFormat(final MultivaluedMap<String, String> uriQueryParameters) {
-        return uriQueryParameters.getFirst(FILE_FORMAT_PARAMETER_NAME);
     }
 }

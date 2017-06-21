@@ -53,9 +53,6 @@ public interface ConfigurationDomainService {
 
     public Integer getCurrencyDigits();
 
-    public Integer getShowCompanyDetails();
-
-    public String getCompanyId();
 
     boolean isBackdatePenaltiesEnabled();
     

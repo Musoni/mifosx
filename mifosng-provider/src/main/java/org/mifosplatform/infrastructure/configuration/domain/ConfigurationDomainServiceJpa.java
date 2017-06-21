@@ -230,10 +230,4 @@ public class ConfigurationDomainServiceJpa implements ConfigurationDomainService
         final GlobalConfigurationProperty property = this.globalConfigurationRepository.findOneByNameWithNotFoundDetection(propertyName);
         return property.isEnabled();
     }
-
-    public String getCompanyId() {
-        final String propertyName = "company_id";
-        final GlobalConfigurationProperty property = this.globalConfigurationRepository.findOneByNameWithNotFoundDetection(propertyName);
-        return property.getTextValue();
-    }
 }
