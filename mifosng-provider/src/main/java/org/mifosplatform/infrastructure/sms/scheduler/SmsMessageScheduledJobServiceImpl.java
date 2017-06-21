@@ -190,7 +190,7 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
 	@Transactional
 	@CronTarget(jobName = JobName.SEND_MESSAGES_TO_SMS_GATEWAY)
 	public void sendMessages() {
-//	    if (IPv4Helper.applicationIsNotRunningOnLocalMachine()) {
+	    if (IPv4Helper.applicationIsNotRunningOnLocalMachine()) {
 	        final TenantSmsConfiguration tenantSmsConfiguration = this.getTenantSmsConfiguration();
 	        final String apiAuthUsername = tenantSmsConfiguration.getApiAuthUsername();
 	        final String apiAuthPassword = tenantSmsConfiguration.getApiAuthPassword();
@@ -268,7 +268,7 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
 	            }
 	        }
 	    }
-//	}
+	}
 	
 	/**
 	 * handles the sending of messages to the intermediate gateway and updating of the external ID, status and sources address
