@@ -275,6 +275,15 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             arrayPos = arrayPos + 1;
         }
 
+        if (searchParameters.getGroupId() !=null) {
+            sqlBuilder.append(" and ( gc.group_id = ? OR g.id = ? ) ");
+            extraCriterias.add(searchParameters.getGroupId());
+            arrayPos = arrayPos + 1;
+            extraCriterias.add(searchParameters.getGroupId());
+            arrayPos = arrayPos + 1;
+        }
+
+
         if (searchParameters.getOfficeId() !=null && searchParameters.getOfficeId() > 0) {
             sqlBuilder.append(" and o.id = ?");
             extraCriterias.add(searchParameters.getOfficeId());
@@ -605,6 +614,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                     + " left join m_loan_recalculation_details lir on lir.loan_id = l.id "
                     + " join m_currency rc on rc.`code` = l.currency_code" //
                     + " left join m_client c on c.id = l.client_id" //
+                    + " left join m_group_client gc on c.id = gc.client_id "
                     + " left join m_group g on g.id = l.group_id" //
                     + " left join m_loan_arrears_aging la on la.loan_id = l.id" //
                     + " left join m_fund f on f.id = l.fund_id" //
