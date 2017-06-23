@@ -283,7 +283,7 @@ public class LoanProductRelatedDetail implements LoanProductMinimumRepaymentSche
         }
 
         final String inMultiplesOfParamName = "inMultiplesOf";
-        if (command.isChangeInStringParameterNamed(inMultiplesOfParamName, currencyCode)) {
+        if (command.isChangeInIntegerParameterNamed(inMultiplesOfParamName, inMultiplesOf)) {
             final Integer newValue = command.integerValueOfParameterNamed(inMultiplesOfParamName);
             actualChanges.put(inMultiplesOfParamName, newValue);
             inMultiplesOf = newValue;
