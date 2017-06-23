@@ -28,4 +28,6 @@ public interface AccountTransfersWritePlatformService {
     CommandProcessingResult refundByTransfer(JsonCommand command);
 
     void reverseTransfersWithFromAccountTransactions(Collection<Long> fromTransactionIds, PortfolioAccountType accountTypeId);
+    
+    void reverseTransfersWithToOrFromAccountTransactions(Collection<Long> toOrFromTransactionIds, PortfolioAccountType accountTypeId);
 }

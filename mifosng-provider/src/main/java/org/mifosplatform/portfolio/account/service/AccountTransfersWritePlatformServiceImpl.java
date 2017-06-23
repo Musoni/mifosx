@@ -561,4 +561,17 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
 
         return builder.build();
     }
+
+	@Override
+	@Transactional
+	public void reverseTransfersWithToOrFromAccountTransactions(final Collection<Long> toOrFromTransactionIds,
+			final PortfolioAccountType accountTypeId) {
+		List<AccountTransferTransaction> acccountTransfers = null;
+        if (accountTypeId.isLoanAccount()) {
+            acccountTransfers = this.accountTransferRepository.findByToOrFromLoanTransactions(toOrFromTransactionIds);
+        }
+        if (acccountTransfers != null && acccountTransfers.size() > 0) {
+            undoTransactions(acccountTransfers);
+        }
+	}
 }
