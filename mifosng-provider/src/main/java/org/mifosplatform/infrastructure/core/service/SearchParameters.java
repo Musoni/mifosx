@@ -31,6 +31,7 @@ public final class SearchParameters {
     private final Boolean orphansOnly;
 
     private final Long tellerId;
+    private final Long groupId;
 
   //Provisning Entries Search Params
     private final Long provisioningEntryId ;
@@ -87,7 +88,7 @@ public final class SearchParameters {
     }
 
     public static SearchParameters forLoans(final String sqlSearch,final Long officeId, final String externalId, final Integer offset, final Integer limit,
-            final String orderBy, final String sortOrder, final String accountNo,final Long staffId) {
+            final String orderBy, final String sortOrder, final String accountNo,final Long staffId, final Long groupId) {
 
         final Integer maxLimitAllowed = getCheckedLimit(limit);
         //final Long staffId =staffId;
@@ -97,7 +98,7 @@ public final class SearchParameters {
         final boolean isSelfUser = false;
 
         return new SearchParameters(sqlSearch, officeId, externalId, null, null, null, null, offset, maxLimitAllowed, orderBy, sortOrder,
-                staffId, accountNo, loanId, savingsId, orphansOnly, isSelfUser,null);
+                staffId, accountNo, loanId, savingsId, orphansOnly, isSelfUser,null,groupId);
     }
 
     public static SearchParameters forJournalEntries(final Long officeId, final Integer offset, final Integer limit, final String orderBy,
@@ -186,6 +187,36 @@ public final class SearchParameters {
     }
 
     private SearchParameters(final String sqlSearch, final Long officeId, final String externalId, final String name,
+                             final String hierarchy, final String firstname, final String lastname, final Integer offset, final Integer limit,
+                             final String orderBy, final String sortOrder, final Long staffId, final String accountNo, final Long loanId,
+                             final Long savingsId, final Boolean orphansOnly, boolean isSelfUser, Long tellerId,Long groupId) {
+        this.sqlSearch = sqlSearch;
+        this.officeId = officeId;
+        this.externalId = externalId;
+        this.name = name;
+        this.hierarchy = hierarchy;
+        this.firstname = firstname;
+        this.lastname = lastname;
+        this.offset = offset;
+        this.limit = limit;
+        this.orderBy = orderBy;
+        this.sortOrder = sortOrder;
+        this.staffId = staffId;
+        this.accountNo = accountNo;
+        this.loanId = loanId;
+        this.savingsId = savingsId;
+        this.orphansOnly = orphansOnly;
+        this.currencyCode = null;
+        this.provisioningEntryId = null ;
+        this.productId = null ;
+        this.categoryId = null ;
+        this.isSelfUser = isSelfUser;
+        this.tellerId = tellerId;
+        this.groupId = groupId;
+
+    }
+
+    private SearchParameters(final String sqlSearch, final Long officeId, final String externalId, final String name,
             final String hierarchy, final String firstname, final String lastname, final Integer offset, final Integer limit,
             final String orderBy, final String sortOrder, final Long staffId, final String accountNo, final Long loanId,
             final Long savingsId, final Boolean orphansOnly, boolean isSelfUser, Long tellerId) {
@@ -211,6 +242,7 @@ public final class SearchParameters {
         this.categoryId = null ;
         this.isSelfUser = isSelfUser;
         this.tellerId = tellerId;
+        this.groupId = null;
       
     }
 
@@ -238,6 +270,7 @@ public final class SearchParameters {
         this.categoryId = categoryId ;
         this.isSelfUser = false;
         this.tellerId = null;
+        this.groupId = null;
         
     }
     
@@ -267,6 +300,7 @@ public final class SearchParameters {
         this.categoryId = null ;
         this.isSelfUser = false;
         this.tellerId = null;
+        this.groupId = null;
     }
 
     public boolean isOrderByRequested() {
@@ -442,4 +476,6 @@ public final class SearchParameters {
     public Long getTellerId() {
         return tellerId;
     }
+
+    public Long getGroupId(){return  groupId; }
 }

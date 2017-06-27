@@ -210,6 +210,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
     private final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService;
     private final LoanSuspendAccruedIncomeWritePlatformService loanSuspendAccruedIncomeWritePlatformService;
     private final StandingInstructionRepository standingInstructionRepository;
+    private final SavingsAccountWritePlatformService savingsAccountWritePlatformService;
 
     @Autowired
     public LoanWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -240,7 +241,8 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
             final LoanCreditCheckWritePlatformService loanCreditCheckWritePlatformService, 
             final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService,
             final LoanSuspendAccruedIncomeWritePlatformService loanSuspendAccruedIncomeWritePlatformService, 
-            final StandingInstructionRepository standingInstructionRepository) {
+            final StandingInstructionRepository standingInstructionRepository, 
+            final SavingsAccountWritePlatformService savingsAccountWritePlatformService) {
         this.context = context;
         this.loanEventApiJsonValidator = loanEventApiJsonValidator;
         this.loanAssembler = loanAssembler;
@@ -279,6 +281,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         this.entityDatatableChecksWritePlatformService = entityDatatableChecksWritePlatformService;
         this.loanSuspendAccruedIncomeWritePlatformService = loanSuspendAccruedIncomeWritePlatformService;
         this.standingInstructionRepository = standingInstructionRepository;
+        this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
     }
 
     private LoanLifecycleStateMachine defaultLoanLifecycleStateMachine() {
@@ -844,18 +847,24 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         final Loan loan = this.loanAssembler.assembleFrom(loanId);
         checkClientOrGroupActive(loan);
         final LoanTransaction transactionToAdjust = this.loanTransactionRepository.findOne(transactionId);
+        final LocalDate transactionDate = command.localDateValueOfParameterNamed("transactionDate");
+        final BigDecimal transactionAmount = command.bigDecimalValueOfParameterNamed("transactionAmount");
+        final String txnExternalId = command.stringValueOfParameterNamedAllowingNull("externalId");
+        final Boolean isAccountTransfer = this.accountTransfersReadPlatformService.isAccountTransfer(transactionId, PortfolioAccountType.LOAN);
+        
         if (transactionToAdjust == null) { throw new LoanTransactionNotFoundException(transactionId); }
         this.businessEventNotifierService.notifyBusinessEventToBeExecuted(BUSINESS_EVENTS.LOAN_ADJUST_TRANSACTION,
                 constructEntityMap(BUSINESS_ENTITY.LOAN_ADJUSTED_TRANSACTION, transactionToAdjust));
-        if (this.accountTransfersReadPlatformService.isAccountTransfer(transactionId, PortfolioAccountType.LOAN)) { throw new PlatformServiceUnavailableException(
+        
+        // only allow transaction reversal for account transfer
+        if (isAccountTransfer && (transactionAmount.compareTo(BigDecimal.ZERO) > 0)) { 
+        	throw new PlatformServiceUnavailableException(
                 "error.msg.loan.transfer.transaction.update.not.allowed", "Loan transaction:" + transactionId
                         + " update not allowed as it involves in account transfer", transactionId); }
         if (loan.isClosedWrittenOff() && transactionToAdjust.isNotRecoveryRepayment()) { throw new PlatformServiceUnavailableException("error.msg.loan.written.off.update.not.allowed",
                "Loan transaction:" + transactionId + " update not allowed as loan status is written off", transactionId); }
 
-        final LocalDate transactionDate = command.localDateValueOfParameterNamed("transactionDate");
-        final BigDecimal transactionAmount = command.bigDecimalValueOfParameterNamed("transactionAmount");
-        final String txnExternalId = command.stringValueOfParameterNamedAllowingNull("externalId");
+        
 
         final Map<String, Object> changes = new LinkedHashMap<>();
         changes.put("transactionDate", command.stringValueOfParameterNamed("transactionDate"));
@@ -953,16 +962,18 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 transactionIds.add(transaction.getId());
             }
         }
+        
+        // add current transaction to the list of transactions needing reversal of corresponding account transfer transactions
+        if (isAccountTransfer) {
+        	transactionIds.add(transactionId);
+        }
 
         if (!transactionIds.isEmpty()) {
             this.accountTransfersWritePlatformService
-                    .reverseTransfersWithFromAccountTransactions(transactionIds, PortfolioAccountType.LOAN);
+                    .reverseTransfersWithToOrFromAccountTransactions(transactionIds, PortfolioAccountType.LOAN);
             loan.updateLoanSummarAndStatus();
         }
-
-
-
-
+        
         postJournalEntries(loan, existingTransactionIds, existingReversedTransactionIds);
 
         this.loanAccountDomainService.recalculateAccruals(loan);

@@ -215,7 +215,7 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
                     + "lfr.is_floating_interest_rate_calculation_allowed as isFloatingInterestRateCalculationAllowed, "
                     + "lp.allow_variabe_installments as isVariableIntallmentsAllowed, "
                     + "lvi.minimum_gap as minimumGap, "
-                    + "lvi.maximum_gap as maximumGap "
+                    + "lvi.maximum_gap as maximumGap, lp.currency_multiplesof as inMultiplesOf "
                     + " from m_product_loan lp "
                     + " left join m_fund f on f.id = lp.fund_id "
                     + " left join m_code_value cv on cv.id = lp.product_group"

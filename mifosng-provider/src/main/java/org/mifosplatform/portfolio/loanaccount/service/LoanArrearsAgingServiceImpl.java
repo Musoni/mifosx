@@ -70,6 +70,8 @@ public class LoanArrearsAgingServiceImpl implements LoanArrearsAgingService, Bus
         this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.LOAN_APPLY_OVERDUE_CHARGE, this);
         this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.LOAN_DISBURSAL, new DisbursementEventListner());
         this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.LOAN_RESCHEDULE, this);
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.LOAN_WRITTEN_OFF, new WriteOffEventListener());
+        this.businessEventNotifierService.addBusinessEventPostListners(BUSINESS_EVENTS.LOAN_UNDO_DISBURSAL, new UndoDisbursementEventListener());
     }
 
     @Transactional
@@ -502,5 +504,56 @@ public class LoanArrearsAgingServiceImpl implements LoanArrearsAgingService, Bus
 
         }
 
+    }
+    
+    /**
+     * Event listener for undo disbursement event
+     */
+    private class UndoDisbursementEventListener implements BusinessEventListner {
+
+		@Override
+		public void businessEventToBeExecuted(Map<BUSINESS_ENTITY, Object> businessEventEntity) { }
+
+		@Override
+		public void businessEventWasExecuted(Map<BUSINESS_ENTITY, Object> businessEventEntity) {
+			Object loanEntity = businessEventEntity.get(BUSINESS_ENTITY.LOAN);
+            
+			if (loanEntity != null) {
+                Loan loan = (Loan) loanEntity;
+                
+                deleteLoanArrearsAgeing(loan);
+            }
+		}
+    }
+    
+    /**
+     * Event listener for loan writeoff event
+     */
+    private class WriteOffEventListener implements BusinessEventListner {
+
+		@Override
+		public void businessEventToBeExecuted(Map<BUSINESS_ENTITY, Object> businessEventEntity) { }
+
+		@Override
+		public void businessEventWasExecuted(Map<BUSINESS_ENTITY, Object> businessEventEntity) {
+			Object loanEntity = businessEventEntity.get(BUSINESS_ENTITY.LOAN_TRANSACTION);
+            
+			if (loanEntity != null) {
+                LoanTransaction loanTransaction = (LoanTransaction) loanEntity;
+                Loan loan = loanTransaction.getLoan();
+                
+                deleteLoanArrearsAgeing(loan);
+            }
+		}
+    }
+    
+    /**
+     * Delete the entry in the arrears table linked to the loan
+     * 
+     * @param loan
+     */
+    public void deleteLoanArrearsAgeing(final Loan loan) {
+    	String deletestatement = "DELETE FROM `m_loan_arrears_aging` WHERE  `loan_id`=" + loan.getId();
+        this.jdbcTemplate.update(deletestatement);
     }
 }
