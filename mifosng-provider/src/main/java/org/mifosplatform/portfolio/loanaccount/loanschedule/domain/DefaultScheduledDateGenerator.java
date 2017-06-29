@@ -5,6 +5,9 @@
  */
 package org.mifosplatform.portfolio.loanaccount.loanschedule.domain;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
 import org.joda.time.Months;
@@ -25,6 +28,8 @@ public class DefaultScheduledDateGenerator implements ScheduledDateGenerator {
     public LocalDate getLastRepaymentDate(final LoanApplicationTerms loanApplicationTerms, final HolidayDetailDTO holidayDetailDTO) {
 
         final int numberOfRepayments = loanApplicationTerms.getNumberOfRepayments();
+        
+        List<LocalDate> adjustedRepaymentDateList = new ArrayList<>();
 
         LocalDate lastRepaymentDate = loanApplicationTerms.getExpectedDisbursementDate();
         boolean isFirstRepayment = true;
@@ -32,7 +37,7 @@ public class DefaultScheduledDateGenerator implements ScheduledDateGenerator {
             lastRepaymentDate = generateNextRepaymentDate(lastRepaymentDate, loanApplicationTerms, isFirstRepayment, holidayDetailDTO);
             isFirstRepayment = false;
         }
-        lastRepaymentDate = adjustRepaymentDate(lastRepaymentDate, loanApplicationTerms, holidayDetailDTO);
+        lastRepaymentDate = adjustRepaymentDate(lastRepaymentDate, loanApplicationTerms, holidayDetailDTO, adjustedRepaymentDateList);
         return lastRepaymentDate;
     }
 
@@ -68,7 +73,7 @@ public class DefaultScheduledDateGenerator implements ScheduledDateGenerator {
 
     @Override
     public LocalDate adjustRepaymentDate(final LocalDate dueRepaymentPeriodDate, final LoanApplicationTerms loanApplicationTerms,
-            final HolidayDetailDTO holidayDetailDTO) {
+            final HolidayDetailDTO holidayDetailDTO, List<LocalDate> adjustedRepaymentDateList) {
 
         LocalDate adjustedDate = dueRepaymentPeriodDate;
 
@@ -99,6 +104,16 @@ public class DefaultScheduledDateGenerator implements ScheduledDateGenerator {
         if (holidayDetailDTO.isHolidayEnabled()) {
             adjustedDate = HolidayUtil.getRepaymentRescheduleDateToIfHoliday(adjustedDate, holidayDetailDTO.getHolidays());
         }
+        
+        // if date falls on same day as any previous installment, add a day to the date
+        if (adjustedRepaymentDateList != null 
+        		&& (rescheduleType == RepaymentRescheduleType.RESCHEDULE_FUTURE_INSTALLMENTS) 
+        		&& adjustedRepaymentDateList.contains(adjustedDate)) {
+        	adjustedDate = this.adjustRepaymentDate(adjustedDate.plusDays(1), loanApplicationTerms, holidayDetailDTO, adjustedRepaymentDateList);
+        }
+        
+        // add to the list of adjusted repayment dates
+        adjustedRepaymentDateList.add(adjustedDate);
 
         return adjustedDate;
     }
@@ -213,13 +228,14 @@ public class DefaultScheduledDateGenerator implements ScheduledDateGenerator {
     public LocalDate generateNextScheduleDateStartingFromDisburseDate(LocalDate lastRepaymentDate,
             LoanApplicationTerms loanApplicationTerms, final HolidayDetailDTO holidayDetailDTO) {
 
+    	List<LocalDate> adjustedRepaymentDateList = new ArrayList<>();
         LocalDate generatedDate = loanApplicationTerms.getExpectedDisbursementDate();
         boolean isFirstRepayment = true;
         while (!generatedDate.isAfter(lastRepaymentDate)) {
             generatedDate = generateNextRepaymentDate(generatedDate, loanApplicationTerms, isFirstRepayment, holidayDetailDTO);
             isFirstRepayment = false;
         }
-        generatedDate = adjustRepaymentDate(generatedDate, loanApplicationTerms, holidayDetailDTO);
+        generatedDate = adjustRepaymentDate(generatedDate, loanApplicationTerms, holidayDetailDTO, adjustedRepaymentDateList);
         return generatedDate;
     }
 }

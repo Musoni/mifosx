@@ -27,6 +27,7 @@ public class WorkingDaysUtil {
             case SAME_DAY:
                 return date;
             case MOVE_TO_NEXT_WORKING_DAY:
+            case RESCHEDULE_FUTURE_INSTALLMENTS:
                 return getOffSetDateIfNonWorkingDay(date.plusDays(1), nextMeetingDate, workingDays);
             case MOVE_TO_NEXT_REPAYMENT_MEETING_DAY:
                 return nextMeetingDate;
