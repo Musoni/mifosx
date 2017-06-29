@@ -7,6 +7,7 @@ package org.mifosplatform.organisation.workingdays.service;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -75,11 +76,14 @@ public class WorkingDaysReadPlatformServiceImpl implements WorkingDaysReadPlatfo
 
     @Override
     public WorkingDaysData repaymentRescheduleType() {
-        Collection<EnumOptionData> repaymentRescheduleOptions = Arrays.asList(
-                WorkingDaysEnumerations.repaymentRescheduleType(RepaymentRescheduleType.SAME_DAY),
-                WorkingDaysEnumerations.repaymentRescheduleType(RepaymentRescheduleType.MOVE_TO_NEXT_WORKING_DAY),
-                WorkingDaysEnumerations.repaymentRescheduleType(RepaymentRescheduleType.MOVE_TO_NEXT_REPAYMENT_MEETING_DAY),
-                WorkingDaysEnumerations.repaymentRescheduleType(RepaymentRescheduleType.MOVE_TO_PREVIOUS_WORKING_DAY));
+    	Collection<EnumOptionData> repaymentRescheduleOptions = new ArrayList<>();
+    	
+    	for (RepaymentRescheduleType type : RepaymentRescheduleType.values()) {
+    		if (!type.equals(RepaymentRescheduleType.INVALID)) {
+    			repaymentRescheduleOptions.add(WorkingDaysEnumerations.repaymentRescheduleType(type));
+    		}
+    	}
+    	
         return new WorkingDaysData(null, null, null, repaymentRescheduleOptions, null);
     }
 }
