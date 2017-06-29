@@ -159,6 +159,7 @@ import org.mifosplatform.portfolio.savings.SavingsAccountTransactionType;
 import org.mifosplatform.portfolio.savings.domain.SavingsAccount;
 import org.mifosplatform.portfolio.savings.exception.InsufficientAccountBalanceException;
 import org.mifosplatform.portfolio.savings.exception.SavingsAccountNotActiveException;
+import org.mifosplatform.portfolio.savings.service.SavingsAccountWritePlatformService;
 import org.mifosplatform.useradministration.domain.AppUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
