@@ -13,6 +13,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.ser.std.StdArraySerializers;
 import org.codehaus.jackson.type.TypeReference;
 import org.mifosplatform.template.domain.Template;
+import org.mifosplatform.template.restwebservice.TemplateRestClient;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -181,81 +182,25 @@ public class TemplateMergeService {
 
     @SuppressWarnings("unchecked")
     private List<HashMap<String, Object>> getMapFromUrl(final String url) throws MalformedURLException, IOException {
-        final HttpURLConnection connection = getConnection(url);
-
-        final String response = getStringFromInputStream(connection.getInputStream());
-        List<HashMap<String, Object>> result = new ArrayList<>();
+    	final TemplateRestClient templateRestClient = new TemplateRestClient(SecurityContextHolder.getContext());
+    	final String data = templateRestClient.retrieveDataFromUrl(url);
+    	
+    	List<HashMap<String, Object>> result = new ArrayList<>();
         HashMap<String,Object> hashMap  = new HashMap<>();
-        if (connection.getContentType().equals("text/plain")) {
-            hashMap.put("src",response);
+        
+        if (TemplateRestClient.isJsonArray(data)) {
+        	result = new ObjectMapper().readValue(data, new TypeReference<List<HashMap<String,Object>>>(){});
+        	
+        } else if (TemplateRestClient.isJsonObject(data)) {
+        	hashMap = new ObjectMapper().readValue(data, HashMap.class);
+        	
             result.add(hashMap);
+        	
         } else {
-            if(response.startsWith("[")){ // means this is an array
-                result = new ObjectMapper().readValue(response, new TypeReference<List<HashMap<String,Object>>>(){});
-            }else{
-                hashMap = new ObjectMapper().readValue(response, HashMap.class);
-                result.add(hashMap);
-            }
+        	hashMap.put("src", data);
         }
+        
         return result;
-    }
-
-    private HttpURLConnection getConnection(final String url) {
-        if (this.authToken == null) {
-            final String name = SecurityContextHolder.getContext().getAuthentication().getName();
-            final String password = SecurityContextHolder.getContext().getAuthentication().getCredentials().toString();
-
-            Authenticator.setDefault(new Authenticator() {
-                @Override
-                protected PasswordAuthentication getPasswordAuthentication() {
-                    return new PasswordAuthentication(name, password.toCharArray());
-                }
-            });
-        }
-
-        HttpURLConnection connection = null;
-        try {
-            connection = (HttpURLConnection) new URL(url).openConnection();
-            if (this.authToken != null) {
-                connection.setRequestProperty("Authorization", "Basic " + this.authToken);
-            }
-            TrustModifier.relaxHostChecking(connection);
-
-            connection.setDoInput(true);
-
-        } catch (IOException | KeyManagementException | NoSuchAlgorithmException | KeyStoreException e) {
-        	logger.error("getConnection() failed, return null", e);
-        }
-
-        return connection;
-    }
-
-    // TODO Replace this with appropriate alternative available in Guava
-    private static String getStringFromInputStream(final InputStream is) {
-        BufferedReader br = null;
-        final StringBuilder sb = new StringBuilder();
-
-        String line;
-        try {
-
-            br = new BufferedReader(new InputStreamReader(is));
-            while ((line = br.readLine()) != null) {
-                sb.append(line);
-            }
-
-        } catch (final IOException e) {
-        	logger.error("getStringFromInputStream() failed", e);
-        } finally {
-            if (br != null) {
-                try {
-                    br.close();
-                } catch (final IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        return sb.toString();
     }
     
 	@SuppressWarnings("unchecked")
@@ -290,12 +235,15 @@ public class TemplateMergeService {
 	 * Gets the object from a runReport query
 	 */
 	private List<HashMap<String,Object>> getRunReportObject(final String url) throws MalformedURLException, IOException{
+		final TemplateRestClient templateRestClient = new TemplateRestClient(SecurityContextHolder.getContext());
+    	final String data = templateRestClient.retrieveDataFromUrl(url);
+    	
+    	List<HashMap<String, Object>> result = new ArrayList<HashMap<String, Object>>();
+    	
+    	if (TemplateRestClient.isJsonArray(data)) {
+    		result = new ObjectMapper().readValue(data, new TypeReference<List<HashMap<String,Object>>>(){});
+    	}
 
-	    final HttpURLConnection connection = getConnection(url);
-
-	    final String response = getStringFromInputStream(connection.getInputStream());
-	    List<HashMap<String, Object>> result = new ArrayList<HashMap<String, Object>>();
-	    result = new ObjectMapper().readValue(response, new TypeReference<List<HashMap<String,Object>>>(){});
 	    return result;
 	}
 	
