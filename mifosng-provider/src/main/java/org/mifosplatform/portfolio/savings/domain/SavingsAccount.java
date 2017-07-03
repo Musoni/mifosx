@@ -1009,6 +1009,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
              * to minimum required balance and the point in time the transaction
              * was made:
              */
+            Money minRequiredBalanceAfterOnHoldTransactions = minRequiredBalance;
             if (depositAccountOnHoldTransactions != null) {
                 for (final DepositAccountOnHoldTransaction onHoldTransaction : depositAccountOnHoldTransactions) {
                     // Compare the balance of the on hold:
@@ -1016,9 +1017,9 @@ public class SavingsAccount extends AbstractPersistable<Long> {
                             .getTransactionDate().isEqual(transaction.transactionLocalDate()) && onHoldTransaction.getCreatedData().isBefore(transaction.getCreatedDate()))
                             && (lastSavingsDate == null || onHoldTransaction.getTransactionDate().isAfter(lastSavingsDate)))) {
                         if (onHoldTransaction.getTransactionType().isHold()) {
-                            minRequiredBalance = minRequiredBalance.plus(onHoldTransaction.getAmountMoney(this.currency));
+                            minRequiredBalanceAfterOnHoldTransactions = minRequiredBalanceAfterOnHoldTransactions.plus(onHoldTransaction.getAmountMoney(this.currency));
                         } else {
-                            minRequiredBalance = minRequiredBalance.minus(onHoldTransaction.getAmountMoney(this.currency));
+                            minRequiredBalanceAfterOnHoldTransactions = minRequiredBalanceAfterOnHoldTransactions.minus(onHoldTransaction.getAmountMoney(this.currency));
                         }
                     }
                 }
@@ -1026,7 +1027,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
 
             // enforceMinRequiredBalance
             if (transaction.canProcessBalanceCheck()) {
-                if (runningBalance.minus(minRequiredBalance).isLessThanZero()) {
+                if (runningBalance.minus(minRequiredBalanceAfterOnHoldTransactions).isLessThanZero()) {
                     final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
                     final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                             .resource(depositAccountType().resourceName() + transactionAction);
