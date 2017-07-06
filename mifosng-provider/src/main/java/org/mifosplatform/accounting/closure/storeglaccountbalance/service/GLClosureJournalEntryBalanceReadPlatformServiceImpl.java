@@ -87,9 +87,8 @@ public class GLClosureJournalEntryBalanceReadPlatformServiceImpl implements GLCl
          * @return SQL statement string
          */
         public String sql() {
-            return "je.id, je.account_id, je.office_id, je.entry_date, je.created_date, je.amount, je.description, "
-                    + "IF(ac.classification_enum IN (1,5), je.organization_running_balance, -1 * je.organization_running_balance) as organization_running_balance, "
-                    + "IF(ac.classification_enum IN (1,5), je.office_running_balance, -1 * je.office_running_balance) as office_running_balance "
+            return "je.id, je.account_id, je.office_id, je.entry_date, je.created_date, je.amount, "
+                    + "je.organization_running_balance, je.office_running_balance, je.description "
                     + "from acc_gl_account as ac "
                     + "inner join ( select * from (select * from acc_gl_journal_entry "
                     + "where office_id = ? and entry_date <= ? "
