@@ -5,31 +5,6 @@
  */
 package org.mifosplatform.portfolio.savings.data;
 
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.SAVINGS_PRODUCT_REQUEST_DATA_PARAMETERS;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.SAVINGS_PRODUCT_RESOURCE_NAME;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.allowOverdraftParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.currencyCodeParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.descriptionParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.digitsAfterDecimalParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.feeAmountParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.feeOnMonthDayParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.inMultiplesOfParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.interestCalculationDaysInYearTypeParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.interestCalculationTypeParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.interestCompoundingPeriodTypeParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.interestPostingPeriodTypeParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.lockinPeriodFrequencyParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.lockinPeriodFrequencyTypeParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.minBalanceForInterestCalculationParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.minRequiredOpeningBalanceParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.nameParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.nominalAnnualInterestRateParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.overdraftLimitParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.nominalAnnualInterestRateOverdraftParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.minOverdraftForInterestCalculationParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.shortNameParamName;
-import static org.mifosplatform.portfolio.savings.SavingsApiConstants.withdrawalFeeForTransfersParamName;
-
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -38,6 +13,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
+import org.joda.time.LocalDate;
 import org.joda.time.MonthDay;
 import org.mifosplatform.accounting.common.AccountingConstants.SAVINGS_PRODUCT_ACCOUNTING_PARAMS;
 import org.mifosplatform.accounting.common.AccountingRuleType;
@@ -57,6 +33,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+
+import static org.mifosplatform.portfolio.interestratechart.InterestRateChartSlabApiConstants.annualInterestRateParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.*;
 
 @Component
 public class SavingsProductDataValidator {
@@ -216,6 +195,11 @@ public class SavingsProductDataValidator {
                 final BigDecimal annualFeeAmount = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(feeAmountParamName, element);
                 baseDataValidator.reset().parameter(feeAmountParamName).value(annualFeeAmount).notNull().zeroOrPositiveAmount();
             }
+        }
+
+        //validate product interest rate charts;
+        if(this.fromApiJsonHelper.parameterExists(interestRateCharts, element)){
+            this.validateProductInterestRateChart(baseDataValidator,element);
         }
 
         // accounting related data validation
@@ -446,6 +430,11 @@ public class SavingsProductDataValidator {
             baseDataValidator.reset().parameter(minBalanceForInterestCalculationParamName).value(minBalanceForInterestCalculation)
                     .ignoreIfNull().zeroOrPositiveAmount();
         }
+        //validate product interest rate charts;
+        if(this.fromApiJsonHelper.parameterExists(interestRateCharts, element)){
+            this.validateProductInterestRateChart(baseDataValidator,element);
+        }
+
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
@@ -550,5 +539,109 @@ public class SavingsProductDataValidator {
         }
 
     }
+
+    private void validateProductInterestRateChart( DataValidatorBuilder baseDataValidator,JsonElement element){
+        if (element.isJsonObject()) {
+            final JsonObject topLevelJsonElement = element.getAsJsonObject();
+            if (topLevelJsonElement.has(interestRateCharts) && topLevelJsonElement.get(interestRateCharts).isJsonArray()) {
+                final JsonArray array = topLevelJsonElement.get(interestRateCharts).getAsJsonArray();
+                for (int i = 0; i < array.size(); i++) {
+                    final JsonObject interestRateChartElement = array.get(i).getAsJsonObject();
+                    final String json = this.fromApiJsonHelper.toJson(interestRateChartElement);
+                    if(!this.fromApiJsonHelper.parameterExists(idParamName,interestRateChartElement)){
+                        this.validateForCreate(json,baseDataValidator);
+                    }else{
+                        this.validateInterestChartForUpdate(json,baseDataValidator);
+                    }
+                }
+            }
+        }
+
+    }
+    public void validateForCreate(final String json, final DataValidatorBuilder baseDataValidator) {
+        final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
+        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json, SAVINGS_PRODUCTS_INTEREST_RATE_CREATE_CHARTS_REQUEST_DATA);
+
+        final JsonElement element = this.fromApiJsonHelper.parse(json);
+
+        if (this.fromApiJsonHelper.parameterExists(nameParamName, element)) {
+            final String name = this.fromApiJsonHelper.extractStringNamed(nameParamName, element);
+            baseDataValidator.reset().parameter(nameParamName).value(name).notBlank();
+        }
+
+        if (this.fromApiJsonHelper.parameterExists(descriptionParamName, element)) {
+            final String description = this.fromApiJsonHelper.extractStringNamed(descriptionParamName, element);
+            baseDataValidator.reset().parameter(descriptionParamName).value(description).notNull();
+        }
+
+        final LocalDate fromDate = this.fromApiJsonHelper.extractLocalDateNamed(fromDateParamName, element);
+        baseDataValidator.reset().parameter(fromDateParamName).value(fromDate).notNull();
+
+        LocalDate toDate = null;
+        if (this.fromApiJsonHelper.parameterExists(endDateParamName, element)) {
+            toDate = this.fromApiJsonHelper.extractLocalDateNamed(endDateParamName, element);
+            baseDataValidator.reset().parameter(endDateParamName).value(toDate).notNull();
+        }
+
+        if (this.fromApiJsonHelper.parameterExists(annualInterestRateParamName, element)) {
+            final BigDecimal annualInterestRate = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(annualInterestRateParamName, element);
+            baseDataValidator.reset().parameter(annualInterestRateParamName).value(annualInterestRate).notNull().zeroOrPositiveAmount();
+        }
+
+
+        if (fromDate != null && toDate != null) {
+            if (fromDate.isAfter(toDate)) {
+                baseDataValidator.parameter(fromDateParamName).value(fromDate).failWithCode("from.date.is.after.to.date");
+            }
+        }
+    }
+
+    public void validateInterestChartForUpdate(final String json, final DataValidatorBuilder baseDataValidator) {
+        final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
+        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json, SAVINGS_PRODUCTS_INTEREST_RATE_UPDATE_CHARTS_REQUEST_DATA);
+
+        final JsonElement element = this.fromApiJsonHelper.parse(json);
+
+        if (this.fromApiJsonHelper.parameterExists(nameParamName, element)) {
+            final String name = this.fromApiJsonHelper.extractStringNamed(nameParamName, element);
+            baseDataValidator.reset().parameter(nameParamName).value(name).notBlank();
+        }
+
+        if(this.fromApiJsonHelper.parameterExists(idParamName,element)){
+            final Long interestChartId  = this.fromApiJsonHelper.extractLongNamed(idParamName,element);
+            baseDataValidator.reset().parameter(idParamName).value(interestChartId).notBlank();
+        }
+
+        if (this.fromApiJsonHelper.parameterExists(descriptionParamName, element)) {
+            final String description = this.fromApiJsonHelper.extractStringNamed(descriptionParamName, element);
+            baseDataValidator.reset().parameter(descriptionParamName).value(description).notNull();
+        }
+
+        final LocalDate fromDate = this.fromApiJsonHelper.extractLocalDateNamed(fromDateParamName, element);
+        baseDataValidator.reset().parameter(fromDateParamName).value(fromDate).notNull();
+
+        LocalDate toDate = null;
+        if (this.fromApiJsonHelper.parameterExists(endDateParamName, element)) {
+            toDate = this.fromApiJsonHelper.extractLocalDateNamed(endDateParamName, element);
+            baseDataValidator.reset().parameter(endDateParamName).value(toDate).notNull();
+        }
+
+        if (this.fromApiJsonHelper.parameterExists(annualInterestRateParamName, element)) {
+            final BigDecimal annualInterestRate = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(annualInterestRateParamName, element);
+            baseDataValidator.reset().parameter(annualInterestRateParamName).value(annualInterestRate).notNull().zeroOrPositiveAmount();
+        }
+
+        if (fromDate != null && toDate != null) {
+            if (fromDate.isAfter(toDate)) {
+                baseDataValidator.parameter(fromDateParamName).value(fromDate).failWithCode("from.date.is.after.to.date");
+            }
+        }
+
+    }
+
+
+
+
+
 
 }

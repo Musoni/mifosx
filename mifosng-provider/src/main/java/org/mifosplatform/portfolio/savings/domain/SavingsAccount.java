@@ -639,6 +639,10 @@ public class SavingsAccount extends AbstractPersistable<Long> {
             periodStartingBalance = Money.zero(this.currency);
 
         final SavingsInterestCalculationType interestCalculationType = SavingsInterestCalculationType.fromInt(this.interestCalculationType);
+        /**
+         * use product interest rate chart (interestRate) only on savings account with enum type 100
+         * this will be applicable only if the falls in the date range else use standard rate on product
+         */
         final BigDecimal interestRateAsFraction = getEffectiveInterestRateAsFraction(mc, upToInterestCalculationDate);
         final BigDecimal overdraftInterestRateAsFraction = getEffectiveOverdraftInterestRateAsFraction(mc);
         final Collection<Long> interestPostTransactions = this.savingsHelper.fetchPostInterestTransactionIds(getId());
@@ -678,6 +682,10 @@ public class SavingsAccount extends AbstractPersistable<Long> {
 
     @SuppressWarnings("unused")
     protected BigDecimal getEffectiveInterestRateAsFraction(final MathContext mc, final LocalDate upToInterestCalculationDate) {
+        if( this.savingsProduct().findCurrentInterestRate() != null){
+           BigDecimal nominalProductInterestRateChart = this.productInterestRate();
+            return nominalProductInterestRateChart.divide(BigDecimal.valueOf(100l), mc);
+        }
         return this.nominalAnnualInterestRate.divide(BigDecimal.valueOf(100l), mc);
     }
 
@@ -694,6 +702,20 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         }
 
         return orderedNonInterestPostingTransactions;
+    }
+
+    /**
+     * This functions checks a savings product interest rate chart and see if there is an interest rate set in the
+     * time frame period if true this interest rate will be use instead of the standard interest rate on the savings product
+     * @return
+     */
+    private BigDecimal productInterestRate(){
+        BigDecimal nominalProductInterestRateChart = null;
+        SavingsProductInterestRateChart savingsProductInterestRateChart = this.savingsProduct().findCurrentInterestRate();
+        if(savingsProductInterestRateChart != null){
+            nominalProductInterestRateChart = savingsProductInterestRateChart.getAnnualInterestRate();
+        }
+        return nominalProductInterestRateChart;
     }
 
     protected List<SavingsAccountTransaction> retreiveListOfTransactions() {
@@ -1641,6 +1663,11 @@ public class SavingsAccount extends AbstractPersistable<Long> {
     }
 
     public BigDecimal getNominalAnnualInterestRate() {
+        final SavingsProductInterestRateChart  savingsProductInterestRateChart= this.savingsProduct().findCurrentInterestRate();
+        if(savingsProductInterestRateChart != null ){
+            BigDecimal productAnnualInterestRate = savingsProductInterestRateChart.getAnnualInterestRate();
+            return productAnnualInterestRate;
+        }
         return this.nominalAnnualInterestRate;
     }
 
