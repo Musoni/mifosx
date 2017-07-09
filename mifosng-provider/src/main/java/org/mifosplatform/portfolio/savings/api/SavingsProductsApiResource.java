@@ -33,7 +33,6 @@ import org.mifosplatform.commands.domain.CommandWrapper;
 import org.mifosplatform.commands.service.CommandWrapperBuilder;
 import org.mifosplatform.commands.service.PortfolioCommandSourceWritePlatformService;
 import org.mifosplatform.infrastructure.codes.data.CodeValueData;
-import org.mifosplatform.infrastructure.codes.domain.CodeValue;
 import org.mifosplatform.infrastructure.codes.service.CodeValueReadPlatformService;
 import org.mifosplatform.infrastructure.core.api.ApiRequestParameterHelper;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
@@ -53,8 +52,10 @@ import org.mifosplatform.portfolio.savings.SavingsInterestCalculationDaysInYearT
 import org.mifosplatform.portfolio.savings.SavingsInterestCalculationType;
 import org.mifosplatform.portfolio.savings.SavingsPostingInterestPeriodType;
 import org.mifosplatform.portfolio.savings.data.SavingsProductData;
+import org.mifosplatform.portfolio.savings.data.InterestRateCharts;
 import org.mifosplatform.portfolio.savings.service.SavingsDropdownReadPlatformService;
 import org.mifosplatform.portfolio.savings.service.SavingsEnumerations;
+import org.mifosplatform.portfolio.savings.service.SavingsProductInterestRateChartReadPlatformService;
 import org.mifosplatform.portfolio.savings.service.SavingsProductReadPlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -78,6 +79,7 @@ public class SavingsProductsApiResource {
     private final ProductToGLAccountMappingReadPlatformService accountMappingReadPlatformService;
     private final ChargeReadPlatformService chargeReadPlatformService;
     private final PaymentTypeReadPlatformService paymentTypeReadPlatformService;
+    private final SavingsProductInterestRateChartReadPlatformService savingsProductInterestRateChartReadPlatformService;
 
     @Autowired
     public SavingsProductsApiResource(final SavingsProductReadPlatformService savingProductReadPlatformService,
@@ -89,7 +91,8 @@ public class SavingsProductsApiResource {
             final ApiRequestParameterHelper apiRequestParameterHelper,
             final AccountingDropdownReadPlatformService accountingDropdownReadPlatformService,
             final ProductToGLAccountMappingReadPlatformService accountMappingReadPlatformService,
-            final ChargeReadPlatformService chargeReadPlatformService, PaymentTypeReadPlatformService paymentTypeReadPlatformService) {
+            final ChargeReadPlatformService chargeReadPlatformService, PaymentTypeReadPlatformService paymentTypeReadPlatformService,
+            final SavingsProductInterestRateChartReadPlatformService savingsProductInterestRateChartReadPlatformService) {
         this.savingProductReadPlatformService = savingProductReadPlatformService;
         this.dropdownReadPlatformService = dropdownReadPlatformService;
         this.currencyReadPlatformService = currencyReadPlatformService;
@@ -102,6 +105,7 @@ public class SavingsProductsApiResource {
         this.accountMappingReadPlatformService = accountMappingReadPlatformService;
         this.chargeReadPlatformService = chargeReadPlatformService;
         this.paymentTypeReadPlatformService = paymentTypeReadPlatformService;
+        this.savingsProductInterestRateChartReadPlatformService = savingsProductInterestRateChartReadPlatformService;
     }
 
     @POST
@@ -160,6 +164,8 @@ public class SavingsProductsApiResource {
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
 
+        final Collection<InterestRateCharts> interestRateChartData = this.savingsProductInterestRateChartReadPlatformService.retrieveOne(productId);
+
         if (savingProductData.hasAccountingEnabled()) {
             final Map<String, Object> accountingMappings = this.accountMappingReadPlatformService
                     .fetchAccountMappingDetailsForSavingsProduct(productId, savingProductData.accountingRuleTypeId());
@@ -171,6 +177,9 @@ public class SavingsProductsApiResource {
                     .fetchPenaltyToIncomeAccountMappingsForSavingsProduct(productId);
             savingProductData = SavingsProductData.withAccountingDetails(savingProductData, accountingMappings,
                     paymentChannelToFundSourceMappings, feeToGLAccountMappings, penaltyToGLAccountMappings);
+        }
+        if(!interestRateChartData.isEmpty()){
+            savingProductData = SavingsProductData.withInterestRateCharts(savingProductData,interestRateChartData);
         }
 
         if (settings.isTemplate()) {

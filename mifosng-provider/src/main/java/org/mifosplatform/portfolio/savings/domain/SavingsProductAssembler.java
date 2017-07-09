@@ -6,11 +6,14 @@
 package org.mifosplatform.portfolio.savings.domain;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import org.joda.time.LocalDate;
 import org.mifosplatform.accounting.common.AccountingRuleType;
 import org.mifosplatform.infrastructure.codes.domain.CodeValue;
 import org.mifosplatform.infrastructure.codes.domain.CodeValueRepositoryWrapper;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
+import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
 import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
 import org.mifosplatform.portfolio.charge.domain.Charge;
 import org.mifosplatform.portfolio.charge.domain.ChargeRepositoryWrapper;
@@ -22,8 +25,10 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
+import static org.mifosplatform.portfolio.interestratechart.InterestRateChartSlabApiConstants.annualInterestRateParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.*;
 
 @Component
@@ -31,12 +36,17 @@ public class SavingsProductAssembler {
 
     private final ChargeRepositoryWrapper chargeRepository;
     private final CodeValueRepositoryWrapper codeValueRepository;
+    private final FromJsonHelper fromApiJsonHelper;
+    private final SavingsProductInterestRateChartRepository savingsProductInterestRateChartRepository;
 
     @Autowired
     public SavingsProductAssembler(final ChargeRepositoryWrapper chargeRepository,
-                                   final CodeValueRepositoryWrapper codeValueRepository) {
+                                   final CodeValueRepositoryWrapper codeValueRepository, final FromJsonHelper fromApiJsonHelper,
+                                   final SavingsProductInterestRateChartRepository savingsProductInterestRateChartRepository) {
         this.chargeRepository = chargeRepository;
         this.codeValueRepository = codeValueRepository;
+        this.fromApiJsonHelper = fromApiJsonHelper;
+        this.savingsProductInterestRateChartRepository = savingsProductInterestRateChartRepository;
     }
 
     public SavingsProduct assemble(final JsonCommand command) {
@@ -135,11 +145,17 @@ public class SavingsProductAssembler {
         final BigDecimal minBalanceForInterestCalculation = command
                 .bigDecimalValueOfParameterNamedDefaultToNullIfZero(minBalanceForInterestCalculationParamName);
 
+        Set<SavingsProductInterestRateChart> savingsProductInterestRateChart = null;
+
+        if(command.parameterExists(interestRateCharts)){
+            savingsProductInterestRateChart= this.assembleSetOfInterestRateCharts(command);
+        }
+
         return SavingsProduct.createNew(name, shortName, description, currency, interestRate, productGroup, interestCompoundingPeriodType,
                 interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
                 lockinPeriodFrequency, lockinPeriodFrequencyType, iswithdrawalFeeApplicableForTransfer, accountingRuleType, charges,
                 allowOverdraft, overdraftLimit, enforceMinRequiredBalance, minRequiredBalance, minBalanceForInterestCalculation,
-                nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation);
+                nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation,savingsProductInterestRateChart);
     }
 
     public Set<Charge> assembleListOfSavingsProductCharges(final JsonCommand command, final String savingsProductCurrencyCode) {
@@ -174,5 +190,50 @@ public class SavingsProductAssembler {
         }
 
         return charges;
+    }
+
+    public Set<SavingsProductInterestRateChart> assembleSetOfInterestRateCharts(final JsonCommand command){
+
+        final Set<SavingsProductInterestRateChart> savingsProductInterestRateChart = new HashSet<>();
+
+        if(command.parameterExists(interestRateCharts)){
+            final JsonArray interestRateChartArray = command.arrayOfParameterNamed(interestRateCharts);
+            if(interestRateChartArray != null){
+                for (int i = 0; i <interestRateChartArray.size(); i++) {
+                    final JsonObject interestRateChartElement = interestRateChartArray.get(i).getAsJsonObject();
+                    final Locale locale = this.fromApiJsonHelper.extractLocaleParameter(interestRateChartElement);
+                    SavingsProductInterestRateChart interestRateChart = this.assembleFrom(interestRateChartElement,locale);
+                    savingsProductInterestRateChart.add(interestRateChart);
+                }
+            }
+        }
+
+        return savingsProductInterestRateChart;
+
+    }
+
+    public SavingsProductInterestRateChart assembleFrom(final JsonElement element, Locale locale) {
+
+        final String name = this.fromApiJsonHelper.extractStringNamed(nameParamName, element);
+
+        String description = "";
+
+        if(this.fromApiJsonHelper.parameterExists(descriptionParamName, element)){
+            description = this.fromApiJsonHelper.extractStringNamed(descriptionParamName, element);
+        }
+        final LocalDate fromDate = this.fromApiJsonHelper.extractLocalDateNamed(fromDateParamName, element);
+        final LocalDate endDate = this.fromApiJsonHelper.extractLocalDateNamed(endDateParamName, element);
+
+        final BigDecimal annualInterestRate = this.fromApiJsonHelper.extractBigDecimalNamed(annualInterestRateParamName,element,locale);
+
+        boolean applyToExistingSavings = false;
+
+        if(this.fromApiJsonHelper.parameterExists(applyToExistingSavingsAccountParamName,element)){
+            applyToExistingSavings = this.fromApiJsonHelper.extractBooleanNamed(applyToExistingSavingsAccountParamName,element);
+        }
+
+        final SavingsProductInterestRateChart savingsProductInterestRateChart =  SavingsProductInterestRateChart.createNew(null,name,description,fromDate,endDate,annualInterestRate,applyToExistingSavings);
+
+        return savingsProductInterestRateChart;
     }
 }

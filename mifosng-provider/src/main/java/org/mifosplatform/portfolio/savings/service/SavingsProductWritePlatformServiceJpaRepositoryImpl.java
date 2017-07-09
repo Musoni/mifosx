@@ -7,6 +7,7 @@ package org.mifosplatform.portfolio.savings.service;
 
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.accountingRuleParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.chargesParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.interestRateCharts;
 
 import java.util.Map;
 import java.util.Set;
@@ -132,6 +133,10 @@ public class SavingsProductWritePlatformServiceJpaRepositoryImpl implements Savi
             if (product == null) { throw new SavingsProductNotFoundException(productId); }
 
             final Map<String, Object> changes = product.update(command);
+
+            if(command.hasParameter(interestRateCharts)){
+                product.updateInterestCharts(changes,command);
+            }
 
             if (changes.containsKey(chargesParamName)) {
                 final Set<Charge> savingsProductCharges = this.savingsProductAssembler.assembleListOfSavingsProductCharges(command, product

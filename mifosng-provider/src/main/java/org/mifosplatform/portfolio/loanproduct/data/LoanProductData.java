@@ -174,6 +174,7 @@ public class LoanProductData {
     private final Boolean accountMovesOutOfNPAOnlyOnArrearsCompletion;
     private LoanProductConfigurableAttributes allowAttributeOverrides;
 
+
     /**
      * Used when returning lookup information about loan product for dropdowns.
      */
