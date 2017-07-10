@@ -51,7 +51,16 @@ public class SavingsAccountTransactionDataValidator {
         this.fromApiJsonHelper = fromApiJsonHelper;
     }
 
+    public void validateUpdate(final JsonCommand command) {
+        validate(command, true);
+
+    }
+
     public void validate(final JsonCommand command) {
+        validate(command, false);
+    }
+
+    private void validate(final JsonCommand command, Boolean isUpdate) {
 
         final String json = command.json();
 
@@ -73,7 +82,7 @@ public class SavingsAccountTransactionDataValidator {
         final BigDecimal transactionAmount = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(transactionAmountParamName, element);
         baseDataValidator.reset().parameter(transactionAmountParamName).value(transactionAmount).notNull().positiveAmount();
 
-        validatePaymentTypeDetails(baseDataValidator, element);
+        validatePaymentTypeDetails(baseDataValidator, element, isUpdate);
 
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
     }
@@ -128,6 +137,10 @@ public class SavingsAccountTransactionDataValidator {
     }
 
     private void validatePaymentTypeDetails(final DataValidatorBuilder baseDataValidator, JsonElement element) {
+        validatePaymentTypeDetails(baseDataValidator, element, false);
+    }
+
+    private void validatePaymentTypeDetails(final DataValidatorBuilder baseDataValidator, JsonElement element, Boolean isUpdate) {
         // Validate all string payment detail fields for max length
         boolean checkPaymentTypeDetails = false;
         final Integer paymentTypeId = this.fromApiJsonHelper.extractIntegerWithLocaleNamed(paymentTypeIdParamName, element);
@@ -142,7 +155,7 @@ public class SavingsAccountTransactionDataValidator {
                 checkPaymentTypeDetails = true;
             }
         }
-        if(checkPaymentTypeDetails){
+    if(checkPaymentTypeDetails && !isUpdate){
             baseDataValidator.reset().parameter(paymentTypeIdParamName).value(paymentTypeId).notBlank().integerGreaterThanZero();
         }
 
