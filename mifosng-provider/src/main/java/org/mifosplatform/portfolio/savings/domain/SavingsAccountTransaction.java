@@ -407,7 +407,7 @@ public final class SavingsAccountTransaction extends AbstractPersistable<Long> {
         thisTransactionData.put("amount", this.amount);
         thisTransactionData.put("overdraftAmount", this.overdraftAmount);
 
-        if (this.paymentDetail != null) {
+        if (this.paymentDetail != null && this.paymentDetail.getPaymentType() != null) {
             thisTransactionData.put("paymentTypeId", this.paymentDetail.getPaymentType().getId());
         }
 
