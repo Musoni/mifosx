@@ -605,7 +605,7 @@ public class GLClosureJournalEntryBalanceReadPlatformServiceImpl implements GLCl
                 }
 
                 if (reportData.getAmount() != null) {
-                    String goodsAmount = reportData.getAmount().setScale(2, RoundingMode.CEILING).
+                    String goodsAmount = reportData.getAmount().abs().setScale(2, RoundingMode.CEILING).
                             stripTrailingZeros().toPlainString();
                     if(reportData.getAmount().compareTo(BigDecimal.ZERO) > 0){
                         fields.put("creditAmount", goodsAmount);

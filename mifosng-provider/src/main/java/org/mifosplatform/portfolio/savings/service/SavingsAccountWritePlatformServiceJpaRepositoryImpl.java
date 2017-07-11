@@ -549,7 +549,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                         "Savings account transaction:" + transactionId + " update not allowed as it involves in account transfer",
                         transactionId); }
 
-        this.savingsAccountTransactionDataValidator.validate(command);
+        this.savingsAccountTransactionDataValidator.validateUpdate(command);
 
         final LocalDate today = DateUtils.getLocalDateOfTenant();
 

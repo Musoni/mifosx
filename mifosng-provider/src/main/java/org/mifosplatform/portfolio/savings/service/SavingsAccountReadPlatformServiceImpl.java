@@ -728,6 +728,18 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
                     final String bankNumber = rs.getString("bankNumber");
                     paymentDetailData = new PaymentDetailData(id, paymentType, accountNumber, checkNumber, routingCode, receiptNumber,
                             bankNumber);
+                }else{
+
+                    final String accountNumber = rs.getString("accountNumber");
+                    final String checkNumber = rs.getString("checkNumber");
+                    final String routingCode = rs.getString("routingCode");
+                    final String receiptNumber = rs.getString("receiptNumber");
+                    final String bankNumber = rs.getString("bankNumber");
+
+                    if(receiptNumber != null || checkNumber != null){
+                        paymentDetailData = new PaymentDetailData(id, null, accountNumber, checkNumber, routingCode, receiptNumber,bankNumber);
+                    }
+
                 }
             }
 
