@@ -16,17 +16,14 @@ import java.sql.Connection;
 import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import javax.sql.DataSource;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
+import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.apache.commons.lang.StringUtils;
 import org.mifosplatform.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
@@ -755,5 +752,44 @@ public class ReadReportingServiceImpl implements ReadReportingService {
         errorLog.append("ReadReportingServiceImpl.generatePentahoReportAsOutputStream method threw a PlatformDataIntegrityException "
                 + "exception: No matching Output Type: " + outputType + " ---------- ");
         throw new PlatformDataIntegrityException("error.msg.invalid.outputType", "No matching Output Type: " + outputType);
+    }
+
+    public GenericResultsetData  runReportByScheduler(String reportName){
+
+        final MultivaluedMap<String, String> queryParams =  new MultivaluedMapImpl();;
+
+        queryParams.add("genericResultSet","false");
+        final String parameterTypeValue = "report";
+
+        final Map<String, String> reportParams = getReportParams(queryParams, false);
+
+        final GenericResultsetData result = this.retrieveGenericResultset(reportName,
+                parameterTypeValue, reportParams);
+
+       // final String json = this.genericDataService.generateJsonFromGenericResultsetData(result);
+
+        return result;
+    }
+
+    private Map<String, String> getReportParams(final MultivaluedMap<String, String> queryParams, final Boolean isPentaho) {
+
+        final Map<String, String> reportParams = new HashMap<>();
+        final Set<String> keys = queryParams.keySet();
+        String pKey;
+        String pValue;
+        for (final String k : keys) {
+
+            if (k.startsWith("R_")) {
+                if (isPentaho) {
+                    pKey = k.substring(2);
+                } else {
+                    pKey = "${" + k.substring(2) + "}";
+                }
+
+                pValue = queryParams.get(k).get(0);
+                reportParams.put(pKey, pValue);
+            }
+        }
+        return reportParams;
     }
 }
