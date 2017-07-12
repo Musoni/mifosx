@@ -596,7 +596,7 @@ public final class LoanTransaction extends AbstractPersistable<Long> {
         thisTransactionData.put("overPaymentPortion", this.overPaymentPortion);
         thisTransactionData.put("isAccountTransfer",this.isAccountTransfer);
 
-        if (this.paymentDetail != null) {
+        if (this.paymentDetail != null && this.paymentDetail.getPaymentType()!=null) {
             thisTransactionData.put("paymentTypeId", this.paymentDetail.getPaymentType().getId());
         }
 
