@@ -17,7 +17,6 @@ import org.mifosplatform.infrastructure.core.exception.InvalidJsonException;
 import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
 import org.mifosplatform.organisation.workingdays.api.WorkingDaysApiConstants;
-import org.mifosplatform.organisation.workingdays.domain.RepaymentRescheduleType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -51,13 +50,8 @@ public class WorkingDayValidator {
         baseDataValidator.reset().parameter(WorkingDaysApiConstants.recurrence).value(recurrence).notNull();
 
         final Integer repaymentRescheduleType = this.fromApiJsonHelper.extractIntegerSansLocaleNamed("repaymentRescheduleType", element);
-        final RepaymentRescheduleType rescheduleType = RepaymentRescheduleType.fromInt(repaymentRescheduleType);
-        
-        if ((repaymentRescheduleType != null) && (rescheduleType == null || (rescheduleType == RepaymentRescheduleType.INVALID))) {
-        	baseDataValidator.reset().parameter("repaymentRescheduleType").value(repaymentRescheduleType)
-        			.ignoreIfNull().failWithCode("invalid.repayment.reschedule.type");
-        }
-        
+        baseDataValidator.reset().parameter("repaymentRescheduleType").value(repaymentRescheduleType).ignoreIfNull().inMinMaxRange(1, 4);
+
         final Boolean extendTermForDailyRepayments = this.fromApiJsonHelper.extractBooleanNamed("extendTermForDailyRepayments", element);
         baseDataValidator.reset().parameter(WorkingDaysApiConstants.extendTermForDailyRepayments).value(extendTermForDailyRepayments).ignoreIfNull().validateForBooleanValue();
         
