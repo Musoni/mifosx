@@ -204,6 +204,8 @@ public class DataExportUtils {
 	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
 	                    				DataExportEntityColumnName.AMOUNT);
 	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.ID);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
 	                    				DataExportEntityColumnName.PRINCIPAL_PORTION_DERIVED);
 	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
 	                    				DataExportEntityColumnName.INTEREST_PORTION_DERIVED);
@@ -236,6 +238,8 @@ public class DataExportUtils {
 	                    				DataExportEntityColumnName.SAVINGS_ACCOUNT_ID);
 	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
 	                    				DataExportEntityColumnName.AMOUNT);
+	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    				DataExportEntityColumnName.ID);
 	            	    		break;
 	            	    		
 	                    	case M_LOAN_REPAYMENT_SCHEDULE:

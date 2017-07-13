@@ -19,7 +19,6 @@ public enum DataExportCoreColumn {
 	GENDER("gender_cv_id", "gender", "VARCHAR", true, "gender_cv_id", "code_value", "m_code_value", null),
 	PHONE_NUMBER("mobile_no", "phone number", "VARCHAR", true, null, null, null, null),
 	STAFF_NAME("staff_name", "staff name", "VARCHAR", true, "staff_id", "display_name", "m_staff", null),
-	TRANSACTION_CREATED_BY("created_by", "created by", "VARCHAR", true, "appuser_id", "username", "m_appuser", null),
 	LOAN_TRANSACTION_INTEREST_ACCRUED("loan_transaction_interest_accrued", "interest accrued", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_TRANSACTION),
 	LOAN_TRANSACTION_INTEREST_WAIVED("loan_transaction_interest_waived", "interest waived", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_TRANSACTION),
 	LOAN_TRANSACTION_TRANSFER_AMOUNT("loan_transaction_transfer_amount", "transfer amount", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_TRANSACTION),
