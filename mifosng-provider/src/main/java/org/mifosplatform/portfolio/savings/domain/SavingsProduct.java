@@ -716,10 +716,13 @@ public class SavingsProduct extends AbstractPersistable<Long> {
     }
 
     public void updateSavingsProductInterestRateCharts(Set<SavingsProductInterestRateChart> savingsProductInterestRateCharts) {
-        for(SavingsProductInterestRateChart interestRateChart : savingsProductInterestRateCharts){
-            interestRateChart.updateSavingsProduct(this);
+        if(savingsProductInterestRateCharts != null){
+            for(SavingsProductInterestRateChart interestRateChart : savingsProductInterestRateCharts){
+                interestRateChart.updateSavingsProduct(this);
+            }
+            this.savingsProductInterestRateCharts = savingsProductInterestRateCharts;
         }
-        this.savingsProductInterestRateCharts = savingsProductInterestRateCharts;
+
     }
 
     public SavingsProductInterestRateChart findProductInterestRateChart(final Long id){
