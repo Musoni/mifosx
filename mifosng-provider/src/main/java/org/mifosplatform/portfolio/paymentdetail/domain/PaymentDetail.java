@@ -26,7 +26,7 @@ import java.util.Map;
 public final class PaymentDetail extends AbstractPersistable<Long> {
 
     @ManyToOne
-    @JoinColumn(name = "payment_type_id", nullable = false)
+    @JoinColumn(name = "payment_type_id", nullable = true)
     private PaymentType paymentType;
 
     @Column(name = "account_number", length = 50)
