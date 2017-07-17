@@ -19,7 +19,7 @@ public enum DataExportCoreColumn {
 	GENDER("gender_cv_id", "gender", "VARCHAR", true, "gender_cv_id", "code_value", "m_code_value", null),
 	PHONE_NUMBER("mobile_no", "phone number", "VARCHAR", true, null, null, null, null),
 	STAFF_NAME("staff_name", "staff name", "VARCHAR", true, "staff_id", "display_name", "m_staff", null),
-	TRANSACTION_CREATED_BY("created_by", "created by", "VARCHAR", true, "appuser_id", "username", "m_appuser", null),
+	LOAN_TRANSACTION_CREATED_BY("loan_transaction_created_by", "created by", "VARCHAR", true, "appuser_id", "username", "m_appuser", DataExportBaseEntity.LOAN_TRANSACTION),
 	LOAN_TRANSACTION_INTEREST_ACCRUED("loan_transaction_interest_accrued", "interest accrued", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_TRANSACTION),
 	LOAN_TRANSACTION_INTEREST_WAIVED("loan_transaction_interest_waived", "interest waived", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_TRANSACTION),
 	LOAN_TRANSACTION_TRANSFER_AMOUNT("loan_transaction_transfer_amount", "transfer amount", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_TRANSACTION),
@@ -36,6 +36,7 @@ public enum DataExportCoreColumn {
 	LOAN_TRANSACTION_PENALTIES_REPAID("penalty_charges_portion_derived", "penalties repaid", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_TRANSACTION),
 	LOAN_TRANSACTION_OVERPAYMENT_REPAID("overpayment_portion_derived", "overpayment repaid", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_TRANSACTION),
 	LOAN_TRANSACTION_TOTAL_RECOVERED(DataExportEntityColumnName.RECOVERED_PORTION_DERIVED, "total recovered", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_TRANSACTION),
+	SAVINGS_TRANSACTION_CREATED_BY("savings_transaction_created_by", "created by", "VARCHAR", true, "appuser_id", "username", "m_appuser", DataExportBaseEntity.SAVINGS_ACCOUNT_TRANSACTION),
 	SAVINGS_TRANSACTION_DEPOSIT("savings_transaction_deposit", "deposit", "DECIMAL", true, null, null, null, DataExportBaseEntity.SAVINGS_ACCOUNT_TRANSACTION),
 	SAVINGS_TRANSACTION_WITHDRAWAL("savings_transaction_withdrawal", "withdrawal", "DECIMAL", true, null, null, null, DataExportBaseEntity.SAVINGS_ACCOUNT_TRANSACTION),
 	SAVINGS_TRANSACTION_INTEREST_POSTING("savings_transaction_interest_posting", "interest posting", "DECIMAL", true, null, null, null, DataExportBaseEntity.SAVINGS_ACCOUNT_TRANSACTION),
@@ -64,7 +65,8 @@ public enum DataExportCoreColumn {
 	REPAYMENT_SCHEDULE_TOTAL_OUTSTANDING("repayment_schedule_total_outstanding", "total outstanding", "DECIMAL", true, null, null, null, DataExportBaseEntity.LOAN_REPAYMENT_SCHEDULE),
 	LOAN_ARREARS_DATE("overdue_since_date_derived", "arrears date", "DATE", true, "id", "overdue_since_date_derived", "m_loan_arrears_aging", DataExportBaseEntity.LOAN),
 	LOAN_ARREARS_DAYS("arrears_days", "arrears days", "INTEGER", true, "id", "overdue_since_date_derived", "m_loan_arrears_aging", DataExportBaseEntity.LOAN),
-	LOAN_ARREARS_AMOUNT("total_overdue_derived", "arrears amount", "DECIMAL", true, "id", "total_overdue_derived", "m_loan_arrears_aging", DataExportBaseEntity.LOAN);
+	LOAN_ARREARS_AMOUNT("total_overdue_derived", "arrears amount", "DECIMAL", true, "id", "total_overdue_derived", "m_loan_arrears_aging", DataExportBaseEntity.LOAN),
+	GROUP_LOAN_MEMBER_ALLOCATION_LOAN_ACCOUNT_NUMBER("group_loan_member_allocation_loan_account_number", "loan account number", "VARCHAR", true, "loan_id", "account_no", "m_loan", DataExportBaseEntity.GROUP_LOAN_MEMBER_ALLOCATION);
 	
 	private String name;
 	private String label;

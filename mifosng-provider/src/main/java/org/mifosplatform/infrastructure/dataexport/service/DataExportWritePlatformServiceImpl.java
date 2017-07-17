@@ -2471,7 +2471,7 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					}
 	    					// =============================================================================
 	    					break;
-						case TRANSACTION_CREATED_BY:
+						case LOAN_TRANSACTION_CREATED_BY:
 							// =============================================================================
 							sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_APP_USER,
 									DataExportCoreTable.M_LOAN_TRANSACTION);
@@ -3357,7 +3357,7 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					}
 	    					// =============================================================================
 	    					break;
-						case TRANSACTION_CREATED_BY:
+						case SAVINGS_TRANSACTION_CREATED_BY:
 							// =============================================================================
 							sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_APP_USER,
 									DataExportCoreTable.M_SAVINGS_ACCOUNT_TRANSACTION);
@@ -4242,6 +4242,476 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					break;
 	    			}
 	    			break;
+	    			
+	    		case GROUP_LOAN_MEMBER_ALLOCATION:
+	    			switch (coreColumn) {
+		    			case CLIENT_ID:
+		    			case CLIENT_NAME:
+		    				// =============================================================================
+	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
+	    							DataExportCoreTable.M_GROUP_LOAN_MEMBER_ALLOCATION);
+	    					
+	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(aliasPostfixNumber.intValue());
+	    						
+	    						// m_group_loan_member_allocation and m_client table join
+	        					sqlStatement = "`" + DataExportCoreTable.M_CLIENT.getName() + "` `" + mClientTableAlias 
+	                        			+ "` on `" + mClientTableAlias + "`.`id` = `" + baseEntityName 
+	                                            + "`.`client_id`";
+	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_CLIENT, 
+	        							DataExportCoreTable.M_GROUP_LOAN_MEMBER_ALLOCATION, sqlStatement, mClientTableAlias, 
+	        							baseEntityName);
+	    						
+	    						sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+	    						
+	    						// add the join to the map
+	        					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+	    					}
+	    					// =============================================================================
+	    					
+	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
+	    					if (isSelectStatement) {
+	    						sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`" 
+	        							+ coreColumn.getReferencedColumnName() + "` as `" + coreColumn.getLabel() + "`";
+	    						
+	    						// add the select statement
+	        					sqlBuilder.SELECT(sqlStatement);
+	        					
+	    					} else if (filterValue != null) {
+	    						sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`" 
+	    								+ coreColumn.getReferencedColumnName() + "` " + filterValue;
+	    						
+	    						// add a WHERE clause
+	    						sqlBuilder.WHERE(sqlStatement);
+	    					}
+		    				break;
+	    			
+		    			case DATE_OF_BIRTH:
+	    				case PHONE_NUMBER:
+	    				case GENDER:
+	    					// =============================================================================
+	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
+	    							DataExportCoreTable.M_GROUP_LOAN_MEMBER_ALLOCATION);
+	    					
+	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(aliasPostfixNumber.intValue());
+	    						
+	    						// m_group_loan_member_allocation and m_client table join
+	        					sqlStatement = "`" + DataExportCoreTable.M_CLIENT.getName() + "` `" + mClientTableAlias 
+	                        			+ "` on `" + mClientTableAlias + "`.`id` = `" + baseEntityName 
+	                                            + "`.`client_id`";
+	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_CLIENT, 
+	        							DataExportCoreTable.M_GROUP_LOAN_MEMBER_ALLOCATION, sqlStatement, mClientTableAlias, 
+	        							baseEntityName);
+	    						
+	    						sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+	    						
+	    						// add the join to the map
+	        					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+	    					}
+	    					// =============================================================================
+	    					
+	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
+	    					if (isSelectStatement) {
+	    						sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`" 
+	        							+ coreColumn.getName() + "` as `" + coreColumn.getLabel() + "`";
+	    						
+	    						// add the select statement
+	        					sqlBuilder.SELECT(sqlStatement);
+	        					
+	    					} else if (filterValue != null) {
+	    						sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`" 
+	    								+ coreColumn.getName() + "` " + filterValue;
+	    						
+	    						// add a WHERE clause
+	    						sqlBuilder.WHERE(sqlStatement);
+	    					}
+	    					break;
+	    					
+	    				case LOAN_OFFICER_NAME:
+	    					// =============================================================================
+	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_LOAN, 
+	    							DataExportCoreTable.M_GROUP_LOAN_MEMBER_ALLOCATION);
+	    					
+	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mLoanTableAlias = DataExportCoreTable.M_LOAN.getAlias(aliasPostfixNumber.intValue());
+	    						
+	    						// m_group_loan_member_allocation and m_loan table join
+	        					sqlStatement = "`" + DataExportCoreTable.M_LOAN.getName() + "` `" + mLoanTableAlias 
+	                        			+ "` on `" + mLoanTableAlias + "`.`id` = `" + baseEntityName 
+	                                            + "`.`loan_id`";
+	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_LOAN, 
+	        							DataExportCoreTable.M_GROUP_LOAN_MEMBER_ALLOCATION, sqlStatement, mLoanTableAlias, 
+	        							baseEntityName);
+	    						
+	    						sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+	    						
+	    						// add the join to the map
+	        					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+	    					}
+	    					// =============================================================================
+	    					
+	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
+	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_STAFF, 
+	    							DataExportCoreTable.M_LOAN);
+	    					
+	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mStaffTableAlias = DataExportCoreTable.M_STAFF.getAlias(aliasPostfixNumber.intValue());
+	    						
+	    						// m_loan and m_group table join
+	        					sqlStatement = "`" + DataExportCoreTable.M_STAFF.getName() + "` `" + mStaffTableAlias 
+	                        			+ "` on `" + mStaffTableAlias + "`.`id` = `" + dataExportSqlJoin.getParentTableAlias() 
+	                                            + "`.`loan_officer_id`";
+	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_STAFF, 
+	        							DataExportCoreTable.M_LOAN, sqlStatement, mStaffTableAlias, 
+	        							dataExportSqlJoin.getParentTableAlias());
+	    						
+	    						sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+	    						
+	    						// add the join to the map
+	        					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+	    					}
+	    					// =============================================================================
+	    					
+	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
+	    					if (isSelectStatement) {
+	    						sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`" 
+	        							+ coreColumn.getReferencedColumnName() + "` as `" + coreColumn.getLabel() + "`";
+	    						
+	    						// add the select statement
+	        					sqlBuilder.SELECT(sqlStatement);
+	        					
+	    					} else if (filterValue != null) {
+	    						sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`" 
+	    								+ coreColumn.getReferencedColumnName() + "` " + filterValue;
+	    						
+	    						// add a WHERE clause
+	    						sqlBuilder.WHERE(sqlStatement);
+	    					}
+	    					break;
+	    					
+	    				case GROUP_NAME:
+	    				case GROUP_ID:
+	    					// =============================================================================
+	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_LOAN, 
+	    							DataExportCoreTable.M_GROUP_LOAN_MEMBER_ALLOCATION);
+	    					
+	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mLoanTableAlias = DataExportCoreTable.M_LOAN.getAlias(aliasPostfixNumber.intValue());
+	    						
+	    						// m_group_loan_member_allocation and m_loan table join
+	        					sqlStatement = "`" + DataExportCoreTable.M_LOAN.getName() + "` `" + mLoanTableAlias 
+	                        			+ "` on `" + mLoanTableAlias + "`.`id` = `" + baseEntityName 
+	                                            + "`.`loan_id`";
+	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_LOAN, 
+	        							DataExportCoreTable.M_GROUP_LOAN_MEMBER_ALLOCATION, sqlStatement, mLoanTableAlias, 
+	        							baseEntityName);
+	    						
+	    						sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+	    						
+	    						// add the join to the map
+	        					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+	    					}
+	    					// =============================================================================
+	    					
+	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
+	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_GROUP, 
+	    							DataExportCoreTable.M_LOAN);
+	    					
+	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(aliasPostfixNumber.intValue());
+	    						
+	    						// m_loan and m_group table join
+	        					sqlStatement = "`" + DataExportCoreTable.M_GROUP.getName() + "` `" + mGroupTableAlias 
+	                        			+ "` on `" + mGroupTableAlias + "`.`id` = `" + dataExportSqlJoin.getParentTableAlias() 
+	                                            + "`.`group_id`";
+	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_GROUP, 
+	        							DataExportCoreTable.M_LOAN, sqlStatement, mGroupTableAlias, 
+	        							dataExportSqlJoin.getParentTableAlias());
+	    						
+	    						sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+	    						
+	    						// add the join to the map
+	        					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+	    					}
+	    					// =============================================================================
+	    					
+	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
+	    					if (isSelectStatement) {
+	    						sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`" 
+	        							+ coreColumn.getReferencedColumnName() + "` as `" + coreColumn.getLabel() + "`";
+	    						
+	    						// add the select statement
+	        					sqlBuilder.SELECT(sqlStatement);
+	        					
+	    					} else if (filterValue != null) {
+	    						sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`" 
+	    								+ coreColumn.getReferencedColumnName() + "` " + filterValue;
+	    						
+	    						// add a WHERE clause
+	    						sqlBuilder.WHERE(sqlStatement);
+	    					}
+	    					break;
+	    					
+	    				case GROUP_LOAN_MEMBER_ALLOCATION_LOAN_ACCOUNT_NUMBER:
+	    					// =============================================================================
+	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_LOAN, 
+	    							DataExportCoreTable.M_GROUP_LOAN_MEMBER_ALLOCATION);
+	    					
+	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mLoanTableAlias = DataExportCoreTable.M_LOAN.getAlias(aliasPostfixNumber.intValue());
+	    						
+	    						// m_group_loan_member_allocation and m_loan table join
+	        					sqlStatement = "`" + DataExportCoreTable.M_LOAN.getName() + "` `" + mLoanTableAlias 
+	                        			+ "` on `" + mLoanTableAlias + "`.`id` = `" + baseEntityName 
+	                                            + "`.`loan_id`";
+	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_LOAN, 
+	        							DataExportCoreTable.M_GROUP_LOAN_MEMBER_ALLOCATION, sqlStatement, mLoanTableAlias, 
+	        							baseEntityName);
+	    						
+	    						sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+	    						
+	    						// add the join to the map
+	        					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+	    					}
+	    					// =============================================================================
+	    					
+	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
+	    					if (isSelectStatement) {
+	    						sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`" 
+	        							+ coreColumn.getReferencedColumnName() + "` as `" + coreColumn.getLabel() + "`";
+	    						
+	    						// add the select statement
+	        					sqlBuilder.SELECT(sqlStatement);
+	        					
+	    					} else if (filterValue != null) {
+	    						sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`" 
+	    								+ coreColumn.getReferencedColumnName() + "` " + filterValue;
+	    						
+	    						// add a WHERE clause
+	    						sqlBuilder.WHERE(sqlStatement);
+	    					}
+	    					break;
+	    					
+	    				case STAFF_NAME:
+	    					// =============================================================================
+	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT, 
+	    							DataExportCoreTable.M_GROUP_LOAN_MEMBER_ALLOCATION);
+	    					
+	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mClientTableAlias = DataExportCoreTable.M_CLIENT.getAlias(aliasPostfixNumber.intValue());
+	    						
+	    						// m_group_loan_member_allocation and m_client table join
+	        					sqlStatement = "`" + DataExportCoreTable.M_CLIENT.getName() + "` `" + mClientTableAlias 
+	                        			+ "` on `" + mClientTableAlias + "`.`id` = `" + baseEntityName 
+	                                            + "`.`client_id`";
+	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_CLIENT, 
+	        							DataExportCoreTable.M_GROUP_LOAN_MEMBER_ALLOCATION, sqlStatement, mClientTableAlias, 
+	        							baseEntityName);
+	    						
+	    						sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+	    						
+	    						// add the join to the map
+	        					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+	    					}
+	    					// =============================================================================
+	    					
+	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
+	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_STAFF, 
+	    							DataExportCoreTable.M_CLIENT);
+	    					
+	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mStaffTableAlias = DataExportCoreTable.M_STAFF.getAlias(aliasPostfixNumber.intValue());
+	    						
+	    						// m_client and m_staff table join
+	        					sqlStatement = "`" + DataExportCoreTable.M_STAFF.getName() + "` `" + mStaffTableAlias 
+	                        			+ "` on `" + mStaffTableAlias + "`.`id` = `" + dataExportSqlJoin.getParentTableAlias() 
+	                                            + "`.`staff_id`";
+	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_STAFF, 
+	        							DataExportCoreTable.M_CLIENT, sqlStatement, mStaffTableAlias, 
+	        							dataExportSqlJoin.getParentTableAlias());
+	    						
+	    						sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+	    						
+	    						// add the join to the map
+	        					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+	    					}
+	    					// =============================================================================
+	    					
+	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
+	    					if (isSelectStatement) {
+	    						sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`" 
+	        							+ coreColumn.getReferencedColumnName() + "` as `" + coreColumn.getLabel() + "`";
+	    						
+	    						// add the select statement
+	        					sqlBuilder.SELECT(sqlStatement);
+	        					
+	    					} else if (filterValue != null) {
+	    						sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`" 
+	    								+ coreColumn.getReferencedColumnName() + "` " + filterValue;
+	    						
+	    						// add a WHERE clause
+	    						sqlBuilder.WHERE(sqlStatement);
+	    					}
+	    					break;
+	    					
+	    				case BRANCH_NAME:
+	    					// =============================================================================
+	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_LOAN, 
+	    							DataExportCoreTable.M_GROUP_LOAN_MEMBER_ALLOCATION);
+	    					
+	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mLoanTableAlias = DataExportCoreTable.M_LOAN.getAlias(aliasPostfixNumber.intValue());
+	    						
+	    						// m_group_loan_member_allocation and m_loan table join
+	        					sqlStatement = "`" + DataExportCoreTable.M_LOAN.getName() + "` `" + mLoanTableAlias 
+	                        			+ "` on `" + mLoanTableAlias + "`.`id` = `" + baseEntityName 
+	                                            + "`.`loan_id`";
+	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_LOAN, 
+	        							DataExportCoreTable.M_GROUP_LOAN_MEMBER_ALLOCATION, sqlStatement, mLoanTableAlias, 
+	        							baseEntityName);
+	    						
+	    						sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+	    						
+	    						// add the join to the map
+	        					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+	    					}
+	    					// =============================================================================
+	    					
+	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
+	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_GROUP, 
+	    							DataExportCoreTable.M_LOAN);
+	    					
+	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mGroupTableAlias = DataExportCoreTable.M_GROUP.getAlias(aliasPostfixNumber.intValue());
+	    						
+	    						// m_loan and m_group table join
+	        					sqlStatement = "`" + DataExportCoreTable.M_GROUP.getName() + "` `" + mGroupTableAlias 
+	                        			+ "` on `" + mGroupTableAlias + "`.`id` = `" + dataExportSqlJoin.getParentTableAlias() 
+	                                            + "`.`group_id`";
+	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_GROUP, 
+	        							DataExportCoreTable.M_LOAN, sqlStatement, mGroupTableAlias, 
+	        							dataExportSqlJoin.getParentTableAlias());
+	    						
+	    						sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+	    						
+	    						// add the join to the map
+	        					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+	    					}
+	    					// =============================================================================
+	    					
+	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
+	    					sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_OFFICE, 
+	    							DataExportCoreTable.M_GROUP);
+	    					
+	    					if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+	    						// increment the alias postfix number
+		    					aliasPostfixNumber.increment();
+		    					
+		    					mOfficeTableAlias = DataExportCoreTable.M_OFFICE.getAlias(aliasPostfixNumber.intValue());
+	    						
+	    						// m_group and m_office table join
+	        					sqlStatement = "`" + DataExportCoreTable.M_OFFICE.getName() + "` `" + mOfficeTableAlias 
+	                        			+ "` on `" + mOfficeTableAlias + "`.`id` = `" + dataExportSqlJoin.getParentTableAlias() 
+	                                            + "`.`office_id`";
+	        					dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_OFFICE, 
+	        							DataExportCoreTable.M_GROUP, sqlStatement, mOfficeTableAlias, 
+	        							dataExportSqlJoin.getParentTableAlias());
+	    						
+	    						sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+	    						
+	    						// add the join to the map
+	        					sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+	    					}
+	    					// =============================================================================
+	    					
+	    					// =============================================================================
+	    					dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+	    					
+	    					if (isSelectStatement) {
+	    						sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`" 
+	        							+ coreColumn.getReferencedColumnName() + "` as `" + coreColumn.getLabel() + "`";
+	    						
+	    						// add the select statement
+	        					sqlBuilder.SELECT(sqlStatement);
+	        					
+	    					} else if (filterValue != null) {
+	    						sqlStatement = "`" + dataExportSqlJoin.getParentTableAlias() + "`.`" 
+	    								+ coreColumn.getReferencedColumnName() + "` " + filterValue;
+	    						
+	    						// add a WHERE clause
+	    						sqlBuilder.WHERE(sqlStatement);
+	    					}
+	    					break;
+	    			
+		    			default:
+	    					// =============================================================================
+	    					if (isSelectStatement) {
+	    						// add the select statement
+	        					sqlStatement = "NULL as `" + coreColumn.getLabel() + "`";
+	        					
+	        					sqlBuilder.SELECT(sqlStatement);
+	    					}
+	    					// =============================================================================
+	    					break;
+	    			}
+	    			break;
+	    			
 				default:
 					break;
 	    	}

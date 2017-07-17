@@ -13,7 +13,8 @@ public enum DataExportBaseEntity {
     SAVINGS_ACCOUNT("savings_account", DataExportCoreTable.M_SAVINGS_ACCOUNT.getName()),
     LOAN_TRANSACTION("loan_transaction", DataExportCoreTable.M_LOAN_TRANSACTION.getName()),
     SAVINGS_ACCOUNT_TRANSACTION("savings_account_transaction", DataExportCoreTable.M_SAVINGS_ACCOUNT_TRANSACTION.getName()),
-    LOAN_REPAYMENT_SCHEDULE("loan_repayment_schedule", DataExportCoreTable.M_LOAN_REPAYMENT_SCHEDULE.getName());
+    LOAN_REPAYMENT_SCHEDULE("loan_repayment_schedule", DataExportCoreTable.M_LOAN_REPAYMENT_SCHEDULE.getName()),
+    GROUP_LOAN_MEMBER_ALLOCATION("group_loan_member_allocation", DataExportCoreTable.M_GROUP_LOAN_MEMBER_ALLOCATION.getName());
     
     private String entityName;
     private String tableName;
