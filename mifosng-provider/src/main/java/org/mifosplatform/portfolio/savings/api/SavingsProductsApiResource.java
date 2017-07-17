@@ -51,12 +51,10 @@ import org.mifosplatform.portfolio.savings.SavingsCompoundingInterestPeriodType;
 import org.mifosplatform.portfolio.savings.SavingsInterestCalculationDaysInYearType;
 import org.mifosplatform.portfolio.savings.SavingsInterestCalculationType;
 import org.mifosplatform.portfolio.savings.SavingsPostingInterestPeriodType;
+import org.mifosplatform.portfolio.savings.data.ApplyProductChargeToExistingSavingsAccountData;
 import org.mifosplatform.portfolio.savings.data.SavingsProductData;
 import org.mifosplatform.portfolio.savings.data.InterestRateCharts;
-import org.mifosplatform.portfolio.savings.service.SavingsDropdownReadPlatformService;
-import org.mifosplatform.portfolio.savings.service.SavingsEnumerations;
-import org.mifosplatform.portfolio.savings.service.SavingsProductInterestRateChartReadPlatformService;
-import org.mifosplatform.portfolio.savings.service.SavingsProductReadPlatformService;
+import org.mifosplatform.portfolio.savings.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -80,6 +78,7 @@ public class SavingsProductsApiResource {
     private final ChargeReadPlatformService chargeReadPlatformService;
     private final PaymentTypeReadPlatformService paymentTypeReadPlatformService;
     private final SavingsProductInterestRateChartReadPlatformService savingsProductInterestRateChartReadPlatformService;
+    private final ApplyProductChargeToExistingSavingsReadPlatformService applyProductChargeToExistingSavingsReadPlatformService;
 
     @Autowired
     public SavingsProductsApiResource(final SavingsProductReadPlatformService savingProductReadPlatformService,
@@ -92,7 +91,8 @@ public class SavingsProductsApiResource {
             final AccountingDropdownReadPlatformService accountingDropdownReadPlatformService,
             final ProductToGLAccountMappingReadPlatformService accountMappingReadPlatformService,
             final ChargeReadPlatformService chargeReadPlatformService, PaymentTypeReadPlatformService paymentTypeReadPlatformService,
-            final SavingsProductInterestRateChartReadPlatformService savingsProductInterestRateChartReadPlatformService) {
+            final SavingsProductInterestRateChartReadPlatformService savingsProductInterestRateChartReadPlatformService,
+            final ApplyProductChargeToExistingSavingsReadPlatformService applyProductChargeToExistingSavingsReadPlatformService) {
         this.savingProductReadPlatformService = savingProductReadPlatformService;
         this.dropdownReadPlatformService = dropdownReadPlatformService;
         this.currencyReadPlatformService = currencyReadPlatformService;
@@ -106,6 +106,7 @@ public class SavingsProductsApiResource {
         this.chargeReadPlatformService = chargeReadPlatformService;
         this.paymentTypeReadPlatformService = paymentTypeReadPlatformService;
         this.savingsProductInterestRateChartReadPlatformService = savingsProductInterestRateChartReadPlatformService;
+        this.applyProductChargeToExistingSavingsReadPlatformService = applyProductChargeToExistingSavingsReadPlatformService;
     }
 
     @POST
@@ -166,6 +167,8 @@ public class SavingsProductsApiResource {
 
         final Collection<InterestRateCharts> interestRateChartData = this.savingsProductInterestRateChartReadPlatformService.retrieveOne(productId);
 
+        final Collection<ApplyProductChargeToExistingSavingsAccountData> productChargeToExistingSavingsAccountDatas = this.applyProductChargeToExistingSavingsReadPlatformService.retrieveAll(productId);
+
         if (savingProductData.hasAccountingEnabled()) {
             final Map<String, Object> accountingMappings = this.accountMappingReadPlatformService
                     .fetchAccountMappingDetailsForSavingsProduct(productId, savingProductData.accountingRuleTypeId());
@@ -180,6 +183,10 @@ public class SavingsProductsApiResource {
         }
         if(!interestRateChartData.isEmpty()){
             savingProductData = SavingsProductData.withInterestRateCharts(savingProductData,interestRateChartData);
+        }
+
+        if(!productChargeToExistingSavingsAccountDatas.isEmpty()){
+            savingProductData = SavingsProductData.withProductChargeToExistingAccounts(savingProductData,productChargeToExistingSavingsAccountDatas);
         }
 
         if (settings.isTemplate()) {

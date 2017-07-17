@@ -39,4 +39,8 @@ public interface SavingsAccountRepository extends JpaRepository<SavingsAccount, 
 
     @Query("select case when (count (saving) > 0) then true else false end from SavingsAccount saving where saving.group.id = :groupId and saving.status in (100,200,300,303,304)")
     boolean doNonClosedSavingAccountsExistForGroup(@Param("groupId") Long groupId);
+
+    @Query(value="select * from m_savings_account sa where not exists (select * from m_savings_account_charge mg where mg.charge_id = :chargeId and mg.savings_account_id = sa.id ) and sa.product_id = :productId and sa.deposit_type_enum=100 and sa.status_enum =300 group by sa.id", nativeQuery = true)
+    List<SavingsAccount> savingsAccountWithoutCharge(@Param("productId") Long productId,@Param("chargeId") Long chargeId);
+
 }

@@ -38,15 +38,18 @@ public class SavingsProductAssembler {
     private final CodeValueRepositoryWrapper codeValueRepository;
     private final FromJsonHelper fromApiJsonHelper;
     private final SavingsProductInterestRateChartRepository savingsProductInterestRateChartRepository;
+    private final ApplyChargesToExistingSavingsAccountRepository applyChargesToExistingSavingsAccountRepository;
 
     @Autowired
     public SavingsProductAssembler(final ChargeRepositoryWrapper chargeRepository,
                                    final CodeValueRepositoryWrapper codeValueRepository, final FromJsonHelper fromApiJsonHelper,
-                                   final SavingsProductInterestRateChartRepository savingsProductInterestRateChartRepository) {
+                                   final SavingsProductInterestRateChartRepository savingsProductInterestRateChartRepository,
+                                   final ApplyChargesToExistingSavingsAccountRepository applyChargesToExistingSavingsAccountRepository) {
         this.chargeRepository = chargeRepository;
         this.codeValueRepository = codeValueRepository;
         this.fromApiJsonHelper = fromApiJsonHelper;
         this.savingsProductInterestRateChartRepository = savingsProductInterestRateChartRepository;
+        this.applyChargesToExistingSavingsAccountRepository = applyChargesToExistingSavingsAccountRepository;
     }
 
     public SavingsProduct assemble(final JsonCommand command) {
@@ -113,6 +116,8 @@ public class SavingsProductAssembler {
         // Savings product charges
         final Set<Charge> charges = assembleListOfSavingsProductCharges(command, currencyCode);
 
+        final Set<ApplyChargesToExistingSavingsAccount> applyChargesToExistingSavingsAccounts = assembleApplyChargesToExistingSavingsAccount(command);
+
         boolean allowOverdraft = false;
         if (command.parameterExists(allowOverdraftParamName)) {
             allowOverdraft = command.booleanPrimitiveValueOfParameterNamed(allowOverdraftParamName);
@@ -155,7 +160,37 @@ public class SavingsProductAssembler {
                 interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
                 lockinPeriodFrequency, lockinPeriodFrequencyType, iswithdrawalFeeApplicableForTransfer, accountingRuleType, charges,
                 allowOverdraft, overdraftLimit, enforceMinRequiredBalance, minRequiredBalance, minBalanceForInterestCalculation,
-                nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation,savingsProductInterestRateChart);
+                nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation,savingsProductInterestRateChart,applyChargesToExistingSavingsAccounts);
+    }
+
+    public Set<ApplyChargesToExistingSavingsAccount> assembleApplyChargesToExistingSavingsAccount(final JsonCommand command){
+
+        final Set<ApplyChargesToExistingSavingsAccount> applyChargesToExistingSavingsAccounts = new HashSet<>();
+
+        if (command.parameterExists(chargesParamName)) {
+            final JsonArray chargesArray = command.arrayOfParameterNamed(chargesParamName);
+            if (chargesArray != null) {
+                for (int i = 0; i < chargesArray.size(); i++) {
+
+                    final JsonObject jsonObject = chargesArray.get(i).getAsJsonObject();
+                    if (jsonObject.has(idParamName)) {
+                        final Long id = jsonObject.get(idParamName).getAsLong();
+                        if(jsonObject.has(addProductChargeToExistingAccountsParamName)){
+                            final boolean addChargeToExistingSavingsAccount = jsonObject.get(addProductChargeToExistingAccountsParamName).getAsBoolean();
+                            final Charge charge = this.chargeRepository.findOneWithNotFoundDetection(id);
+                            if(addChargeToExistingSavingsAccount){
+                                if(charge.isAnnualFee() || charge.isMonthlyFee() || charge.isWithdrawalFee()){
+                                    ApplyChargesToExistingSavingsAccount applyChargesToExistingSavingsAccount = new ApplyChargesToExistingSavingsAccount(null,charge,addChargeToExistingSavingsAccount);
+                                    applyChargesToExistingSavingsAccounts.add(applyChargesToExistingSavingsAccount);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return applyChargesToExistingSavingsAccounts;
+
     }
 
     public Set<Charge> assembleListOfSavingsProductCharges(final JsonCommand command, final String savingsProductCurrencyCode) {

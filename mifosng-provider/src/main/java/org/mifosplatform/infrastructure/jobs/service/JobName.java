@@ -35,7 +35,8 @@ public enum JobName {
     UPDATE_EMAIL_OUTBOUND_WITH_CAMPAIGN_MESSAGE("Update Email Outbound with campaign message"),
     EXECUTE_REPORT_MAILING_JOBS("Execute Report Mailing Jobs"),
     EXECUTE_EMAIL("Execute Email"),
-    APPLY_CHARGE_TO_OVERDUE_ON_MATURITY_LOANS("Apply penalty to overdue on maturity loans");
+    APPLY_CHARGE_TO_OVERDUE_ON_MATURITY_LOANS("Apply penalty to overdue on maturity loans"),
+    APPLY_PRODUCT_CHARGE_TO_EXISTING_SAVINGS_ACCOUNT("Apply product charge to existing savings account");
 
 
     private final String name;
