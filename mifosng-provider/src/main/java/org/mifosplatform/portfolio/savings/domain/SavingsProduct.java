@@ -145,6 +145,10 @@ public class SavingsProduct extends AbstractPersistable<Long> {
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "savingsProduct", orphanRemoval = true)
     private Set<SavingsProductInterestRateChart> savingsProductInterestRateCharts = new HashSet<>();
 
+    @LazyCollection(LazyCollectionOption.FALSE)
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "savingsProduct", orphanRemoval = true)
+    private Set<ApplyChargesToExistingSavingsAccount> applyChargesToExistingSavingsAccounts = new HashSet<>();
+
     public static SavingsProduct createNew(final String name, final String shortName, final String description,
             final MonetaryCurrency currency, final BigDecimal interestRate, final CodeValue productGroup,
             final SavingsCompoundingInterestPeriodType interestCompoundingPeriodType,
@@ -154,13 +158,14 @@ public class SavingsProduct extends AbstractPersistable<Long> {
             final boolean withdrawalFeeApplicableForTransfer, final AccountingRuleType accountingRuleType, final Set<Charge> charges,
             final boolean allowOverdraft, final BigDecimal overdraftLimit, final boolean enforceMinRequiredBalance,
             final BigDecimal minRequiredBalance, final BigDecimal minBalanceForInterestCalculation,
-            final BigDecimal nominalAnnualInterestRateOverdraft, final BigDecimal minOverdraftForInterestCalculation,final Set<SavingsProductInterestRateChart> savingsProductInterestRateCharts) {
+            final BigDecimal nominalAnnualInterestRateOverdraft, final BigDecimal minOverdraftForInterestCalculation,final Set<SavingsProductInterestRateChart> savingsProductInterestRateCharts,
+            final Set<ApplyChargesToExistingSavingsAccount> applyChargesToExistingSavingsAccounts) {
 
         return new SavingsProduct(name, shortName, description, currency, interestRate, interestCompoundingPeriodType,
                 interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
                 lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeApplicableForTransfer, accountingRuleType, charges,
                 allowOverdraft, overdraftLimit, enforceMinRequiredBalance, minRequiredBalance, minBalanceForInterestCalculation, 
-                nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, null, null, productGroup,savingsProductInterestRateCharts);
+                nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, null, null, productGroup,savingsProductInterestRateCharts,applyChargesToExistingSavingsAccounts);
     }
 
     protected SavingsProduct() {
@@ -175,11 +180,12 @@ public class SavingsProduct extends AbstractPersistable<Long> {
             final Integer lockinPeriodFrequency, final SavingsPeriodFrequencyType lockinPeriodFrequencyType,
             final boolean withdrawalFeeApplicableForTransfer, final AccountingRuleType accountingRuleType, final Set<Charge> charges,
             final boolean allowOverdraft, final BigDecimal overdraftLimit, BigDecimal minBalanceForInterestCalculation,
-            final CodeValue productGroup,final Set<SavingsProductInterestRateChart> savingsProductInterestRateCharts) {
+            final CodeValue productGroup,final Set<SavingsProductInterestRateChart> savingsProductInterestRateCharts,
+            final Set<ApplyChargesToExistingSavingsAccount> applyChargesToExistingSavingsAccounts) {
         this(name, shortName, description, currency, interestRate, interestCompoundingPeriodType, interestPostingPeriodType,
                 interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency,
                 lockinPeriodFrequencyType, withdrawalFeeApplicableForTransfer, accountingRuleType, charges, allowOverdraft, overdraftLimit,
-                false, null, minBalanceForInterestCalculation, null, null, null, null, productGroup, savingsProductInterestRateCharts);
+                false, null, minBalanceForInterestCalculation, null, null, null, null, productGroup, savingsProductInterestRateCharts,applyChargesToExistingSavingsAccounts);
     }
 
     protected SavingsProduct(final String name, final String shortName, final String description, final MonetaryCurrency currency,
@@ -191,7 +197,8 @@ public class SavingsProduct extends AbstractPersistable<Long> {
             final boolean allowOverdraft, final BigDecimal overdraftLimit, final boolean enforceMinRequiredBalance,
             final BigDecimal minRequiredBalance, BigDecimal minBalanceForInterestCalculation,
             final BigDecimal nominalAnnualInterestRateOverdraft, final BigDecimal minOverdraftForInterestCalculation,
-            final LocalDate startDate, final LocalDate closeDate, final CodeValue productGroup,final Set<SavingsProductInterestRateChart> savingsProductInterestRateCharts) {
+            final LocalDate startDate, final LocalDate closeDate, final CodeValue productGroup,final Set<SavingsProductInterestRateChart> savingsProductInterestRateCharts,
+            final Set<ApplyChargesToExistingSavingsAccount> applyChargesToExistingSavingsAccounts) {
 
         this.name = name;
         this.shortName = shortName;
@@ -238,6 +245,10 @@ public class SavingsProduct extends AbstractPersistable<Long> {
         this.closeDate = closeDate != null ? closeDate.toDateTimeAtCurrentTime().toDate() : null;
         this.productGroup = productGroup;
         updateSavingsProductInterestRateCharts(savingsProductInterestRateCharts);
+
+        if(applyChargesToExistingSavingsAccounts != null){
+            this.applyChargesToExistingSavingsAccounts = associateApplyChargeToExistingSavingsAccountWith(applyChargesToExistingSavingsAccounts);
+        }
     }
 
     /**
@@ -715,6 +726,13 @@ public class SavingsProduct extends AbstractPersistable<Long> {
         return closeLocalDate;
     }
 
+    public Set<ApplyChargesToExistingSavingsAccount> associateApplyChargeToExistingSavingsAccountWith(final Set<ApplyChargesToExistingSavingsAccount> applyChargesToExistingSavingsAccounts){
+        for(final ApplyChargesToExistingSavingsAccount applyTo : applyChargesToExistingSavingsAccounts){
+            applyTo.updateSavingsProduct(this);
+        }
+        return applyChargesToExistingSavingsAccounts;
+    }
+
     public void updateSavingsProductInterestRateCharts(Set<SavingsProductInterestRateChart> savingsProductInterestRateCharts) {
         if(savingsProductInterestRateCharts != null){
             for(SavingsProductInterestRateChart interestRateChart : savingsProductInterestRateCharts){
@@ -723,6 +741,53 @@ public class SavingsProduct extends AbstractPersistable<Long> {
             this.savingsProductInterestRateCharts = savingsProductInterestRateCharts;
         }
 
+    }
+
+    public void updateApplyChargesToExistingSavingsAccount(final Set<ApplyChargesToExistingSavingsAccount> applyChargesToExistingSavingsAccounts){
+       
+
+        if(this.applyChargesToExistingSavingsAccounts == null){
+            this.applyChargesToExistingSavingsAccounts = this.associateApplyChargeToExistingSavingsAccountWith(applyChargesToExistingSavingsAccounts);
+        }else{
+            //check existing a new if its exist leave else remove or add
+            final List<Long> chargeIds = new ArrayList<>();
+            for(ApplyChargesToExistingSavingsAccount  toBeAdded : applyChargesToExistingSavingsAccounts){
+                chargeIds.add(toBeAdded.getProductCharge().getId());
+                if(!this.findByCharge(toBeAdded.getProductCharge().getId())){
+                    toBeAdded.updateSavingsProduct(this);
+                    this.applyChargesToExistingSavingsAccounts.add(toBeAdded);
+                }
+
+            }
+
+            //has apply in Db but not in newly sent remove it
+            List<ApplyChargesToExistingSavingsAccount> idsToRemove = new ArrayList<>();
+            for(final ApplyChargesToExistingSavingsAccount existingApplyCharges : this.applyChargesToExistingSavingsAccounts){
+                if(!chargeIds.contains(existingApplyCharges.getProductCharge().getId())){
+                    idsToRemove.add(existingApplyCharges);
+                }
+            }
+            if(idsToRemove.size() > 0){
+                this.applyChargesToExistingSavingsAccounts.removeAll(idsToRemove);
+            }
+
+
+
+        }
+
+    }
+
+    private boolean findByCharge(final Long chargeId){
+         boolean found =false;
+        if(this.applyChargesToExistingSavingsAccounts !=null){
+            for(final ApplyChargesToExistingSavingsAccount account : this.applyChargesToExistingSavingsAccounts){
+                if(account.getProductCharge().getId().equals(chargeId)){
+                    found= true;
+                    break;
+                }
+            }
+        }
+        return found;
     }
 
     public SavingsProductInterestRateChart findProductInterestRateChart(final Long id){
@@ -754,5 +819,7 @@ public class SavingsProduct extends AbstractPersistable<Long> {
         }
         return savingsProductInterestRateChart;
     }
+
+
 
 }
