@@ -391,7 +391,6 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         this.minRequiredBalance = minRequiredBalance;
         this.minBalanceForInterestCalculation = product.minBalanceForInterestCalculation();
         this.savingsOfficerHistory = null;
-
     }
 
     /**

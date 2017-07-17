@@ -9,33 +9,24 @@ import static org.mifosplatform.portfolio.savings.SavingsApiConstants.accounting
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.chargesParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.interestRateCharts;
 
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
 
-import org.apache.commons.lang.StringUtils;
-import org.joda.time.LocalDate;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 import org.mifosplatform.accounting.producttoaccountmapping.service.ProductToGLAccountMappingWritePlatformService;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResultBuilder;
-import org.mifosplatform.infrastructure.core.domain.Tenant;
-import org.mifosplatform.infrastructure.core.exception.AbstractPlatformDomainRuleException;
-import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.mifosplatform.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.mifosplatform.infrastructure.entityaccess.domain.MifosEntityAccessType;
 import org.mifosplatform.infrastructure.entityaccess.domain.MifosEntityType;
 import org.mifosplatform.infrastructure.entityaccess.service.MifosEntityAccessUtil;
-import org.mifosplatform.infrastructure.jobs.annotation.CronTarget;
-import org.mifosplatform.infrastructure.jobs.exception.JobExecutionException;
-import org.mifosplatform.infrastructure.jobs.service.JobName;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.portfolio.charge.domain.Charge;
-import org.mifosplatform.portfolio.charge.domain.ChargeCalculationType;
-import org.mifosplatform.portfolio.charge.domain.ChargeTimeType;
 import org.mifosplatform.portfolio.savings.DepositAccountType;
 import org.mifosplatform.portfolio.savings.data.SavingsProductDataValidator;
-import org.mifosplatform.portfolio.savings.domain.*;
+import org.mifosplatform.portfolio.savings.domain.SavingsProduct;
+import org.mifosplatform.portfolio.savings.domain.SavingsProductAssembler;
+import org.mifosplatform.portfolio.savings.domain.SavingsProductRepository;
 import org.mifosplatform.portfolio.savings.exception.SavingsProductNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,16 +45,13 @@ public class SavingsProductWritePlatformServiceJpaRepositoryImpl implements Savi
     private final SavingsProductAssembler savingsProductAssembler;
     private final ProductToGLAccountMappingWritePlatformService accountMappingWritePlatformService;
     private final MifosEntityAccessUtil mifosEntityAccessUtil;
-    private final ApplyChargesToExistingSavingsAccountRepository applyChargesToExistingSavingsAccountRepository;
-    private final SavingsAccountRepository savingsAccountRepository;
 
     @Autowired
     public SavingsProductWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
             final SavingsProductRepository savingProductRepository, final SavingsProductDataValidator fromApiJsonDataValidator,
             final SavingsProductAssembler savingsProductAssembler,
             final ProductToGLAccountMappingWritePlatformService accountMappingWritePlatformService,
-            final MifosEntityAccessUtil mifosEntityAccessUtil,final ApplyChargesToExistingSavingsAccountRepository applyChargesToExistingSavingsAccountRepository,
-            final SavingsAccountRepository savingsAccountRepository
+            final MifosEntityAccessUtil mifosEntityAccessUtil
             ) {
         this.context = context;
         this.savingProductRepository = savingProductRepository;
@@ -72,8 +60,6 @@ public class SavingsProductWritePlatformServiceJpaRepositoryImpl implements Savi
         this.logger = LoggerFactory.getLogger(SavingsProductWritePlatformServiceJpaRepositoryImpl.class);
         this.accountMappingWritePlatformService = accountMappingWritePlatformService;
         this.mifosEntityAccessUtil = mifosEntityAccessUtil;
-        this.applyChargesToExistingSavingsAccountRepository = applyChargesToExistingSavingsAccountRepository;
-        this.savingsAccountRepository = savingsAccountRepository;
     }
 
     /*
@@ -159,11 +145,6 @@ public class SavingsProductWritePlatformServiceJpaRepositoryImpl implements Savi
                 if (!updated) {
                     changes.remove(chargesParamName);
                 }
-                /* update ApplyChargesToExistingSavingsAccount  */
-
-                final Set<ApplyChargesToExistingSavingsAccount> applyChargesToExistingSavingsAccounts = this.savingsProductAssembler.assembleApplyChargesToExistingSavingsAccount(command);
-                product.updateApplyChargesToExistingSavingsAccount(applyChargesToExistingSavingsAccounts);
-
             }
 
             // accounting related changes
@@ -201,48 +182,4 @@ public class SavingsProductWritePlatformServiceJpaRepositoryImpl implements Savi
                 .build();
     }
 
-    /**
-     * this function adds savings charges of type annual, monthly and withdrawals to an already existing savings accounts
-     * when its set to on a product. functions is more like a bulk addSavingsCharge to savings accounts
-     */
-    @Override
-    @CronTarget(jobName = JobName.APPLY_PRODUCT_CHARGE_TO_EXISTING_SAVINGS_ACCOUNT)
-    public void applyChargeToExistingSavingsAccount() throws JobExecutionException {
-        final StringBuilder sb = new StringBuilder();
-
-        final Collection<ApplyChargesToExistingSavingsAccount> applyChargesToExistingSavingsAccounts = this.applyChargesToExistingSavingsAccountRepository.findAll();
-        if(!applyChargesToExistingSavingsAccounts.isEmpty() && applyChargesToExistingSavingsAccounts.size() > 0){
-            for(final ApplyChargesToExistingSavingsAccount applyCharge : applyChargesToExistingSavingsAccounts){
-                if(applyCharge.isApplyChargeToExistingSavingsAccount()){
-                    final List<SavingsAccount> activeSavingsAccountsWithoutCharge = this.savingsAccountRepository.savingsAccountWithoutCharge(applyCharge.getSavingsProduct().getId(),applyCharge.getProductCharge().getId());
-                    for(final SavingsAccount account : activeSavingsAccountsWithoutCharge){
-                        final Charge charge = applyCharge.getProductCharge();
-                        final LocalDate currentDate =  LocalDate.now();
-                        final Locale locale = new Locale("en");
-                        final String format = "dd MMMM yyyy";
-                        final DateTimeFormatter fmt = StringUtils.isNotBlank(format) ? DateTimeFormat.forPattern(format).withLocale(locale)
-                                : DateTimeFormat.forPattern("dd MM yyyy");
-                        final SavingsAccountCharge savingsAccountCharge = SavingsAccountCharge.createNewWithoutSavingsAccount(charge,charge.getAmount(), ChargeTimeType.fromInt(charge.getChargeTimeType()),
-                                ChargeCalculationType.fromInt(charge.getChargeCalculation()),currentDate,true,charge.getFeeOnMonthDay(),charge.feeInterval());
-                        savingsAccountCharge.update(account);
-                        try{
-                            //FIXMe add validation from the add charge to savings account method
-                            account.addCharge(fmt,savingsAccountCharge,charge);
-                            this.savingsAccountRepository.saveAndFlush(account);
-                        }catch(PlatformApiDataValidationException e){
-                            sb.append(e.getErrors().get(0).getDeveloperMessage() + " savings account with id  " + account.getId() + ",");
-                        }catch(AbstractPlatformDomainRuleException e){
-                            sb.append(e.getDefaultUserMessage()  + " savings account with id  " + account.getId() + ",");
-                        }catch(RuntimeException e){
-                            sb.append(e.toString()  + " savings account with id " + account.getId() + ",");
-                        }catch(Exception e){
-                            sb.append(e.getCause().getMessage() + " savings account with  id" + account.getId() + ",");
-                        }
-                    }
-                }
-            }
-        }
-
-        if (sb.length() > 0) { throw new JobExecutionException(sb.toString()); }
-    }
 }

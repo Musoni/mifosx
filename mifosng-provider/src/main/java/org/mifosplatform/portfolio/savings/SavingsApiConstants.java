@@ -140,7 +140,6 @@ public class SavingsApiConstants {
     public static final String amountPaidParamName = "amountPaid";
     public static final String chargeOptionsParamName = "chargeOptions";
     public static final String chargePaymentModeParamName = "chargePaymentMode";
-    public static final String addProductChargeToExistingAccountsParamName = "addChargeToExistingSavingsAccount";
 
     public static final String noteParamName = "note";
 

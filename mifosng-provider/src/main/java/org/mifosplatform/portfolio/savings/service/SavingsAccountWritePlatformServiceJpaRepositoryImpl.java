@@ -1073,7 +1073,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final DateTimeFormatter fmt = DateTimeFormat.forPattern("dd MM yyyy");
         fmt.withZone(DateUtils.getDateTimeZoneOfTenant());
 
-        while ((transactionDate.isAfter(savingsAccountCharge.getDueLocalDate()) || transactionDate.isEqual(savingsAccountCharge.getDueLocalDate())) && savingsAccountCharge.isNotFullyPaid()) {
+        while (transactionDate.isAfter(savingsAccountCharge.getDueLocalDate()) && savingsAccountCharge.isNotFullyPaid()) {
             payCharge(savingsAccountCharge, transactionDate, savingsAccountCharge.amoutOutstanding(), fmt, user);
         }
     }

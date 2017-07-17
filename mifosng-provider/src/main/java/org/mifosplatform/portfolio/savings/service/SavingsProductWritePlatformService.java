@@ -7,7 +7,6 @@ package org.mifosplatform.portfolio.savings.service;
 
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
-import org.mifosplatform.infrastructure.jobs.exception.JobExecutionException;
 
 public interface SavingsProductWritePlatformService {
 
@@ -16,6 +15,4 @@ public interface SavingsProductWritePlatformService {
     CommandProcessingResult update(Long productId, JsonCommand command);
 
     CommandProcessingResult delete(Long productId);
-
-    void applyChargeToExistingSavingsAccount() throws JobExecutionException;
 }

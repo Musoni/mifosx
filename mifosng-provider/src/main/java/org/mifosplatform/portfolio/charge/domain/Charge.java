@@ -100,7 +100,6 @@ public class Charge extends AbstractPersistable<Long> {
     @JoinColumn(name = "income_or_liability_account_id")
     private GLAccount account;
 
-
     public static Charge fromJson(final JsonCommand command, final GLAccount account) {
 
         final String name = command.stringValueOfParameterNamed("name");
@@ -564,10 +563,6 @@ public class Charge extends AbstractPersistable<Long> {
 
     public boolean isMonthlyFee() {
         return ChargeTimeType.fromInt(this.chargeTimeType).isMonthlyFee();
-    }
-
-    public boolean isWithdrawalFee(){
-        return ChargeTimeType.fromInt(this.chargeTimeType).isWithdrawalFee();
     }
 
     public boolean isAnnualFee() {
