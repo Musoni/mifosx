@@ -50,12 +50,9 @@ public class LoanProductConfigurableAttributes extends AbstractPersistable<Long>
     @Column(name = "standing_instruction_enum", nullable = true)
     private Boolean standingInstruction;
 
-    @Column(name = "allow_additional_charges")
-    private Boolean allowAdditionalCharges;
-
     public static String[] supportedloanConfigurableAttributes = { "amortizationType", "interestType", "transactionProcessingStrategyId",
             "interestCalculationPeriodType", "inArrearsTolerance", "repaymentEvery", "graceOnPrincipalAndInterestPayment",
-            "graceOnArrearsAgeing","standingInstruction", "allowAdditionalCharges" };
+            "graceOnArrearsAgeing","standingInstruction" };
 
     public static LoanProductConfigurableAttributes createFrom(JsonCommand command) {
 
@@ -86,12 +83,9 @@ public class LoanProductConfigurableAttributes extends AbstractPersistable<Long>
         final Boolean standingInstruction = command.parsedJson().getAsJsonObject()
                 .getAsJsonObject(LoanProductConstants.allowAttributeOverridesParamName)
                 .getAsJsonPrimitive(LoanProductConstants.standingInstructionParamName).getAsBoolean();
-        final Boolean allowAdditionalCharges = command.parsedJson().getAsJsonObject()
-                .getAsJsonObject(LoanProductConstants.allowAttributeOverridesParamName)
-                .getAsJsonPrimitive(LoanProductConstants.allowAdditionalChargesParameterName).getAsBoolean();
 
         return new LoanProductConfigurableAttributes(amortization, interestMethod, transactionProcessingStrategy, interestCalcPeriod,
-                arrearsTolerance, repaymentEvery, graceOnPrincipalAndInterestPayment, graceOnArrearsAging,standingInstruction, allowAdditionalCharges);
+                arrearsTolerance, repaymentEvery, graceOnPrincipalAndInterestPayment, graceOnArrearsAging,standingInstruction);
     }
 
     public void updateLoanProduct(final LoanProduct loanProduct) {
@@ -108,15 +102,14 @@ public class LoanProductConfigurableAttributes extends AbstractPersistable<Long>
         final Boolean graceOnPrincipalAndInterestPayment = true;
         final Boolean graceOnArrearsAging = true;
         final Boolean standingInstruction = true;
-        final Boolean allowAdditionalCharges = true;
 
         return new LoanProductConfigurableAttributes(amortization, interestMethod, transactionProcessingStrategy, interestCalcPeriod,
-                arrearsTolerance, repaymentEvery, graceOnPrincipalAndInterestPayment, graceOnArrearsAging,standingInstruction, allowAdditionalCharges);
+                arrearsTolerance, repaymentEvery, graceOnPrincipalAndInterestPayment, graceOnArrearsAging,standingInstruction );
     }
 
     public LoanProductConfigurableAttributes(Boolean amortization, Boolean interestMethod, Boolean transactionProcessingStrategy,
             Boolean interestCalcPeriod, Boolean arrearsTolerance, Boolean repaymentEvery, Boolean graceOnPrincipalAndInterestPayment,
-            Boolean graceOnArrearsAging, Boolean standingInstruction, Boolean allowAdditionalCharges) {
+            Boolean graceOnArrearsAging, Boolean standingInstruction) {
         this.amortizationType = amortization;
         this.interestType = interestMethod;
         this.inArrearsTolerance = arrearsTolerance;
@@ -126,7 +119,6 @@ public class LoanProductConfigurableAttributes extends AbstractPersistable<Long>
         this.repaymentEvery = repaymentEvery;
         this.transactionProcessingStrategyId = transactionProcessingStrategy;
         this.standingInstruction = standingInstruction;
-        this.allowAdditionalCharges = allowAdditionalCharges;
     }
 
     protected LoanProductConfigurableAttributes() {
@@ -173,8 +165,6 @@ public class LoanProductConfigurableAttributes extends AbstractPersistable<Long>
         return graceOnArrearsAgeing;
     }
 
-    public Boolean getAllowAdditionalChargesBoolean() {return allowAdditionalCharges; }
-
     public void setLoanProduct(LoanProduct loanProduct) {
         this.loanProduct = loanProduct;
     }
@@ -216,6 +206,4 @@ public class LoanProductConfigurableAttributes extends AbstractPersistable<Long>
     public void setStandingInstruction(Boolean standingInstruction) {
         this.standingInstruction = standingInstruction;
     }
-
-    public void setAllowAdditionalCharges(Boolean allowAdditionalCharges) { this.allowAdditionalCharges = allowAdditionalCharges; }
 }

@@ -334,8 +334,6 @@ public class LoanProduct extends AbstractPersistable<Long> {
 
         final boolean canAutoAllocateOverpayments = command.booleanPrimitiveValueOfParameterNamed("canAutoAllocateOverpayments");
 
-        final boolean allowAdditionalCharges = command.booleanPrimitiveValueOfParameterNamed("allowAdditionalCharges");
-
         return new LoanProduct(fund, loanTransactionProcessingStrategy, name, shortName, description, currency, principal, minPrincipal,
                 maxPrincipal, interestRatePerPeriod, minInterestRatePerPeriod, maxInterestRatePerPeriod, interestFrequencyType,
                 annualInterestRate, interestMethod, interestCalculationPeriodMethod, allowPartialPeriodInterestCalcualtion, repaymentEvery,
@@ -1035,13 +1033,6 @@ public class LoanProduct extends AbstractPersistable<Long> {
                             .getAsJsonObject(LoanProductConstants.allowAttributeOverridesParamName)
                             .getAsJsonPrimitive(LoanProductConstants.standingInstructionParamName).getAsBoolean());
                 }
-                if (command.parsedJson().getAsJsonObject().getAsJsonObject(LoanProductConstants.allowAttributeOverridesParamName)
-                        .getAsJsonPrimitive(LoanProductConstants.allowAdditionalChargesParameterName).getAsBoolean() != this.loanConfigurableAttributes
-                        .getAllowAdditionalChargesBoolean()) {
-                    this.loanConfigurableAttributes.setAllowAdditionalCharges(command.parsedJson().getAsJsonObject()
-                            .getAsJsonObject(LoanProductConstants.allowAttributeOverridesParamName)
-                            .getAsJsonPrimitive(LoanProductConstants.allowAdditionalChargesParameterName).getAsBoolean());
-                }
             } else {
                 this.loanConfigurableAttributes = LoanProductConfigurableAttributes.populateDefaultsForConfigurableAttributes();
                 this.loanConfigurableAttributes.updateLoanProduct(this);
@@ -1097,6 +1088,11 @@ public class LoanProduct extends AbstractPersistable<Long> {
             final boolean newValue = command.booleanPrimitiveValueOfParameterNamed(LoanProductConstants.reverseOverdueDaysNPAInterestParameterName);
             actualChanges.put(LoanProductConstants.reverseOverdueDaysNPAInterestParameterName, newValue);
             this.reverseOverdueDaysNPAInterest = newValue;
+        }
+        if (command.isChangeInBooleanParameterNamed(LoanProductConstants.canAutoAllocateOverpaymentsParameterName, this.canAutoAllocateOverpayments)) {
+            final boolean newValue = command.booleanPrimitiveValueOfParameterNamed(LoanProductConstants.canAutoAllocateOverpaymentsParameterName);
+            actualChanges.put(LoanProductConstants.canAutoAllocateOverpaymentsParameterName, newValue);
+            this.canAutoAllocateOverpayments = newValue;
         }
         return actualChanges;
     }

@@ -84,7 +84,7 @@ public class LoanProductsApiResource {
             "accountingRuleOptions", "accountingMappingOptions", "floatingRateOptions", "isLinkedToFloatingInterestRates",
             "floatingRatesId", "interestRateDifferential", "minDifferentialLendingRate", "defaultDifferentialLendingRate",
             "maxDifferentialLendingRate", "isFloatingInterestRateCalculationAllowed", CreditCheckConstants.CREDIT_CHECKS_PARAM_NAME, 
-            CreditCheckConstants.CREDIT_CHECK_OPTIONS_PARAM_NAME, "productGroup", "productGroupOptions", "allowAdditionalCharges"));
+            CreditCheckConstants.CREDIT_CHECK_OPTIONS_PARAM_NAME, "productGroup", "productGroupOptions"));
     private final Set<String> PRODUCT_MIX_DATA_PARAMETERS = new HashSet<>(Arrays.asList("productId", "productName", "restrictedProducts",
             "productGroup", "allowedProducts", "productOptions", "productGroupOptions"));
 
