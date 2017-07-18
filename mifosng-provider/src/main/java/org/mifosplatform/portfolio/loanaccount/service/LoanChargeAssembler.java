@@ -205,7 +205,7 @@ public class LoanChargeAssembler {
                     }
                 }
                 for(final Charge loanProductCharge : loanProduct.getCharges()){
-                    if(!charges.contains(loanProductCharge) && (!loanProductCharge.isOverdueOnMaturity())){
+                    if(!charges.contains(loanProductCharge)){
                         if (!isMultiDisbursal) {
                             final LoanCharge loanCharge = LoanCharge.createNewWithoutLoan(loanProductCharge, principal, null, null,
                                     null, null, null, numberOfRepayments);
@@ -267,12 +267,9 @@ public class LoanChargeAssembler {
             }
         } else {
             for(final Charge loanProductCharge : loanProduct.getLoanProductCharges()) {
-                if(!loanProductCharge.isOverdueOnMaturity()){
-                    final LoanCharge loanCharge = LoanCharge.createNewWithoutLoan(loanProductCharge, principal, null, null,
-                            null, null, null, numberOfRepayments);
-                    loanCharges.add(loanCharge);
-                }
-
+                final LoanCharge loanCharge = LoanCharge.createNewWithoutLoan(loanProductCharge, principal, null, null,
+                                null, null, null, numberOfRepayments);
+                        loanCharges.add(loanCharge);
             }
         }
 
