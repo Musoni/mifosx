@@ -31,9 +31,12 @@ import org.joda.time.format.DateTimeFormatter;
 import org.mifosplatform.accounting.closure.data.GLClosureData;
 import org.mifosplatform.accounting.closure.service.GLClosureReadPlatformService;
 import org.mifosplatform.accounting.closure.storeglaccountbalance.data.GLClosureAccountBalanceReportData;
+import org.mifosplatform.accounting.closure.storeglaccountbalance.data.GLClosureFileFormat;
 import org.mifosplatform.accounting.closure.storeglaccountbalance.data.GLClosureJournalEntryBalanceValidator;
 import org.mifosplatform.accounting.closure.storeglaccountbalance.data.GLClosureJournalEntryData;
 import org.mifosplatform.accounting.closure.storeglaccountbalance.helper.UriQueryParameterHelper;
+import org.mifosplatform.accounting.glaccount.domain.GLAccount;
+import org.mifosplatform.accounting.glaccount.domain.GLAccountRepositoryWrapper;
 import org.mifosplatform.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
 import org.mifosplatform.infrastructure.core.service.RoutingDataSource;
@@ -143,9 +146,9 @@ public class GLClosureJournalEntryBalanceReadPlatformServiceImpl implements GLCl
          * @return SQL statement string
          */
         public String sql() {
-            String sql = "sc.account_id, sc.account_number, (ec.amount - sc.amount) as amount, sc.closureId as closureId "
+            String sql = "sc.account_id, sc.account_number, sc.account_name, (ec.amount - sc.amount) as amount, sc.closureId as closureId "
                     + "from "
-                    + "(select je.account_id as account_id, ga.gl_code as account_number, sum(amount) as amount, je.closure_id as closureId "
+                    + "(select je.account_id as account_id, ga.gl_code as account_number, ga.name as account_name, sum(amount) as amount, je.closure_id as closureId "
                     + "from acc_gl_closure_journal_entry_balance je "
                     + "inner join acc_gl_closure gc "
                     + "on gc.id = je.closure_id "
@@ -172,7 +175,7 @@ public class GLClosureJournalEntryBalanceReadPlatformServiceImpl implements GLCl
                     + "order by account_number ";
             
             if (this.startClosure == null) {
-                sql = "je.account_id as account_id, ga.gl_code as account_number, sum(amount) as amount, je.closure_id as closureId "
+                sql = "je.account_id as account_id, ga.gl_code as account_number, ga.name as account_name, sum(amount) as amount, je.closure_id as closureId "
                     + "from acc_gl_closure_journal_entry_balance je "
                     + "inner join acc_gl_closure gc "
                     + "on gc.id = je.closure_id "
@@ -203,6 +206,7 @@ public class GLClosureJournalEntryBalanceReadPlatformServiceImpl implements GLCl
         @Override
         public GLClosureAccountBalanceReportData mapRow(ResultSet rs, int rowNum) throws SQLException {
             final String accountNumber = rs.getString("account_number");
+            final String accountName = rs.getString("account_name");
             final LocalDate postedDate = new LocalDate();
             final BigDecimal amount = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "amount");
             final Long closureId = rs.getLong("closureId");
@@ -214,7 +218,7 @@ public class GLClosureJournalEntryBalanceReadPlatformServiceImpl implements GLCl
             }
             
             return GLClosureAccountBalanceReportData.instance(accountNumber, transactionDate, postedDate, amount, 
-                    this.reference, closureId);
+                    this.reference, closureId, accountName);
         }
     }
 
@@ -226,7 +230,7 @@ public class GLClosureJournalEntryBalanceReadPlatformServiceImpl implements GLCl
         final Long startClosureId = UriQueryParameterHelper.getStartClosureId(uriQueryParameters);
         final Long endClosureId = UriQueryParameterHelper.getEndClosureId(uriQueryParameters);
         final String reference = UriQueryParameterHelper.getReference(uriQueryParameters);
-        final String fileFormat = UriQueryParameterHelper.getFileFormat(uriQueryParameters);
+        final GLClosureFileFormat fileFormat = GLClosureFileFormat.fromInteger(Integer.valueOf(UriQueryParameterHelper.getFileFormat(uriQueryParameters)));
         
         GLClosureData endClosure = null;
         GLClosureData startClosure = null;
@@ -270,10 +274,12 @@ public class GLClosureJournalEntryBalanceReadPlatformServiceImpl implements GLCl
         
         final Collection<GLClosureAccountBalanceReportData> reportDataList = this.namedParameterJdbcTemplate.query(sql, 
                 sqlParameterSource, mapper);
-        if(fileFormat.equalsIgnoreCase("csv")) {
+        if(fileFormat.isCsv()) {
             return this.createGLClosureAccountBalanceReportCsvFile(reportDataList);
-        } else if(fileFormat.equalsIgnoreCase("gp")){
+        } else if(fileFormat.isGP()){
             return this.createGLClosureAccountBalanceReportGreatPlainsFile(reportDataList);
+        } else if(fileFormat.isT24()){
+            return this.createGLClosureAccountBalanceReportT24File(reportDataList);
         }
 
         return null;
@@ -362,6 +368,71 @@ public class GLClosureJournalEntryBalanceReadPlatformServiceImpl implements GLCl
             logger.error(exception.getMessage(), exception);
         }
         
+        return file;
+    }
+
+    /**
+     * Create the csv file with the balance report data
+     *
+     * @param reportDataList
+     * @return {@link File} object
+     */
+    private File createGLClosureAccountBalanceReportT24File(
+            final Collection<GLClosureAccountBalanceReportData> reportDataList) {
+        File file = null;
+
+        try {
+            final String fileDirectory = FileSystemContentRepository.MIFOSX_BASE_DIR + File.separator + "";
+
+            if (!new File(fileDirectory).isDirectory()) {
+                new File(fileDirectory).mkdirs();
+            }
+
+            file = new File(fileDirectory + "gl_closure_account_balance_report.csv");
+
+            // use FileWriter constructor that specifies open for appending
+            CsvWriter csvWriter = new CsvWriter(new FileWriter(file), ',');
+
+            csvWriter.write("Musoni GL Account");
+            csvWriter.write("Account Name");
+            csvWriter.write("Amount");
+            csvWriter.write("Currency");
+            csvWriter.write("Sign");
+            csvWriter.write("Value Date");
+            csvWriter.endRecord();
+
+            for (GLClosureAccountBalanceReportData reportData : reportDataList) {
+                String goodsAmount = "";
+                String currency = "USD";
+                String sign = "";
+                String valueDate = "";
+
+                if (reportData.getAmount() != null) {
+                    goodsAmount = reportData.getAmount().abs().setScale(2, RoundingMode.CEILING).
+                            stripTrailingZeros().toPlainString();
+                    sign = reportData.getAmount().compareTo(BigDecimal.ZERO) > 0 ? "D" : "C";
+                }
+
+                if (reportData.getPostedDate() != null) {
+                    valueDate = this.fileOutputDateFormatter.print(reportData.getPostedDate());
+                }
+
+                csvWriter.write(reportData.getAccountNumber());
+                csvWriter.write(reportData.getAccountName());
+                csvWriter.write(goodsAmount);
+                csvWriter.write(currency);
+                csvWriter.write(sign);
+                csvWriter.write(valueDate);
+                csvWriter.endRecord();
+            }
+
+            csvWriter.close();
+        }
+
+        catch (Exception exception) {
+            logger.error(exception.getMessage(), exception);
+        }
+
         return file;
     }
     
@@ -606,7 +677,7 @@ public class GLClosureJournalEntryBalanceReadPlatformServiceImpl implements GLCl
 
                 if (reportData.getAmount() != null) {
                     String goodsAmount = reportData.getAmount().abs().setScale(2, RoundingMode.CEILING).toPlainString();
-                    if(reportData.getAmount().compareTo(BigDecimal.ZERO) > 0){
+                    if(reportData.getAmount().compareTo(BigDecimal.ZERO) < 0){
                         fields.put("creditAmount", goodsAmount);
                     }else{
                         fields.put("debitAmount", goodsAmount);
