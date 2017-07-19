@@ -12,6 +12,7 @@ import org.joda.time.LocalDate;
 
 public class GLClosureAccountBalanceReportData {
     private final String accountNumber;
+    private final String accountName;
     private final Long closureId;
     private final LocalDate transactionDate;
     private final LocalDate postedDate;
@@ -29,7 +30,7 @@ public class GLClosureAccountBalanceReportData {
      */
     private GLClosureAccountBalanceReportData(final String accountNumber, final LocalDate transactionDate, 
             final LocalDate postedDate, final GLClosureAccountBalanceReportTransactionType transactionType, 
-            final BigDecimal amount, final String reference, final Long closureId) {
+            final BigDecimal amount, final String reference, final Long closureId, final String accountName) {
         this.accountNumber = accountNumber;
         this.transactionDate = transactionDate;
         this.postedDate = postedDate;
@@ -37,6 +38,7 @@ public class GLClosureAccountBalanceReportData {
         this.amount = amount;
         this.reference = reference;
         this.closureId = closureId;
+        this.accountName = accountName;
     }
     
     /**
@@ -50,9 +52,10 @@ public class GLClosureAccountBalanceReportData {
      * @return {@link GLClosureAccountBalanceReportData} object
      */
     public static GLClosureAccountBalanceReportData instance(final String accountNumber, final LocalDate transactionDate, 
-            final LocalDate postedDate, final BigDecimal amount, final String reference, final Long closureId) {
+            final LocalDate postedDate, final BigDecimal amount, final String reference, final Long closureId,
+            final String accountName) {
         return new GLClosureAccountBalanceReportData(accountNumber, transactionDate, postedDate, 
-                GLClosureAccountBalanceReportTransactionType.NEW, amount, reference, closureId);
+                GLClosureAccountBalanceReportTransactionType.NEW, amount, reference, closureId, accountName);
     }
 
     /**
@@ -60,6 +63,13 @@ public class GLClosureAccountBalanceReportData {
      */
     public String getAccountNumber() {
         return accountNumber;
+    }
+
+    /**
+     * @return the accountName
+     */
+    public String getAccountName() {
+        return accountName;
     }
 
     /**
