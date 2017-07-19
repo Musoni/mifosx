@@ -10,26 +10,29 @@ import java.util.*;
 
 import javax.persistence.*;
 
+import com.google.gson.JsonObject;
+import org.hibernate.annotations.LazyCollection;
+import org.hibernate.annotations.LazyCollectionOption;
+import org.joda.time.DateTime;
+import org.joda.time.Interval;
 import org.joda.time.LocalDate;
 import org.mifosplatform.accounting.common.AccountingRuleType;
 import org.mifosplatform.infrastructure.codes.domain.CodeValue;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.ApiParameterError;
 import org.mifosplatform.infrastructure.core.data.DataValidatorBuilder;
+import org.mifosplatform.infrastructure.core.domain.LocalDateInterval;
 import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
 import org.mifosplatform.organisation.monetary.domain.Money;
 import org.mifosplatform.portfolio.charge.domain.Charge;
 import org.mifosplatform.portfolio.interestratechart.domain.InterestRateChart;
-import org.mifosplatform.portfolio.savings.SavingsCompoundingInterestPeriodType;
-import org.mifosplatform.portfolio.savings.SavingsInterestCalculationDaysInYearType;
-import org.mifosplatform.portfolio.savings.SavingsInterestCalculationType;
-import org.mifosplatform.portfolio.savings.SavingsPeriodFrequencyType;
-import org.mifosplatform.portfolio.savings.SavingsPostingInterestPeriodType;
+import org.mifosplatform.portfolio.savings.*;
 import org.springframework.data.jpa.domain.AbstractPersistable;
 
 import com.google.gson.JsonArray;
 
+import static org.mifosplatform.portfolio.interestratechart.InterestRateChartApiConstants.idParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.*;
 
 @Entity
@@ -139,6 +142,10 @@ public class SavingsProduct extends AbstractPersistable<Long> {
     @JoinColumn(name = "product_group")
     private CodeValue productGroup;
 
+    @LazyCollection(LazyCollectionOption.FALSE)
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "savingsProduct", orphanRemoval = true)
+    private Set<SavingsProductInterestRateChart> savingsProductInterestRateCharts = new HashSet<>();
+
     public static SavingsProduct createNew(final String name, final String shortName, final String description,
             final MonetaryCurrency currency, final BigDecimal interestRate, final CodeValue productGroup,
             final SavingsCompoundingInterestPeriodType interestCompoundingPeriodType,
@@ -148,13 +155,13 @@ public class SavingsProduct extends AbstractPersistable<Long> {
             final boolean withdrawalFeeApplicableForTransfer, final AccountingRuleType accountingRuleType, final Set<Charge> charges,
             final boolean allowOverdraft, final BigDecimal overdraftLimit, final boolean enforceMinRequiredBalance,
             final BigDecimal minRequiredBalance, final BigDecimal minBalanceForInterestCalculation,
-            final BigDecimal nominalAnnualInterestRateOverdraft, final BigDecimal minOverdraftForInterestCalculation) {
+            final BigDecimal nominalAnnualInterestRateOverdraft, final BigDecimal minOverdraftForInterestCalculation,final Set<SavingsProductInterestRateChart> savingsProductInterestRateCharts) {
 
         return new SavingsProduct(name, shortName, description, currency, interestRate, interestCompoundingPeriodType,
                 interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
                 lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeApplicableForTransfer, accountingRuleType, charges,
                 allowOverdraft, overdraftLimit, enforceMinRequiredBalance, minRequiredBalance, minBalanceForInterestCalculation, 
-                nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, null, null, productGroup);
+                nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, null, null, productGroup,savingsProductInterestRateCharts);
     }
 
     protected SavingsProduct() {
@@ -169,11 +176,11 @@ public class SavingsProduct extends AbstractPersistable<Long> {
             final Integer lockinPeriodFrequency, final SavingsPeriodFrequencyType lockinPeriodFrequencyType,
             final boolean withdrawalFeeApplicableForTransfer, final AccountingRuleType accountingRuleType, final Set<Charge> charges,
             final boolean allowOverdraft, final BigDecimal overdraftLimit, BigDecimal minBalanceForInterestCalculation,
-            final CodeValue productGroup) {
+            final CodeValue productGroup,final Set<SavingsProductInterestRateChart> savingsProductInterestRateCharts) {
         this(name, shortName, description, currency, interestRate, interestCompoundingPeriodType, interestPostingPeriodType,
                 interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency,
                 lockinPeriodFrequencyType, withdrawalFeeApplicableForTransfer, accountingRuleType, charges, allowOverdraft, overdraftLimit,
-                false, null, minBalanceForInterestCalculation, null, null, null, null, productGroup);
+                false, null, minBalanceForInterestCalculation, null, null, null, null, productGroup, savingsProductInterestRateCharts);
     }
 
     protected SavingsProduct(final String name, final String shortName, final String description, final MonetaryCurrency currency,
@@ -185,7 +192,7 @@ public class SavingsProduct extends AbstractPersistable<Long> {
             final boolean allowOverdraft, final BigDecimal overdraftLimit, final boolean enforceMinRequiredBalance,
             final BigDecimal minRequiredBalance, BigDecimal minBalanceForInterestCalculation,
             final BigDecimal nominalAnnualInterestRateOverdraft, final BigDecimal minOverdraftForInterestCalculation,
-            final LocalDate startDate, final LocalDate closeDate, final CodeValue productGroup) {
+            final LocalDate startDate, final LocalDate closeDate, final CodeValue productGroup,final Set<SavingsProductInterestRateChart> savingsProductInterestRateCharts) {
 
         this.name = name;
         this.shortName = shortName;
@@ -231,6 +238,7 @@ public class SavingsProduct extends AbstractPersistable<Long> {
         this.startDate = startDate != null ? startDate.toDateTimeAtStartOfDay().toDate() : null;
         this.closeDate = closeDate != null ? closeDate.toDateTimeAtCurrentTime().toDate() : null;
         this.productGroup = productGroup;
+        updateSavingsProductInterestRateCharts(savingsProductInterestRateCharts);
     }
 
     /**
@@ -514,6 +522,65 @@ public class SavingsProduct extends AbstractPersistable<Long> {
         return actualChanges;
     }
 
+    public void updateInterestCharts(Map<String, Object> changes,final JsonCommand command) {
+        final JsonArray interestRateChartArray = command.arrayOfParameterNamed(interestRateCharts);
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
+                .resource(SAVINGS_PRODUCT_RESOURCE_NAME);
+
+        if(interestRateChartArray != null){
+            for (int i = 0; i <interestRateChartArray.size(); i++) {
+                final JsonObject interestRateChartElement = interestRateChartArray.get(i).getAsJsonObject();
+                JsonCommand chartCommand = JsonCommand.fromExistingCommand(command, interestRateChartElement);
+                if(interestRateChartElement.has(idParamName)){
+                    final Long id = interestRateChartElement.get(idParamName).getAsLong();
+                    final SavingsProductInterestRateChart chart = this.findProductInterestRateChart(id);
+                    if(chart == null) {
+                        baseDataValidator.parameter(idParamName).value(id).failWithCode("no.chart.associated.with.id");
+                    } else{
+                        chart.update(chartCommand,changes,baseDataValidator);
+                    }
+                }else{
+                    //for newly added interest charts to products
+                    final SavingsProductInterestRateChart savingsProductInterestRateChart = SavingsProductInterestRateChart.createNewFromJson(this,chartCommand);
+                    this.savingsProductInterestRateCharts.add(savingsProductInterestRateChart);
+
+                }
+            }
+        }
+        this.validateProductInterestRate(baseDataValidator);
+        if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
+
+    }
+
+    public void validateProductInterestRate(DataValidatorBuilder baseDataValidator){
+        final Set<SavingsProductInterestRateChart> charts = this.savingsProductInterestRateCharts;
+        if(charts.size() > 0 && !charts.isEmpty()){
+            for(final SavingsProductInterestRateChart chart: charts){
+                this.validateProductInterestRateCharts(baseDataValidator,chart);
+            }
+        }
+    }
+
+    public void validateProductInterestRateCharts(final DataValidatorBuilder baseDataValidator, final SavingsProductInterestRateChart comparingInterestRateChart){
+        final Set<SavingsProductInterestRateChart> productInterestRateCharts = this.savingsProductInterestRateCharts;
+        if(productInterestRateCharts.size() > 0 && !productInterestRateCharts.isEmpty()){
+            for(final SavingsProductInterestRateChart existingInterestRateChart : productInterestRateCharts){
+                if(!existingInterestRateChart.equals(comparingInterestRateChart)){
+                    if(existingInterestRateChart.getChartFields().isOverlapping(comparingInterestRateChart.getChartFields())){
+                        baseDataValidator.failWithCodeNoParameterAddedToErrorCode("chart.overlapping.from.and.end.dates",
+                                existingInterestRateChart.getChartFields().getFromDateAsLocalDate(),existingInterestRateChart.getChartFields().getEndDateAsLocalDate(),
+                                comparingInterestRateChart.getChartFields().getFromDateAsLocalDate(), comparingInterestRateChart.getChartFields().getEndDateAsLocalDate());
+                    }
+                }
+            }
+        }
+    }
+
+
+
+
     private void validateLockinDetails() {
 
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
@@ -649,4 +716,57 @@ public class SavingsProduct extends AbstractPersistable<Long> {
         return closeLocalDate;
     }
 
+    public void updateSavingsProductInterestRateCharts(Set<SavingsProductInterestRateChart> savingsProductInterestRateCharts) {
+        for(SavingsProductInterestRateChart interestRateChart : savingsProductInterestRateCharts){
+            interestRateChart.updateSavingsProduct(this);
+        }
+        this.savingsProductInterestRateCharts = savingsProductInterestRateCharts;
+    }
+
+    public SavingsProductInterestRateChart findProductInterestRateChart(final Long id){
+
+        SavingsProductInterestRateChart savingsProductInterestRateChart = null;
+
+        for(final SavingsProductInterestRateChart chart : this.savingsProductInterestRateCharts){
+            if(chart.getId().equals(id)){
+                savingsProductInterestRateChart = chart;
+            }
+        }
+        return savingsProductInterestRateChart;
+    }
+
+    public SavingsProductInterestRateChart findCurrentInterestRate(){
+        SavingsProductInterestRateChart savingsProductInterestRateChart = null;
+        if(this.savingsProductInterestRateCharts != null){
+            for(final SavingsProductInterestRateChart interestRateChart : this.savingsProductInterestRateCharts){
+                final LocalDate currentDate = new LocalDate();
+                final LocalDateInterval thatInterval = LocalDateInterval.create(interestRateChart.getChartFields().getFromDate(), interestRateChart.getChartFields().getEndDate());
+                if(thatInterval.contains(currentDate)){
+                    savingsProductInterestRateChart = interestRateChart;
+                    break;
+                }
+            }
+        }
+        return savingsProductInterestRateChart;
+    }
+
+    public SavingsProductInterestRateChart findInterestRateFromDateRange(final LocalDate startDate, final LocalDate endDate) {
+        SavingsProductInterestRateChart savingsProductInterestRateChart = null;
+        if(this.savingsProductInterestRateCharts != null){
+            for(final SavingsProductInterestRateChart interestRateChart : this.savingsProductInterestRateCharts){
+                final LocalDateInterval thisInterval = LocalDateInterval.create(startDate, endDate);
+                final LocalDateInterval thatInterval = LocalDateInterval.create(interestRateChart.getChartFields().getFromDate(), interestRateChart.getChartFields().getEndDate());
+                if(thatInterval.contains(endDate)){
+                    savingsProductInterestRateChart = interestRateChart;
+                    break;
+                }
+            }
+        }
+
+        return savingsProductInterestRateChart;
+    }
+
+    public Set<SavingsProductInterestRateChart> getSavingsProductInterestRateCharts() {
+        return this.savingsProductInterestRateCharts;
+    }
 }

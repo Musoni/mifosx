@@ -147,4 +147,23 @@ public class InterestRateChartFields {
         return interval.contains(target);
     }
 
+    public String getName() {return this.name;}
+
+    public String getDescription() {return this.description;}
+
+    public LocalDate getFromDate() {
+        LocalDate date =null ;
+        if(this.fromDate != null){
+            date = new LocalDate(this.fromDate);
+        }
+        return date;
+    }
+
+    public LocalDate getEndDate() {
+        LocalDate date = null;
+        if(this.endDate != null){
+            date = new LocalDate(this.endDate);
+        }
+        return date;
+    }
 }
