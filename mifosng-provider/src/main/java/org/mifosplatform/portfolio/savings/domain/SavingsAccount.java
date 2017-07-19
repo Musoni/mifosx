@@ -656,10 +656,11 @@ public class SavingsAccount extends AbstractPersistable<Long> {
             if(postedAsOnDates.contains(periodInterval.endDate().plusDays(1))){
                 isUserPosting = true;
             }
+            BigDecimal interestRateAsFractionFromPeriodSlab =getEffectiveInterestRateFromProductSlab(mc,periodInterval.startDate(),periodInterval.endDate());
 
             final PostingPeriod postingPeriod = PostingPeriod.createFrom(periodInterval, periodStartingBalance,
                     retreiveOrderedNonInterestPostingTransactions(), this.currency, compoundingPeriodType, interestCalculationType,
-                    interestRateAsFraction, daysInYearType.getValue(), upToInterestCalculationDate, interestPostTransactions,
+                    interestRateAsFractionFromPeriodSlab, daysInYearType.getValue(), upToInterestCalculationDate, interestPostTransactions,
                     isInterestTransfer, minBalanceForInterestCalculation, isSavingsInterestPostingAtCurrentPeriodEnd,
                     overdraftInterestRateAsFraction, minOverdraftForInterestCalculation);
 
@@ -686,6 +687,14 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         if( this.savingsProduct().findCurrentInterestRate() != null){
            BigDecimal nominalProductInterestRateChart = this.productInterestRate();
             return nominalProductInterestRateChart.divide(BigDecimal.valueOf(100l), mc);
+        }
+        return this.nominalAnnualInterestRate.divide(BigDecimal.valueOf(100l), mc);
+    }
+    protected BigDecimal getEffectiveInterestRateFromProductSlab(final MathContext mc, final LocalDate startDate, final LocalDate endDate){
+        SavingsProductInterestRateChart interestRateChart =this.savingsProduct().findInterestRateFromDateRange(startDate,endDate);
+        if(interestRateChart != null){
+            BigDecimal interestRateAsFraction = interestRateChart.getAnnualInterestRate().divide(BigDecimal.valueOf(100l), mc);
+            return interestRateAsFraction;
         }
         return this.nominalAnnualInterestRate.divide(BigDecimal.valueOf(100l), mc);
     }

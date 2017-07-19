@@ -21,6 +21,7 @@ import org.mifosplatform.infrastructure.codes.domain.CodeValue;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.ApiParameterError;
 import org.mifosplatform.infrastructure.core.data.DataValidatorBuilder;
+import org.mifosplatform.infrastructure.core.domain.LocalDateInterval;
 import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
 import org.mifosplatform.organisation.monetary.domain.Money;
@@ -807,17 +808,34 @@ public class SavingsProduct extends AbstractPersistable<Long> {
         if(this.savingsProductInterestRateCharts != null){
             for(final SavingsProductInterestRateChart interestRateChart : this.savingsProductInterestRateCharts){
                 final LocalDate currentDate = new LocalDate();
-                final LocalDate fromDate = interestRateChart.getChartFields().getFromDate();
-                final LocalDate endDate = interestRateChart.getChartFields().getEndDate();
-                if(fromDate != null && endDate != null){
-                    if((fromDate.isBefore(currentDate) || fromDate.isEqual(currentDate)) && (endDate.isAfter(currentDate)|| endDate.isEqual(currentDate))){
-                        savingsProductInterestRateChart = interestRateChart;
-                        break;
-                    }
+                final LocalDateInterval thatInterval = LocalDateInterval.create(interestRateChart.getChartFields().getFromDate(), interestRateChart.getChartFields().getEndDate());
+                if(thatInterval.contains(currentDate)){
+                    savingsProductInterestRateChart = interestRateChart;
+                    break;
                 }
             }
         }
         return savingsProductInterestRateChart;
+    }
+
+    public SavingsProductInterestRateChart findInterestRateFromDateRange(final LocalDate startDate, final LocalDate endDate) {
+        SavingsProductInterestRateChart savingsProductInterestRateChart = null;
+        if(this.savingsProductInterestRateCharts != null){
+            for(final SavingsProductInterestRateChart interestRateChart : this.savingsProductInterestRateCharts){
+                final LocalDateInterval thisInterval = LocalDateInterval.create(startDate, endDate);
+                final LocalDateInterval thatInterval = LocalDateInterval.create(interestRateChart.getChartFields().getFromDate(), interestRateChart.getChartFields().getEndDate());
+                if(thatInterval.contains(endDate)){
+                    savingsProductInterestRateChart = interestRateChart;
+                    break;
+                }
+            }
+        }
+
+        return savingsProductInterestRateChart;
+    }
+
+    public Set<SavingsProductInterestRateChart> getSavingsProductInterestRateCharts() {
+        return this.savingsProductInterestRateCharts;
     }
 
 
