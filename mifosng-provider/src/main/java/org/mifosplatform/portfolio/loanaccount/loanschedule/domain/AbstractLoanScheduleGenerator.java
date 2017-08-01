@@ -311,6 +311,7 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
                     currentPeriodParams.getFeeChargesForInstallment(), currentPeriodParams.getPenaltyChargesForInstallment(),
                     totalInstallmentDue, false);
 
+
             // apply loan transactions on installments to identify early/late
             // payments for interest recalculation
             installment = handleRecalculationForTransactions(mc, loanApplicationTerms, holidayDetailDTO, currency, scheduleParams,
@@ -420,9 +421,9 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
             LoanScheduleParams scheduleParams, LocalDate scheduledDueDate, ScheduleCurrentPeriodParams currentPeriodParams,
             LoanScheduleModelPeriod installment) {
         LocalDate amountApplicableDate = installment.periodDueDate();
-        if (loanApplicationTerms.isInterestRecalculationEnabled()) {
-            amountApplicableDate = getNextRestScheduleDate(installment.periodDueDate().minusDays(1), loanApplicationTerms, holidayDetailDTO);
-        }
+//        if (loanApplicationTerms.isInterestRecalculationEnabled()) {
+//            amountApplicableDate = getNextRestScheduleDate(installment.periodDueDate().minusDays(1), loanApplicationTerms, holidayDetailDTO);
+//        }
         updateMapWithAmount(scheduleParams.getPrincipalPortionMap(),
                 currentPeriodParams.getPrincipalForThisPeriod().minus(currentPeriodParams.getReducedBalance()), amountApplicableDate);
 
