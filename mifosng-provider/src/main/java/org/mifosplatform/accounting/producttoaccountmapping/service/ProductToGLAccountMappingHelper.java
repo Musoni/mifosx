@@ -391,9 +391,10 @@ public class ProductToGLAccountMappingHelper {
         final GLAccount glAccount = this.accountRepositoryWrapper.findOneWithNotFoundDetection(accountId);
 
         // validate account is of the expected Type
+        /** remove this validation to allow different gl in different account types
         if (glAccount.getType().intValue() != expectedAccountType.getValue()) { throw new ProductToGLAccountMappingInvalidException(
                 paramName, glAccount.getName(), accountId, GLAccountType.fromInt(glAccount.getType()).toString(),
-                expectedAccountType.toString()); }
+                expectedAccountType.toString()); } **/
         return glAccount;
     }
 
@@ -404,8 +405,8 @@ public class ProductToGLAccountMappingHelper {
         for (GLAccountType glAccountType : expectedAccountTypes) {
             glAccountTypeValues.add(glAccountType.getValue());
         }
-        if (!glAccountTypeValues.contains(glAccount.getType())) { throw new ProductToGLAccountMappingInvalidException(paramName,
-                glAccount.getName(), accountId, GLAccountType.fromInt(glAccount.getType()).toString(), glAccountTypeValues.toString()); }
+       /* if (!glAccountTypeValues.contains(glAccount.getType())) { throw new ProductToGLAccountMappingInvalidException(paramName,
+                glAccount.getName(), accountId, GLAccountType.fromInt(glAccount.getType()).toString(), glAccountTypeValues.toString()); } */
         return glAccount;
     }
 
