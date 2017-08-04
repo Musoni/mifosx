@@ -6,6 +6,7 @@
 package org.mifosplatform.organisation.teller.service;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,8 @@ import org.mifosplatform.accounting.journalentry.data.JournalEntryAssociationPar
 import org.mifosplatform.accounting.journalentry.domain.JournalEntry;
 import org.mifosplatform.accounting.journalentry.domain.JournalEntryRepository;
 import org.mifosplatform.accounting.journalentry.domain.JournalEntryType;
+import org.mifosplatform.accounting.journalentry.exception.JournalEntryInvalidException;
+import org.mifosplatform.accounting.journalentry.exception.JournalEntryInvalidException.GL_JOURNAL_ENTRY_INVALID_REASON;
 import org.mifosplatform.accounting.producttoaccountmapping.domain.PortfolioProductType;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
@@ -511,10 +514,15 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
                     throw new NotEnoughCashInTheMainVaultTellerException(glAccountData.getId());
                 }
            }
+            
+            final LocalDate transactionDate = command.localDateValueOfParameterNamed("txnDate");
+            final LocalDate todaysDate = new LocalDate();
 
-
-
-
+            // make sure that a future date cannot be used as transaction date
+            if (transactionDate.isAfter(todaysDate)) { 
+            	throw new JournalEntryInvalidException(GL_JOURNAL_ENTRY_INVALID_REASON.FUTURE_DATE,
+                    transactionDate.toDate(), null, null); 
+        	}
 
             final String entityType = command.stringValueOfParameterNamed("entityType");
             final Long entityId = command.longValueOfParameterNamed("entityId");
