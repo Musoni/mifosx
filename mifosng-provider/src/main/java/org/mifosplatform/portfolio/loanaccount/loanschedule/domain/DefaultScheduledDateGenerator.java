@@ -233,9 +233,12 @@ public class DefaultScheduledDateGenerator implements ScheduledDateGenerator {
         boolean isFirstRepayment = true;
         while (!generatedDate.isAfter(lastRepaymentDate)) {
             generatedDate = generateNextRepaymentDate(generatedDate, loanApplicationTerms, isFirstRepayment, holidayDetailDTO);
+            generatedDate = adjustRepaymentDate(generatedDate, loanApplicationTerms, holidayDetailDTO, adjustedRepaymentDateList);
+
             isFirstRepayment = false;
         }
-        generatedDate = adjustRepaymentDate(generatedDate, loanApplicationTerms, holidayDetailDTO, adjustedRepaymentDateList);
+        // Moved this code to the block above to fix issues with interest recalculation for "Next working day" reschedule method.
+        // generatedDate = adjustRepaymentDate(generatedDate, loanApplicationTerms, holidayDetailDTO, adjustedRepaymentDateList);
         return generatedDate;
     }
 }
