@@ -40,7 +40,21 @@ public class AccountTransfersDetailDataValidator {
             final Long toClientId = this.fromApiJsonHelper.extractLongNamed(toClientIdParamName, element);
             baseDataValidator.reset().parameter(toClientIdParamName).value(toClientId).notNull().integerGreaterThanZero();
 
-        }else{
+        }else if(this.fromApiJsonHelper.parameterExists(fromClientIdParamName,element) && this.fromApiJsonHelper.parameterExists(toGroupIdParamName,element)){
+            final Long fromClientId = this.fromApiJsonHelper.extractLongNamed(fromClientIdParamName, element);
+            baseDataValidator.reset().parameter(fromClientIdParamName).value(fromClientId).notNull().integerGreaterThanZero();
+
+            final Long toGroupId = this.fromApiJsonHelper.extractLongNamed(toGroupIdParamName, element);
+            baseDataValidator.reset().parameter(toGroupIdParamName).value(toGroupId).notNull().integerGreaterThanZero();
+        }else if (this.fromApiJsonHelper.parameterExists(fromGroupIdParamName,element) && this.fromApiJsonHelper.parameterExists(toClientIdParamName,element)){
+
+            final Long fromGroupId = this.fromApiJsonHelper.extractLongNamed(fromGroupIdParamName, element);
+            baseDataValidator.reset().parameter(fromGroupIdParamName).value(fromGroupId).notNull().integerGreaterThanZero();
+
+            final Long toClientId = this.fromApiJsonHelper.extractLongNamed(toClientIdParamName, element);
+            baseDataValidator.reset().parameter(toClientIdParamName).value(toClientId).notNull().integerGreaterThanZero();
+
+        } else{
 
             final Long fromGroupId = this.fromApiJsonHelper.extractLongNamed(fromGroupIdParamName, element);
             baseDataValidator.reset().parameter(fromGroupIdParamName).value(fromGroupId).notNull().integerGreaterThanZero();
