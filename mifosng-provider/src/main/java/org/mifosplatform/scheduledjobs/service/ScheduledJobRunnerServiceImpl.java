@@ -376,7 +376,16 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
     @CronTarget(jobName = JobName.CALCULATE_DASHBOARD_METRICS)
     public void calculateDashboardMetrics() {
 
-        final Set<String> metrics_reports = new HashSet<>(Arrays.asList("Dashboard principal disbursed"));
+        final Set<String> metrics_reports = new HashSet<>(Arrays.asList("Dashboard principal disbursed",
+                "Dashboard number of outstanding loans",
+                "Dashboard principal outstanding",
+                "Dashboard interest outstanding",
+                "Dashboard PAR_1",
+                "Dashboard PAR_30",
+                "Dashboard PAR_90",
+                "Dashboard Write off",
+                "Dashboard Repayments",
+                "Dashboard POLB"));
 
         for (final String reportName : metrics_reports) {
             try {
