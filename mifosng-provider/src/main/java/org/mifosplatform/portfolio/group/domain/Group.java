@@ -225,6 +225,9 @@ public final class Group extends AbstractPersistable<Long> {
         validateStatusNotEqualToActiveAndLogError(dataValidationErrors);
         if (dataValidationErrors.isEmpty()) {
             this.status = GroupingTypeStatus.ACTIVE.getValue();
+            this.closedBy = null;
+            this.closureDate = null;
+            this.closureReason = null;
             setActivationDate(activationLocalDate.toDate(), currentUser, dataValidationErrors);
         }
 
