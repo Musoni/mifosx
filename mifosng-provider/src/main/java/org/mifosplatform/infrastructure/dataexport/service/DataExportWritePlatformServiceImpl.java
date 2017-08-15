@@ -445,7 +445,7 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
     	String sqlStatement, mClientTableAlias, mGroupTableAlias, mGroupClientTableAlias, 
     	mOfficeTableAlias, mStaffTableAlias, mLoanTableAlias, mProductLoanTableAlias, 
     	mPaymentDetailTableAlias, mSavingsProductTableAlias, sqlJoinKey, parentTableAlias, 
-    	mSavingsAccountTableAlias, mAppUserTableAlias;
+    	mSavingsAccountTableAlias, mAppUserTableAlias, mGroupRoleTableAlias;
     	DataExportSqlJoin dataExportSqlJoin;
     	
     	if (coreColumn != null) {
@@ -457,6 +457,51 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
         	switch (baseEntity) {
 	    		case CLIENT:
 	    			switch (coreColumn) {
+						case GROUP_ROLE:
+							// =============================================================================
+							sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT,
+									DataExportCoreTable.M_GROUP_ROLE);
+
+							if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+								// increment the alias postfix number
+								aliasPostfixNumber.increment();
+
+								mGroupRoleTableAlias = DataExportCoreTable.M_GROUP_ROLE.
+										getAlias(aliasPostfixNumber.intValue());
+
+								// m_client and m_group_role table join
+								sqlStatement = "`" + DataExportCoreTable.M_GROUP_ROLE.getName()
+										+ "` `" + mGroupRoleTableAlias + "` on `" + mGroupRoleTableAlias
+										+ "`.`client_id` = `" + baseEntityName + "`.`id`";
+								dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_CLIENT,
+										DataExportCoreTable.M_GROUP_ROLE, sqlStatement, baseEntityName,
+										mGroupRoleTableAlias);
+
+								sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+
+								// add the join to the map
+								sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+							}
+							// =============================================================================
+
+							// =============================================================================
+							dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+
+							if (isSelectStatement) {
+								sqlStatement = "`" + dataExportSqlJoin.getChildTableAlias() + "`.`"
+										+ coreColumn.getName() + "` as `" + coreColumn.getLabel() + "`";
+
+								// add the select statement
+								sqlBuilder.SELECT(sqlStatement);
+
+							} else if (filterValue != null) {
+								sqlStatement = "`" + dataExportSqlJoin.getChildTableAlias() + "`.`"
+										+ coreColumn.getName() + "` " + filterValue;
+
+								// add a WHERE clause
+								sqlBuilder.WHERE(sqlStatement);
+							}
+							break;
 	    				case GROUP_NAME:
 	    				case GROUP_ID:
 	    					// =============================================================================
@@ -762,6 +807,49 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					}
 	    					// =============================================================================
 	    					break;
+						case GROUP_ROLE:
+							// =============================================================================
+							sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_LOAN,
+									DataExportCoreTable.M_GROUP_ROLE);
+
+							if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+								// increment the alias postfix number
+								aliasPostfixNumber.increment();
+
+								mGroupRoleTableAlias = DataExportCoreTable.M_GROUP_ROLE.
+										getAlias(aliasPostfixNumber.intValue());
+
+								// m_client and m_group_role table join
+								sqlStatement = "`" + DataExportCoreTable.M_GROUP_ROLE.getName()
+										+ "` `" + mGroupRoleTableAlias + "` on `" + mGroupRoleTableAlias
+										+ "`.`client_id` = `" + baseEntityName + "`.`client_id`";
+								dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_LOAN,
+										DataExportCoreTable.M_GROUP_ROLE, sqlStatement, baseEntityName,
+										mGroupRoleTableAlias);
+
+								sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+
+								// add the join to the map
+								sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+							}
+							// =============================================================================
+							dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+
+							if (isSelectStatement) {
+								sqlStatement = "`" + dataExportSqlJoin.getChildTableAlias() + "`.`"
+										+ coreColumn.getName() + "` as `" + coreColumn.getLabel() + "`";
+
+								// add the select statement
+								sqlBuilder.SELECT(sqlStatement);
+
+							} else if (filterValue != null) {
+								sqlStatement = "`" + dataExportSqlJoin.getChildTableAlias() + "`.`"
+										+ coreColumn.getName() + "` " + filterValue;
+
+								// add a WHERE clause
+								sqlBuilder.WHERE(sqlStatement);
+							}
+							break;
 	    				case GROUP_NAME:
 	    				case GROUP_ID:
 	    					// =============================================================================
@@ -1267,6 +1355,77 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					}
 	    					// =============================================================================
 	    					break;
+						case GROUP_ROLE:
+							// =============================================================================
+							sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_SAVINGS_ACCOUNT,
+									DataExportCoreTable.M_GROUP_ROLE);
+
+							if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+								// increment the alias postfix number
+								aliasPostfixNumber.increment();
+
+								mGroupRoleTableAlias = DataExportCoreTable.M_GROUP_ROLE.
+										getAlias(aliasPostfixNumber.intValue());
+
+								// m_client and m_group_role table join
+								sqlStatement = "`" + DataExportCoreTable.M_GROUP_ROLE.getName()
+										+ "` `" + mGroupRoleTableAlias + "` on `" + mGroupRoleTableAlias
+										+ "`.`client_id` = `" + baseEntityName + "`.`client_id`";
+								dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_SAVINGS_ACCOUNT,
+										DataExportCoreTable.M_GROUP_ROLE, sqlStatement, baseEntityName,
+										mGroupRoleTableAlias);
+
+								sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+
+								// add the join to the map
+								sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+							}
+							// =============================================================================
+
+							// =============================================================================
+							dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+
+							sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_CLIENT,
+									DataExportCoreTable.M_GROUP_ROLE);
+
+							if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+								// increment the alias postfix number
+								aliasPostfixNumber.increment();
+
+								mClientTableAlias = DataExportCoreTable.M_CLIENT.
+										getAlias(aliasPostfixNumber.intValue());
+
+								// m_client and m_group_role table join
+								sqlStatement = "`" + DataExportCoreTable.M_CLIENT.getName()
+										+ "` `" + mClientTableAlias + "` on `" + mClientTableAlias
+										+ "`.`id` = `" + baseEntityName + "`.`client_id`";
+								dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_CLIENT,
+										DataExportCoreTable.M_GROUP_ROLE, sqlStatement, baseEntityName,
+										dataExportSqlJoin.getChildTableAlias());
+
+								sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+
+								// add the join to the map
+								sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+							}
+							// =============================================================================
+							dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+
+							if (isSelectStatement) {
+								sqlStatement = "`" + dataExportSqlJoin.getChildTableAlias() + "`.`"
+										+ coreColumn.getName() + "` as `" + coreColumn.getLabel() + "`";
+
+								// add the select statement
+								sqlBuilder.SELECT(sqlStatement);
+
+							} else if (filterValue != null) {
+								sqlStatement = "`" + dataExportSqlJoin.getChildTableAlias() + "`.`"
+										+ coreColumn.getName() + "` " + filterValue;
+
+								// add a WHERE clause
+								sqlBuilder.WHERE(sqlStatement);
+							}
+							break;
 	    				case GROUP_NAME:
 	    				case GROUP_ID:
 	    					// =============================================================================
@@ -2085,6 +2244,79 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					}
 	    					// =============================================================================
 	    					break;
+						case GROUP_ROLE:
+							// =============================================================================
+							sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_LOAN,
+									DataExportCoreTable.M_LOAN_TRANSACTION);
+
+							// only add the join statement if it hasn't been previously added
+							if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+								// increment the alias postfix number
+								aliasPostfixNumber.increment();
+
+								mLoanTableAlias = DataExportCoreTable.M_LOAN.getAlias(aliasPostfixNumber.intValue());
+
+								// m_loan and m_group_client table join
+								sqlStatement = "`" + DataExportCoreTable.M_LOAN.getName() + "` `"
+										+ mLoanTableAlias + "` on `" + mLoanTableAlias + "`.`id` = `"
+										+ baseEntityName + "`.`loan_id`";
+								dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_LOAN,
+										DataExportCoreTable.M_LOAN_TRANSACTION, sqlStatement, mLoanTableAlias,
+										baseEntityName);
+
+								sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+
+								// add the join to the map
+								sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+							}
+							// =============================================================================
+
+							// =============================================================================
+							dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+
+							sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_LOAN,
+									DataExportCoreTable.M_GROUP_ROLE);
+
+							if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+								// increment the alias postfix number
+								aliasPostfixNumber.increment();
+
+								mGroupRoleTableAlias = DataExportCoreTable.M_GROUP_ROLE.
+										getAlias(aliasPostfixNumber.intValue());
+
+								// m_client and m_group_role table join
+								sqlStatement = "`" + DataExportCoreTable.M_GROUP_ROLE.getName()
+										+ "` `" + mGroupRoleTableAlias + "` on `" + mGroupRoleTableAlias
+										+ "`.`client_id` = `" + dataExportSqlJoin.getParentTableAlias() + "`.`client_id`";
+								dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_LOAN,
+										DataExportCoreTable.M_GROUP_ROLE, sqlStatement, dataExportSqlJoin.getParentTableAlias(),
+										mGroupRoleTableAlias);
+
+								sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+
+								// add the join to the map
+								sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+							}
+							// =============================================================================
+
+							// =============================================================================
+							dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+
+							if (isSelectStatement) {
+								sqlStatement = "`" + dataExportSqlJoin.getChildTableAlias() + "`.`"
+										+ coreColumn.getName() + "` as `" + coreColumn.getLabel() + "`";
+
+								// add the select statement
+								sqlBuilder.SELECT(sqlStatement);
+
+							} else if (filterValue != null) {
+								sqlStatement = "`" + dataExportSqlJoin.getChildTableAlias() + "`.`"
+										+ coreColumn.getName() + "` " + filterValue;
+
+								// add a WHERE clause
+								sqlBuilder.WHERE(sqlStatement);
+							}
+							break;
 	    				case GROUP_NAME:
 	    				case GROUP_ID:
 	    					// =============================================================================
@@ -2981,6 +3213,79 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					}
 	    					// =============================================================================
 	    					break;
+						case GROUP_ROLE:
+							// =============================================================================
+							sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_SAVINGS_ACCOUNT,
+									DataExportCoreTable.M_SAVINGS_ACCOUNT_TRANSACTION);
+
+							// only add the join statement if it hasn't been previously added
+							if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+								// increment the alias postfix number
+								aliasPostfixNumber.increment();
+
+								mSavingsAccountTableAlias = DataExportCoreTable.M_SAVINGS_ACCOUNT.getAlias(aliasPostfixNumber.intValue());
+
+								// m_loan and m_group_client table join
+								sqlStatement = "`" + DataExportCoreTable.M_SAVINGS_ACCOUNT.getName() + "` `"
+										+ mSavingsAccountTableAlias + "` on `" + mSavingsAccountTableAlias + "`.`id` = `"
+										+ baseEntityName + "`.`savings_account_id`";
+								dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_SAVINGS_ACCOUNT,
+										DataExportCoreTable.M_SAVINGS_ACCOUNT_TRANSACTION, sqlStatement, mSavingsAccountTableAlias,
+										baseEntityName);
+
+								sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+
+								// add the join to the map
+								sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+							}
+							// =============================================================================
+
+							// =============================================================================
+							dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+
+							sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_SAVINGS_ACCOUNT,
+									DataExportCoreTable.M_GROUP_ROLE);
+
+							if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+								// increment the alias postfix number
+								aliasPostfixNumber.increment();
+
+								mGroupRoleTableAlias = DataExportCoreTable.M_GROUP_ROLE.
+										getAlias(aliasPostfixNumber.intValue());
+
+								// m_client and m_group_role table join
+								sqlStatement = "`" + DataExportCoreTable.M_GROUP_ROLE.getName()
+										+ "` `" + mGroupRoleTableAlias + "` on `" + mGroupRoleTableAlias
+										+ "`.`client_id` = `" + dataExportSqlJoin.getParentTableAlias() + "`.`client_id`";
+								dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_SAVINGS_ACCOUNT,
+										DataExportCoreTable.M_GROUP_ROLE, sqlStatement, dataExportSqlJoin.getParentTableAlias(),
+										mGroupRoleTableAlias);
+
+								sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+
+								// add the join to the map
+								sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+							}
+							// =============================================================================
+
+							// =============================================================================
+							dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+
+							if (isSelectStatement) {
+								sqlStatement = "`" + dataExportSqlJoin.getChildTableAlias() + "`.`"
+										+ coreColumn.getName() + "` as `" + coreColumn.getLabel() + "`";
+
+								// add the select statement
+								sqlBuilder.SELECT(sqlStatement);
+
+							} else if (filterValue != null) {
+								sqlStatement = "`" + dataExportSqlJoin.getChildTableAlias() + "`.`"
+										+ coreColumn.getName() + "` " + filterValue;
+
+								// add a WHERE clause
+								sqlBuilder.WHERE(sqlStatement);
+							}
+							break;
 	    				case GROUP_NAME:
 	    				case GROUP_ID:
 	    					// =============================================================================
@@ -3859,6 +4164,79 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    					}
 	    					// =============================================================================
 	    					break;
+						case GROUP_ROLE:
+							// =============================================================================
+							sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_LOAN,
+									DataExportCoreTable.M_LOAN_REPAYMENT_SCHEDULE);
+
+							// only add the join statement if it hasn't been previously added
+							if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+								// increment the alias postfix number
+								aliasPostfixNumber.increment();
+
+								mLoanTableAlias = DataExportCoreTable.M_LOAN.getAlias(aliasPostfixNumber.intValue());
+
+								// m_loan and m_group_client table join
+								sqlStatement = "`" + DataExportCoreTable.M_LOAN.getName() + "` `"
+										+ mLoanTableAlias + "` on `" + mLoanTableAlias + "`.`id` = `"
+										+ baseEntityName + "`.`loan_id`";
+								dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_LOAN,
+										DataExportCoreTable.M_LOAN_REPAYMENT_SCHEDULE, sqlStatement, mLoanTableAlias,
+										baseEntityName);
+
+								sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+
+								// add the join to the map
+								sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+							}
+							// =============================================================================
+
+							// =============================================================================
+							dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+
+							sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_LOAN,
+									DataExportCoreTable.M_GROUP_ROLE);
+
+							if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+								// increment the alias postfix number
+								aliasPostfixNumber.increment();
+
+								mGroupRoleTableAlias = DataExportCoreTable.M_GROUP_ROLE.
+										getAlias(aliasPostfixNumber.intValue());
+
+								// m_client and m_group_role table join
+								sqlStatement = "`" + DataExportCoreTable.M_GROUP_ROLE.getName()
+										+ "` `" + mGroupRoleTableAlias + "` on `" + mGroupRoleTableAlias
+										+ "`.`client_id` = `" + dataExportSqlJoin.getParentTableAlias() + "`.`client_id`";
+								dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_LOAN,
+										DataExportCoreTable.M_GROUP_ROLE, sqlStatement, dataExportSqlJoin.getParentTableAlias(),
+										mGroupRoleTableAlias);
+
+								sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+
+								// add the join to the map
+								sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+							}
+							// =============================================================================
+
+							// =============================================================================
+							dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+
+							if (isSelectStatement) {
+								sqlStatement = "`" + dataExportSqlJoin.getChildTableAlias() + "`.`"
+										+ coreColumn.getName() + "` as `" + coreColumn.getLabel() + "`";
+
+								// add the select statement
+								sqlBuilder.SELECT(sqlStatement);
+
+							} else if (filterValue != null) {
+								sqlStatement = "`" + dataExportSqlJoin.getChildTableAlias() + "`.`"
+										+ coreColumn.getName() + "` " + filterValue;
+
+								// add a WHERE clause
+								sqlBuilder.WHERE(sqlStatement);
+							}
+							break;
 		    			case GROUP_NAME:
 	    				case GROUP_ID:
 	    					// =============================================================================
@@ -4409,7 +4787,49 @@ public class DataExportWritePlatformServiceImpl implements DataExportWritePlatfo
 	    						sqlBuilder.WHERE(sqlStatement);
 	    					}
 	    					break;
-	    					
+						case GROUP_ROLE:
+							// =============================================================================
+							sqlJoinKey = DataExportSqlJoin.createId(DataExportCoreTable.M_GROUP_LOAN_MEMBER_ALLOCATION,
+									DataExportCoreTable.M_GROUP_ROLE);
+
+							if (!sqlJoinMap.containsKey(sqlJoinKey)) {
+								// increment the alias postfix number
+								aliasPostfixNumber.increment();
+
+								mGroupRoleTableAlias = DataExportCoreTable.M_GROUP_ROLE.
+										getAlias(aliasPostfixNumber.intValue());
+
+								// m_client and m_group_role table join
+								sqlStatement = "`" + DataExportCoreTable.M_GROUP_ROLE.getName()
+										+ "` `" + mGroupRoleTableAlias + "` on `" + mGroupRoleTableAlias
+										+ "`.`client_id` = `" + baseEntityName + "`.`client_id`";
+								dataExportSqlJoin = DataExportSqlJoin.newInstance(DataExportCoreTable.M_GROUP_LOAN_MEMBER_ALLOCATION,
+										DataExportCoreTable.M_GROUP_ROLE, sqlStatement, baseEntityName,
+										mGroupRoleTableAlias);
+
+								sqlBuilder.LEFT_OUTER_JOIN(sqlStatement);
+
+								// add the join to the map
+								sqlJoinMap.put(dataExportSqlJoin.getId(), dataExportSqlJoin);
+							}
+							// =============================================================================
+							dataExportSqlJoin = sqlJoinMap.get(sqlJoinKey);
+
+							if (isSelectStatement) {
+								sqlStatement = "`" + dataExportSqlJoin.getChildTableAlias() + "`.`"
+										+ coreColumn.getName() + "` as `" + coreColumn.getLabel() + "`";
+
+								// add the select statement
+								sqlBuilder.SELECT(sqlStatement);
+
+							} else if (filterValue != null) {
+								sqlStatement = "`" + dataExportSqlJoin.getChildTableAlias() + "`.`"
+										+ coreColumn.getName() + "` " + filterValue;
+
+								// add a WHERE clause
+								sqlBuilder.WHERE(sqlStatement);
+							}
+							break;
 	    				case GROUP_NAME:
 	    				case GROUP_ID:
 	    					// =============================================================================

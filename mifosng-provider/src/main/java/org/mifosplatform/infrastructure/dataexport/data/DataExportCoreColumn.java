@@ -15,6 +15,7 @@ public enum DataExportCoreColumn {
 	GROUP_ID("group_id", "group id", "BIGINT", true, "group_id", "id", "m_group", null),
 	CLIENT_NAME("client_name", "client name", "VARCHAR", true, "client_id", "display_name", "m_client", null),
 	CLIENT_ID("client_id", "client id", "BIGINT", true, "client_id", "id", "m_client", null),
+	GROUP_ROLE("role_cv_id", "group role", "VARCHAR", true, "role_cv_id", "code_value", "m_code_value", null),
 	DATE_OF_BIRTH("date_of_birth", "date of birth", "DATE", true, null, null, null, null),
 	GENDER("gender_cv_id", "gender", "VARCHAR", true, "gender_cv_id", "code_value", "m_code_value", null),
 	PHONE_NUMBER("mobile_no", "phone number", "VARCHAR", true, null, null, null, null),
