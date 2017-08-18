@@ -101,7 +101,7 @@ public class AccountTransferDetailAssembler {
 
         }else if(this.fromApiJsonHelper.parameterExists(fromGroupIdParamName,element)){
 
-            final Long fromGroupId = this.fromApiJsonHelper.extractLongNamed(toGroupIdParamName,element);
+            final Long fromGroupId = this.fromApiJsonHelper.extractLongNamed(fromGroupIdParamName,element);
             fromGroup = this.groupRepository.findOneWithNotFoundDetection(fromGroupId);
         }
 
@@ -149,7 +149,7 @@ public class AccountTransferDetailAssembler {
 
         }else if(this.fromApiJsonHelper.parameterExists(fromGroupIdParamName,element)){
 
-            final Long fromGroupId = this.fromApiJsonHelper.extractLongNamed(toGroupIdParamName,element);
+            final Long fromGroupId = this.fromApiJsonHelper.extractLongNamed(fromGroupIdParamName,element);
             fromGroup = this.groupRepository.findOneWithNotFoundDetection(fromGroupId);
         }
 
@@ -236,7 +236,7 @@ public class AccountTransferDetailAssembler {
 
         }else if(this.fromApiJsonHelper.parameterExists(fromGroupIdParamName,element)){
 
-            final Long fromGroupId = this.fromApiJsonHelper.extractLongNamed(toGroupIdParamName,element);
+            final Long fromGroupId = this.fromApiJsonHelper.extractLongNamed(fromGroupIdParamName,element);
             fromGroup = this.groupRepository.findOneWithNotFoundDetection(fromGroupId);
         }
 
