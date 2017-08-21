@@ -384,7 +384,8 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
                 "Dashboard PAR_30",
                 "Dashboard PAR_90",
                 "Dashboard Write off",
-                "Dashboard Repayments"));
+                "Dashboard Repayments",
+                "Dashboard POLB"));
 
         for (final String reportName : metrics_reports) {
             try {
