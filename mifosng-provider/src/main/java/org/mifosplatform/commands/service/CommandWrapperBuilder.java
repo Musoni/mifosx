@@ -232,6 +232,15 @@ public class CommandWrapperBuilder {
         return this;
     }
 
+    public CommandWrapperBuilder updateSubStatus(final Long loanId){
+        this.actionName = "UPDATE";
+        this.entityName = "LOANSUBSTATUS";
+        this.entityId = null;
+        this.loanId = loanId;
+        this.href = "/loans/" + loanId + "?command=updateSubStatus";
+        return this;
+    }
+
     public CommandWrapperBuilder createFund() {
         this.actionName = "CREATE";
         this.entityName = "FUND";

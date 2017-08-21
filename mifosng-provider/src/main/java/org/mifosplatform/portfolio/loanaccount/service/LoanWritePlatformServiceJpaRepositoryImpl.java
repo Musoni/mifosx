@@ -24,6 +24,10 @@ import org.joda.time.LocalDateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.mifosplatform.accounting.journalentry.service.JournalEntryWritePlatformService;
+import org.mifosplatform.infrastructure.codes.domain.CodeValue;
+import org.mifosplatform.infrastructure.codes.domain.CodeValueRepository;
+import org.mifosplatform.infrastructure.codes.domain.CodeValueRepositoryWrapper;
+import org.mifosplatform.infrastructure.codes.service.CodeValueReadPlatformService;
 import org.mifosplatform.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.ApiParameterError;
@@ -219,6 +223,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
     private final StandingInstructionRepository standingInstructionRepository;
     private final SavingsAccountWritePlatformService savingsAccountWritePlatformService;
     private final FloatingRatesReadPlatformService floatingRatesReadPlatformService;
+    private final CodeValueRepositoryWrapper codeValueRepository;
 
     @Autowired
     public LoanWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -251,7 +256,8 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
             final LoanSuspendAccruedIncomeWritePlatformService loanSuspendAccruedIncomeWritePlatformService, 
             final StandingInstructionRepository standingInstructionRepository, 
             final SavingsAccountWritePlatformService savingsAccountWritePlatformService, 
-            final FloatingRatesReadPlatformService floatingRatesReadPlatformService) {
+            final FloatingRatesReadPlatformService floatingRatesReadPlatformService,
+            final CodeValueRepositoryWrapper codeValueRepository) {
         this.context = context;
         this.loanEventApiJsonValidator = loanEventApiJsonValidator;
         this.loanAssembler = loanAssembler;
@@ -292,6 +298,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         this.standingInstructionRepository = standingInstructionRepository;
         this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
         this.floatingRatesReadPlatformService = floatingRatesReadPlatformService;
+        this.codeValueRepository = codeValueRepository;
     }
 
     private LoanLifecycleStateMachine defaultLoanLifecycleStateMachine() {
@@ -3111,5 +3118,29 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 
         return new CommandProcessingResultBuilder().withLoanId(loanId).build();
 
+    }
+
+    @Override
+    public CommandProcessingResult updateLoanSubStatus(Long loanId, JsonCommand command){
+        final AppUser currentUser = getAppUserIfPresent();
+
+        final Loan loan = this.loanAssembler.assembleFrom(loanId);
+
+        CodeValue subStatus = null;
+        if(command.parameterExists("substatus")){
+            final Long subStatusId = command.longValueOfParameterNamed("substatus");
+            subStatus = this.codeValueRepository.findOneByCodeNameAndIdWithNotFoundDetection(LoanApiConstants.subStatusCodeParameterName,subStatusId);
+        }
+
+        if(subStatus != null){
+            loan.updateSubStatus(subStatus);
+            this.loanRepository.save(loan);
+        }
+
+        return new CommandProcessingResultBuilder()
+                .withEntityId(loan.getId())
+                .withLoanId(loanId)
+                .withCommandId(command.commandId())
+                .build();
     }
 }
