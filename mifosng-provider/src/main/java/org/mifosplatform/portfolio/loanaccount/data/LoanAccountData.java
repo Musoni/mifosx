@@ -58,6 +58,8 @@ public class LoanAccountData {
 
     // status
     private final LoanStatusEnumData status;
+    private final Long substatusId;
+    private final String substatus;
 
     // related to
     private final Long clientId;
@@ -137,6 +139,7 @@ public class LoanAccountData {
     private final Collection<EnumOptionData> repaymentFrequencyTypeOptions;
     private final Collection<EnumOptionData> repaymentFrequencyNthDayTypeOptions;
     private final Collection<EnumOptionData> repaymentFrequencyDaysOfWeekTypeOptions;
+    private final Collection<CodeValueData> substatusOptions;
 
     private final Collection<EnumOptionData> interestRateFrequencyTypeOptions;
     private final Collection<EnumOptionData> amortizationTypeOptions;
@@ -210,6 +213,8 @@ public class LoanAccountData {
         final Long id = null;
         final String accountNo = null;
         final LoanStatusEnumData status = null;
+        final Long substatusId = null;
+        final String substatus = null;
         final String externalId = null;
         final Long clientId = null;
         final String clientName = null;
@@ -282,6 +287,7 @@ public class LoanAccountData {
         final ChargeData chargeTemplate = null;
         final Collection<StaffData> loanOfficerOptions = null;
         final Collection<CodeValueData> loanPurposeOptions = null;
+        final Collection<CodeValueData> substatusOptions = null;
         final Collection<CalendarData> calendarOptions = null;
         final Boolean syncDisbursementWithMeeting = null;
         final Integer loancounter = null;
@@ -316,7 +322,7 @@ public class LoanAccountData {
         final Collection<ClientData> groupMembers = null;
         final Collection<GroupLoanMembersAllocationData> groupLoanMembersAllocation = null;
 
-        return new LoanAccountData(id, accountNo, status, externalId, clientId, clientAccountNo, clientName, clientOfficeId, group,
+        return new LoanAccountData(id, accountNo, status, substatusId, substatus, externalId, clientId, clientAccountNo, clientName, clientOfficeId, group,
                 loanType, loanProductId, loanProductName, loanProductDescription, isLoanProductLinkedToFloatingRate, fundId, fundName,
                 loanPurposeId, loanPurposeName, loanOfficerId, loanOfficerName, currencyData, proposedPrincipal, principal, principal,
                 totalOverpaid, inArrearsTolerance, termFrequency, termPeriodFrequencyType, numberOfRepayments, repaymentEvery,
@@ -329,7 +335,7 @@ public class LoanAccountData {
                 repaymentFrequencyTypeOptions, repaymentFrequencyNthDayTypeOptions, repaymentFrequencyDayOfWeekTypeOptions,
                 transactionProcessingStrategyOptions, interestRateFrequencyTypeOptions, amortizationTypeOptions, interestTypeOptions,
                 interestCalculationPeriodTypeOptions, fundOptions, chargeOptions, chargeTemplate, loanOfficerOptions, loanPurposeOptions,
-                loanCollateralOptions, calendarOptions, syncDisbursementWithMeeting, loancounter, loanProductCounter, notes,
+                loanCollateralOptions, substatusOptions, calendarOptions, syncDisbursementWithMeeting, loancounter, loanProductCounter, notes,
                 accountLinkingOptions, linkedAccount, disbursementData, multiDisburseLoan, canDefineInstallmentAmount, fixedEmiAmount,
                 maxOutstandingLoanBalance, emiAmountVariations, memberVariations, product, inArrears, graceOnArrearsAgeing, overdueCharges,
                 isNPA, daysInMonthType, daysInYearType, isInterestRecalculationEnabled, interestRecalculationData, originalSchedule,
@@ -355,6 +361,8 @@ public class LoanAccountData {
         final Long id = null;
         final String accountNo = null;
         final LoanStatusEnumData status = null;
+        final Long substatusId = null;
+        final String substatus = null;
         final String externalId = null;
         final GroupGeneralData group = null;
         final EnumOptionData loanType = null;
@@ -424,6 +432,7 @@ public class LoanAccountData {
         final ChargeData chargeTemplate = null;
         final Collection<StaffData> loanOfficerOptions = null;
         final Collection<CodeValueData> loanPurposeOptions = null;
+        final Collection<CodeValueData> substatusOptions = null;
         final Collection<CodeValueData> loanCollateralOptions = null;
         final Collection<CalendarData> calendarOptions = null;
         final Boolean syncDisbursementWithMeeting = null;
@@ -460,7 +469,7 @@ public class LoanAccountData {
         final Collection<ClientData> groupMembers = null;
         final Collection<GroupLoanMembersAllocationData> groupLoanMembersAllocation = null;
 
-        return new LoanAccountData(id, accountNo, status, externalId, clientId, clientAccountNo, clientName, clientOfficeId, group,
+        return new LoanAccountData(id, accountNo, status, substatusId, substatus, externalId, clientId, clientAccountNo, clientName, clientOfficeId, group,
                 loanType, loanProductId, loanProductName, loanProductDescription, isLoanProductLinkedToFloatingRate, fundId, fundName,
                 loanPurposeId, loanPurposeName, loanOfficerId, loanOfficerName, currencyData, proposedPrincipal, principal, principal,
                 totalOverpaid, inArrearsTolerance, termFrequency, termPeriodFrequencyType, numberOfRepayments, repaymentEvery,
@@ -473,7 +482,7 @@ public class LoanAccountData {
                 repaymentFrequencyTypeOptions, repaymentFrequencyNthDayTypeOptions, repaymentFrequencyDayOfWeekTypeOptions,
                 repaymentStrategyOptions, interestRateFrequencyTypeOptions, amortizationTypeOptions, interestTypeOptions,
                 interestCalculationPeriodTypeOptions, fundOptions, chargeOptions, chargeTemplate, loanOfficerOptions, loanPurposeOptions,
-                loanCollateralOptions, calendarOptions, syncDisbursementWithMeeting, loancounter, loanProductCounter, notes,
+                loanCollateralOptions, substatusOptions, calendarOptions, syncDisbursementWithMeeting, loancounter, loanProductCounter, notes,
                 accountLinkingOptions, linkedAccount, disbursementData, multiDisburseLoan, canDefineInstallmentAmount, fixedEmiAmount,
                 maxOutstandingLoanBalance, emiAmountVariations, memberVariations, product, inArrears, graceOnArrearsAgeing, overdueCharges,
                 isNPA, daysInMonthType, daysInYearType, isInterestRecalculationEnabled, interestRecalculationData, originalSchedule,
@@ -483,7 +492,7 @@ public class LoanAccountData {
 
     public static LoanAccountData populateClientDefaults(final LoanAccountData acc, final LoanAccountData clientAcc) {
 
-        return new LoanAccountData(acc.id, acc.accountNo, acc.status, acc.externalId, clientAcc.clientId, clientAcc.clientAccountNo,
+        return new LoanAccountData(acc.id, acc.accountNo, acc.status, acc.substatusId, acc.substatus, acc.externalId, clientAcc.clientId, clientAcc.clientAccountNo,
                 clientAcc.clientName, clientAcc.clientOfficeId, acc.group, acc.loanType, acc.loanProductId, acc.loanProductName,
                 acc.loanProductDescription, acc.isLoanProductLinkedToFloatingRate, acc.fundId, acc.fundName, acc.loanPurposeId,
                 acc.loanPurposeName, acc.loanOfficerId, acc.loanOfficerName, acc.currency, acc.proposedPrincipal, acc.principal,
@@ -499,7 +508,7 @@ public class LoanAccountData {
                 acc.repaymentFrequencyNthDayTypeOptions, acc.repaymentFrequencyDaysOfWeekTypeOptions,
                 acc.transactionProcessingStrategyOptions, acc.interestRateFrequencyTypeOptions, acc.amortizationTypeOptions,
                 acc.interestTypeOptions, acc.interestCalculationPeriodTypeOptions, acc.fundOptions, acc.chargeOptions, null,
-                acc.loanOfficerOptions, acc.loanPurposeOptions, acc.loanCollateralOptions, acc.calendarOptions,
+                acc.loanOfficerOptions, acc.loanPurposeOptions, acc.loanCollateralOptions, acc.substatusOptions, acc.calendarOptions,
                 acc.syncDisbursementWithMeeting, acc.loanCounter, acc.loanProductCounter, acc.notes, acc.accountLinkingOptions,
                 acc.linkedAccount, acc.disbursementDetails, acc.multiDisburseLoan, acc.canDefineInstallmentAmount, acc.fixedEmiAmount,
                 acc.maxOutstandingLoanBalance, acc.emiAmountVariations, acc.memberVariations, acc.product, acc.inArrears,
@@ -518,6 +527,8 @@ public class LoanAccountData {
         final Long id = null;
         final String accountNo = null;
         final LoanStatusEnumData status = null;
+        final Long substatusId = null;
+        final String substatus = null;
         final String externalId = null;
         final Long clientId = null;
         final String clientAccountNo = null;
@@ -590,6 +601,7 @@ public class LoanAccountData {
         final Collection<StaffData> loanOfficerOptions = null;
         final Collection<CodeValueData> loanPurposeOptions = null;
         final Collection<CodeValueData> loanCollateralOptions = null;
+        final Collection<CodeValueData> substatusOptions = null;
         final Collection<CalendarData> calendarOptions = null;
         final Boolean syncDisbursementWithMeeting = null;
         final Integer loancounter = null;
@@ -625,7 +637,7 @@ public class LoanAccountData {
         final Collection<ClientData> groupMembers = null;
         final Collection<GroupLoanMembersAllocationData> groupLoanMembersAllocation = null;
 
-        return new LoanAccountData(id, accountNo, status, externalId, clientId, clientAccountNo, clientName, clientOfficeId, group,
+        return new LoanAccountData(id, accountNo, status, substatusId, substatus, externalId, clientId, clientAccountNo, clientName, clientOfficeId, group,
                 loanType, loanProductId, loanProductName, loanProductDescription, isLoanProductLinkedToFloatingRate, fundId, fundName,
                 loanPurposeId, loanPurposeName, loanOfficerId, loanOfficerName, currencyData, proposedPrincipal, principal, principal,
                 totalOverpaid, inArrearsTolerance, termFrequency, termPeriodFrequencyType, numberOfRepayments, repaymentEvery,
@@ -638,7 +650,7 @@ public class LoanAccountData {
                 repaymentFrequencyTypeOptions, repaymentFrequencyNthDayTypeOptions, repaymentFrequencyDayOfWeekTypeOptions,
                 repaymentStrategyOptions, interestRateFrequencyTypeOptions, amortizationTypeOptions, interestTypeOptions,
                 interestCalculationPeriodTypeOptions, fundOptions, chargeOptions, chargeTemplate, loanOfficerOptions, loanPurposeOptions,
-                loanCollateralOptions, calendarOptions, syncDisbursementWithMeeting, loancounter, loanProductCounter, notes,
+                loanCollateralOptions, substatusOptions, calendarOptions, syncDisbursementWithMeeting, loancounter, loanProductCounter, notes,
                 accountLinkingOptions, linkedAccount, disbursementData, multiDisburseLoan, canDefineInstallmentAmount, fixedEmiAmount,
                 maxOutstandingBalance, emiAmountVariations, memberVariations, product, inArrears, graceOnArrearsAgeing, overdueCharges,
                 isNPA, daysInMonthType, daysInYearType, isInterestRecalculationEnabled, interestRecalculationData, originalSchedule,
@@ -648,7 +660,7 @@ public class LoanAccountData {
 
     public static LoanAccountData populateGroupDefaults(final LoanAccountData acc, final LoanAccountData groupAcc) {
 
-        return new LoanAccountData(acc.id, acc.accountNo, acc.status, acc.externalId, acc.clientId, acc.clientAccountNo, acc.clientName,
+        return new LoanAccountData(acc.id, acc.accountNo, acc.status, acc.substatusId, acc.substatus, acc.externalId, acc.clientId, acc.clientAccountNo, acc.clientName,
                 acc.clientOfficeId, groupAcc.group, acc.loanType, acc.loanProductId, acc.loanProductName, acc.loanProductDescription,
                 acc.isLoanProductLinkedToFloatingRate, acc.fundId, acc.fundName, acc.loanPurposeId, acc.loanPurposeName, acc.loanOfficerId,
                 acc.loanOfficerName, acc.currency, acc.proposedPrincipal, acc.principal, acc.approvedPrincipal, acc.totalOverpaid,
@@ -664,7 +676,7 @@ public class LoanAccountData {
                 acc.repaymentFrequencyNthDayTypeOptions, acc.repaymentFrequencyDaysOfWeekTypeOptions,
                 acc.transactionProcessingStrategyOptions, acc.interestRateFrequencyTypeOptions, acc.amortizationTypeOptions,
                 acc.interestTypeOptions, acc.interestCalculationPeriodTypeOptions, acc.fundOptions, acc.chargeOptions, null,
-                acc.loanOfficerOptions, acc.loanPurposeOptions, acc.loanCollateralOptions, acc.calendarOptions,
+                acc.loanOfficerOptions, acc.loanPurposeOptions, acc.loanCollateralOptions, acc.substatusOptions, acc.calendarOptions,
                 acc.syncDisbursementWithMeeting, acc.loanCounter, acc.loanProductCounter, acc.notes, acc.accountLinkingOptions,
                 acc.linkedAccount, acc.disbursementDetails, acc.multiDisburseLoan, acc.canDefineInstallmentAmount, acc.fixedEmiAmount,
                 acc.maxOutstandingLoanBalance, acc.emiAmountVariations, acc.memberVariations, acc.product, acc.inArrears,
@@ -684,11 +696,13 @@ public class LoanAccountData {
             final Collection<EnumOptionData> interestTypeOptions, final Collection<EnumOptionData> interestCalculationPeriodTypeOptions,
             final Collection<FundData> fundOptions, final Collection<ChargeData> chargeOptions,
             final Collection<CodeValueData> loanPurposeOptions, final Collection<CodeValueData> loanCollateralOptions,
-            final Integer loanCycleNumber) {
+            final Collection<CodeValueData> substatusOptions, final Integer loanCycleNumber) {
 
         final Long id = null;
         final String accountNo = null;
         final LoanStatusEnumData status = null;
+        final Long substatusId = null;
+        final String substatus = null;
         final String externalId = null;
         final Long clientId = null;
         final String clientAccountNo = null;
@@ -800,7 +814,7 @@ public class LoanAccountData {
         final Collection<ClientData> groupMembers = null;
         final Collection<GroupLoanMembersAllocationData> groupLoanMembersAllocation = null;
 
-        return new LoanAccountData(id, accountNo, status, externalId, clientId, clientAccountNo, clientName, clientOfficeId, group,
+        return new LoanAccountData(id, accountNo, status, substatusId, substatus, externalId, clientId, clientAccountNo, clientName, clientOfficeId, group,
                 loanType, product.getId(), product.getName(), product.getDescription(), product.isLinkedToFloatingInterestRates(),
                 product.getFundId(), product.getFundName(), loanPurposeId, loanPurposeName, loanOfficerId, loanOfficerName,
                 product.getCurrency(), proposedPrincipal, principal, principal, totalOverpaid, product.getInArrearsTolerance(),
@@ -816,7 +830,7 @@ public class LoanAccountData {
                 repaymentFrequencyTypeOptions, repaymentFrequencyNthDayTypeOptions, repaymentFrequencyDayOfWeekTypeOptions,
                 repaymentStrategyOptions, interestRateFrequencyTypeOptions, amortizationTypeOptions, interestTypeOptions,
                 interestCalculationPeriodTypeOptions, fundOptions, chargeOptions, chargeTemplate, loanOfficerOptions, loanPurposeOptions,
-                loanCollateralOptions, calendarOptions, syncDisbursementWithMeeting, loancounter, loanProductCounter, notes,
+                loanCollateralOptions, substatusOptions, calendarOptions, syncDisbursementWithMeeting, loancounter, loanProductCounter, notes,
                 accountLinkingOptions, linkedAccount, disbursementData, product.getMultiDisburseLoan(),
                 product.canDefineInstallmentAmount(), fixedEmi, product.getOutstandingLoanBalance(), emiAmountVariations, memberVariations,
                 product, inArrears, product.getGraceOnArrearsAgeing(), product.overdueFeeCharges(), isNPA, product.getDaysInMonthType(),
@@ -848,6 +862,7 @@ public class LoanAccountData {
         final Collection<StaffData> loanOfficerOptions = null;
         final Collection<CodeValueData> loanPurposeOptions = null;
         final Collection<CodeValueData> loanCollateralOptions = null;
+        final Collection<CodeValueData> substatusOptions = null;
         final Collection<CalendarData> calendarOptions = null;
         final PaidInAdvanceData paidInAdvance = null;
 
@@ -862,7 +877,7 @@ public class LoanAccountData {
         final Collection<ClientData> groupMembers = null;
         final Collection<GroupLoanMembersAllocationData> groupLoanMembersAllocation = null;
 
-        return new LoanAccountData(acc.id, acc.accountNo, acc.status, acc.externalId, acc.clientId, acc.clientAccountNo, acc.clientName,
+        return new LoanAccountData(acc.id, acc.accountNo, acc.status, acc.substatusId, acc.substatus, acc.externalId, acc.clientId, acc.clientAccountNo, acc.clientName,
                 acc.clientOfficeId, acc.group, acc.loanType, product.getId(), product.getName(), product.getDescription(),
                 product.isLinkedToFloatingInterestRates(), product.getFundId(), product.getFundName(), acc.loanPurposeId,
                 acc.loanPurposeName, acc.loanOfficerId, acc.loanOfficerName, product.getCurrency(), product.getPrincipal(),
@@ -878,7 +893,7 @@ public class LoanAccountData {
                 calendarData, productOptions, termFrequencyTypeOptions, repaymentFrequencyTypeOptions, null, null,
                 repaymentStrategyOptions, interestRateFrequencyTypeOptions, amortizationTypeOptions, interestTypeOptions,
                 interestCalculationPeriodTypeOptions, fundOptions, chargeOptions, chargeTemplate, loanOfficerOptions, loanPurposeOptions,
-                loanCollateralOptions, calendarOptions, acc.syncDisbursementWithMeeting, acc.loanCounter, acc.loanProductCounter, notes,
+                loanCollateralOptions, substatusOptions, calendarOptions, acc.syncDisbursementWithMeeting, acc.loanCounter, acc.loanProductCounter, notes,
                 acc.accountLinkingOptions, acc.linkedAccount, acc.disbursementDetails, product.getMultiDisburseLoan(),
                 product.canDefineInstallmentAmount(), acc.fixedEmiAmount, product.getOutstandingLoanBalance(), acc.emiAmountVariations,
                 acc.memberVariations, product, acc.inArrears, product.getGraceOnArrearsAgeing(), product.overdueFeeCharges(), acc.isNPA,
@@ -894,9 +909,10 @@ public class LoanAccountData {
      * query.
      */
     public static LoanAccountData basicLoanDetails(final Long id, final String accountNo, final LoanStatusEnumData status,
-            final String externalId, final Long clientId, final String clientAccountNo, final String clientName, final Long clientOfficeId,
-            final GroupGeneralData group, final EnumOptionData loanType, final Long loanProductId, final String loanProductName,
-            final String loanProductDescription, final boolean isLoanProductLinkedToFloatingRate, final Long fundId, final String fundName,
+            final Long substatusId, final String substatus, final String externalId, final Long clientId, final String clientAccountNo,
+            final String clientName, final Long clientOfficeId, final GroupGeneralData group, final EnumOptionData loanType,
+            final Long loanProductId, final String loanProductName, final String loanProductDescription,
+            final boolean isLoanProductLinkedToFloatingRate, final Long fundId, final String fundName,
             final Long loanPurposeId, final String loanPurposeName, final Long loanOfficerId, final String loanOfficerName,
             final CurrencyData currencyData, final BigDecimal proposedPrincipal, final BigDecimal principal,
             final BigDecimal approvedPrincipal, final BigDecimal totalOverpaid, final BigDecimal inArrearsTolerance,
@@ -940,6 +956,7 @@ public class LoanAccountData {
         final Collection<StaffData> loanOfficerOptions = null;
         final Collection<CodeValueData> loanPurposeOptions = null;
         final Collection<CodeValueData> loanCollateralOptions = null;
+        final Collection<CodeValueData> substatusOptions = null;
         final Collection<CalendarData> calendarOptions = null;
         final Collection<PortfolioAccountData> accountLinkingOptions = null;
         final PortfolioAccountData linkedAccount = null;
@@ -956,7 +973,7 @@ public class LoanAccountData {
         final Collection<ClientData> groupMembers = null;
         final Collection<GroupLoanMembersAllocationData> groupLoanMembersAllocation = null;
 
-        return new LoanAccountData(id, accountNo, status, externalId, clientId, clientAccountNo, clientName, clientOfficeId, group,
+        return new LoanAccountData(id, accountNo, status, substatusId, substatus, externalId, clientId, clientAccountNo, clientName, clientOfficeId, group,
                 loanType, loanProductId, loanProductName, loanProductDescription, isLoanProductLinkedToFloatingRate, fundId, fundName,
                 loanPurposeId, loanPurposeName, loanOfficerId, loanOfficerName, currencyData, proposedPrincipal, principal,
                 approvedPrincipal, totalOverpaid, inArrearsTolerance, termFrequency, termPeriodFrequencyType, numberOfRepayments,
@@ -969,7 +986,7 @@ public class LoanAccountData {
                 repaymentFrequencyTypeOptions, repaymentFrequencyNthDayTypeOptions, repaymentFrequencyDayOfWeekTypeOptions,
                 repaymentStrategyOptions, interestRateFrequencyTypeOptions, amortizationTypeOptions, interestTypeOptions,
                 interestCalculationPeriodTypeOptions, fundOptions, chargeOptions, chargeTemplate, loanOfficerOptions, loanPurposeOptions,
-                loanCollateralOptions, calendarOptions, syncDisbursementWithMeeting, loancounter, loanProductCounter, notes,
+                loanCollateralOptions, substatusOptions, calendarOptions, syncDisbursementWithMeeting, loancounter, loanProductCounter, notes,
                 accountLinkingOptions, linkedAccount, disbursementData, multiDisburseLoan, canDefineInstallmentAmount, fixedEmiAmont,
                 outstandingLoanBalance, emiAmountVariations, memberVariations, product, inArrears, graceOnArrearsAgeing, overdueCharges,
                 isNPA, daysInMonthType, daysInYearType, isInterestRecalculationEnabled, interestRecalculationData, originalSchedule,
@@ -993,8 +1010,9 @@ public class LoanAccountData {
             final Collection<EnumOptionData> interestTypeOptions, final Collection<EnumOptionData> interestCalculationPeriodTypeOptions,
             final Collection<FundData> fundOptions, final Collection<ChargeData> chargeOptions, final ChargeData chargeTemplate,
             final Collection<StaffData> loanOfficerOptions, final Collection<CodeValueData> loanPurposeOptions,
-            final Collection<CodeValueData> loanCollateralOptions, final Collection<CalendarData> calendarOptions,
-            final Collection<NoteData> notes, final Collection<PortfolioAccountData> accountLinkingOptions,
+            final Collection<CodeValueData> loanCollateralOptions, final Collection<CodeValueData> substatusOptions,
+            final Collection<CalendarData> calendarOptions, final Collection<NoteData> notes,
+            final Collection<PortfolioAccountData> accountLinkingOptions,
             final PortfolioAccountData linkedAccount, final Collection<DisbursementData> disbursementDetails,
             final Collection<LoanTermVariationsData> emiAmountVariations, final Collection<ChargeData> overdueCharges,
             final PaidInAdvanceData paidInAdvance, Collection<InterestRatePeriodData> interestRatesPeriods, 
@@ -1004,7 +1022,7 @@ public class LoanAccountData {
             loanProductConfigurableAttributes = acc.product.getloanProductConfigurableAttributes();
         }
 
-        return new LoanAccountData(acc.id, acc.accountNo, acc.status, acc.externalId, acc.clientId, acc.clientAccountNo, acc.clientName,
+        return new LoanAccountData(acc.id, acc.accountNo, acc.status, acc.substatusId, acc.substatus, acc.externalId, acc.clientId, acc.clientAccountNo, acc.clientName,
                 acc.clientOfficeId, acc.group, acc.loanType, acc.loanProductId, acc.loanProductName, acc.loanProductDescription,
                 acc.isLoanProductLinkedToFloatingRate, acc.fundId, acc.fundName, acc.loanPurposeId, acc.loanPurposeName, acc.loanOfficerId,
                 acc.loanOfficerName, acc.currency, acc.proposedPrincipal, acc.principal, acc.approvedPrincipal, acc.totalOverpaid,
@@ -1019,7 +1037,7 @@ public class LoanAccountData {
                 productOptions, termFrequencyTypeOptions, repaymentFrequencyTypeOptions, repaymentFrequencyNthDayTypeOptions,
                 repaymentFrequencyDayOfWeekTypeOptions, transactionProcessingStrategyOptions, interestRateFrequencyTypeOptions,
                 amortizationTypeOptions, interestTypeOptions, interestCalculationPeriodTypeOptions, fundOptions, chargeOptions,
-                chargeTemplate, loanOfficerOptions, loanPurposeOptions, loanCollateralOptions, calendarOptions,
+                chargeTemplate, loanOfficerOptions, loanPurposeOptions, loanCollateralOptions, substatusOptions, calendarOptions,
                 acc.syncDisbursementWithMeeting, acc.loanCounter, acc.loanProductCounter, notes, accountLinkingOptions, linkedAccount,
                 disbursementDetails, acc.multiDisburseLoan, acc.canDefineInstallmentAmount, acc.fixedEmiAmount,
                 acc.maxOutstandingLoanBalance, emiAmountVariations, acc.memberVariations, acc.product, acc.inArrears,
@@ -1037,14 +1055,14 @@ public class LoanAccountData {
                 acc.repaymentFrequencyNthDayTypeOptions, acc.repaymentFrequencyDaysOfWeekTypeOptions,
                 acc.transactionProcessingStrategyOptions, acc.interestRateFrequencyTypeOptions, acc.amortizationTypeOptions,
                 acc.interestTypeOptions, acc.interestCalculationPeriodTypeOptions, acc.fundOptions, acc.chargeOptions, null,
-                allowedLoanOfficers, acc.loanPurposeOptions, acc.loanCollateralOptions, calendarOptions, acc.notes, accountLinkingOptions,
-                acc.linkedAccount, acc.disbursementDetails, acc.emiAmountVariations, acc.overdueCharges, acc.paidInAdvance,
-                acc.interestRatesPeriods, acc.creditChecks, null);
+                allowedLoanOfficers, acc.loanPurposeOptions, acc.loanCollateralOptions, acc.substatusOptions, calendarOptions,
+                acc.notes, accountLinkingOptions, acc.linkedAccount, acc.disbursementDetails, acc.emiAmountVariations,
+                acc.overdueCharges, acc.paidInAdvance, acc.interestRatesPeriods, acc.creditChecks, null);
     }
 
     public static LoanAccountData associateGroup(final LoanAccountData acc, final GroupGeneralData group) {
 
-        return new LoanAccountData(acc.id, acc.accountNo, acc.status, acc.externalId, acc.clientId, acc.clientAccountNo, acc.clientName,
+        return new LoanAccountData(acc.id, acc.accountNo, acc.status, acc.substatusId, acc.substatus, acc.externalId, acc.clientId, acc.clientAccountNo, acc.clientName,
                 acc.clientOfficeId, group, acc.loanType, acc.loanProductId, acc.loanProductName, acc.loanProductDescription,
                 acc.isLoanProductLinkedToFloatingRate, acc.fundId, acc.fundName, acc.loanPurposeId, acc.loanPurposeName, acc.loanOfficerId,
                 acc.loanOfficerName, acc.currency, acc.proposedPrincipal, acc.principal, acc.approvedPrincipal, acc.totalOverpaid,
@@ -1060,7 +1078,7 @@ public class LoanAccountData {
                 acc.repaymentFrequencyNthDayTypeOptions, acc.repaymentFrequencyDaysOfWeekTypeOptions,
                 acc.transactionProcessingStrategyOptions, acc.interestRateFrequencyTypeOptions, acc.amortizationTypeOptions,
                 acc.interestTypeOptions, acc.interestCalculationPeriodTypeOptions, acc.fundOptions, acc.chargeOptions, null,
-                acc.loanOfficerOptions, acc.loanPurposeOptions, acc.loanCollateralOptions, acc.calendarOptions,
+                acc.loanOfficerOptions, acc.loanPurposeOptions, acc.loanCollateralOptions, acc.substatusOptions, acc.calendarOptions,
                 acc.syncDisbursementWithMeeting, acc.loanCounter, acc.loanProductCounter, acc.notes, acc.accountLinkingOptions,
                 acc.linkedAccount, acc.disbursementDetails, acc.multiDisburseLoan, acc.canDefineInstallmentAmount, acc.fixedEmiAmount,
                 acc.maxOutstandingLoanBalance, acc.emiAmountVariations, acc.memberVariations, acc.product, acc.inArrears,
@@ -1109,7 +1127,7 @@ public class LoanAccountData {
             memberVariations.put(clientId, borrowerCycleData);
         }
 
-        return new LoanAccountData(acc.id, acc.accountNo, acc.status, acc.externalId, acc.clientId, acc.clientAccountNo, acc.clientName,
+        return new LoanAccountData(acc.id, acc.accountNo, acc.status, acc.substatusId, acc.substatus, acc.externalId, acc.clientId, acc.clientAccountNo, acc.clientName,
                 acc.clientOfficeId, acc.group, acc.loanType, acc.loanProductId, acc.loanProductName, acc.loanProductDescription,
                 acc.isLoanProductLinkedToFloatingRate, acc.fundId, acc.fundName, acc.loanPurposeId, acc.loanPurposeName, acc.loanOfficerId,
                 acc.loanOfficerName, acc.currency, acc.proposedPrincipal, acc.principal, acc.approvedPrincipal, acc.totalOverpaid,
@@ -1125,7 +1143,7 @@ public class LoanAccountData {
                 acc.repaymentFrequencyNthDayTypeOptions, acc.repaymentFrequencyDaysOfWeekTypeOptions,
                 acc.transactionProcessingStrategyOptions, acc.interestRateFrequencyTypeOptions, acc.amortizationTypeOptions,
                 acc.interestTypeOptions, acc.interestCalculationPeriodTypeOptions, acc.fundOptions, acc.chargeOptions, null,
-                acc.loanOfficerOptions, acc.loanPurposeOptions, acc.loanCollateralOptions, acc.calendarOptions,
+                acc.loanOfficerOptions, acc.loanPurposeOptions, acc.loanCollateralOptions, acc.substatusOptions, acc.calendarOptions,
                 acc.syncDisbursementWithMeeting, acc.loanCounter, acc.loanProductCounter, acc.notes, acc.accountLinkingOptions,
                 acc.linkedAccount, acc.disbursementDetails, acc.multiDisburseLoan, acc.canDefineInstallmentAmount, acc.fixedEmiAmount,
                 acc.maxOutstandingLoanBalance, acc.emiAmountVariations, memberVariations, acc.product, acc.inArrears,
@@ -1142,7 +1160,7 @@ public class LoanAccountData {
         final LoanInterestRecalculationData interestRecalculationData = LoanInterestRecalculationData.withCalendarData(
                 acc.interestRecalculationData, calendarData, compoundingCalendarData);
 
-        return new LoanAccountData(acc.id, acc.accountNo, acc.status, acc.externalId, acc.clientId, acc.clientAccountNo, acc.clientName,
+        return new LoanAccountData(acc.id, acc.accountNo, acc.status, acc.substatusId, acc.substatus, acc.externalId, acc.clientId, acc.clientAccountNo, acc.clientName,
                 acc.clientOfficeId, acc.group, acc.loanType, acc.loanProductId, acc.loanProductName, acc.loanProductDescription,
                 acc.isLoanProductLinkedToFloatingRate, acc.fundId, acc.fundName, acc.loanPurposeId, acc.loanPurposeName, acc.loanOfficerId,
                 acc.loanOfficerName, acc.currency, acc.proposedPrincipal, acc.principal, acc.approvedPrincipal, acc.totalOverpaid,
@@ -1158,7 +1176,7 @@ public class LoanAccountData {
                 acc.repaymentFrequencyNthDayTypeOptions, acc.repaymentFrequencyDaysOfWeekTypeOptions,
                 acc.transactionProcessingStrategyOptions, acc.interestRateFrequencyTypeOptions, acc.amortizationTypeOptions,
                 acc.interestTypeOptions, acc.interestCalculationPeriodTypeOptions, acc.fundOptions, acc.chargeOptions, null,
-                acc.loanOfficerOptions, acc.loanPurposeOptions, acc.loanCollateralOptions, acc.calendarOptions,
+                acc.loanOfficerOptions, acc.loanPurposeOptions, acc.loanCollateralOptions, acc.substatusOptions, acc.calendarOptions,
                 acc.syncDisbursementWithMeeting, acc.loanCounter, acc.loanProductCounter, acc.notes, acc.accountLinkingOptions,
                 acc.linkedAccount, acc.disbursementDetails, acc.multiDisburseLoan, acc.canDefineInstallmentAmount, acc.fixedEmiAmount,
                 acc.maxOutstandingLoanBalance, acc.emiAmountVariations, acc.memberVariations, acc.product, acc.inArrears,
@@ -1171,7 +1189,7 @@ public class LoanAccountData {
 
     public static LoanAccountData withOriginalSchedule(final LoanAccountData acc, final LoanScheduleData originalSchedule) {
 
-        return new LoanAccountData(acc.id, acc.accountNo, acc.status, acc.externalId, acc.clientId, acc.clientAccountNo, acc.clientName,
+        return new LoanAccountData(acc.id, acc.accountNo, acc.status, acc.substatusId, acc.substatus, acc.externalId, acc.clientId, acc.clientAccountNo, acc.clientName,
                 acc.clientOfficeId, acc.group, acc.loanType, acc.loanProductId, acc.loanProductName, acc.loanProductDescription,
                 acc.isLoanProductLinkedToFloatingRate, acc.fundId, acc.fundName, acc.loanPurposeId, acc.loanPurposeName, acc.loanOfficerId,
                 acc.loanOfficerName, acc.currency, acc.proposedPrincipal, acc.principal, acc.approvedPrincipal, acc.totalOverpaid,
@@ -1187,7 +1205,7 @@ public class LoanAccountData {
                 acc.repaymentFrequencyNthDayTypeOptions, acc.repaymentFrequencyDaysOfWeekTypeOptions,
                 acc.transactionProcessingStrategyOptions, acc.interestRateFrequencyTypeOptions, acc.amortizationTypeOptions,
                 acc.interestTypeOptions, acc.interestCalculationPeriodTypeOptions, acc.fundOptions, acc.chargeOptions, null,
-                acc.loanOfficerOptions, acc.loanPurposeOptions, acc.loanCollateralOptions, acc.calendarOptions,
+                acc.loanOfficerOptions, acc.loanPurposeOptions, acc.loanCollateralOptions, acc.substatusOptions, acc.calendarOptions,
                 acc.syncDisbursementWithMeeting, acc.loanCounter, acc.loanProductCounter, acc.notes, acc.accountLinkingOptions,
                 acc.linkedAccount, acc.disbursementDetails, acc.multiDisburseLoan, acc.canDefineInstallmentAmount, acc.fixedEmiAmount,
                 acc.maxOutstandingLoanBalance, acc.emiAmountVariations, acc.memberVariations, acc.product, acc.inArrears,
@@ -1202,6 +1220,8 @@ public class LoanAccountData {
             final Long id, //
             final String accountNo, //
             final LoanStatusEnumData status, //
+            final Long substatusId,
+            final String substatus,
             final String externalId, //
             final Long clientId,
             final String clientAccountNo,
@@ -1250,9 +1270,9 @@ public class LoanAccountData {
             final Collection<EnumOptionData> interestTypeOptions, final Collection<EnumOptionData> interestCalculationPeriodTypeOptions,
             final Collection<FundData> fundOptions, final Collection<ChargeData> chargeOptions, final ChargeData chargeTemplate,
             final Collection<StaffData> loanOfficerOptions, final Collection<CodeValueData> loanPurposeOptions,
-            final Collection<CodeValueData> loanCollateralOptions, final Collection<CalendarData> calendarOptions,
-            final Boolean syncDisbursementWithMeeting, final Integer loanCounter, final Integer loanProductCounter,
-            final Collection<NoteData> notes, final Collection<PortfolioAccountData> accountLinkingOptions,
+            final Collection<CodeValueData> loanCollateralOptions, final Collection<CodeValueData> substatusOptions,
+            final Collection<CalendarData> calendarOptions, final Boolean syncDisbursementWithMeeting, final Integer loanCounter,
+            final Integer loanProductCounter, final Collection<NoteData> notes, final Collection<PortfolioAccountData> accountLinkingOptions,
             final PortfolioAccountData linkedAccount, final Collection<DisbursementData> disbursementDetails,
             final Boolean multiDisburseLoan, final Boolean canDefineInstallmentAmount, BigDecimal fixedEmiAmount,
             final BigDecimal maxOutstandingLoanBalance, final Collection<LoanTermVariationsData> emiAmountVariations,
@@ -1267,6 +1287,8 @@ public class LoanAccountData {
         this.id = id;
         this.accountNo = accountNo;
         this.status = status;
+        this.substatusId = substatusId;
+        this.substatus = substatus;
         this.externalId = externalId;
         this.clientId = clientId;
         this.clientAccountNo = clientAccountNo;
@@ -1368,6 +1390,12 @@ public class LoanAccountData {
             this.loanPurposeOptions = null;
         } else {
             this.loanPurposeOptions = loanPurposeOptions;
+        }
+
+        if (CollectionUtils.isEmpty(substatusOptions)) {
+            this.substatusOptions = null;
+        } else {
+            this.substatusOptions = substatusOptions;
         }
 
         if (CollectionUtils.isEmpty(loanCollateralOptions)) {

@@ -151,8 +151,8 @@ public class DataExportUtils {
         final DataExportCoreTable coreTable = DataExportCoreTable.newInstance(tableName);
         Set<String> columnsToBeRemovedFromListsOfEntityColumns = new HashSet<>(Arrays.asList(
         		DataExportEntityColumnName.TRANSFER_TO_OFFICE_ID, DataExportEntityColumnName.VERSION, 
-        		DataExportEntityColumnName.IMAGE_ID, DataExportEntityColumnName.ACCOUNT_TYPE_ENUM, DataExportEntityColumnName.DEPOSIT_TYPE_ENUM, 
-        		DataExportEntityColumnName.SUB_STATUS, DataExportEntityColumnName.FULL_NAME));
+        		DataExportEntityColumnName.IMAGE_ID, DataExportEntityColumnName.ACCOUNT_TYPE_ENUM,
+				DataExportEntityColumnName.DEPOSIT_TYPE_ENUM, DataExportEntityColumnName.FULL_NAME));
         
         try {
             // see - http://dev.mysql.com/doc/refman/5.7/en/limit-optimization.html
@@ -180,6 +180,10 @@ public class DataExportUtils {
                     
                     if (coreTable != null) {
                     	switch (coreTable) {
+							case M_CLIENT:
+								columnsToBeRemovedFromListsOfEntityColumns.add(
+										DataExportEntityColumnName.SUB_STATUS);
+								break;
 	                    	case M_LOAN_TRANSACTION:
 	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.UNRECOGNIZED_INCOME_PORTION);

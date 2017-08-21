@@ -535,7 +535,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                     + " lp.id as loanProductId, lp.name as loanProductName, lp.description as loanProductDescription,"
                     + " lp.is_linked_to_floating_interest_rates as isLoanProductLinkedToFloatingRate, "
                     + " lp.allow_variabe_installments as isvariableInstallmentsAllowed, "
-                    + " lp.allow_multiple_disbursals as multiDisburseLoan,"
+                    + " lp.allow_multiple_disbursals as multiDisburseLoan, l.sub_status_cv_id as substatusId, cvs.code_value as substatus, "
                     + " lp.can_define_fixed_emi_amount as canDefineInstallmentAmount,"
                     + " c.id as clientId, c.account_no as clientAccountNo, c.display_name as clientName, c.office_id as clientOfficeId,"
                     + " g.id as groupId, g.account_no as groupAccountNo, g.display_name as groupName,"
@@ -626,6 +626,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                     + " left join m_appuser dbu on dbu.id = l.disbursedon_userid"
                     + " left join m_appuser cbu on cbu.id = l.closedon_userid"
                     + " left join m_code_value cv on cv.id = l.loanpurpose_cv_id"
+                    + " left join m_code_value cvs on cvs.id = l.sub_status_cv_id"
                     + " left join ref_loan_transaction_processing_strategy lps on lps.id = l.loan_transaction_strategy_id"
                     + " left join m_product_loan_variable_installment_config lpvi on lpvi.loan_product_id = l.product_id";
 
@@ -674,6 +675,9 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
 
             final Long loanPurposeId = JdbcSupport.getLong(rs, "loanPurposeId");
             final String loanPurposeName = rs.getString("loanPurposeName");
+
+            final Long substatusId = JdbcSupport.getLong(rs, "substatusId");
+            final String substatus = rs.getString("substatus");
 
             final Long loanProductId = JdbcSupport.getLong(rs, "loanProductId");
             final String loanProductName = rs.getString("loanProductName");
@@ -894,7 +898,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
                         compoundingCalendarData, compoundingFrequencyType, compoundingInterval, compoundingFrequencyDate);
             }
 
-            return LoanAccountData.basicLoanDetails(id, accountNo, status, externalId, clientId, clientAccountNo, clientName,
+            return LoanAccountData.basicLoanDetails(id, accountNo, status, substatusId, substatus, externalId, clientId, clientAccountNo, clientName,
                     clientOfficeId, groupData, loanType, loanProductId, loanProductName, loanProductDescription,
                     isLoanProductLinkedToFloatingRate, fundId, fundName, loanPurposeId, loanPurposeName, loanOfficerId, loanOfficerName,
                     currencyData, proposedPrincipal, principal, approvedPrincipal, totalOverpaid, inArrearsTolerance, termFrequency,
@@ -1368,6 +1372,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
         final Collection<CodeValueData> loanPurposeOptions = this.codeValueReadPlatformService.retrieveCodeValuesByCode("LoanPurpose");
         final Collection<CodeValueData> loanCollateralOptions = this.codeValueReadPlatformService
                 .retrieveCodeValuesByCode("LoanCollateral");
+        final Collection<CodeValueData> substatusOptions = this.codeValueReadPlatformService.retrieveCodeValuesByCode("LoanSubStatus");
         Collection<ChargeData> chargeOptions = null;
         if (loanProduct.getMultiDisburseLoan()) {
             chargeOptions = this.chargeReadPlatformService.retrieveLoanProductApplicableCharges(productId,
@@ -1389,7 +1394,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
         return LoanAccountData.loanProductWithTemplateDefaults(loanProduct, loanTermFrequencyTypeOptions, repaymentFrequencyTypeOptions,
                 repaymentFrequencyNthDayTypeOptions, repaymentFrequencyDaysOfWeekTypeOptions, repaymentStrategyOptions,
                 interestRateFrequencyTypeOptions, amortizationTypeOptions, interestTypeOptions, interestCalculationPeriodTypeOptions,
-                fundOptions, chargeOptions, loanPurposeOptions, loanCollateralOptions, loanCycleCounter);
+                fundOptions, chargeOptions, loanPurposeOptions, loanCollateralOptions, substatusOptions, loanCycleCounter);
     }
 
     @Override
