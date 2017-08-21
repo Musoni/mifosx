@@ -307,7 +307,7 @@ public class Loan extends AbstractPersistable<Long> {
     // http://stackoverflow.com/questions/4334970/hibernate-cannot-simultaneously-fetch-multiple-bags
     @LazyCollection(LazyCollectionOption.FALSE)
     @OrderBy(value = "installmentNumber")
-    @OneToMany(cascade = CascadeType.MERGE, mappedBy = "loan", orphanRemoval = true)
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "loan", orphanRemoval = true)
     private final List<LoanRepaymentScheduleInstallment> repaymentScheduleInstallments = new ArrayList<>();
 
     // see
