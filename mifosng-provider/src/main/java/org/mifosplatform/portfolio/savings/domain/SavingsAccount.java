@@ -750,7 +750,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
                 Money overdraftAmount = Money.zero(this.currency);
                 Money transactionAmount = Money.zero(this.currency);
                 if (transaction.isCredit()) {
-                    if (runningBalance.isLessThanZero()) {
+                    if (runningBalance.plus(transaction.getAmount(this.currency)).isLessThanZero()) {
                         Money diffAmount = transaction.getAmount(this.currency).plus(runningBalance);
                         if (diffAmount.isGreaterThanZero()) {
                             overdraftAmount = transaction.getAmount(this.currency).minus(diffAmount);
