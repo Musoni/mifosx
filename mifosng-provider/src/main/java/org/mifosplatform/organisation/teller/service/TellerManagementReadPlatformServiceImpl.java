@@ -472,6 +472,7 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             final String sql = " select * from (select *, @balance:= CASE WHEN txn_type IN (103,101) THEN @balance+ txn_amount ELSE @balance-txn_amount END as balance " +
                     "from (select @balance:=0) as p, (select * from (select " + ctm.cashierTxnSchema()
                     + " where t.id = ? and (txn.currency_code = ?  or ? IS NULL ) and o.hierarchy like ? "
+                    + " AND ( (txn.created_date BETWEEN ? and ? ) OR ( ? IS NULL  AND ? IS NULL ) ) "
 
                     +" ) cashier_txns " + " union (select "
                     + ctm.savingsTxnSchema()
@@ -481,7 +482,7 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
                     "  where pt.is_cash_payment=1  and sav_txn.payment_detail_id = pd.id  ) "
                     + " and sav_txn.is_reversed = 0 and t.id = ? and ( sav.currency_code = ? OR ? IS NULL ) and o.hierarchy like ? and "
                     + " sav_txn.created_date >= c.started_at and ( sav_txn.created_date <= c.ended_at OR c.ended_at IS NULL) "
-
+                    + " AND ( (sav_txn.created_date BETWEEN ? and ? ) OR ( ? IS NULL  AND ? IS NULL ) ) "
                     + "  ) " + " union (select "
                     + ctm.loansTxnSchema()
                     +" where  EXISTS ( select renum.enum_value from r_enum_value renum " +
@@ -490,15 +491,16 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
                     "   where pt.is_cash_payment=1  and loan_txn.payment_detail_id = pd.id  )  "
                     + " and loan_txn.is_reversed = 0 and t.id = ? and (loan.currency_code = ?  OR ? IS NULL )and o.hierarchy like ? and "
                     + " loan_txn.created_date >= c.started_at and ( loan_txn.created_date <= c.ended_at OR c.ended_at IS NULL) "
+                    + " AND ( (loan_txn.created_date BETWEEN ? and ? ) OR ( ? IS NULL  AND ? IS NULL ) ) "
 
                     + " ) "
                     + " order by created_date ) as t ) as z order by created_date desc ";
 
             // logger.info(sql);
 
-            return this.jdbcTemplate.query(sql, ctm, new Object[] { tellerId, null, null, hierarchySearchString,
-                    tellerId, null,null,hierarchySearchString,
-                    tellerId, null,null, hierarchySearchString });
+            return this.jdbcTemplate.query(sql, ctm, new Object[] { tellerId, null, null, hierarchySearchString,fromDate,toDate, fromDate,toDate,
+                    tellerId, null,null,hierarchySearchString,fromDate,toDate, fromDate,toDate,
+                    tellerId, null,null, hierarchySearchString,fromDate,toDate, fromDate,toDate });
     }
 
     @Override
@@ -668,13 +670,32 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
                          " from (select @balance:=0) as p,( select * from ( select " + ctm.cashierTxnSchema()
                 + " where txn.cashier_id = ? and (txn.currency_code = ?  or ? IS NULL ) and o.hierarchy like ? ) cashier_txns " + " union (select "
                 + ctm.savingsTxnSchema()
-                + " where pt.is_cash_payment=1 and sav_txn.is_reversed = 0 and c.id = ? and ( sav.currency_code = ? OR ? IS NULL ) and o.hierarchy like ? and "
-                + " sav_txn.created_date >= c.started_at and ( sav_txn.created_date <= c.ended_at OR c.ended_at IS NULL) "
-                + " and renum.enum_value in ('deposit','withdrawal fee', 'Pay Charge', 'withdrawal') ) " + " union (select "
+
+                + " WHERE EXISTS ( select enum.enum_value from r_enum_value enum "
+                + " where enum.enum_value in  ('deposit','withdrawal fee', 'Pay Charge', 'withdrawal') and enum.enum_value = renum.enum_value )"
+                + " and exists ( select pd.id from m_payment_detail pd left join  m_payment_type pt on pt.id = pd.payment_type_id "
+                + "  where pt.is_cash_payment=1  and sav_txn.payment_detail_id = pd.id  ) "
+                + " and sav_txn.is_reversed = 0 and t.id = ? and ( sav.currency_code = ? OR ? IS NULL ) and o.hierarchy like ? and "
+                + " sav_txn.created_date >= c.started_at and ( sav_txn.created_date <= c.ended_at OR c.ended_at IS NULL) )"
+
+//                + " where pt.is_cash_payment=1 and sav_txn.is_reversed = 0 and c.id = ? and ( sav.currency_code = ? OR ? IS NULL ) and o.hierarchy like ? and "
+//                + " sav_txn.created_date >= c.started_at and ( sav_txn.created_date <= c.ended_at OR c.ended_at IS NULL) "
+//                + " and renum.enum_value in ('deposit','withdrawal fee', 'Pay Charge', 'withdrawal') ) "
+
+
+                + " union (select "
                 + ctm.loansTxnSchema()
-                + " where pt.is_cash_payment=1 and  loan_txn.is_reversed = 0 and c.id = ? and (loan.currency_code = ?  OR ? IS NULL )and o.hierarchy like ? and "
-                + " loan_txn.created_date >= c.started_at and ( loan_txn.created_date <= c.ended_at OR c.end_date IS NULL) "
-                + " and renum.enum_value in ('Repayment At Disbursement','Repayment', 'Recovery Payment','Disbursement') ) "
+
+                +" WHERE EXISTS ( select enum.enum_value from r_enum_value enum "
+                +" where enum.enum_value in  ('Repayment At Disbursement','Repayment', 'Recovery Payment','Disbursement') and enum.enum_value = renum.enum_value )"
+                + " and exists ( select pd.id from m_payment_detail pd left join  m_payment_type pt on pt.id = pd.payment_type_id "
+                +"  where pt.is_cash_payment=1  and loan_txn.payment_detail_id = pd.id  )  "
+                + " and loan_txn.is_reversed = 0 and t.id = ? and (loan.currency_code = ?  OR ? IS NULL )and o.hierarchy like ? and "
+                + " loan_txn.created_date >= c.started_at and ( loan_txn.created_date <= c.ended_at OR c.ended_at IS NULL) ) "
+
+//                + " where pt.is_cash_payment=1 and  loan_txn.is_reversed = 0 and c.id = ? and (loan.currency_code = ?  OR ? IS NULL )and o.hierarchy like ? and "
+//                + " loan_txn.created_date >= c.started_at and ( loan_txn.created_date <= c.ended_at OR c.end_date IS NULL) "
+//                + " and renum.enum_value in ('Repayment At Disbursement','Repayment', 'Recovery Payment','Disbursement') ) "
                 + " order by created_date ) AS T ) as z order by created_date desc ";
 
         return this.jdbcTemplate.query(sql, ctm, new Object[] { cashierId, currencyCode, currencyCode, hierarchySearchString, cashierId, currencyCode,currencyCode,
