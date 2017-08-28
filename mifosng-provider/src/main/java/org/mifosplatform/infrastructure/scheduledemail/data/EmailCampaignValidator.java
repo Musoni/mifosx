@@ -14,6 +14,7 @@ import org.mifosplatform.infrastructure.core.data.DataValidatorBuilder;
 import org.mifosplatform.infrastructure.core.exception.InvalidJsonException;
 import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
+import org.mifosplatform.infrastructure.scheduledemail.domain.EmailCampaign;
 import org.mifosplatform.infrastructure.scheduledemail.domain.EmailCampaignType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -45,6 +46,7 @@ public class EmailCampaignValidator {
 
     public static final String localeParamName = "locale";
     public static final String dateFormatParamName = "dateFormat";
+    public static final String campaignId = "campaignId";
 
 
     private final FromJsonHelper fromApiJsonHelper;
@@ -63,7 +65,7 @@ public class EmailCampaignValidator {
     public static final Set<String> CLOSE_REQUEST_DATA_PARAMETERS = new HashSet<String>(Arrays.asList(localeParamName,
             dateFormatParamName, closureDateParamName));
 
-    public static final Set<String> PREVIEW_REQUEST_DATA_PARAMETERS= new HashSet<String>(Arrays.asList(paramValue,emailMessage));
+    public static final Set<String> PREVIEW_REQUEST_DATA_PARAMETERS= new HashSet<String>(Arrays.asList(paramValue,emailMessage,campaignId));
 
     @Autowired
     public EmailCampaignValidator(FromJsonHelper fromApiJsonHelper) {
@@ -175,6 +177,7 @@ public class EmailCampaignValidator {
 
         final String paramValue = this.fromApiJsonHelper.extractStringNamed(EmailCampaignValidator.paramValue, element);
         baseDataValidator.reset().parameter(EmailCampaignValidator.paramValue).value(paramValue).notBlank();
+
 
         final String message = this.fromApiJsonHelper.extractStringNamed(EmailCampaignValidator.emailMessage, element);
         baseDataValidator.reset().parameter(EmailCampaignValidator.emailMessage).value(message).notBlank().notExceedingLengthOf(480);

@@ -5,12 +5,17 @@
  */
 package org.mifosplatform.infrastructure.sms.scheduler;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.security.cert.X509Certificate;
-import java.security.SecureRandom;
+import java.util.Properties;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -19,11 +24,10 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
-import org.mifosplatform.infrastructure.configuration.data.ExternalServicesData;
+import org.apache.commons.lang3.StringUtils;
 import org.mifosplatform.infrastructure.configuration.data.ExternalServicesPropertiesData;
 import org.mifosplatform.infrastructure.configuration.service.ExternalServicesConstants;
 import org.mifosplatform.infrastructure.configuration.service.ExternalServicesPropertiesReadPlatformService;
-import org.mifosplatform.infrastructure.configuration.service.ExternalServicesReadPlatformService;
 import org.mifosplatform.infrastructure.core.domain.MifosPlatformTenant;
 import org.mifosplatform.infrastructure.core.service.ThreadLocalContextUtil;
 import org.mifosplatform.infrastructure.jobs.annotation.CronTarget;
@@ -31,7 +35,6 @@ import org.mifosplatform.infrastructure.jobs.service.JobName;
 import org.mifosplatform.infrastructure.reportmailingjob.helper.IPv4Helper;
 import org.mifosplatform.infrastructure.scheduledemail.data.EmailMessageWithAttachmentData;
 import org.mifosplatform.infrastructure.scheduledemail.service.EmailMessageJobEmailService;
-import org.mifosplatform.infrastructure.scheduledemail.service.EmailMessageJobEmailServiceImpl;
 import org.mifosplatform.infrastructure.sms.data.SmsConfigurationData;
 import org.mifosplatform.infrastructure.sms.data.SmsData;
 import org.mifosplatform.infrastructure.sms.data.SmsMessageApiQueueResourceData;
@@ -190,7 +193,7 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
 	@Transactional
 	@CronTarget(jobName = JobName.SEND_MESSAGES_TO_SMS_GATEWAY)
 	public void sendMessages() {
-	    if (IPv4Helper.applicationIsNotRunningOnLocalMachine()) {
+	    if (IPv4Helper.applicationIsNotRunningOnLocalMachine() && this.isSmsEnabledInSmsPropertiesFile()) {
 	        final TenantSmsConfiguration tenantSmsConfiguration = this.getTenantSmsConfiguration();
 	        final String apiAuthUsername = tenantSmsConfiguration.getApiAuthUsername();
 	        final String apiAuthPassword = tenantSmsConfiguration.getApiAuthPassword();
@@ -351,7 +354,7 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
 	@Transactional
 	@CronTarget(jobName = JobName.GET_DELIVERY_REPORTS_FROM_SMS_GATEWAY)
 	public void getDeliveryReports() {
-	    if (IPv4Helper.applicationIsNotRunningOnLocalMachine()) {
+	    if (IPv4Helper.applicationIsNotRunningOnLocalMachine() && this.isSmsEnabledInSmsPropertiesFile()) {
 	        final TenantSmsConfiguration tenantSmsConfiguration = this.getTenantSmsConfiguration();
 	        final String apiAuthUsername = tenantSmsConfiguration.getApiAuthUsername();
 	        final String apiAuthPassword = tenantSmsConfiguration.getApiAuthPassword();
@@ -427,6 +430,60 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
 	            logger.error(e.getMessage(), e);
 	        }
 	    }
+	}
+	
+	/**
+	 * Checks if the SMS module (sending sms and retrieving delivery reports) is enable in the sms properties file
+	 * 
+	 * @return true if sms module is enabled, else false
+	 */
+	private Boolean isSmsEnabledInSmsPropertiesFile() {
+		Boolean isEnabled = true;
+		
+		Properties smsProperties = new Properties();
+        InputStream smsPropertiesInputStream = null;
+        File catalinaBaseConfDirectory = null;
+        File smsPropertiesFile = null;
+        String smsDotEnablePropertyValue = null;
+        
+        try {
+            // create a new File instance for the catalina base conf directory
+            catalinaBaseConfDirectory = new File(System.getProperty("catalina.base"), "conf");
+            
+            // create a new File instance for the quartz properties file
+            smsPropertiesFile = new File(catalinaBaseConfDirectory, "sms.properties");
+            
+            // create file inputstream to the quartz properties file
+            smsPropertiesInputStream = new FileInputStream(smsPropertiesFile);
+            
+            // read property list from input stream 
+            smsProperties.load(smsPropertiesInputStream);
+            
+            smsDotEnablePropertyValue = smsProperties.getProperty("sms.enabled");
+            
+            // make sure it isn't blank, before trying to parse the string as boolean
+            if (StringUtils.isNoneBlank(smsDotEnablePropertyValue)) {
+                isEnabled = Boolean.parseBoolean(smsDotEnablePropertyValue); 
+            }
+            
+        } catch (FileNotFoundException ex) {
+            
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+
+        finally {
+            if (smsPropertiesInputStream != null) {
+                try {
+                	smsPropertiesInputStream.close();
+                	
+                }  catch (Exception ex) {
+                    logger.error(ex.getMessage(), ex);
+                }
+            }
+        }
+		
+		return isEnabled;
 	}
 
 	private void sendEmailLowSmsCreditReminder(final Integer smsCredits){

@@ -6,10 +6,7 @@
 package org.mifosplatform.scheduledjobs.service;
 
 import java.math.BigDecimal;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
@@ -20,6 +17,13 @@ import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidation
 import org.mifosplatform.infrastructure.core.service.DateUtils;
 import org.mifosplatform.infrastructure.core.service.RoutingDataSourceServiceFactory;
 import org.mifosplatform.infrastructure.core.service.ThreadLocalContextUtil;
+import org.mifosplatform.infrastructure.dataqueries.api.DataTableApiConstant;
+import org.mifosplatform.infrastructure.dataqueries.data.GenericResultsetData;
+import org.mifosplatform.infrastructure.dataqueries.data.ResultsetColumnHeaderData;
+import org.mifosplatform.infrastructure.dataqueries.data.ResultsetRowData;
+import org.mifosplatform.infrastructure.dataqueries.domain.DashboardMetrics;
+import org.mifosplatform.infrastructure.dataqueries.domain.DashboardMetricsRepository;
+import org.mifosplatform.infrastructure.dataqueries.service.ReadReportingService;
 import org.mifosplatform.infrastructure.jobs.annotation.CronTarget;
 import org.mifosplatform.infrastructure.jobs.exception.JobExecutionException;
 import org.mifosplatform.infrastructure.jobs.service.JobName;
@@ -52,6 +56,8 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
     private final DepositAccountReadPlatformService depositAccountReadPlatformService;
     private final DepositAccountWritePlatformService depositAccountWritePlatformService;
     private final LoanSuspendAccruedIncomeWritePlatformService loanSuspendAccruedIncomeWritePlatformService;
+    private final ReadReportingService readExtraDataAndReportingService;
+    private final DashboardMetricsRepository dashboardMetricsRepository;
 
 
     @Autowired
@@ -60,13 +66,16 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
             final SavingsAccountChargeReadPlatformService savingsAccountChargeReadPlatformService,
             final DepositAccountReadPlatformService depositAccountReadPlatformService,
             final DepositAccountWritePlatformService depositAccountWritePlatformService,
-            final LoanSuspendAccruedIncomeWritePlatformService loanSuspendAccruedIncomeWritePlatformService) {
+            final LoanSuspendAccruedIncomeWritePlatformService loanSuspendAccruedIncomeWritePlatformService, final ReadReportingService readExtraDataAndReportingService,
+                                         final DashboardMetricsRepository dashboardMetricsRepository) {
         this.dataSourceServiceFactory = dataSourceServiceFactory;
         this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
         this.savingsAccountChargeReadPlatformService = savingsAccountChargeReadPlatformService;
         this.depositAccountReadPlatformService = depositAccountReadPlatformService;
         this.depositAccountWritePlatformService = depositAccountWritePlatformService;
         this.loanSuspendAccruedIncomeWritePlatformService = loanSuspendAccruedIncomeWritePlatformService;
+        this.readExtraDataAndReportingService = readExtraDataAndReportingService;
+        this.dashboardMetricsRepository = dashboardMetricsRepository;
 
     }
 
@@ -361,6 +370,80 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
             jdbcTemplate.update(insertSql + sb.toString());
         }
 
+    }
+
+    @Override
+    @CronTarget(jobName = JobName.CALCULATE_DASHBOARD_METRICS)
+    public void calculateDashboardMetrics() {
+
+        final Set<String> metrics_reports = new HashSet<>(Arrays.asList("Dashboard principal disbursed",
+                "Dashboard number of outstanding loans",
+                "Dashboard principal outstanding",
+                "Dashboard interest outstanding",
+                "Dashboard PAR_1",
+                "Dashboard PAR_30",
+                "Dashboard PAR_90",
+                "Dashboard Write off",
+                "Dashboard Repayments",
+                "Dashboard POLB"));
+
+        for (final String reportName : metrics_reports) {
+            try {
+
+                // run the report to ge the metrics
+                final GenericResultsetData result = this.readExtraDataAndReportingService.runReportByScheduler(reportName);
+
+                final List<ResultsetColumnHeaderData> columnHeaders = result.getColumnHeaders();
+                final List<ResultsetRowData> data = result.getData();
+
+                List<String> row;
+
+                logger.info("NO. of Columns: " + columnHeaders.size());
+                final Integer chSize = columnHeaders.size();
+
+
+                logger.info("NO. of Rows: " + data.size());
+
+                for (int i = 0; i < data.size(); i++) {
+                    row = data.get(i).getRow();
+
+                    final BigDecimal value =BigDecimal.valueOf(Double.valueOf(row.get(0))) ;
+                    final String name = columnHeaders.get(0).getColumnName();
+                    final long officeId = Long.parseLong(row.get(1));
+                    final long StaffId = Long.parseLong(row.get(2));
+                    final String monthYear = row.get(3);
+
+                    final DashboardMetrics newMetric = new DashboardMetrics(value,name,officeId,StaffId,monthYear);
+
+                    DashboardMetrics oldMetric = this.dashboardMetricsRepository.findSpecial(monthYear,StaffId,officeId);
+
+                    if(oldMetric!=null){
+
+                        oldMetric.setMetricValue(value);
+                        this.dashboardMetricsRepository.saveAndFlush(oldMetric);
+
+                    }else{
+
+                        this.dashboardMetricsRepository.saveAndFlush(newMetric);
+                    }
+
+
+
+                }
+
+
+            } catch (final PlatformApiDataValidationException e) {
+                final List<ApiParameterError> errors = e.getErrors();
+                for (final ApiParameterError error : errors) {
+                    logger.error("Updating metric for " + reportName + " failed with message "
+                            + error.getDeveloperMessage());
+                }
+            } catch (final Exception ex) {
+                // need to handle this scenario
+            }
+        }
+
+        logger.info(ThreadLocalContextUtil.getTenant().getName() + ": Dashboard metrics updated : " );
     }
 
 }

@@ -100,6 +100,7 @@ public class Charge extends AbstractPersistable<Long> {
     @JoinColumn(name = "income_or_liability_account_id")
     private GLAccount account;
 
+
     public static Charge fromJson(final JsonCommand command, final GLAccount account) {
 
         final String name = command.stringValueOfParameterNamed("name");
@@ -204,7 +205,7 @@ public class Charge extends AbstractPersistable<Long> {
         if (obj == null) { return false; }
         if (obj == this) { return true; }
         if (obj.getClass() != getClass()) { return false; }
-        final LoanCharge rhs = (LoanCharge) obj;
+        final Charge rhs = (Charge) obj;
         return new EqualsBuilder().appendSuper(super.equals(obj)) //
                 .append(getId(), rhs.getId()) //
                 .isEquals();
@@ -563,6 +564,10 @@ public class Charge extends AbstractPersistable<Long> {
 
     public boolean isMonthlyFee() {
         return ChargeTimeType.fromInt(this.chargeTimeType).isMonthlyFee();
+    }
+
+    public boolean isWithdrawalFee(){
+        return ChargeTimeType.fromInt(this.chargeTimeType).isWithdrawalFee();
     }
 
     public boolean isAnnualFee() {

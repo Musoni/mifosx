@@ -69,6 +69,7 @@ import org.mifosplatform.portfolio.account.domain.StandingInstructionPriority;
 import org.mifosplatform.portfolio.account.domain.StandingInstructionRepository;
 import org.mifosplatform.portfolio.account.domain.StandingInstructionStatus;
 import org.mifosplatform.portfolio.account.domain.StandingInstructionType;
+import org.mifosplatform.portfolio.account.exception.AccountAssociationNotFoundException;
 import org.mifosplatform.portfolio.account.service.AccountAssociationsReadPlatformService;
 import org.mifosplatform.portfolio.account.service.AccountTransfersReadPlatformService;
 import org.mifosplatform.portfolio.account.service.AccountTransfersWritePlatformService;
@@ -104,6 +105,10 @@ import org.mifosplatform.portfolio.common.BusinessEventNotificationConstants.BUS
 import org.mifosplatform.portfolio.common.BusinessEventNotificationConstants.BUSINESS_EVENTS;
 import org.mifosplatform.portfolio.common.domain.PeriodFrequencyType;
 import org.mifosplatform.portfolio.common.service.BusinessEventNotifierService;
+import org.mifosplatform.portfolio.floatingrates.data.FloatingRateDTO;
+import org.mifosplatform.portfolio.floatingrates.data.FloatingRatePeriodData;
+import org.mifosplatform.portfolio.floatingrates.exception.FloatingRateNotFoundException;
+import org.mifosplatform.portfolio.floatingrates.service.FloatingRatesReadPlatformService;
 import org.mifosplatform.portfolio.group.domain.Group;
 import org.mifosplatform.portfolio.group.exception.GroupNotActiveException;
 import org.mifosplatform.portfolio.loanaccount.api.LoanApiConstants;
@@ -136,6 +141,7 @@ import org.mifosplatform.portfolio.loanaccount.exception.*;
 import org.mifosplatform.portfolio.loanaccount.guarantor.service.GuarantorDomainService;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.data.OverdueLoanScheduleData;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.DefaultScheduledDateGenerator;
+import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanApplicationTerms;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanScheduleModel;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanScheduleModelPeriod;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.ScheduledDateGenerator;
@@ -147,6 +153,7 @@ import org.mifosplatform.portfolio.loanproduct.data.LoanOverdueDTO;
 import org.mifosplatform.portfolio.loanproduct.data.LoanProductData;
 import org.mifosplatform.portfolio.loanproduct.domain.LoanProduct;
 import org.mifosplatform.portfolio.loanproduct.domain.LoanProductGuaranteeDetails;
+import org.mifosplatform.portfolio.loanproduct.domain.LoanProductMinimumRepaymentScheduleRelatedDetail;
 import org.mifosplatform.portfolio.loanproduct.exception.InvalidCurrencyException;
 import org.mifosplatform.portfolio.loanproduct.exception.LinkedAccountRequiredException;
 import org.mifosplatform.portfolio.loanproduct.service.LoanProductReadPlatformService;
@@ -157,6 +164,7 @@ import org.mifosplatform.portfolio.paymentdetail.service.PaymentDetailWritePlatf
 import org.mifosplatform.portfolio.savings.SavingsAccountTransactionType;
 import org.mifosplatform.portfolio.savings.domain.SavingsAccount;
 import org.mifosplatform.portfolio.savings.exception.InsufficientAccountBalanceException;
+import org.mifosplatform.portfolio.savings.exception.SavingsAccountNotActiveException;
 import org.mifosplatform.portfolio.savings.service.SavingsAccountWritePlatformService;
 import org.mifosplatform.useradministration.domain.AppUser;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -210,6 +218,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
     private final LoanSuspendAccruedIncomeWritePlatformService loanSuspendAccruedIncomeWritePlatformService;
     private final StandingInstructionRepository standingInstructionRepository;
     private final SavingsAccountWritePlatformService savingsAccountWritePlatformService;
+    private final FloatingRatesReadPlatformService floatingRatesReadPlatformService;
 
     @Autowired
     public LoanWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -241,7 +250,8 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
             final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService,
             final LoanSuspendAccruedIncomeWritePlatformService loanSuspendAccruedIncomeWritePlatformService, 
             final StandingInstructionRepository standingInstructionRepository, 
-            final SavingsAccountWritePlatformService savingsAccountWritePlatformService) {
+            final SavingsAccountWritePlatformService savingsAccountWritePlatformService, 
+            final FloatingRatesReadPlatformService floatingRatesReadPlatformService) {
         this.context = context;
         this.loanEventApiJsonValidator = loanEventApiJsonValidator;
         this.loanAssembler = loanAssembler;
@@ -281,6 +291,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         this.loanSuspendAccruedIncomeWritePlatformService = loanSuspendAccruedIncomeWritePlatformService;
         this.standingInstructionRepository = standingInstructionRepository;
         this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
+        this.floatingRatesReadPlatformService = floatingRatesReadPlatformService;
     }
 
     private LoanLifecycleStateMachine defaultLoanLifecycleStateMachine() {
@@ -1772,8 +1783,14 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 
                 try{
                     final AccountAssociations accountAssociations = this.accountAssociationRepository.findByLoanIdAndType(loanId,AccountAssociationType.LINKED_ACCOUNT_ASSOCIATION.getValue());
+
+                    if(accountAssociations == null || accountAssociations.linkedSavingsAccount() == null){ throw new AccountAssociationNotFoundException(loanId,AccountAssociationType.LINKED_ACCOUNT_ASSOCIATION.getValue()); }
+
                     final Loan loan = accountAssociations.getLoan();
                     final SavingsAccount toSavingsAccount = accountAssociations.linkedSavingsAccount();
+
+                    if(!toSavingsAccount.isActive()){ throw new SavingsAccountNotActiveException(toSavingsAccount.getId()); }
+
                     final BigDecimal transactionAmount = loan.getTotalOverpaid();
                     final LocalDate transactionDate = LocalDate.now();
 
@@ -2233,6 +2250,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
     @CronTarget(jobName = JobName.APPLY_HOLIDAYS_TO_LOANS)
     public void applyHolidaysToLoans() {
 
+    	final ScheduledDateGenerator scheduledDateGenerator = new DefaultScheduledDateGenerator();
         final boolean isHolidayEnabled = this.configurationDomainService.isRescheduleRepaymentsOnHolidaysEnabled();
 
         if (!isHolidayEnabled) { return; }
@@ -2241,6 +2259,9 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 LoanStatus.APPROVED.getValue(), LoanStatus.ACTIVE.getValue()));
         // Get all Holidays which are active and not processed
         final List<Holiday> holidays = this.holidayRepository.findUnprocessed();
+        final WorkingDays workingDays = this.workingDaysRepository.findOne();
+        // get all loans
+        final List<Loan> loans = new ArrayList<>();
 
         // Loop through all holidays
         for (final Holiday holiday : holidays) {
@@ -2251,23 +2272,68 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 officeIds.add(office.getId());
             }
 
-            // get all loans
-            final List<Loan> loans = new ArrayList<>();
             // get all individual and jlg loans
             loans.addAll(this.loanRepository.findByClientOfficeIdsAndLoanStatus(officeIds, loanStatuses));
             // FIXME: AA optimize to get all client and group loans belongs to a
             // office id
             // get all group loans
             loans.addAll(this.loanRepository.findByGroupOfficeIdsAndLoanStatus(officeIds, loanStatuses));
-
-            for (final Loan loan : loans) {
-                // apply holiday
-                loan.applyHolidayToRepaymentScheduleDates(holiday);
-            }
-            this.loanRepository.save(loans);
+            
             holiday.processed();
         }
+        
+        final HolidayDetailDTO holidayDetailDTO = new HolidayDetailDTO(isHolidayEnabled, holidays, workingDays);
+        CalendarInstance restCalendarInstance = null;
+        CalendarInstance compoundingCalendarInstance = null;
+        Calendar loanCalendar = null;
+        
+        for (final Loan loan : loans) {
+        	if (loan.repaymentScheduleDetail().isInterestRecalculationEnabled()) {
+                restCalendarInstance = calendarInstanceRepository.findCalendarInstaneByEntityId(
+                        loan.loanInterestRecalculationDetailId(), CalendarEntityType.LOAN_RECALCULATION_REST_DETAIL.getValue());
+                compoundingCalendarInstance = calendarInstanceRepository.findCalendarInstaneByEntityId(
+                        loan.loanInterestRecalculationDetailId(), CalendarEntityType.LOAN_RECALCULATION_COMPOUNDING_DETAIL.getValue());
+            }
+        	
+            final CalendarInstance loanCalendarInstance = calendarInstanceRepository.findCalendarInstaneByEntityId(loan.getId(),
+                    CalendarEntityType.LOANS.getValue());
+            
+            if (loanCalendarInstance != null) {
+                loanCalendar = loanCalendarInstance.getCalendar();
+            }
+            
+            final FloatingRateDTO floatingRateDTO = constructFloatingRateDTO(loan);
+            final LoanProductMinimumRepaymentScheduleRelatedDetail loanProductRelatedDetail = loan.getLoanRepaymentScheduleDetail();
+            final MonetaryCurrency currency = loanProductRelatedDetail.getCurrency();
+            final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepository.findOneWithNotFoundDetection(currency);
+            final LoanApplicationTerms loanApplicationTerms = loan.getLoanApplicationTerms(applicationCurrency, restCalendarInstance,
+                    compoundingCalendarInstance, loanCalendar, floatingRateDTO);
+            
+            loan.applyHolidayToRepaymentScheduleDates(holidayDetailDTO, loanApplicationTerms);
+        }
+        
+        if (loans != null && !loans.isEmpty()) {
+        	this.loanRepository.save(loans);
+        }
+        
         this.holidayRepository.save(holidays);
+    }
+    
+    private FloatingRateDTO constructFloatingRateDTO(final Loan loan) {
+        FloatingRateDTO floatingRateDTO = null;
+        if (loan.loanProduct().isLinkedToFloatingInterestRate()) {
+            boolean isFloatingInterestRate = loan.getIsFloatingInterestRate();
+            BigDecimal interestRateDiff = loan.getInterestRateDifferential();
+            List<FloatingRatePeriodData> baseLendingRatePeriods = null;
+            try {
+                baseLendingRatePeriods = this.floatingRatesReadPlatformService.retrieveBaseLendingRate().getRatePeriods();
+            } catch (final FloatingRateNotFoundException ex) {
+                // Do not do anything
+            }
+            floatingRateDTO = new FloatingRateDTO(isFloatingInterestRate, loan.getDisbursementDate(), interestRateDiff,
+                    baseLendingRatePeriods);
+        }
+        return floatingRateDTO;
     }
 
     private void checkForProductMixRestrictions(final Loan loan) {

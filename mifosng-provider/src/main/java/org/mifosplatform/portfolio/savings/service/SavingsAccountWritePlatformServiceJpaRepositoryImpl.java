@@ -425,7 +425,12 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final boolean isSavingsInterestPostingAtCurrentPeriodEnd = this.configurationDomainService
                 .isSavingsInterestPostingAtCurrentPeriodEnd();
         final Integer financialYearBeginningMonth = this.configurationDomainService.retrieveFinancialYearBeginningMonth();
-        if (account.getNominalAnnualInterestRate().compareTo(BigDecimal.ZERO) > 0
+        /** Add account.savingsProduct().getSavingsProductInterestRateCharts() this makes sure if a
+         * savings product have a slab in between posting periods and the saving account interest is zero
+         * the added parameter will make sure the period in between is posted
+         *
+         */
+        if ((account.getNominalAnnualInterestRate().compareTo(BigDecimal.ZERO) > 0 || account.savingsProduct().getSavingsProductInterestRateCharts() !=null)
                 || (account.allowOverdraft() && account.getNominalAnnualInterestRateOverdraft().compareTo(BigDecimal.ZERO) > 0)) {
             final Set<Long> existingTransactionIds = new HashSet<>();
             final Set<Long> existingReversedTransactionIds = new HashSet<>();
@@ -1073,7 +1078,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final DateTimeFormatter fmt = DateTimeFormat.forPattern("dd MM yyyy");
         fmt.withZone(DateUtils.getDateTimeZoneOfTenant());
 
-        while (transactionDate.isAfter(savingsAccountCharge.getDueLocalDate()) && savingsAccountCharge.isNotFullyPaid()) {
+        while ((transactionDate.isAfter(savingsAccountCharge.getDueLocalDate()) || transactionDate.isEqual(savingsAccountCharge.getDueLocalDate())) && savingsAccountCharge.isNotFullyPaid()) {
             payCharge(savingsAccountCharge, transactionDate, savingsAccountCharge.amoutOutstanding(), fmt, user);
         }
     }

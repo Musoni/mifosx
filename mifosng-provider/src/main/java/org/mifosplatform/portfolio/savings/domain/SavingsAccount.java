@@ -391,6 +391,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         this.minRequiredBalance = minRequiredBalance;
         this.minBalanceForInterestCalculation = product.minBalanceForInterestCalculation();
         this.savingsOfficerHistory = null;
+
     }
 
     /**
@@ -639,6 +640,10 @@ public class SavingsAccount extends AbstractPersistable<Long> {
             periodStartingBalance = Money.zero(this.currency);
 
         final SavingsInterestCalculationType interestCalculationType = SavingsInterestCalculationType.fromInt(this.interestCalculationType);
+        /**
+         * use product interest rate chart (interestRate) only on savings account with enum type 100
+         * this will be applicable only if the falls in the date range else use standard rate on product
+         */
         final BigDecimal interestRateAsFraction = getEffectiveInterestRateAsFraction(mc, upToInterestCalculationDate);
         final BigDecimal overdraftInterestRateAsFraction = getEffectiveOverdraftInterestRateAsFraction(mc);
         final Collection<Long> interestPostTransactions = this.savingsHelper.fetchPostInterestTransactionIds(getId());
@@ -651,10 +656,11 @@ public class SavingsAccount extends AbstractPersistable<Long> {
             if(postedAsOnDates.contains(periodInterval.endDate().plusDays(1))){
                 isUserPosting = true;
             }
+            BigDecimal interestRateAsFractionFromPeriodSlab =getEffectiveInterestRateFromProductSlab(mc,periodInterval.startDate(),periodInterval.endDate());
 
             final PostingPeriod postingPeriod = PostingPeriod.createFrom(periodInterval, periodStartingBalance,
                     retreiveOrderedNonInterestPostingTransactions(), this.currency, compoundingPeriodType, interestCalculationType,
-                    interestRateAsFraction, daysInYearType.getValue(), upToInterestCalculationDate, interestPostTransactions,
+                    interestRateAsFractionFromPeriodSlab, daysInYearType.getValue(), upToInterestCalculationDate, interestPostTransactions,
                     isInterestTransfer, minBalanceForInterestCalculation, isSavingsInterestPostingAtCurrentPeriodEnd,
                     overdraftInterestRateAsFraction, minOverdraftForInterestCalculation);
 
@@ -678,6 +684,18 @@ public class SavingsAccount extends AbstractPersistable<Long> {
 
     @SuppressWarnings("unused")
     protected BigDecimal getEffectiveInterestRateAsFraction(final MathContext mc, final LocalDate upToInterestCalculationDate) {
+        if( this.savingsProduct().findCurrentInterestRate() != null){
+           BigDecimal nominalProductInterestRateChart = this.productInterestRate();
+            return nominalProductInterestRateChart.divide(BigDecimal.valueOf(100l), mc);
+        }
+        return this.nominalAnnualInterestRate.divide(BigDecimal.valueOf(100l), mc);
+    }
+    protected BigDecimal getEffectiveInterestRateFromProductSlab(final MathContext mc, final LocalDate startDate, final LocalDate endDate){
+        SavingsProductInterestRateChart interestRateChart =this.savingsProduct().findInterestRateFromDateRange(startDate,endDate);
+        if(interestRateChart != null){
+            BigDecimal interestRateAsFraction = interestRateChart.getAnnualInterestRate().divide(BigDecimal.valueOf(100l), mc);
+            return interestRateAsFraction;
+        }
         return this.nominalAnnualInterestRate.divide(BigDecimal.valueOf(100l), mc);
     }
 
@@ -694,6 +712,20 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         }
 
         return orderedNonInterestPostingTransactions;
+    }
+
+    /**
+     * This functions checks a savings product interest rate chart and see if there is an interest rate set in the
+     * time frame period if true this interest rate will be use instead of the standard interest rate on the savings product
+     * @return
+     */
+    private BigDecimal productInterestRate(){
+        BigDecimal nominalProductInterestRateChart = null;
+        SavingsProductInterestRateChart savingsProductInterestRateChart = this.savingsProduct().findCurrentInterestRate();
+        if(savingsProductInterestRateChart != null){
+            nominalProductInterestRateChart = savingsProductInterestRateChart.getAnnualInterestRate();
+        }
+        return nominalProductInterestRateChart;
     }
 
     protected List<SavingsAccountTransaction> retreiveListOfTransactions() {
@@ -718,7 +750,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
                 Money overdraftAmount = Money.zero(this.currency);
                 Money transactionAmount = Money.zero(this.currency);
                 if (transaction.isCredit()) {
-                    if (runningBalance.isLessThanZero()) {
+                    if (runningBalance.plus(transaction.getAmount(this.currency)).isLessThanZero()) {
                         Money diffAmount = transaction.getAmount(this.currency).plus(runningBalance);
                         if (diffAmount.isGreaterThanZero()) {
                             overdraftAmount = transaction.getAmount(this.currency).minus(diffAmount);
@@ -1642,6 +1674,11 @@ public class SavingsAccount extends AbstractPersistable<Long> {
     }
 
     public BigDecimal getNominalAnnualInterestRate() {
+        final SavingsProductInterestRateChart  savingsProductInterestRateChart= this.savingsProduct().findCurrentInterestRate();
+        if(savingsProductInterestRateChart != null ){
+            BigDecimal productAnnualInterestRate = savingsProductInterestRateChart.getAnnualInterestRate();
+            return productAnnualInterestRate;
+        }
         return this.nominalAnnualInterestRate;
     }
 
@@ -2473,10 +2510,11 @@ public class SavingsAccount extends AbstractPersistable<Long> {
 
         if (savingsAccountCharge.isAnnualFee() || savingsAccountCharge.isMonthlyFee() || savingsAccountCharge.isWeeklyFee()) {
             // update due date
+            LocalDate localDateTenantDate = DateUtils.getLocalDateOfTenant();
             if (isActive()) {
-                savingsAccountCharge.updateToNextDueDateFrom(getActivationLocalDate());
+                savingsAccountCharge.updateToNextDueDateFrom(localDateTenantDate);
             } else if (isApproved()) {
-                savingsAccountCharge.updateToNextDueDateFrom(getApprovedOnLocalDate());
+                savingsAccountCharge.updateToNextDueDateFrom(localDateTenantDate);
             }
         }
 

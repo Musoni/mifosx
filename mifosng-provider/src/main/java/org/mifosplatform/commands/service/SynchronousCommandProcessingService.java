@@ -27,6 +27,8 @@ import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext
 import org.mifosplatform.useradministration.domain.AppUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -63,20 +65,38 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
     public CommandProcessingResult processAndLogCommand(final CommandWrapper wrapper, final JsonCommand command,
             final boolean isApprovedByChecker) {
 
+    	CommandSource commandSourceResult = null;
+    	
         final boolean rollbackTransaction = this.configurationDomainService.isMakerCheckerEnabledForTask(wrapper.taskPermissionName());
 
+        final AppUser authenticatedUser = this.context.authenticatedUser(wrapper);
+        
+        // only process if a command id is provided
+        if (command.commandId() != null) {
+        	commandSourceResult = this.commandSourceRepository.findOne(command.commandId());
+        	
+        	if (commandSourceResult != null) {
+        		final AppUser maker = commandSourceResult.getMaker();
+        		
+        		if (maker != null) {
+        			final UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+        					maker, maker.getPassword(), maker.getAuthorities());
+                	
+        			// change the current authenticated principal from the checker (currently authenticated user) to
+        			// the maker of the request stored in the audit log
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+        		}
+        	}
+        }
+        
         final NewCommandSourceHandler handler = findCommandHandler(wrapper);
 
         final CommandProcessingResult result = handler.processCommand(command);
-
-        final AppUser maker = this.context.authenticatedUser(wrapper);
-
-        CommandSource commandSourceResult = null;
-        if (command.commandId() != null) {
-            commandSourceResult = this.commandSourceRepository.findOne(command.commandId());
-            commandSourceResult.markAsChecked(maker, DateTime.now());
+        
+        if (commandSourceResult != null) {
+        	commandSourceResult.markAsChecked(authenticatedUser, DateTime.now());
         } else {
-            commandSourceResult = CommandSource.fullEntryFrom(wrapper, command, maker);
+            commandSourceResult = CommandSource.fullEntryFrom(wrapper, command, authenticatedUser);
         }
         commandSourceResult.updateResourceId(result.resourceId());
         commandSourceResult.updateForAudit(result.getOfficeId(), result.getGroupId(), result.getClientId(), result.getLoanId(),

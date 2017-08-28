@@ -102,10 +102,12 @@ import org.mifosplatform.portfolio.loanaccount.exception.MultiDisbursementDataRe
 import org.mifosplatform.portfolio.loanaccount.exception.UndoLastTrancheDisbursementException;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.data.LoanScheduleDTO;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.AprCalculator;
+import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.DefaultScheduledDateGenerator;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanApplicationTerms;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanScheduleGenerator;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanScheduleModel;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanScheduleModelPeriod;
+import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.ScheduledDateGenerator;
 import org.mifosplatform.portfolio.loanproduct.LoanProductConstants;
 import org.mifosplatform.portfolio.loanproduct.domain.AmortizationMethod;
 import org.mifosplatform.portfolio.loanproduct.domain.InterestCalculationPeriodMethod;
@@ -4550,7 +4552,11 @@ public class Loan extends AbstractPersistable<Long> {
                                                    // startDate
     }
 
-    public void applyHolidayToRepaymentScheduleDates(final Holiday holiday) {
+    public void applyHolidayToRepaymentScheduleDates(final HolidayDetailDTO holidayDetailDTO, 
+    		final LoanApplicationTerms loanApplicationTerms) {
+    	List<LocalDate> adjustedRepaymentDateList = new ArrayList<>();
+    	final ScheduledDateGenerator scheduledDateGenerator = new DefaultScheduledDateGenerator();
+    	
         // first repayment's from date is same as disbursement date.
         LocalDate tmpFromDate = getDisbursementDate();
         // Loop through all loanRepayments
@@ -4562,18 +4568,12 @@ public class Loan extends AbstractPersistable<Long> {
             if (!loanRepaymentScheduleInstallment.getFromDate().isEqual(tmpFromDate)) {
                 loanRepaymentScheduleInstallment.updateFromDate(tmpFromDate);
             }
-            if (oldDueDate.isAfter(holiday.getToDateLocalDate())) {
-                break;
-            }
-
-            if (oldDueDate.equals(holiday.getFromDateLocalDate()) || oldDueDate.equals(holiday.getToDateLocalDate())
-                    || oldDueDate.isAfter(holiday.getFromDateLocalDate()) && oldDueDate.isBefore(holiday.getToDateLocalDate())) {
-                // FIXME: AA do we need to apply non-working days.
-                // Assuming holiday's repayment reschedule to date cannot be
-                // created on a non-working day.
-                final LocalDate newRepaymentDate = holiday.getRepaymentsRescheduledToLocalDate();
-                loanRepaymentScheduleInstallment.updateDueDate(newRepaymentDate);
-            }
+            
+            LocalDate newRepaymentDate = scheduledDateGenerator.adjustRepaymentDate(oldDueDate, loanApplicationTerms, 
+            		holidayDetailDTO, adjustedRepaymentDateList);
+            
+            loanRepaymentScheduleInstallment.updateDueDate(newRepaymentDate);
+            
             tmpFromDate = loanRepaymentScheduleInstallment.getDueDate();
         }
     }

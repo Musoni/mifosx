@@ -13,6 +13,8 @@ import org.mifosplatform.accounting.common.AccountingConstants.SAVINGS_PRODUCT_A
 import org.mifosplatform.portfolio.savings.data.SavingsAccountData;
 import org.mifosplatform.portfolio.savings.data.SavingsProductData;
 
+import static org.mifosplatform.portfolio.interestratechart.InterestRateChartSlabApiConstants.annualInterestRateParamName;
+
 public class SavingsApiConstants {
 
     public static final String SAVINGS_PRODUCT_RESOURCE_NAME = "savingsproduct";
@@ -138,6 +140,7 @@ public class SavingsApiConstants {
     public static final String amountPaidParamName = "amountPaid";
     public static final String chargeOptionsParamName = "chargeOptions";
     public static final String chargePaymentModeParamName = "chargePaymentMode";
+    public static final String addProductChargeToExistingAccountsParamName = "addChargeToExistingSavingsAccount";
 
     public static final String noteParamName = "note";
 
@@ -151,6 +154,11 @@ public class SavingsApiConstants {
     public static final String onHoldTransactionDateParamName = "transactionDate";
     public static final String onHoldReversedParamName = "reversed";
 
+    //interest chart
+    public static final String interestRateCharts = "interestRateCharts";
+    public static final String fromDateParamName ="fromDate";
+    public static final String endDateParamName = "endDate";
+    public static final String applyToExistingSavingsAccountParamName = "applyToExistingSavingsAccount";
     public static final Set<String> SAVINGS_PRODUCT_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(localeParamName,
             monthDayFormatParamName, nameParamName, shortNameParamName, descriptionParamName, currencyCodeParamName,
             digitsAfterDecimalParamName, inMultiplesOfParamName, nominalAnnualInterestRateParamName, productGroupIdParamName,
@@ -170,7 +178,16 @@ public class SavingsApiConstants {
             SAVINGS_PRODUCT_ACCOUNTING_PARAMS.LOSSES_WRITTEN_OFF.getValue(),
             SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INCOME_FROM_INTEREST.getValue(), allowOverdraftParamName, overdraftLimitParamName,
             nominalAnnualInterestRateOverdraftParamName, minOverdraftForInterestCalculationParamName,
-            minRequiredBalanceParamName, enforceMinRequiredBalanceParamName, minBalanceForInterestCalculationParamName));
+            minRequiredBalanceParamName, enforceMinRequiredBalanceParamName, minBalanceForInterestCalculationParamName,interestRateCharts));
+
+    public static final Set<String> SAVINGS_PRODUCTS_INTEREST_RATE_CREATE_CHARTS_REQUEST_DATA = new HashSet<>(Arrays.asList(localeParamName,
+            dateFormatParamName, nameParamName, descriptionParamName, fromDateParamName, endDateParamName, applyToExistingSavingsAccountParamName,
+            annualInterestRateParamName
+    ));
+    public static final Set<String> SAVINGS_PRODUCTS_INTEREST_RATE_UPDATE_CHARTS_REQUEST_DATA = new HashSet<>(Arrays.asList(localeParamName,
+            dateFormatParamName, nameParamName, descriptionParamName, fromDateParamName, endDateParamName, applyToExistingSavingsAccountParamName,
+            annualInterestRateParamName,idParamName
+    ));
 
     /**
      * These parameters will match the class level parameters of
@@ -185,7 +202,7 @@ public class SavingsApiConstants {
             withdrawalFeeForTransfersParamName, feeAmountParamName, feeOnMonthDayParamName, "currencyOptions",
             "interestCompoundingPeriodTypeOptions", "interestPostingPeriodTypeOptions", "interestCalculationTypeOptions",
             "interestCalculationDaysInYearTypeOptions", "lockinPeriodFrequencyTypeOptions", "withdrawalFeeTypeOptions",
-            nominalAnnualInterestRateOverdraftParamName, minOverdraftForInterestCalculationParamName, productGroupIdParamName));
+            nominalAnnualInterestRateOverdraftParamName, minOverdraftForInterestCalculationParamName, productGroupIdParamName,interestRateCharts));
 
     public static final Set<String> SAVINGS_ACCOUNT_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(localeParamName,
             dateFormatParamName, monthDayFormatParamName, staffIdParamName, accountNoParamName, externalIdParamName, clientIdParamName,

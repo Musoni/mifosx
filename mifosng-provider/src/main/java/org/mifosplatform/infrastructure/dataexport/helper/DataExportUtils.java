@@ -10,8 +10,11 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.mifosplatform.infrastructure.codes.data.CodeValueData;
@@ -146,6 +149,10 @@ public class DataExportUtils {
 		final List<EntityColumnMetaData> entityColumnsMetaData = new ArrayList<>();
         final List<String> columnNames = new ArrayList<>();
         final DataExportCoreTable coreTable = DataExportCoreTable.newInstance(tableName);
+        Set<String> columnsToBeRemovedFromListsOfEntityColumns = new HashSet<>(Arrays.asList(
+        		DataExportEntityColumnName.TRANSFER_TO_OFFICE_ID, DataExportEntityColumnName.VERSION, 
+        		DataExportEntityColumnName.IMAGE_ID, DataExportEntityColumnName.ACCOUNT_TYPE_ENUM, DataExportEntityColumnName.DEPOSIT_TYPE_ENUM, 
+        		DataExportEntityColumnName.SUB_STATUS, DataExportEntityColumnName.FULL_NAME));
         
         try {
             // see - http://dev.mysql.com/doc/refman/5.7/en/limit-optimization.html
@@ -166,6 +173,7 @@ public class DataExportUtils {
                 
                 for (int i = 1; i <= numberOfColumns; i++) {
                     String columnName = resultSetMetaData.getColumnName(i);
+					String columnLabel = resultSetMetaData.getColumnName(i);
                     String columnType = resultSetMetaData.getColumnTypeName(i);
                     Integer columnIsNullable = resultSetMetaData.isNullable(i);
                     boolean isNullable = (columnIsNullable != 0);
@@ -173,133 +181,129 @@ public class DataExportUtils {
                     if (coreTable != null) {
                     	switch (coreTable) {
 	                    	case M_LOAN_TRANSACTION:
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.UNRECOGNIZED_INCOME_PORTION);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.SUSPENDED_INTEREST_PORTION_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.SUSPENDED_FEE_CHARGES_PORTION_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.SUSPENDED_PENALTY_CHARGES_PORTION_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.OUTSTANDING_LOAN_BALANCE_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.RECOVERED_PORTION_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.PAYMENT_DETAIL_ID);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.OFFICE_ID);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.IS_ACCCOUNT_TRANSFER);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.APPUSER_ID);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.EXTERNAL_ID);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.CREATED_DATE);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.TRANSACTION_TYPE_ENUM);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.LOAN_ID);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.AMOUNT);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
-	                    				DataExportEntityColumnName.ID);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.PRINCIPAL_PORTION_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.INTEREST_PORTION_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.FEE_CHARGES_PORTION_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.PENALTY_CHARGES_PORTION_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.OVERPAYMENT_PORTION_DERIVED);
 	                    		break;
 	                    		
 	                    	case M_SAVINGS_ACCOUNT_TRANSACTION:
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.OVERDRAFT_AMOUNT_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.RUNNING_BALANCE_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.CUMULATIVE_BALANCE_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.BALANCE_NUMBER_OF_DAYS_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.BALANCE_END_DATE_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.CREATED_DATE);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.TRANSACTION_TYPE_ENUM);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.APPUSER_ID);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.SAVINGS_ACCOUNT_ID);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.AMOUNT);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
-	                    				DataExportEntityColumnName.ID);
 	            	    		break;
 	            	    		
 	                    	case M_LOAN_REPAYMENT_SCHEDULE:
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.ID);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.LOAN_ID);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.FROMDATE);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.INSTALLMENT);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.PRINCIPAL_COMPLETED_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.PRINCIPAL_WRITTENOFF_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.INTEREST_COMPLETED_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.INTEREST_WAIVED_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.INTEREST_WRITTENOFF_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.ACCRUAL_INTEREST_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.SUSPENDED_INTEREST_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.FEE_CHARGES_WRITTENOFF_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.FEE_CHARGES_COMPLETED_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.FEE_CHARGES_WAIVED_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.ACCRUAL_FEE_CHARGES_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.SUSPENDED_FEE_CHARGES_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.PENALTY_CHARGES_COMPLETED_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.PENALTY_CHARGES_WAIVED_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.PENALTY_CHARGES_WRITTEN_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.ACCRUAL_PENALTY_CHARGES_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.SUSPENDED_PENALTY_CHARGES_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.TOTAL_PAID_IN_ADVANCE_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.TOTAL_PAID_LATE_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.COMPLETED_DERIVED);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.CREATED_BY_ID);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.CREATED_DATE);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.LAST_MODIFIED_BY_ID);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.LAST_MODIFIED_DATE);
-	                    		DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.add(
+	                    		columnsToBeRemovedFromListsOfEntityColumns.add(
 	                    				DataExportEntityColumnName.RECALCULATED_INTEREST_COMPONENT);
 	                    		break;
 	                    		
@@ -308,10 +312,13 @@ public class DataExportUtils {
 	                    }
                     }
                     
-                    if (!DataExportEntityColumnName.COLUMNS_TO_BE_REMOVED_FROM_LISTS_OF_ENTITY_COLUMNS.
+                    if (!columnsToBeRemovedFromListsOfEntityColumns.
                     		contains(columnName)) {
+						if(columnName.equals(DataExportEntityColumnName.ID)){
+							columnLabel = DataExportEntityColumnName.TRANSACTION_ID;
+						}
                     	EntityColumnMetaData entityColumnMetaData = EntityColumnMetaData.newInstance(columnName, 
-                    			columnName, columnType, isNullable);
+                    			columnLabel, columnType, isNullable);
                         
                         entityColumnsMetaData.add(entityColumnMetaData);
                         columnNames.add(columnName);

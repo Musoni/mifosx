@@ -12,9 +12,12 @@ public class PreviewCampaignMessage {
 
     private final Integer totalNumberOfMessages;
 
-    public PreviewCampaignMessage(String campaignMessage, Integer totalNumberOfMessages) {
+    private final String reportStrethcyParams;
+
+    public PreviewCampaignMessage(String campaignMessage, Integer totalNumberOfMessages,String reportStrethcyParams) {
         this.campaignMessage = campaignMessage;
         this.totalNumberOfMessages = totalNumberOfMessages;
+        this.reportStrethcyParams = reportStrethcyParams;
     }
 
     public String getCampaignMessage() {

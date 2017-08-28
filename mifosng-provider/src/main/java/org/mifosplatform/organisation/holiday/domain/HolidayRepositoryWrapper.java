@@ -57,7 +57,9 @@ public class HolidayRepositoryWrapper {
     }
 
     public List<Holiday> findUnprocessed() {
-        return this.repository.findUnprocessed(HolidayStatusType.ACTIVE.getValue());
+    	Integer status = HolidayStatusType.ACTIVE.getValue();
+    	
+        return this.repository.findUnprocessed(status);
     }
 
     public boolean isHoliday(Long officeId, LocalDate transactionDate) {

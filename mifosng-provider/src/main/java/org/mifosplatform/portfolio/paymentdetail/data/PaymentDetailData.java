@@ -5,6 +5,7 @@
  */
 package org.mifosplatform.portfolio.paymentdetail.data;
 
+import org.mifosplatform.portfolio.paymentdetail.domain.PaymentDetail;
 import org.mifosplatform.portfolio.paymenttype.data.PaymentTypeData;
 
 /**
@@ -26,9 +27,16 @@ public class PaymentDetailData {
     private final String receiptNumber;
     @SuppressWarnings("unused")
     private final String bankNumber;
+    @SuppressWarnings("unused")
+    private String clientName;
+
+    public PaymentDetailData(final Long id, final PaymentTypeData paymentType,final String accountNumber, final String checkNumber,
+                             final String routingCode, final String receiptNumber, final String bankNumber){
+        this(id, paymentType, accountNumber, checkNumber, routingCode, receiptNumber, bankNumber, null);
+    }
 
     public PaymentDetailData(final Long id, final PaymentTypeData paymentType, final String accountNumber, final String checkNumber,
-            final String routingCode, final String receiptNumber, final String bankNumber) {
+            final String routingCode, final String receiptNumber, final String bankNumber, final String clientName) {
         this.id = id;
         this.paymentType = paymentType;
         this.accountNumber = accountNumber;
@@ -36,8 +44,9 @@ public class PaymentDetailData {
         this.routingCode = routingCode;
         this.receiptNumber = receiptNumber;
         this.bankNumber = bankNumber;
+        this.clientName = clientName;
     }
-    
-    
+
+    public void setClientName(final String clientName) { this.clientName = clientName; }
 
 }

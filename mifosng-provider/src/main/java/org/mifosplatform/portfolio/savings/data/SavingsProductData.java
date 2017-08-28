@@ -16,7 +16,6 @@ import org.mifosplatform.accounting.glaccount.data.GLAccountData;
 import org.mifosplatform.accounting.producttoaccountmapping.data.ChargeToGLAccountMapper;
 import org.mifosplatform.accounting.producttoaccountmapping.data.PaymentTypeToGLAccountMapper;
 import org.mifosplatform.infrastructure.codes.data.CodeValueData;
-import org.mifosplatform.infrastructure.codes.domain.CodeValue;
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import org.mifosplatform.organisation.monetary.data.CurrencyData;
 import org.mifosplatform.portfolio.charge.data.ChargeData;
@@ -78,6 +77,12 @@ public class SavingsProductData {
 	private final BigDecimal nominalAnnualInterestRateOverdraft;
 	private final BigDecimal minOverdraftForInterestCalculation;
 
+    //interest Rate Chart for savings product
+    private final Collection<InterestRateCharts> interestRateCharts;
+
+    private Collection<ApplyProductChargeToExistingSavingsAccountData> applyProductChargeToExistingSavingsAccount;
+
+
     public static SavingsProductData template(final CurrencyData currency, final EnumOptionData interestCompoundingPeriodType,
             final EnumOptionData interestPostingPeriodType, final EnumOptionData interestCalculationType,
             final EnumOptionData interestCalculationDaysInYearType, final EnumOptionData accountingRule,
@@ -115,6 +120,9 @@ public class SavingsProductData {
         final LocalDate closeDate = null;
         final String status = null;
         final CodeValueData productGroup = null;
+        final Collection<InterestRateCharts> interestRateCharts = null;
+        final Collection<ApplyProductChargeToExistingSavingsAccountData> applyProductChargeToExistingSavingsAccount= null;
+
 
 
         return new SavingsProductData(id, name, shortName, description, currency, nominalAnnualInterestRate, interestCompoundingPeriodType,
@@ -126,7 +134,7 @@ public class SavingsProductData {
                 accountingMappingOptions, charges, chargeOptions, penaltyOptions, feeToIncomeAccountMappings,
                 penaltyToIncomeAccountMappings, allowOverdraft, overdraftLimit, minRequiredBalance, enforceMinRequiredBalance,
                 minBalanceForInterestCalculation, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation,
-                startDate, closeDate, status, productGroup);
+                startDate, closeDate, status, productGroup,interestRateCharts,applyProductChargeToExistingSavingsAccount);
     }
 
     public static SavingsProductData withCharges(final SavingsProductData product, final Collection<ChargeData> charges) {
@@ -143,7 +151,7 @@ public class SavingsProductData {
                 product.feeToIncomeAccountMappings, product.penaltyToIncomeAccountMappings, product.allowOverdraft, product.overdraftLimit,
                 product.minRequiredBalance, product.enforceMinRequiredBalance, product.minBalanceForInterestCalculation,
                 product.nominalAnnualInterestRateOverdraft, product.minOverdraftForInterestCalculation, product.startDate,
-                product.closeDate, product.status, product.productGroup);
+                product.closeDate, product.status, product.productGroup,null,null);
     }
 
     /**
@@ -174,7 +182,7 @@ public class SavingsProductData {
                 existingProduct.overdraftLimit, existingProduct.minRequiredBalance, existingProduct.enforceMinRequiredBalance,
                 existingProduct.minBalanceForInterestCalculation, existingProduct.nominalAnnualInterestRateOverdraft,
                 existingProduct.minOverdraftForInterestCalculation, existingProduct.startDate, existingProduct.closeDate,
-                existingProduct.status, existingProduct.productGroup);
+                existingProduct.status, existingProduct.productGroup,null,null);
     }
 
     public static SavingsProductData withAccountingDetails(final SavingsProductData existingProduct,
@@ -196,6 +204,10 @@ public class SavingsProductData {
         final Collection<ChargeData> chargeOptions = null;
         final Collection<ChargeData> penaltyOptions = null;
         final Collection<CodeValueData> productGroupOptions = null;
+        final Collection<InterestRateCharts> interestRateCharts = null;
+        final Collection<ApplyProductChargeToExistingSavingsAccountData> applyProductChargeToExistingSavingsAccount = null;
+
+
 
         return new SavingsProductData(existingProduct.id, existingProduct.name, existingProduct.shortName, existingProduct.description,
                 existingProduct.currency, existingProduct.nominalAnnualInterestRate, existingProduct.interestCompoundingPeriodType,
@@ -211,7 +223,7 @@ public class SavingsProductData {
                 existingProduct.minRequiredBalance, existingProduct.enforceMinRequiredBalance,
                 existingProduct.minBalanceForInterestCalculation, existingProduct.nominalAnnualInterestRateOverdraft,
                 existingProduct.minOverdraftForInterestCalculation, existingProduct.startDate, existingProduct.closeDate,
-                existingProduct.status, existingProduct.productGroup);
+                existingProduct.status, existingProduct.productGroup,interestRateCharts,applyProductChargeToExistingSavingsAccount);
     }
 
     public static SavingsProductData instance(final Long id, final String name, final String shortName, final String description,
@@ -243,6 +255,9 @@ public class SavingsProductData {
         final Collection<ChargeToGLAccountMapper> feeToIncomeAccountMappings = null;
         final Collection<ChargeToGLAccountMapper> penaltyToIncomeAccountMappings = null;
         final Collection<CodeValueData> productGroupOptions = null;
+        final Collection<InterestRateCharts> interestRateCharts = null;
+        final  Collection<ApplyProductChargeToExistingSavingsAccountData> applyProductChargeToExistingSavingsAccount = null;
+
 
         return new SavingsProductData(id, name, shortName, description, currency, nominalAnnualInterestRate, interestCompoundingPeriodType,
                 interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
@@ -253,7 +268,7 @@ public class SavingsProductData {
                 accountingMappingOptions, charges, chargeOptions, penaltyOptions, feeToIncomeAccountMappings,
                 penaltyToIncomeAccountMappings, allowOverdraft, overdraftLimit, minRequiredBalance, enforceMinRequiredBalance,
                 minBalanceForInterestCalculation, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation,
-                startDate, closeDate, status, productGroup);
+                startDate, closeDate, status, productGroup,interestRateCharts,applyProductChargeToExistingSavingsAccount);
     }
 
     public static SavingsProductData lookup(final Long id, final String name) {
@@ -301,6 +316,8 @@ public class SavingsProductData {
         final Collection<ChargeToGLAccountMapper> feeToIncomeAccountMappings = null;
         final Collection<ChargeToGLAccountMapper> penaltyToIncomeAccountMappings = null;
         final Collection<CodeValueData> productGroupOptions = null;
+        final Collection<InterestRateCharts> interestRateCharts = null;
+        final Collection<ApplyProductChargeToExistingSavingsAccountData> applyProductChargeToExistingSavingsAccount = null;
 
         return new SavingsProductData(id, name, shortName, description, currency, nominalAnnualInterestRate, interestCompoundingPeriodType,
                 interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
@@ -311,8 +328,43 @@ public class SavingsProductData {
                 accountingMappingOptions, charges, chargeOptions, penaltyOptions, feeToIncomeAccountMappings,
                 penaltyToIncomeAccountMappings, allowOverdraft, overdraftLimit, minRequiredBalance, enforceMinRequiredBalance,
                 minBalanceForInterestCalculation, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation,
-                startDate, closeDate, status, productGroup);
+                startDate, closeDate, status, productGroup,interestRateCharts,applyProductChargeToExistingSavingsAccount);
     }
+    public static SavingsProductData withInterestRateCharts(final SavingsProductData product,final Collection<InterestRateCharts> interestRateCharts){
+
+        return new SavingsProductData(product.id, product.name, product.shortName, product.description, product.currency,
+                product.nominalAnnualInterestRate, product.interestCompoundingPeriodType, product.interestPostingPeriodType,
+                product.interestCalculationType, product.interestCalculationDaysInYearType, product.minRequiredOpeningBalance,
+                product.lockinPeriodFrequency, product.lockinPeriodFrequencyType, product.withdrawalFeeForTransfers,
+                product.accountingRule, product.accountingMappings, product.paymentChannelToFundSourceMappings,
+                product.productGroupOptions, product.currencyOptions,
+                product.interestCompoundingPeriodTypeOptions, product.interestPostingPeriodTypeOptions,
+                product.interestCalculationTypeOptions, product.interestCalculationDaysInYearTypeOptions,
+                product.lockinPeriodFrequencyTypeOptions, product.withdrawalFeeTypeOptions, product.paymentTypeOptions,
+                product.accountingRuleOptions, product.accountingMappingOptions, product.charges, product.chargeOptions, product.penaltyOptions,
+                product.feeToIncomeAccountMappings, product.penaltyToIncomeAccountMappings, product.allowOverdraft, product.overdraftLimit,
+                product.minRequiredBalance, product.enforceMinRequiredBalance, product.minBalanceForInterestCalculation,
+                product.nominalAnnualInterestRateOverdraft, product.minOverdraftForInterestCalculation, product.startDate,
+                product.closeDate, product.status, product.productGroup,interestRateCharts,null);
+    }
+    public static SavingsProductData withProductChargeToExistingAccounts(final SavingsProductData product,final Collection<ApplyProductChargeToExistingSavingsAccountData> applyProductChargeToExistingSavingsAccount){
+
+        return new SavingsProductData(product.id, product.name, product.shortName, product.description, product.currency,
+                product.nominalAnnualInterestRate, product.interestCompoundingPeriodType, product.interestPostingPeriodType,
+                product.interestCalculationType, product.interestCalculationDaysInYearType, product.minRequiredOpeningBalance,
+                product.lockinPeriodFrequency, product.lockinPeriodFrequencyType, product.withdrawalFeeForTransfers,
+                product.accountingRule, product.accountingMappings, product.paymentChannelToFundSourceMappings,
+                product.productGroupOptions, product.currencyOptions,
+                product.interestCompoundingPeriodTypeOptions, product.interestPostingPeriodTypeOptions,
+                product.interestCalculationTypeOptions, product.interestCalculationDaysInYearTypeOptions,
+                product.lockinPeriodFrequencyTypeOptions, product.withdrawalFeeTypeOptions, product.paymentTypeOptions,
+                product.accountingRuleOptions, product.accountingMappingOptions, product.charges, product.chargeOptions, product.penaltyOptions,
+                product.feeToIncomeAccountMappings, product.penaltyToIncomeAccountMappings, product.allowOverdraft, product.overdraftLimit,
+                product.minRequiredBalance, product.enforceMinRequiredBalance, product.minBalanceForInterestCalculation,
+                product.nominalAnnualInterestRateOverdraft, product.minOverdraftForInterestCalculation, product.startDate,
+                product.closeDate, product.status, product.productGroup,product.interestRateCharts, applyProductChargeToExistingSavingsAccount);
+    }
+
 
     private SavingsProductData(final Long id, final String name, final String shortName, final String description,
             final CurrencyData currency, final BigDecimal nominalAnnualInterestRate, final EnumOptionData interestCompoundingPeriodType,
@@ -335,7 +387,8 @@ public class SavingsProductData {
             final BigDecimal overdraftLimit, final BigDecimal minRequiredBalance, final boolean enforceMinRequiredBalance,
             final BigDecimal minBalanceForInterestCalculation,
             final BigDecimal nominalAnnualInterestRateOverdraft, final BigDecimal minOverdraftForInterestCalculation,
-            final LocalDate startDate, final LocalDate closeDate, final String status, final CodeValueData productGroup) {
+            final LocalDate startDate, final LocalDate closeDate, final String status, final CodeValueData productGroup,
+            final Collection<InterestRateCharts> interestRateCharts, final Collection<ApplyProductChargeToExistingSavingsAccountData> productChargeToExistingSavingsAccounts) {
         this.id = id;
         this.name = name;
         this.shortName = shortName;
@@ -390,6 +443,8 @@ public class SavingsProductData {
         this.minBalanceForInterestCalculation = minBalanceForInterestCalculation;
         this.nominalAnnualInterestRateOverdraft = nominalAnnualInterestRateOverdraft;
         this.minOverdraftForInterestCalculation = minOverdraftForInterestCalculation;
+        this.interestRateCharts = interestRateCharts;
+        this.applyProductChargeToExistingSavingsAccount =  productChargeToExistingSavingsAccounts;
     }
 
     public boolean hasAccountingEnabled() {

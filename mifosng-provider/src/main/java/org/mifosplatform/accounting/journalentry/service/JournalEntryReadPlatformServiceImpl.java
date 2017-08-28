@@ -120,6 +120,7 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
                         .append(" pt.is_deleted as paymentTypeDeleted, ")
                         .append(" pd.payment_type_id as paymentTypeId,").append(" pd.bank_number as bankNumber, ")
                         .append(" pd.routing_code as routingCode, ")
+                        .append(" ifnull(mc.display_name,concat(mg.display_name, ' - [Group]')) as clientName, ")
                         .append(" lt.transaction_type_enum as loanTransactionType, ")
                         .append(" st.transaction_type_enum as savingsTransactionType, ")
                         .append("  ct.txn_type as cashierTransactionType ");
@@ -146,6 +147,10 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
             if (associationParametersData.isPaymentDetailsRequired()) {
                 sb.append(" left join m_loan_transaction as lt on journalEntry.loan_transaction_id = lt.id ")
                         .append(" left join m_savings_account_transaction as st on journalEntry.savings_transaction_id = st.id ")
+                        .append(" left join m_loan as loan on lt.loan_id = loan.id ")
+                        .append(" left join m_savings_account as savings on st.savings_account_id = savings.id ")
+                        .append(" left join m_client as mc on mc.id = ifnull(loan.client_id, savings.client_id) ")
+                        .append(" left join m_group as mg on mg.id = ifnull(loan.group_id, savings.group_id) ")
                         .append(" left join m_payment_detail as pd on journalEntry.payment_details_id = pd.id ")
                         .append(" left join m_payment_type as pt on pt.id = pd.payment_type_id ")
                         .append(" left join m_cashier_transactions as ct on journalEntry.entity_id = ct.id ")
@@ -238,7 +243,15 @@ public class JournalEntryReadPlatformServiceImpl implements JournalEntryReadPlat
                     paymentDetailData = new PaymentDetailData(id, paymentType, accountNumber, checkNumber, routingCode, receiptNumber,
                             bankNumber);
                 }
-                
+
+                final String clientName = rs.getString("clientName");
+                if(clientName != null){
+                    if(paymentDetailData != null){
+                        paymentDetailData.setClientName(clientName);
+                    }else{
+                        paymentDetailData = new PaymentDetailData(id, null, null, null, null, null, null, clientName);
+                    }
+                }
                 
                 if (entityType != null) {
                     transaction = Long.parseLong(transactionId.substring(1).trim());
