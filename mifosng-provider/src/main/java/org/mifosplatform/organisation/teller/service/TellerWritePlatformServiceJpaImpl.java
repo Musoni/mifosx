@@ -38,6 +38,7 @@ import org.mifosplatform.organisation.office.domain.OfficeRepository;
 import org.mifosplatform.organisation.office.exception.OfficeNotFoundException;
 import org.mifosplatform.organisation.staff.domain.Staff;
 import org.mifosplatform.organisation.staff.domain.StaffRepository;
+import org.mifosplatform.organisation.staff.exception.StaffDoesNotHaveAUserAccountException;
 import org.mifosplatform.organisation.staff.exception.StaffNotFoundException;
 import org.mifosplatform.organisation.teller.data.TellerData;
 import org.mifosplatform.organisation.teller.domain.Cashier;
@@ -286,6 +287,11 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
             }
 
             final AppUser user =this.appUserRepository.findAppUserByStaffId(staffId);
+
+            if(user==null){
+
+                throw new StaffDoesNotHaveAUserAccountException(staffId);
+            }
 
             final Cashier cashier = Cashier.fromJson(tellerOffice, teller, staff, startTime,endTime, command, user);
 

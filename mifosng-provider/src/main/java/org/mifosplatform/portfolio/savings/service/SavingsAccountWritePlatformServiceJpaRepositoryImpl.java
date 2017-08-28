@@ -44,6 +44,7 @@ import org.mifosplatform.organisation.monetary.domain.MoneyHelper;
 import org.mifosplatform.organisation.office.domain.Office;
 import org.mifosplatform.organisation.staff.domain.Staff;
 import org.mifosplatform.organisation.staff.domain.StaffRepositoryWrapper;
+import org.mifosplatform.organisation.teller.service.TellerManagementReadPlatformService;
 import org.mifosplatform.organisation.workingdays.domain.WorkingDaysRepositoryWrapper;
 import org.mifosplatform.portfolio.account.PortfolioAccountType;
 import org.mifosplatform.portfolio.account.domain.AccountTransferStandingInstruction;
@@ -121,6 +122,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
     private final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService;
     private final StandingInstructionRepository standingInstructionRepository;
     private final BusinessEventNotifierService businessEventNotifierService;
+    private final TellerManagementReadPlatformService tellerManagementReadPlatformService;
 
     @Autowired
     public SavingsAccountWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -142,7 +144,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository, 
             final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService, 
             final StandingInstructionRepository standingInstructionRepository,
-            final BusinessEventNotifierService businessEventNotifierService) {
+            final BusinessEventNotifierService businessEventNotifierService,
+            final TellerManagementReadPlatformService tellerManagementReadPlatformService) {
         this.context = context;
         this.savingAccountRepository = savingAccountRepository;
         this.savingsAccountTransactionRepository = savingsAccountTransactionRepository;
@@ -168,6 +171,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         this.entityDatatableChecksWritePlatformService = entityDatatableChecksWritePlatformService;
         this.standingInstructionRepository = standingInstructionRepository;
         this.businessEventNotifierService = businessEventNotifierService;
+        this.tellerManagementReadPlatformService = tellerManagementReadPlatformService;
     }
 
     @Transactional
@@ -302,6 +306,10 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         final SavingsAccount account = this.savingAccountAssembler.assembleFrom(savingsId);
         checkClientOrGroupActive(account);
 
+        final AppUser currentUser = getAppUserIfPresent();
+
+        this.tellerManagementReadPlatformService.checkIfMoneyInTill(currentUser.getId(),transactionAmount);
+        
         final boolean isAccountTransfer = false;
         final boolean isRegularTransaction = true;
         final boolean isApplyWithdrawFee = true;

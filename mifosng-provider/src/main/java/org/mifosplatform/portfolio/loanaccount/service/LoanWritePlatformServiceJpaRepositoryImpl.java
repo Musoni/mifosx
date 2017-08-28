@@ -54,6 +54,8 @@ import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
 import org.mifosplatform.organisation.monetary.domain.Money;
 import org.mifosplatform.organisation.office.domain.Office;
 import org.mifosplatform.organisation.staff.domain.Staff;
+import org.mifosplatform.organisation.teller.service.TellerManagementReadPlatformService;
+import org.mifosplatform.organisation.teller.service.TellerManagementReadPlatformServiceImpl;
 import org.mifosplatform.organisation.workingdays.domain.WorkingDays;
 import org.mifosplatform.organisation.workingdays.domain.WorkingDaysRepositoryWrapper;
 import org.mifosplatform.portfolio.account.PortfolioAccountType;
@@ -224,6 +226,8 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
     private final SavingsAccountWritePlatformService savingsAccountWritePlatformService;
     private final FloatingRatesReadPlatformService floatingRatesReadPlatformService;
     private final CodeValueRepositoryWrapper codeValueRepository;
+    private final TellerManagementReadPlatformService tellerManagementReadPlatformService;
+
 
     @Autowired
     public LoanWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -257,7 +261,9 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
             final StandingInstructionRepository standingInstructionRepository, 
             final SavingsAccountWritePlatformService savingsAccountWritePlatformService, 
             final FloatingRatesReadPlatformService floatingRatesReadPlatformService,
-            final CodeValueRepositoryWrapper codeValueRepository) {
+            final CodeValueRepositoryWrapper codeValueRepository,
+            final TellerManagementReadPlatformService tellerManagementReadPlatformService) {
+
         this.context = context;
         this.loanEventApiJsonValidator = loanEventApiJsonValidator;
         this.loanAssembler = loanAssembler;
@@ -299,6 +305,8 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
         this.floatingRatesReadPlatformService = floatingRatesReadPlatformService;
         this.codeValueRepository = codeValueRepository;
+        this.tellerManagementReadPlatformService = tellerManagementReadPlatformService;
+
     }
 
     private LoanLifecycleStateMachine defaultLoanLifecycleStateMachine() {
@@ -324,6 +332,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 
         entityDatatableChecksWritePlatformService.runTheCheckForLoan(loanId, EntityTables.LOAN.getName(), StatusEnum.ACTIVATE.getCode().longValue(), EntityTables.LOAN.getForeignKeyColumnNameOnDatatable(),productId);
 
+        this.tellerManagementReadPlatformService.checkIfMoneyInTill(currentUser.getId(),loan.getApprovedPrincipal());
         // check for product mix validations
         checkForProductMixRestrictions(loan);
 

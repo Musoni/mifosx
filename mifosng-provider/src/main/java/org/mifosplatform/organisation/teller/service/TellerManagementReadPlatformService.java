@@ -12,6 +12,7 @@ import org.mifosplatform.organisation.teller.data.TellerData;
 import org.mifosplatform.organisation.teller.data.TellerJournalData;
 import org.mifosplatform.organisation.teller.data.TellerTransactionData;
 
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Date;
 
@@ -21,7 +22,11 @@ public interface TellerManagementReadPlatformService {
 
     public TellerData findTeller(Long tellerId);
 
+    public TellerData findTellerByUserId(Long userId);
+
     public CashierData findCashier(Long cashierId);
+
+    public CashierData findCashierByStaffId(Long staffId);
 
     public Collection<CashierData> getCashierData(Long officeId, Long tellerId, Long staffId, Date date);
 
@@ -55,5 +60,7 @@ public interface TellerManagementReadPlatformService {
 
 
     public boolean hasTransaction(final Long cashierId);
+
+    public  void checkIfMoneyInTill(final Long userId,final BigDecimal amount);
 
 }

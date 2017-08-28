@@ -11,7 +11,7 @@ import org.mifosplatform.infrastructure.core.exception.AbstractPlatformDomainRul
 public class NotEnoughCashInTheMainVaultTellerException extends AbstractPlatformDomainRuleException{
 
     private static final String ERROR_MESSAGE_CODE = "error.msg.not.enough.cash.in.the.main.vault.account";
-    private static final String DEFAULT_ERROR_MESSAGE = "There is not enough cash in the main vault account to allocate to the teller";
+    private static final String DEFAULT_ERROR_MESSAGE = "There is not enough cash in the main vault account";
 
     public NotEnoughCashInTheMainVaultTellerException(Long accountId) {
         super(ERROR_MESSAGE_CODE, DEFAULT_ERROR_MESSAGE, accountId);

@@ -37,6 +37,7 @@ import org.mifosplatform.organisation.teller.data.TellerJournalData;
 import org.mifosplatform.organisation.teller.data.TellerTransactionData;
 import org.mifosplatform.organisation.teller.domain.CashierTxnType;
 import org.mifosplatform.organisation.teller.domain.TellerStatus;
+import org.mifosplatform.organisation.teller.exception.NotEnoughCashInTheMainVaultTellerException;
 import org.mifosplatform.useradministration.domain.AppUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -209,6 +210,77 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             return sqlBuilder.toString();
         }
 
+        public String schemaByUserId() {
+
+            final StringBuilder sqlBuilder = new StringBuilder(400);
+
+            sqlBuilder.append("t.id as id,t.office_id as office_id, t.name as teller_name, t.description as description, ");
+            sqlBuilder.append("t.valid_from as start_date, t.valid_to as end_date, t.state as status, null as office_name, ");
+            sqlBuilder.append("t.debit_account_id as debit_account_id, t.credit_account_id as credit_account_id, ");
+            sqlBuilder.append("c.id as cashier_id, st.display_name as cashier_name, ");
+            sqlBuilder.append("(IFNULL(loan.balance,0) + IFNULL(sav.balance,0)+ IFNULL(txn.balance,0)) as balance ");
+
+
+            sqlBuilder.append(" FROM m_cashiers c ");
+            sqlBuilder.append(" JOIN m_appuser u on u.id = c.appuser_id and c.staff_id = u.staff_id ");
+            sqlBuilder.append(" left join m_tellers t on t.id = c.teller_id ");
+            sqlBuilder.append(" left join m_staff st on st.id = c.staff_id ");
+            sqlBuilder.append(" LEFT JOIN ( SELECT SUM( loan_txn.amount ) as balance, c.teller_id as teller_id ");
+            sqlBuilder.append(" from m_loan_transaction loan_txn ");
+            sqlBuilder.append(" left join m_loan loan on loan_txn.loan_id = loan.id ");
+            sqlBuilder.append(" left join m_appuser user on loan_txn.appuser_id = user.id ");
+            sqlBuilder.append(" left join m_cashiers c on c.appuser_id = user.id ");
+            sqlBuilder.append(" where loan_txn.is_reversed = 0 and loan_txn.created_date >= c.started_at ");
+            sqlBuilder.append(" and ( loan_txn.created_date <= c.ended_at OR c.ended_at IS NULL) ");
+            sqlBuilder.append(" and exists ( ");
+            sqlBuilder.append("  select pd.id from m_payment_detail pd ");
+            sqlBuilder.append("  left join  m_payment_type pt on pt.id = pd.payment_type_id ");
+            sqlBuilder.append("  where pt.is_cash_payment=1 ");
+            sqlBuilder.append(" and loan_txn.payment_detail_id = pd.id ) ");
+
+            sqlBuilder.append(" and  EXISTS ( select renum.enum_value from r_enum_value renum where renum.enum_value in ");
+            sqlBuilder.append(" ('Repayment At Disbursement','Repayment', 'Recovery Payment','Disbursement') ");
+            sqlBuilder.append(" and loan_txn.transaction_type_enum = renum.enum_id ) ");
+            sqlBuilder.append(" group by c.teller_id ) as loan on loan.teller_id = c.teller_id ");
+
+            sqlBuilder.append(" LEFT JOIN (  SELECT SUM( CASE WHEN renum.enum_value in ('deposit','withdrawal fee', 'Pay Charge') ");
+            sqlBuilder.append("  THEN sav_txn.amount ELSE  -1* sav_txn.amount END ) as balance, c.teller_id as teller_id ");
+            sqlBuilder.append("  from m_savings_account_transaction sav_txn ");
+            sqlBuilder.append("  left join r_enum_value renum on sav_txn.transaction_type_enum = renum.enum_id and renum.enum_name = 'savings_transaction_type_enum' ");
+            sqlBuilder.append("  left join m_savings_account sav on sav_txn.savings_account_id = sav.id ");
+            sqlBuilder.append("  left join m_appuser user on sav_txn.appuser_id = user.id ");
+            sqlBuilder.append("  left join m_cashiers c on c.appuser_id = user.id ");
+
+            sqlBuilder.append("  where sav_txn.is_reversed = 0 and sav_txn.created_date >= c.started_at ");
+            sqlBuilder.append("  and ( sav_txn.created_date <= c.ended_at OR c.ended_at IS NULL) ");
+            sqlBuilder.append("  and exists ( select pd.id from m_payment_detail pd left join  m_payment_type pt on pt.id = pd.payment_type_id where pt.is_cash_payment=1 ");
+            sqlBuilder.append(" and sav_txn.payment_detail_id = pd.id ) and  EXISTS ( ");
+
+            sqlBuilder.append(" select renum.enum_value from r_enum_value renum where renum.enum_value in ");
+            sqlBuilder.append("('deposit','withdrawal fee', 'Pay Charge', 'withdrawal') ");
+            sqlBuilder.append("and sav_txn.transaction_type_enum  = renum.enum_id and  renum.enum_name = 'savings_transaction_type_enum' ) ");
+
+            sqlBuilder.append(" and renum.enum_value in ('deposit','withdrawal fee', 'Pay Charge', 'withdrawal') ");
+            sqlBuilder.append(" group by c.teller_id  ) as sav on sav.teller_id = c.teller_id  ");
+
+            sqlBuilder.append(" LEFT JOIN (  SELECT ");
+            sqlBuilder.append(" SUM( CASE WHEN txn.txn_type in (101) THEN txn.txn_amount ELSE  -1* txn.txn_amount END ) as balance, ");
+            sqlBuilder.append(" c.teller_id as teller_id ");
+            sqlBuilder.append(" from m_cashier_transactions txn ");
+            sqlBuilder.append(" left join m_cashiers c on c.id = txn.cashier_id ");
+            sqlBuilder.append(" left join m_staff s on s.id = c.staff_id ");
+            sqlBuilder.append(" where  txn.created_date >= c.started_at ");
+            sqlBuilder.append(" and(txn.created_date <= c.ended_at OR c.end_date IS NULL)");
+
+            sqlBuilder.append(" group by c.teller_id ");
+                  
+            sqlBuilder.append(" ) as txn on txn.teller_id = c.teller_id ");
+
+            sqlBuilder.append(" WHERE  c.is_active = 1 and ended_at is null AND appuser_id = ? ");
+
+            return sqlBuilder.toString();
+        }
+
         @Override
         public TellerData mapRow(final ResultSet rs, @SuppressWarnings("unused") final int rowNum) throws SQLException {
 
@@ -339,6 +411,17 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
     }
 
     @Override
+    public TellerData findTellerByUserId(Long userId){
+
+
+            final TellerMapper tm = new TellerMapper();
+            final String sql = "select " + tm.schemaByUserId() ;
+
+            return this.jdbcTemplate.queryForObject(sql, tm, new Object[] { userId });
+
+    }
+
+    @Override
     public Collection<TellerData> retrieveAllTellers(final String sqlSearch, final Long officeId, final String status) {
         final String extraCriteria = getTellerCriteria(sqlSearch, officeId, status);
         return retrieveAllTeller(extraCriteria);
@@ -438,6 +521,20 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             return this.jdbcTemplate.queryForObject(sql, cm, new Object[] { cashierId });
         } catch (final EmptyResultDataAccessException e) {
             throw new StaffNotFoundException(cashierId);
+        }
+    }
+
+    @Override
+    public CashierData findCashierByStaffId(Long staffId){
+        try {
+            final CashierMapper cm = new CashierMapper();
+            final String sql = "select " + cm.schema() + " where s.id = ? AND c.ended_at IS NULL and c.is_active=1";
+
+            return this.jdbcTemplate.queryForObject(sql, cm, new Object[] { staffId });
+
+        } catch (final EmptyResultDataAccessException e) {
+
+            return null;
         }
     }
 
@@ -719,6 +816,8 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
 
             return sqlBuilder.toString();
         }
+
+
 
         @Override
         public CashierData mapRow(final ResultSet rs, @SuppressWarnings("unused") final int rowNum) throws SQLException {
@@ -1033,6 +1132,25 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
 
         final String hasTransaction = this.jdbcTemplate.queryForObject(sql, String.class, new Object[]{cashierId});
         return new Boolean(hasTransaction);
+    }
+
+    public  void  checkIfMoneyInTill(final Long userId,final BigDecimal amount){
+
+        try {
+
+            final TellerData teller =this.findTellerByUserId(userId);
+
+            if(teller.getBalance().compareTo(amount) < 0){
+
+                throw new NotEnoughCashInTheMainVaultTellerException(userId);
+            }
+
+        } catch (final EmptyResultDataAccessException e) {
+
+
+        }
+
+
     }
 
 }
