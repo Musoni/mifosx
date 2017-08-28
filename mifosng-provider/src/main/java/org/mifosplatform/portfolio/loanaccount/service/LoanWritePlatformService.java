@@ -102,4 +102,6 @@ public interface LoanWritePlatformService {
 
     CommandProcessingResult splitInterestAmongGuarantors(Long loanId);
 
+    CommandProcessingResult updateLoanSubStatus(Long loanId, JsonCommand command);
+
 }

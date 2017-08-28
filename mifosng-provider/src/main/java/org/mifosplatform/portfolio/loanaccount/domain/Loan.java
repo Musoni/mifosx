@@ -21,21 +21,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Embedded;
-import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
-import javax.persistence.OrderBy;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
-import javax.persistence.Transient;
-import javax.persistence.UniqueConstraint;
-import javax.persistence.Version;
+import javax.persistence.*;
 
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
@@ -155,6 +141,10 @@ public class Loan extends AbstractPersistable<Long> {
 
     @Column(name = "loan_type_enum", nullable = false)
     private Integer loanType;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sub_status_cv_id", nullable = true)
+    private CodeValue subStatus;
 
     @ManyToOne
     @JoinColumn(name = "product_id", nullable = false)
@@ -4656,6 +4646,22 @@ public class Loan extends AbstractPersistable<Long> {
 
     public boolean isGroupLoan() {
         return AccountType.fromInt(this.loanType).isGroupAccount();
+    }
+
+    public CodeValue subStatus() {
+        return this.subStatus;
+    }
+
+    public Long subStatusId() {
+        Long subStatusId = null;
+        if (this.subStatus != null) {
+            subStatusId = this.subStatus.getId();
+        }
+        return subStatusId;
+    }
+
+    public void updateSubStatus(CodeValue subStatus){
+        this.subStatus = subStatus;
     }
 
     public boolean isJLGLoan() {

@@ -530,6 +530,7 @@ public class LoansApiResource {
         ChargeData chargeTemplate = null;
         Collection<CodeValueData> loanPurposeOptions = null;
         Collection<CodeValueData> loanCollateralOptions = null;
+        Collection<CodeValueData> substatusOptions = null;
         Collection<CalendarData> calendarOptions = null;
         Collection<PortfolioAccountData> accountLinkingOptions = null;
         PaidInAdvanceData paidInAdvanceTemplate = null;
@@ -596,7 +597,7 @@ public class LoansApiResource {
                 charges, collateral, guarantors, meeting, productOptions, loanTermFrequencyTypeOptions, repaymentFrequencyTypeOptions,
                 null, null, repaymentStrategyOptions, interestRateFrequencyTypeOptions, amortizationTypeOptions, interestTypeOptions,
                 interestCalculationPeriodTypeOptions, fundOptions, chargeOptions, chargeTemplate, allowedLoanOfficers, loanPurposeOptions,
-                loanCollateralOptions, calendarOptions, notes, accountLinkingOptions, linkedAccount, disbursementData, emiAmountVariations,
+                loanCollateralOptions, substatusOptions, calendarOptions, notes, accountLinkingOptions, linkedAccount, disbursementData, emiAmountVariations,
                 overdueCharges, paidInAdvanceTemplate, interestRatesPeriods, loanCreditCheckDataList, groupLoanMembersAllocationList);
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters(),
@@ -738,6 +739,11 @@ public class LoansApiResource {
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         }else if(is(commandParam,"splitinterestamongguarantors")){
             final CommandWrapper commandRequest =  new CommandWrapperBuilder().splitInterestAmongGuarantors(loanId).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        }
+
+        if (is(commandParam, "updatesubstatus")){
+            final CommandWrapper commandRequest = builder.updateSubStatus(loanId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         }
 
