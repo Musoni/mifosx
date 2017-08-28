@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 import java.security.Timestamp;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
@@ -463,6 +464,40 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
     public Collection<CashierTransactionData> fetchTellerTransactionsByTellerId(Long tellerId, Date fromDate, Date toDate) {
 
 
+          SimpleDateFormat mysqlDateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        System.out.println("mysql date time format "+ mysqlDateTimeFormat.format(fromDate) + "  to time "+mysqlDateTimeFormat.format(toDate));
+
+
+
+//        final String userHierarchy = this.context.getAuthenticatedUserIfPresent().getOffice().getHierarchy();
+//        final String hierarchySearchString = userHierarchy+"%";
+//
+//
+        //final CashierTransactionMapper ctm = new CashierTransactionMapper();
+//
+//        final String sqls = " select * from (select *, @balance:= CASE WHEN txn_type IN (103,101) THEN @balance+ txn_amount ELSE @balance-txn_amount END as balance " +
+//                "from (select @balance:=0) as p, (select * from (select " + ctm.cashierTxnSchema()
+//                + " where t.id = ? and (txn.currency_code = ?  or ? IS NULL ) and o.hierarchy like ? " +
+//                " and ( (txn.created_date BETWEEN ? and ? ) OR ( ? IS NULL  AND ? IS NULL ) ) ) cashier_txns " + " union (select "
+//                + ctm.savingsTxnSchema()
+//                + " where pt.is_cash_payment=1 and sav_txn.is_reversed = 0 and t.id = ? and ( sav.currency_code = ? OR ? IS NULL ) and o.hierarchy like ? and "
+//                + " sav_txn.created_date >= c.started_at and ( sav_txn.created_date <= c.ended_at OR c.ended_at IS NULL) " +
+//                " and ( (sav_txn.created_date BETWEEN ? and ? ) OR ( ? IS NULL  AND ? IS NULL ) ) "
+//                + " and renum.enum_value in ('deposit','withdrawal fee', 'Pay Charge', 'withdrawal') ) " + " union (select "
+//                + ctm.loansTxnSchema()
+//                + " where pt.is_cash_payment=1 and loan_txn.is_reversed = 0 and t.id = ? and (loan.currency_code = ?  OR ? IS NULL )and o.hierarchy like ? and "
+//                + " loan_txn.created_date >= c.started_at and ( loan_txn.created_date <= c.ended_at OR c.ended_at IS NULL) " +
+//                "  and ( (loan_txn.created_date BETWEEN ? and ? ) OR ( ? IS NULL  AND ? IS NULL ) ) "
+//                + " and renum.enum_value in ('Repayment At Disbursement','Repayment', 'Recovery Payment','Disbursement') ) "
+//                + " order by created_date ) as t ) as z order by created_date desc ";
+
+        // logger.info(sql);
+
+//        return this.jdbcTemplate.query(sql, ctm, new Object[] { tellerId, null, null, hierarchySearchString, fromDate,toDate,fromDate,toDate,
+//                tellerId, null,null,hierarchySearchString, fromDate,toDate,fromDate,toDate,
+//                tellerId, null,null, hierarchySearchString, fromDate,toDate,fromDate,toDate });
+
+
             final String userHierarchy = this.context.getAuthenticatedUserIfPresent().getOffice().getHierarchy();
             final String hierarchySearchString = userHierarchy+"%";
 
@@ -481,6 +516,7 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
                     "  where pt.is_cash_payment=1  and sav_txn.payment_detail_id = pd.id  ) "
                     + " and sav_txn.is_reversed = 0 and t.id = ? and ( sav.currency_code = ? OR ? IS NULL ) and o.hierarchy like ? and "
                     + " sav_txn.created_date >= c.started_at and ( sav_txn.created_date <= c.ended_at OR c.ended_at IS NULL) "
+                    + " and sav_txn.created_date BETWEEN ? and ?  "
 
                     + "  ) " + " union (select "
                     + ctm.loansTxnSchema()
@@ -490,15 +526,17 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
                     "   where pt.is_cash_payment=1  and loan_txn.payment_detail_id = pd.id  )  "
                     + " and loan_txn.is_reversed = 0 and t.id = ? and (loan.currency_code = ?  OR ? IS NULL )and o.hierarchy like ? and "
                     + " loan_txn.created_date >= c.started_at and ( loan_txn.created_date <= c.ended_at OR c.ended_at IS NULL) "
+                    + " and loan_txn.created_date BETWEEN  ? and ?  "
 
                     + " ) "
                     + " order by created_date ) as t ) as z order by created_date desc ";
 
             // logger.info(sql);
 
+
             return this.jdbcTemplate.query(sql, ctm, new Object[] { tellerId, null, null, hierarchySearchString,
-                    tellerId, null,null,hierarchySearchString,
-                    tellerId, null,null, hierarchySearchString });
+                    tellerId, null,null,mysqlDateTimeFormat.format(fromDate),mysqlDateTimeFormat.format(toDate),hierarchySearchString,
+                    tellerId, null,null, hierarchySearchString ,mysqlDateTimeFormat.format(fromDate),mysqlDateTimeFormat.format(toDate) });
     }
 
     @Override
