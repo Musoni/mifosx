@@ -51,7 +51,7 @@ import java.util.Set;
 @Table(name = "m_loan_transaction", uniqueConstraints = { @UniqueConstraint(columnNames = { "external_id" }, name = "external_id_UNIQUE") })
 public final class LoanTransaction extends AbstractPersistable<Long> {
 
-    @ManyToOne(optional = false,cascade = CascadeType.MERGE)
+    @ManyToOne(optional = false)
     @JoinColumn(name = "loan_id", nullable = false)
     private Loan loan;
 
