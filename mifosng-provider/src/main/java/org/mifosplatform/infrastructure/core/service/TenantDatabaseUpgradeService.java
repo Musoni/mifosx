@@ -83,8 +83,8 @@ public class TenantDatabaseUpgradeService {
      * @return boolean true if value is true, else false
      **/
     private boolean isFlywayEnabled() {
-        // scheduler is disabled by default
-        boolean isEnabled = false;
+        // scheduler is enabled by default
+        boolean isEnabled = true;
         Properties flywayProperties = new Properties();
         InputStream flywayPropertiesInputStream = null;
         File catalinaBaseConfDirectory = null;
