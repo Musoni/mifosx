@@ -302,4 +302,8 @@ public final class ResultsetColumnHeaderData {
     public String getColumnFormulaExpression() {
         return columnFormulaExpression;
     }
+
+    public List<ResultsetColumnValueData> getColumnValues() {
+        return columnValues;
+    }
 }

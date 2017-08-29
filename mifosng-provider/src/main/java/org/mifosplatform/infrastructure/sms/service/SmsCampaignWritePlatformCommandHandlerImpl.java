@@ -280,16 +280,17 @@ public class SmsCampaignWritePlatformCommandHandlerImpl implements SmsCampaignWr
                 }
             }
         }catch(final IOException e){
-            System.out.println("IOException: " + e.getMessage());
-            // TODO throw something here
-        }catch(final RuntimeException e){System.out.println("RuntimeException: " + e.getMessage());}
+            logger.info("sms trigger campaign loan  : " + e.getMessage());
+        }catch(final RuntimeException e){
+            logger.info("sms triggers campaign loan  runtime exception: " + e.getMessage());
+        }
     }
 
     @Override
     public void insertTriggeredCampaignIntoSmsOutboundTable(final SavingsAccount savingsAccount, final SmsCampaign smsCampaign){
         try{
             if(savingsAccount.hasInvalidAccountType()){
-                throw new InvalidAccountTypeException("Loan Type cannot be 0 for the Triggered Sms Campaign");
+                throw new InvalidAccountTypeException(" savings Type cannot be 0 for the Triggered Sms Campaign");
             }
 
             Set<Client> clientSet = new HashSet<>();
@@ -333,9 +334,12 @@ public class SmsCampaignWritePlatformCommandHandlerImpl implements SmsCampaignWr
                 }
             }
         }catch(final IOException e){
-            System.out.println("IOException: " + e.getMessage());
+            logger.info("sms trigger campaign savings  : " + e.getMessage());
             // TODO throw something here
-        }catch(final RuntimeException e){System.out.println("RuntimeException: " + e.getMessage());}
+        }catch(final RuntimeException e){
+            logger.info("sms triggers campaign savings runtime exception: " + e.getMessage());
+
+        }
     }
 
     @Override
