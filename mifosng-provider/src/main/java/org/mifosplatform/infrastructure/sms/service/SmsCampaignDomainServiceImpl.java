@@ -7,9 +7,15 @@ package org.mifosplatform.infrastructure.sms.service;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
+import org.joda.time.*;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.mifosplatform.infrastructure.codes.domain.CodeValueRepository;
+import org.mifosplatform.infrastructure.core.service.DateUtils;
+import org.mifosplatform.infrastructure.dataqueries.data.GenericResultsetData;
+import org.mifosplatform.infrastructure.dataqueries.data.ResultsetColumnHeaderData;
+import org.mifosplatform.infrastructure.dataqueries.data.ResultsetColumnValueData;
+import org.mifosplatform.infrastructure.dataqueries.data.ResultsetRowData;
 import org.mifosplatform.infrastructure.dataqueries.service.GenericDataService;
 import org.mifosplatform.infrastructure.dataqueries.service.ReadReportingService;
 import org.mifosplatform.infrastructure.sms.domain.*;
@@ -30,7 +36,10 @@ import org.mifosplatform.portfolio.loanaccount.domain.LoanTransaction;
 import org.mifosplatform.portfolio.loanaccount.exception.InvalidAccountTypeException;
 import org.mifosplatform.portfolio.paymentdetail.domain.PaymentDetailRepository;
 import org.mifosplatform.portfolio.savings.domain.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -42,6 +51,9 @@ import java.util.*;
 
 @Service
 public class SmsCampaignDomainServiceImpl implements SmsCampaignDomainService {
+
+    private final static Logger logger = LoggerFactory.getLogger(SmsCampaignDomainServiceImpl.class);
+
 
     private final SmsCampaignRepository smsCampaignRepository;
     private final SmsMessageRepository smsMessageRepository;
@@ -177,6 +189,7 @@ public class SmsCampaignDomainServiceImpl implements SmsCampaignDomainService {
                                         }else{throw new RuntimeException();}
                                     }
                                 }
+                                /** get ml_office details **/
                                 String message = this.smsCampaignWritePlatformCommandHandler.compileSmsTemplate(smsCampaign.getMessage(), smsCampaign.getCampaignName(), smsParams);
                                 Object mobileNo = smsParams.get("mobileNo");
 
@@ -187,9 +200,9 @@ public class SmsCampaignDomainServiceImpl implements SmsCampaignDomainService {
                             }
                         }
                     } catch (final IOException e) {
-                        System.out.println("smsParams does not contain the following key: " + e.getMessage());
+                        logger.info("smsParams does not contain the following key: " + e.getMessage());
                     } catch (final RuntimeException e) {
-                        System.out.println("RuntimeException: " + e.getMessage());
+                        logger.info("sms trigger loan runtime exception : " + e.getMessage());
                     }
                 }
             }
@@ -276,9 +289,9 @@ public class SmsCampaignDomainServiceImpl implements SmsCampaignDomainService {
                 }
             }
         } catch (final IOException e) {
-            System.out.println("smsParams does not contain the following key: " + e.getMessage());
+            logger.info("smsParams does not contain the following key: " + e.getMessage());
         } catch (final RuntimeException e) {
-            System.out.println("RuntimeException: " + e.getMessage());
+            logger.info("sms savings trigger runtime RuntimeException " + e.getMessage());
         }
     }
 
@@ -296,7 +309,11 @@ public class SmsCampaignDomainServiceImpl implements SmsCampaignDomainService {
         }
 
         DateTimeFormatter timeFormatter = DateTimeFormat.forPattern("HH:mm");
-        DateTimeFormatter dateFormatter = DateTimeFormat.forPattern("MMM:d:yyyy");
+        DateTimeFormatter dateFormatter = DateTimeFormat.forPattern("dd-MM-yyyy");
+
+
+        /** return the time of the tenant which is similar to transaction created_date*/
+        LocalDateTime repaymentTime = DateUtils.getLocalDateTimeOfTenant();
 
         smsParams.put("id",client.getId());
         smsParams.put("firstname",client.getFirstname());
@@ -309,11 +326,30 @@ public class SmsCampaignDomainServiceImpl implements SmsCampaignDomainService {
         smsParams.put("loanId",loan.getId());
         smsParams.put("LoanAccountId", loan.getAccountNumber());
         smsParams.put("${officeId}", client.getOffice().getId());
+        smsParams.put("officeName",client.getOffice().getName());
         smsParams.put("${staffId}", client.getStaff().getId());
         smsParams.put("repaymentAmount", loanTransaction.getAmount(loan.getCurrency()));
         smsParams.put("RepaymentDate", loanTransaction.getCreatedDateTime().toLocalDate().toString(dateFormatter));
-        smsParams.put("RepaymentTime", loanTransaction.getCreatedDateTime().toLocalTime().toString(timeFormatter));
+        smsParams.put("repaymentTime", repaymentTime.toString(timeFormatter));
         smsParams.put("receiptNumber", loanTransaction.getPaymentDetail().getReceiptNumber());
+        smsParams.put("transactionDate",loanTransaction.getTransactionDate().toString(dateFormatter));
+
+        String ml_office_details = "select ml.phonenumber as officenummer from ml_office_details ml where ml.office_id ="+client.getOffice().getId();
+
+        try{
+            GenericResultsetData dataTableColumns = genericDataService.fillGenericResultSet(ml_office_details);
+            List<ResultsetRowData> officeNumber = dataTableColumns.getData();
+
+
+            if(!officeNumber.isEmpty() && officeNumber.size() > 0){
+                ResultsetRowData phonenumber = officeNumber.get(0);
+                smsParams.put("officenummber",phonenumber.getRow().get(0));
+            }
+
+        }catch (DataAccessException e){
+            logger.info("ml office details error "+ e.getMessage());
+        }
+
 
         return smsParams;
     }
@@ -332,7 +368,10 @@ public class SmsCampaignDomainServiceImpl implements SmsCampaignDomainService {
         }
 
         DateTimeFormatter timeFormatter = DateTimeFormat.forPattern("HH:mm");
-        DateTimeFormatter dateFormatter = DateTimeFormat.forPattern("MMM:d:yyyy");
+        DateTimeFormatter dateFormatter = DateTimeFormat.forPattern("dd-MM-yyyy");
+
+        /** return the time of the tenant which is similar to transaction created_date*/
+        LocalDateTime transactionTime = DateUtils.getLocalDateTimeOfTenant();
 
         smsParams.put("id",client.getId());
         smsParams.put("firstname",client.getFirstname());
@@ -344,11 +383,30 @@ public class SmsCampaignDomainServiceImpl implements SmsCampaignDomainService {
         smsParams.put("savingsId",savingsAccount.getId());
         smsParams.put("SavingsAccountId", savingsAccount.getAccountNumber());
         smsParams.put("${officeId}", client.getOffice().getId());
+        smsParams.put("officeName",client.getOffice().getName());
         smsParams.put("${staffId}", client.getStaff().getId());
         smsParams.put("transactionAmount", transaction.getAmount(savingsAccount.getCurrency()));
         smsParams.put("transactionDate", transaction.transactionLocalDate().toString(dateFormatter));
-        smsParams.put("transactionTime", transaction.transactionLocalDate().toString(timeFormatter));
+        smsParams.put("repaymentTime", transactionTime.toString(timeFormatter));
         smsParams.put("receiptNumber", transaction.getPaymentDetail().getReceiptNumber());
+
+        String ml_office_details = "select ml.phonenumber as officenummer from ml_office_details ml where ml.office_id ="+client.getOffice().getId();
+
+
+        try{
+            GenericResultsetData dataTableColumns = genericDataService.fillGenericResultSet(ml_office_details);
+            List<ResultsetRowData> officeNumber = dataTableColumns.getData();
+
+            if(!officeNumber.isEmpty() && officeNumber.size() > 0){
+                ResultsetRowData phonenumber = officeNumber.get(0);
+                smsParams.put("officenummber",phonenumber.getRow().get(0));
+            }
+
+        }catch (DataAccessException e){
+            logger.info("ml office details error "+ e.getMessage());
+        }
+
+
 
         return smsParams;
     }
