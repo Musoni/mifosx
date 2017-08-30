@@ -8,6 +8,7 @@ package org.mifosplatform.infrastructure.security.data;
 import java.util.Collection;
 
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
+import org.mifosplatform.organisation.teller.data.CashierData;
 import org.mifosplatform.useradministration.data.RoleData;
 
 /**
@@ -41,6 +42,8 @@ public class AuthenticatedUserData {
     @SuppressWarnings("unused")
     private final boolean shouldRenewPassword;
 
+    private final CashierData cashier;
+
     public AuthenticatedUserData(final String username, final Collection<String> permissions) {
         this.username = username;
         this.userId = null;
@@ -54,6 +57,7 @@ public class AuthenticatedUserData {
         this.roles = null;
         this.permissions = permissions;
         this.shouldRenewPassword = false;
+        this.cashier = null;
     }
 
     public AuthenticatedUserData(final String username, final Long officeId, final String officeName, final Long staffId,
@@ -71,6 +75,26 @@ public class AuthenticatedUserData {
         this.roles = roles;
         this.permissions = permissions;
         this.shouldRenewPassword = false;
+        this.cashier = null;
+    }
+
+    public AuthenticatedUserData(final String username, final Long officeId, final String officeName, final Long staffId,
+                                 final String staffDisplayName, final EnumOptionData organisationalRole, final Collection<RoleData> roles,
+                                 final Collection<String> permissions, final Long userId, final String base64EncodedAuthenticationKey,
+                                 final CashierData cashier) {
+        this.username = username;
+        this.officeId = officeId;
+        this.officeName = officeName;
+        this.staffId = staffId;
+        this.staffDisplayName = staffDisplayName;
+        this.organisationalRole = organisationalRole;
+        this.userId = userId;
+        this.base64EncodedAuthenticationKey = base64EncodedAuthenticationKey;
+        this.authenticated = true;
+        this.roles = roles;
+        this.permissions = permissions;
+        this.shouldRenewPassword = false;
+        this.cashier = cashier;
     }
 
     public AuthenticatedUserData(final String username, final Long userId, final String base64EncodedAuthenticationKey) {
@@ -86,5 +110,6 @@ public class AuthenticatedUserData {
         this.roles = null;
         this.permissions = null;
         this.shouldRenewPassword = true;
+        this.cashier = null;
     }
 }
