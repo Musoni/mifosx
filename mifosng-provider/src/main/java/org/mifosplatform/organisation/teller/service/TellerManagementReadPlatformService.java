@@ -23,6 +23,8 @@ public interface TellerManagementReadPlatformService {
 
     public CashierData findCashier(Long cashierId);
 
+    public CashierData findCashierByStaffId(Long staffId);
+
     public Collection<CashierData> getCashierData(Long officeId, Long tellerId, Long staffId, Date date);
 
     public Collection<CashierData> getTellerCashiers(Long tellerId, Date date);

@@ -19,6 +19,8 @@ import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import org.mifosplatform.infrastructure.core.serialization.ToApiJsonSerializer;
 import org.mifosplatform.infrastructure.security.data.AuthenticatedUserData;
 import org.mifosplatform.infrastructure.security.service.SpringSecurityPlatformSecurityContext;
+import org.mifosplatform.organisation.teller.data.CashierData;
+import org.mifosplatform.organisation.teller.service.TellerManagementReadPlatformServiceImpl;
 import org.mifosplatform.useradministration.data.RoleData;
 import org.mifosplatform.useradministration.domain.AppUser;
 import org.mifosplatform.useradministration.domain.Role;
@@ -43,15 +45,18 @@ public class AuthenticationApiResource {
     private final DaoAuthenticationProvider customAuthenticationProvider;
     private final ToApiJsonSerializer<AuthenticatedUserData> apiJsonSerializerService;
     private final SpringSecurityPlatformSecurityContext springSecurityPlatformSecurityContext;
+    private final TellerManagementReadPlatformServiceImpl tellerManagementReadPlatformService;
 
     @Autowired
     public AuthenticationApiResource(
             @Qualifier("customAuthenticationProvider") final DaoAuthenticationProvider customAuthenticationProvider,
             final ToApiJsonSerializer<AuthenticatedUserData> apiJsonSerializerService,
-            final SpringSecurityPlatformSecurityContext springSecurityPlatformSecurityContext) {
+            final SpringSecurityPlatformSecurityContext springSecurityPlatformSecurityContext,
+            final TellerManagementReadPlatformServiceImpl tellerManagementReadPlatformService) {
         this.customAuthenticationProvider = customAuthenticationProvider;
         this.apiJsonSerializerService = apiJsonSerializerService;
         this.springSecurityPlatformSecurityContext = springSecurityPlatformSecurityContext;
+        this.tellerManagementReadPlatformService = tellerManagementReadPlatformService;
     }
 
     @POST
@@ -85,6 +90,8 @@ public class AuthenticationApiResource {
             final Long staffId = principal.getStaffId();
             final String staffDisplayName = principal.getStaffDisplayName();
 
+            final CashierData cashierData = this.tellerManagementReadPlatformService.findCashierByStaffId(staffId);
+
             final EnumOptionData organisationalRole = principal.organisationalRoleData();
 
             if (this.springSecurityPlatformSecurityContext.doesPasswordHasToBeRenewed(principal)) {
@@ -92,7 +99,8 @@ public class AuthenticationApiResource {
             } else {
 
                 authenticatedUserData = new AuthenticatedUserData(username, officeId, officeName, staffId, staffDisplayName,
-                        organisationalRole, roles, permissions, principal.getId(), new String(base64EncodedAuthenticationKey));
+                        organisationalRole, roles, permissions, principal.getId()
+                        , new String(base64EncodedAuthenticationKey), cashierData);
             }
 
         }

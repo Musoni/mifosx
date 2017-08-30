@@ -442,6 +442,20 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
     }
 
     @Override
+    public CashierData findCashierByStaffId(Long staffId){
+        try {
+            final CashierMapper cm = new CashierMapper();
+            final String sql = "select " + cm.schema() + " where s.id = ? AND c.ended_at IS NULL and c.is_active=1";
+
+            return this.jdbcTemplate.queryForObject(sql, cm, new Object[] { staffId });
+
+        } catch (final EmptyResultDataAccessException e) {
+
+            return null;
+        }
+    }
+
+    @Override
     public Collection<CashierData> getCashierData(Long officeId, Long tellerId, Long staffId, Date date) {
         // TODO Auto-generated method stub
         return null;
@@ -719,6 +733,8 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
 
             return sqlBuilder.toString();
         }
+
+
 
         @Override
         public CashierData mapRow(final ResultSet rs, @SuppressWarnings("unused") final int rowNum) throws SQLException {
