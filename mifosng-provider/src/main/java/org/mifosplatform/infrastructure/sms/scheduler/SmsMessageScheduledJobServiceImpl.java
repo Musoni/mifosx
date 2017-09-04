@@ -174,6 +174,9 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
     	String formatedPhoneNumber = "";
     	
     	try {
+    		// trim the string
+    		phoneNumber = StringUtils.trim(phoneNumber);
+    		
     		Long phoneNumberToLong = Long.parseLong(phoneNumber);
     		Long countryCallingCodeToLong = Long.parseLong(countryCallingCode);
     		formatedPhoneNumber = Long.toString(countryCallingCodeToLong) + Long.toString(phoneNumberToLong);
@@ -301,8 +304,9 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
         while(deliveryReportIterator.hasNext()) {
             SmsMessageDeliveryReportData smsMessageDeliveryReportData = deliveryReportIterator.next();
             
+            SmsMessage smsMessage = this.smsMessageRepository.findOne(smsMessageDeliveryReportData.getId());
+            
             if(!smsMessageDeliveryReportData.getHasError()) {
-                SmsMessage smsMessage = this.smsMessageRepository.findOne(smsMessageDeliveryReportData.getId());
                 
                 // initially set the status type enum to 100
                 Integer statusType = SmsMessageStatusType.PENDING.getValue();
@@ -335,13 +339,19 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
                 // update the status Type enum
                 smsMessage.setStatusType(statusType);
                 
-                // save the SmsMessage entity
-                this.smsMessageRepository.save(smsMessage);
-                
                 // deduct one credit from the tenant's SMS credits
                 smsCredits--;
 				if(smsCreditReminder.compareTo(smsCredits) == 0){this.sendEmailLowSmsCreditReminder(smsCredits);}
+				
+            } else {
+            	Integer statusType = SmsMessageStatusType.FAILED.getValue();
+            	
+            	// update the status Type enum
+                smsMessage.setStatusType(statusType);
             }
+            
+            // save the SmsMessage entity
+            this.smsMessageRepository.save(smsMessage);
         }
         
         return smsCredits;
