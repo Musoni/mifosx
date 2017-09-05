@@ -7,11 +7,9 @@ package org.mifosplatform.infrastructure.dataqueries.domain;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 public interface DashboardMetricsRepository extends JpaRepository<DashboardMetrics, Long>, JpaSpecificationExecutor<DashboardMetrics> {
 
-    @Query("from DashboardMetrics d where d.monthYear = :monthYear and d.staffId =:staffId and d.officeId =:officeId")
-    DashboardMetrics findSpecial(@Param("monthYear") String monthYear,@Param("staffId") Long staffId,@Param("officeId") Long officeId);
+    DashboardMetrics findByMetricNameAndMonthYearAndStaffIdAndOfficeId(final String metricName, final String monthYear, 
+    		final Long staffId, final Long officeId);
 }

@@ -415,7 +415,8 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 
                     final DashboardMetrics newMetric = new DashboardMetrics(value,name,officeId,StaffId,monthYear);
 
-                    DashboardMetrics oldMetric = this.dashboardMetricsRepository.findSpecial(monthYear,StaffId,officeId);
+                    DashboardMetrics oldMetric = this.dashboardMetricsRepository.
+                    		findByMetricNameAndMonthYearAndStaffIdAndOfficeId(name, monthYear, StaffId, officeId);
 
                     if(oldMetric!=null){
 
