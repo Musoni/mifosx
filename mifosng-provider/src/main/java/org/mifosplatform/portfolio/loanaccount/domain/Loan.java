@@ -6009,7 +6009,9 @@ public class Loan extends AbstractPersistable<Long> {
 
         return groupLoanMemberAllocations;
     }
-    
+
+    public Integer getLoanType() {return this.loanType;}
+
     private GroupLoanMembersAllocationData[] listOfGroupLoanMemberAllocationData(final Set<GroupLoanMemberAllocation> setOfGroupLoanMemberAllocation) {
 
         GroupLoanMembersAllocationData[] existingGroupLoanMemberAllocation = null;

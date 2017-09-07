@@ -176,6 +176,14 @@ public class SmsCampaignDomainServiceImpl implements SmsCampaignDomainService {
                                 for (String key : campaignParams.keySet()) {
                                     String value = campaignParams.get(key);
                                     String spvalue = null;
+                                    /** this code will validate if the loanType of the loan account is the same as defined in the campaign params **/
+                                    if((key.equals("${loanType}")) && (!value.equals("-1")) && (!loan.getLoanType().equals(Integer.valueOf(value)))){
+                                        throw new RuntimeException();
+                                    }
+                                    if((key.equals("${productGroupId}")) && (!value.equals("-1")) && (!loan.getLoanProduct().getProductGroup().getId().equals(Long.valueOf(value)))){
+                                        throw new RuntimeException();
+                                    }
+
                                     boolean spkeycheck = smsParams.containsKey(key);
                                     if (spkeycheck) {
                                         spvalue = smsParams.get(key).toString();
@@ -266,6 +274,14 @@ public class SmsCampaignDomainServiceImpl implements SmsCampaignDomainService {
                     for (String key : campaignParams.keySet()) {
                         String value = campaignParams.get(key);
                         String spvalue = null;
+                        /** this code will validate if the accountType of the savings account is the same as defined in the campaign params **/
+                        if((key.equals("${accountType}")) && (!value.equals("-1")) && (!savingsAccount.getAccountType().equals(Integer.valueOf(value)))){
+                            throw new RuntimeException();
+                        }
+                        if((key.equals("${productGroupId}")) && (!value.equals("-1")) && (!savingsAccount.getProduct().getProductGroup().getId().equals(Long.valueOf(value)))){
+                            throw new RuntimeException();
+                        }
+
                         boolean spkeycheck = smsParams.containsKey(key);
                         if (spkeycheck) {
                             spvalue = smsParams.get(key).toString();
@@ -334,7 +350,16 @@ public class SmsCampaignDomainServiceImpl implements SmsCampaignDomainService {
         smsParams.put("receiptNumber", loanTransaction.getPaymentDetail().getReceiptNumber());
         smsParams.put("transactionDate",loanTransaction.getTransactionDate().toString(dateFormatter));
 
-        String ml_office_details = "select ml.phonenumber as officenummer from ml_office_details ml where ml.office_id ="+client.getOffice().getId();
+        String ml_office_details = "select ml.phonenumber as officenumber from ml_office_details ml where ml.office_id ="+client.getOffice().getId();
+
+        final Office headOfficeNumber = client.getOffice();
+
+        boolean hasParent = false;
+
+        if(!headOfficeNumber.getParent().getId().equals(client.getOffice().getId())){
+            ml_office_details += " union select ml.phonenumber as officenumber from ml_office_details ml where ml.office_id ="+headOfficeNumber.getParent().getId();
+            hasParent = true;
+        }
 
         try{
             GenericResultsetData dataTableColumns = genericDataService.fillGenericResultSet(ml_office_details);
@@ -343,7 +368,12 @@ public class SmsCampaignDomainServiceImpl implements SmsCampaignDomainService {
 
             if(!officeNumber.isEmpty() && officeNumber.size() > 0){
                 ResultsetRowData phonenumber = officeNumber.get(0);
-                smsParams.put("officenummber",phonenumber.getRow().get(0));
+                smsParams.put("clientOfficeNumber",phonenumber.getRow().get(0));
+
+                if(hasParent  && officeNumber.size() > 1){
+                    ResultsetRowData parentOffice= officeNumber.get(1);
+                    smsParams.put("selectedOfficeNumber",parentOffice.getRow().get(0));
+                }
             }
 
         }catch (DataAccessException e){
@@ -390,8 +420,16 @@ public class SmsCampaignDomainServiceImpl implements SmsCampaignDomainService {
         smsParams.put("repaymentTime", transactionTime.toString(timeFormatter));
         smsParams.put("receiptNumber", transaction.getPaymentDetail().getReceiptNumber());
 
-        String ml_office_details = "select ml.phonenumber as officenummer from ml_office_details ml where ml.office_id ="+client.getOffice().getId();
+        String ml_office_details = "select ml.phonenumber as clientOfficeNumber from ml_office_details ml where ml.office_id ="+client.getOffice().getId();
 
+        final Office headOfficeNumber = client.getOffice();
+
+        boolean hasParent = false;
+
+        if(!headOfficeNumber.getParent().getId().equals(client.getOffice().getId())){
+            ml_office_details += " union select ml.phonenumber as officenumber from ml_office_details ml where ml.office_id ="+headOfficeNumber.getParent().getId();
+            hasParent = true;
+        }
 
         try{
             GenericResultsetData dataTableColumns = genericDataService.fillGenericResultSet(ml_office_details);
@@ -399,8 +437,13 @@ public class SmsCampaignDomainServiceImpl implements SmsCampaignDomainService {
 
             if(!officeNumber.isEmpty() && officeNumber.size() > 0){
                 ResultsetRowData phonenumber = officeNumber.get(0);
-                smsParams.put("officenummber",phonenumber.getRow().get(0));
+                if(hasParent && officeNumber.size() > 1){
+                    ResultsetRowData parentOffice= officeNumber.get(1);
+                    smsParams.put("selectedOfficeNumber",parentOffice.getRow().get(0));
+                }
+                smsParams.put("clientOfficeNumber",phonenumber.getRow().get(0));
             }
+
 
         }catch (DataAccessException e){
             logger.info("ml office details error "+ e.getMessage());

@@ -2813,6 +2813,10 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         return minReqBalance;
     }
 
+    public SavingsProduct getProduct() {return this.product;}
+
+    public Integer getAccountType() {return this.accountType;}
+
     public BigDecimal getOnHoldFunds() {
         return this.onHoldFunds == null ? BigDecimal.ZERO : this.onHoldFunds;
     }

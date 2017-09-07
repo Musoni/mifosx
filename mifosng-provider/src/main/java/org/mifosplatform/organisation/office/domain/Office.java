@@ -233,4 +233,6 @@ public class Office extends AbstractPersistable<Long> {
     public String getExternalId() {return this.externalId;}
 
     public List<Office> getChildren() {return this.children;}
+
+    public Office getParent() {return this.parent;}
 }
