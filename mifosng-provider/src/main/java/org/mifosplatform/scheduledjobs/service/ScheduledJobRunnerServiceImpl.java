@@ -6,6 +6,7 @@
 package org.mifosplatform.scheduledjobs.service;
 
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import org.joda.time.LocalDate;
@@ -376,6 +377,32 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
     @CronTarget(jobName = JobName.CALCULATE_DASHBOARD_METRICS)
     public void calculateDashboardMetrics() {
 
+        SimpleDateFormat format1 = new SimpleDateFormat("yyyy-MM-dd");
+
+        Calendar aCalendar = Calendar.getInstance();
+
+        String currentDate = format1.format(aCalendar.getTime());
+
+
+        aCalendar.set(Calendar.DATE, 1);
+        aCalendar.add(Calendar.DAY_OF_MONTH, -1);
+
+        String lastDateOfPreviousMonth = format1.format(aCalendar.getTime());
+
+        final Set<String> endDates = new HashSet<>(Arrays.asList(currentDate,lastDateOfPreviousMonth));
+
+        for (final String endDate : endDates) {
+
+            this.runMetricReport(endDate);
+        }
+
+
+
+        logger.info(ThreadLocalContextUtil.getTenant().getName() + ": Dashboard metrics updated : " );
+    }
+
+    private  void runMetricReport(String endDate){
+
         final Set<String> metrics_reports = new HashSet<>(Arrays.asList("Dashboard principal disbursed",
                 "Dashboard number of outstanding loans",
                 "Dashboard principal outstanding",
@@ -390,7 +417,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
             try {
 
                 // run the report to ge the metrics
-                final GenericResultsetData result = this.readExtraDataAndReportingService.runReportByScheduler(reportName);
+                final GenericResultsetData result = this.readExtraDataAndReportingService.runReportByScheduler(reportName,endDate);
 
                 final List<ResultsetColumnHeaderData> columnHeaders = result.getColumnHeaders();
                 final List<ResultsetRowData> data = result.getData();
@@ -408,8 +435,8 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 
                     final BigDecimal value =BigDecimal.valueOf(Double.valueOf(row.get(0))) ;
                     final String name = columnHeaders.get(0).getColumnName();
-                    final long officeId = Long.parseLong(row.get(1));
-                    final long StaffId = Long.parseLong(row.get(2));
+                    final Long officeId = Long.parseLong(row.get(1));
+                    final Long  StaffId = Long.parseLong(row.get(2));
                     final String monthYear = row.get(3);
 
                     final DashboardMetrics newMetric = new DashboardMetrics(value,name,officeId,StaffId,monthYear);
@@ -438,11 +465,11 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
                             + error.getDeveloperMessage());
                 }
             } catch (final Exception ex) {
-                // need to handle this scenario
+
+                logger.error("Updating metric for " + reportName + " failed with message "
+                        + ex.getMessage());
             }
         }
-
-        logger.info(ThreadLocalContextUtil.getTenant().getName() + ": Dashboard metrics updated : " );
     }
 
 }
