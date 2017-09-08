@@ -47,5 +47,5 @@ public interface ReadReportingService {
     ByteArrayOutputStream generatePentahoReportAsOutputStream(String reportName, String outputTypeParam,
             Map<String, String> queryParams, Locale locale, AppUser runReportAsUser, StringBuilder errorLog);
 
-    GenericResultsetData runReportByScheduler(String reportName);
+    GenericResultsetData runReportByScheduler(String reportName,String endDate);
 }

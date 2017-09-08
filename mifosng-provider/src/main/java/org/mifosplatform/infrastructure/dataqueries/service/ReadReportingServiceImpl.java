@@ -754,11 +754,12 @@ public class ReadReportingServiceImpl implements ReadReportingService {
         throw new PlatformDataIntegrityException("error.msg.invalid.outputType", "No matching Output Type: " + outputType);
     }
 
-    public GenericResultsetData  runReportByScheduler(String reportName){
+    public GenericResultsetData  runReportByScheduler(String reportName,String endDate){
 
         final MultivaluedMap<String, String> queryParams =  new MultivaluedMapImpl();;
 
         queryParams.add("genericResultSet","false");
+        queryParams.add("R_endDate",endDate);
         final String parameterTypeValue = "report";
 
         final Map<String, String> reportParams = getReportParams(queryParams, false);
