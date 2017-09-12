@@ -34,7 +34,9 @@ import org.mifosplatform.portfolio.common.BusinessEventNotificationConstants.BUS
 import org.mifosplatform.portfolio.common.BusinessEventNotificationConstants.BUSINESS_EVENTS;
 import org.mifosplatform.portfolio.common.service.BusinessEventListner;
 import org.mifosplatform.portfolio.common.service.BusinessEventNotifierService;
-import org.mifosplatform.portfolio.loanaccount.domain.*;
+import org.mifosplatform.portfolio.loanaccount.domain.Loan;
+import org.mifosplatform.portfolio.loanaccount.domain.LoanStatus;
+import org.mifosplatform.portfolio.loanaccount.domain.LoanTransaction;
 import org.mifosplatform.portfolio.loanaccount.guarantor.GuarantorConstants;
 import org.mifosplatform.portfolio.loanaccount.guarantor.domain.*;
 import org.mifosplatform.portfolio.loanproduct.domain.LoanProduct;
@@ -47,7 +49,6 @@ import org.mifosplatform.portfolio.savings.SavingsApiConstants;
 import org.mifosplatform.portfolio.savings.domain.*;
 import org.mifosplatform.portfolio.savings.exception.InsufficientAccountBalanceException;
 import org.mifosplatform.useradministration.domain.AppUser;
-import org.pentaho.reporting.engine.classic.core.designtime.Change;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -74,7 +75,6 @@ public class GuarantorDomainServiceImpl implements GuarantorDomainService {
     private final ApplicationCurrencyRepositoryWrapper applicationCurrencyRepositoryWrapper;
     private final ConfigurationDomainService configurationDomainService;
     private final SavingsAccountAssembler savingAccountAssembler;
-    private final LoanRepository loanRepository;
 
     @Autowired
     public GuarantorDomainServiceImpl(final GuarantorRepository guarantorRepository,
@@ -92,7 +92,7 @@ public class GuarantorDomainServiceImpl implements GuarantorDomainService {
             final JournalEntryWritePlatformService journalEntryWritePlatformService,
             final ApplicationCurrencyRepositoryWrapper  applicationCurrencyRepositoryWrapper,
             final ConfigurationDomainService configurationDomainService,
-            final SavingsAccountAssembler savingAccountAssembler, final LoanRepository loanRepository) {
+            final SavingsAccountAssembler savingAccountAssembler) {
         this.guarantorRepository = guarantorRepository;
         this.guarantorFundingRepository = guarantorFundingRepository;
         this.guarantorFundingTransactionRepository = guarantorFundingTransactionRepository;
@@ -111,7 +111,6 @@ public class GuarantorDomainServiceImpl implements GuarantorDomainService {
         this.applicationCurrencyRepositoryWrapper = applicationCurrencyRepositoryWrapper;
         this.configurationDomainService = configurationDomainService;
         this.savingAccountAssembler = savingAccountAssembler;
-        this.loanRepository =loanRepository;
     }
 
     @PostConstruct
@@ -639,32 +638,9 @@ public class GuarantorDomainServiceImpl implements GuarantorDomainService {
                 if (releaseLoanIds.containsKey(loanTransaction.getLoan().getId())) {
                     completeGuarantorFund(loanTransaction);
                 } else {
-                    final ChangedTransactionDetail changedTransactionDetail = loanTransaction.getLoan().getChangedTransactionDetail();
-                    if(changedTransactionDetail !=null){
-                        releaseOrReverseFundsOnTransactionChange(changedTransactionDetail);
-                    }
                     releaseGuarantorFunds(loanTransaction);
                 }
             }
-        }
-    }
-
-    private void releaseOrReverseFundsOnTransactionChange(final ChangedTransactionDetail changedTransactionDetail){
-        final List<Long> transactionIdsToReverse = new ArrayList<>();
-        final List<LoanTransaction> transactionsToReleaseFunds = new ArrayList<>();
-
-        for (Map.Entry<Long, LoanTransaction> mapEntry : changedTransactionDetail.getNewTransactionMappings().entrySet()) {
-            transactionsToReleaseFunds.add(mapEntry.getValue());
-            transactionIdsToReverse.add(mapEntry.getKey());
-        }
-
-        if(!transactionsToReleaseFunds.isEmpty() && transactionsToReleaseFunds.size() > 0){
-            for(final LoanTransaction transaction : transactionsToReleaseFunds){
-                releaseGuarantorFunds(transaction);
-            }
-        }
-        if(!transactionIdsToReverse.isEmpty() && transactionIdsToReverse.size() > 0){
-            reverseTransaction(transactionIdsToReverse);
         }
     }
 
