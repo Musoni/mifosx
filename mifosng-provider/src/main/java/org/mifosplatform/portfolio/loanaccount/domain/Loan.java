@@ -330,6 +330,9 @@ public class Loan extends AbstractPersistable<Long> {
     @Transient
     private LoanSummaryWrapper loanSummaryWrapper;
 
+    @Transient
+    private ChangedTransactionDetail changedTransactionDetail;
+
     @Column(name = "principal_amount_proposed", scale = 6, precision = 19, nullable = false)
     private BigDecimal proposedPrincipal;
 
@@ -6019,5 +6022,13 @@ public class Loan extends AbstractPersistable<Long> {
         existingGroupLoanMemberAllocation = GroupLoanMemberAllocationList.toArray(new GroupLoanMembersAllocationData[GroupLoanMemberAllocationList.size()]);
 
         return existingGroupLoanMemberAllocation;
+    }
+
+    public ChangedTransactionDetail getChangedTransactionDetail() {
+        return this.changedTransactionDetail;
+    }
+
+    public void updateChangedTransactionDetail(ChangedTransactionDetail changedTransactionDetail) {
+        this.changedTransactionDetail = changedTransactionDetail;
     }
 }
