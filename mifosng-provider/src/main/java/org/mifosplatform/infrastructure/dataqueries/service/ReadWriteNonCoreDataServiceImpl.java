@@ -2109,7 +2109,7 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
         for (final ResultsetColumnHeaderData pColumnHeader : columnHeaders) {
             final String key = pColumnHeader.getColumnName();
 
-            if (changedColumns.containsKey(key)) {
+            if (changedColumns.containsKey(key) && !pColumnHeader.isLabelDisplayType()) {
                 if (firstColumn) {
                     sql += " set ";
                     firstColumn = false;
@@ -2170,7 +2170,7 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
             }else{
                 // put in the current value stored in the db
                 //  affectedAndChangedColumns.put(key, grs.getColTypeOfColumnNamed());
-                if(!colHeader.isImage()) {
+                if(!colHeader.isImage() && !colHeader.isLabelDisplayType()) {
                     affectedAndChangedColumns.put(key, getObjectValueforColumn(colHeader, grs.getValueForColumnNamed(key), locale));
                 }
             }
