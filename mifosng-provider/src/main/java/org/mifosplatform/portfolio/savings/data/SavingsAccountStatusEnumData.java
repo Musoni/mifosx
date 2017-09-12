@@ -54,40 +54,4 @@ public class SavingsAccountStatusEnumData {
     public Long id() {
         return this.id;
     }
-
-    public boolean isSubmittedAndPendingApproval() {
-        return submittedAndPendingApproval;
-    }
-
-    public boolean isApproved() {
-        return approved;
-    }
-
-    public boolean isRejected() {
-        return rejected;
-    }
-
-    public boolean isWithdrawnByApplicant() {
-        return withdrawnByApplicant;
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public boolean isClosed() {
-        return closed;
-    }
-
-    public boolean isPrematureClosed() {
-        return prematureClosed;
-    }
-
-    public boolean isTransferInProgress() {
-        return transferInProgress;
-    }
-
-    public boolean isTransferOnHold() {
-        return transferOnHold;
-    }
 }

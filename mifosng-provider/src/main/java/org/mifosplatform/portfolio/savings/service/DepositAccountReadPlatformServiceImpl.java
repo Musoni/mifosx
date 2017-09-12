@@ -174,9 +174,6 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
         sqlBuilder.append("select SQL_CALC_FOUND_ROWS ");
         sqlBuilder.append(depositAccountMapper.schema());
         sqlBuilder.append(" where sa.deposit_type_enum = ? ");
-        if(depositAccountType.isFixedDeposit() && paginationParameters.isLimited() && paginationParameters.getLimit() == 1){
-            sqlBuilder.append(" order by sa.status_enum DESC ");
-        }
         sqlBuilder.append(paginationParameters.paginationSql());
 
         final String sqlCountRows = "SELECT FOUND_ROWS()";

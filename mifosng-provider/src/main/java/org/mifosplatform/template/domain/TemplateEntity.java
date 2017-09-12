@@ -14,9 +14,7 @@ public enum TemplateEntity {
 
     @SerializedName("client") CLIENT(0, "client"),
     @SerializedName("loan") LOAN(1, "loan"),
-    @SerializedName("runreports") RUNREPORT(2,"runreports"),
-    @SerializedName("savingsaccount") SAVINGSACCOUNT(3, "savingsaccount"),
-    @SerializedName("fixeddepositaccount") FIXEDTERMDEPOSIT(4, "fixeddepositaccount");
+    @SerializedName("runreports") RUNREPORT(2,"runreports");
 
     private int id;
     private String name;
