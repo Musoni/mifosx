@@ -62,4 +62,10 @@ public class MetaDataResultSet {
     public String getType() {
         return type;
     }
+
+    public boolean isLabelType(){
+        if(this.getType()!=null && this.getType().equals("label")) return true;
+
+        return false;
+    }
 }

@@ -260,6 +260,23 @@ public class GenericDataServiceImpl implements GenericDataService {
 
             columnHeaders.add(rsch);
         }
+
+        final List<MetaDataResultSet> metaDataResultSets = this.retrieveRegisteredTableMetaData(datatable);
+
+        List<ResultsetColumnValueData> columnValues = new ArrayList<>();
+
+        for (MetaDataResultSet metadata:metaDataResultSets) {
+
+            if(metadata.isLabelType()){
+
+                final ResultsetColumnHeaderData rsch = ResultsetColumnHeaderData.detailed(metadata.getColumnName(), metadata.getType(),null, true,
+                        false, columnValues, null, metadata.getDisplayCondition(),metadata.getFormulaExpression() );
+
+                columnHeaders.add(rsch);
+
+
+        }
+
         return columnHeaders;
     }
 

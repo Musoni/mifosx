@@ -1611,6 +1611,8 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
 
         for(ResultsetColumnHeaderData column: columnHeaders){
 
+            if(column.isLabelDisplayType()) continue;
+
              String Alias="";
 
             if(column.isCodeLookupDisplayType() && dropdownValues){
@@ -1654,6 +1656,7 @@ public class ReadWriteNonCoreDataServiceImpl implements ReadWriteNonCoreDataServ
         }
 
         final List<ResultsetRowData> result = fillDatatableResultSetDataRows(sql);
+
 
         return new GenericResultsetData(columnHeaders, result);
     }

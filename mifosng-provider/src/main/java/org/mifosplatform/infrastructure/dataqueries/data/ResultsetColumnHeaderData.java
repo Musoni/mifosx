@@ -77,7 +77,10 @@ public final class ResultsetColumnHeaderData {
                 displayType = "IMAGE";
             } else if (isAnyInteger()) {
                 displayType = "INTEGER";
+            }else if(isLabel()){
+                displayType = "LABEL";
             }
+            
             else if (isDate()) {
                 displayType = "DATE";
             } else if (isDateTime()) {
@@ -154,6 +157,10 @@ public final class ResultsetColumnHeaderData {
         return "char".equalsIgnoreCase(this.columnType);
     }
 
+    private boolean isLabel() {
+        return "label".equalsIgnoreCase(this.columnType);
+    }
+
     private boolean isVarchar() {
         return "varchar".equalsIgnoreCase(this.columnType);
     }
@@ -205,6 +212,7 @@ public final class ResultsetColumnHeaderData {
     public boolean isDateDisplayType() {
         return "DATE".equalsIgnoreCase(this.columnDisplayType);
     }
+    public boolean isLabelDisplayType() { return "LABEL".equalsIgnoreCase(this.columnDisplayType);}
 
     public boolean isDateTimeDisplayType() {
         return "DATETIME".equalsIgnoreCase(this.columnDisplayType);
