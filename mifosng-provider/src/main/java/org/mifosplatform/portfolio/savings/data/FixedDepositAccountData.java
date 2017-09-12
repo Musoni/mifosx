@@ -35,6 +35,7 @@ public class FixedDepositAccountData extends DepositAccountData {
     private Integer inMultiplesOfDepositTerm;
     private EnumOptionData inMultiplesOfDepositTermType;
     private BigDecimal depositAmount;
+    private BigDecimal expectedInterestOnMaturity;
     private BigDecimal maturityAmount;
     private LocalDate maturityDate;
     private Integer depositPeriod;
@@ -396,6 +397,12 @@ public class FixedDepositAccountData extends DepositAccountData {
         this.inMultiplesOfDepositTerm = inMultiplesOfDepositTerm;
         this.inMultiplesOfDepositTermType = inMultiplesOfDepositTermType;
         this.depositAmount = depositAmount;
+        if((status != null && status.isPrematureClosed()) || preClosurePenalInterest == null){
+            this.expectedInterestOnMaturity = maturityAmount != null && depositAmount != null ? maturityAmount.subtract(depositAmount) : null;
+        }else{
+            this.expectedInterestOnMaturity = maturityAmount != null && depositAmount != null ? maturityAmount.subtract(depositAmount).subtract(preClosurePenalInterest) : null;
+        }
+
         this.maturityAmount = maturityAmount;
         this.maturityDate = maturityDate;
         this.depositPeriod = depositPeriod;
