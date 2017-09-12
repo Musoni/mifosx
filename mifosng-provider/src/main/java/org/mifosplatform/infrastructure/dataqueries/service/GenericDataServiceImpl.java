@@ -267,12 +267,13 @@ public class GenericDataServiceImpl implements GenericDataService {
 
         for (MetaDataResultSet metadata:metaDataResultSets) {
 
-            if(metadata.isLabelType()){
+            if(metadata.isLabelType()) {
 
-                final ResultsetColumnHeaderData rsch = ResultsetColumnHeaderData.detailed(metadata.getColumnName(), metadata.getType(),null, true,
-                        false, columnValues, null, metadata.getDisplayCondition(),metadata.getFormulaExpression() );
+                final ResultsetColumnHeaderData rsch = ResultsetColumnHeaderData.detailed(metadata.getColumnName(), metadata.getType(), null, true,
+                        false, columnValues, null, metadata.getDisplayCondition(), metadata.getFormulaExpression());
 
                 columnHeaders.add(rsch);
+            }
 
 
         }
