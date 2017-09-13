@@ -122,9 +122,9 @@ public class DecliningBalanceInterestLoanScheduleGenerator extends AbstractLoanS
                 balanceForInterestCalculation = balanceForInterestCalculation.minus(compoundedMoney);
                 compoundingMap.clear();
             } else if (compoundedMoney.isGreaterThanZero()) {
-                compoundingMap.put(periodEndDate, compoundedMoney);
-                compoundingMap.put(compoundingEndDate, compoundedMoney.negated());
-                clearMapDetails(periodEndDate, compoundingMap);
+                    compoundingMap.put(periodEndDate, compoundedMoney.minus(compoundingMap.get(periodStartDate).getAmount()));
+                    compoundingMap.put(compoundingEndDate, compoundedMoney.negated());
+                    clearMapDetails(periodEndDate, compoundingMap);
             }
         }
 
