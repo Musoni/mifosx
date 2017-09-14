@@ -462,6 +462,17 @@ public class AccountingProcessorHelper {
         }
     }
 
+    public boolean checkFoBranchClosures(final GLClosure latestGLClosure, final Date transactionDate){
+        boolean officeBranchIsClosed = false;
+        if(latestGLClosure != null){
+            if (latestGLClosure.getClosingDate().after(transactionDate)
+                    || latestGLClosure.getClosingDate().equals(transactionDate)){
+                officeBranchIsClosed = true;
+            }
+        }
+        return officeBranchIsClosed;
+    }
+
     public GLClosure getLatestClosureByBranch(final long officeId) {
         return this.closureRepository.getLatestGLClosureByBranch(officeId);
     }
