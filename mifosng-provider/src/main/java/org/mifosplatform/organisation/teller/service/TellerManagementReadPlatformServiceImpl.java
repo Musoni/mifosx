@@ -858,7 +858,10 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             sqlBuilder.append(" txn.txn_type as txn_type, ");
             sqlBuilder.append(" txn.currency_code as txn_currency_code, ");
 
-            sqlBuilder.append(" txn.txn_amount as txn_amount, txn.txn_date as txn_date, txn.txn_note as txn_note, ");
+            sqlBuilder.append(" txn.txn_amount as txn_amount, txn.txn_date as txn_date,");
+            sqlBuilder.append(" null as clientId , null  as clientName, null as accountNo, ");
+            sqlBuilder.append(" null as reference , ");
+            sqlBuilder.append(" txn.txn_note as txn_note, ");
             sqlBuilder.append(" txn.entity_type as entity_type, txn.entity_id as entity_id, txn.created_date as created_date, ");
             sqlBuilder
                     .append(" o.id as office_id, o.name as office_name, t.id as teller_id, t.name as teller_name,");
@@ -888,6 +891,8 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             sqlBuilder.append(" end as txn_type, ");
             sqlBuilder.append(" sav.currency_code as txn_currency_code, ");
             sqlBuilder.append(" sav_txn.amount as txn_amount, sav_txn.transaction_date as txn_date, ");
+            sqlBuilder.append(" cl.id as clientId , cl.display_name  as clientName, sav.account_no as accountNo, ");
+            sqlBuilder.append(" pd.receipt_number as reference , ");
             sqlBuilder
                     .append(" concat (renum.enum_value, ', Sav:', sav.id, '-', sav.account_no, ',Client:', cl.id, '-',cl.display_name) as txn_note, ");
             sqlBuilder.append(" 'savings' as entity_type, sav.id as entity_id, sav_txn.created_date as created_date, ");
@@ -900,6 +905,7 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
                     .append(" left join r_enum_value renum on sav_txn.transaction_type_enum = renum.enum_id and renum.enum_name = 'savings_transaction_type_enum' ");
             sqlBuilder.append(" left join m_savings_account sav on sav_txn.savings_account_id = sav.id ");
             sqlBuilder.append(" left join m_client cl on sav.client_id = cl.id ");
+            sqlBuilder.append(" left join m_payment_detail pd on pd.id = sav_txn.payment_detail_id ");
             sqlBuilder.append(" left join m_group mc on sav.group_id = mc.id ");
             sqlBuilder.append(" left join m_office o on CASE WHEN  cl.office_id IS NULL THEN mc.office_id ELSE cl.office_id END = o.id ");
             sqlBuilder.append(" left join m_appuser user on sav_txn.appuser_id = user.id ");
@@ -928,8 +934,9 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             sqlBuilder.append(" end as cash_txn_type, ");
             sqlBuilder.append(" loan.currency_code as txn_currency_code, ");
             sqlBuilder.append(" loan_txn.amount as txn_amount, loan_txn.transaction_date as txn_date, ");
-            sqlBuilder
-                    .append(" concat (renum.enum_value, ', Loan:', loan.id, '-', loan.account_no, ',Client:', cl.id, '-',cl.display_name) as txn_note, ");
+            sqlBuilder.append(" cl.id as clientId , cl.display_name  as clientName, loan.account_no as accountNo, ");
+            sqlBuilder.append(" pd.receipt_number as reference , ");
+            sqlBuilder.append(" concat (renum.enum_value, ', Loan:', loan.id, '-', loan.account_no, ',Client:', cl.id, '-',cl.display_name) as txn_note, ");
             sqlBuilder.append(" 'loans' as entity_type, loan.id as entity_id, loan_txn.created_date as created_date, ");
             sqlBuilder
                     .append(" o.id as office_id, o.name as office_name, t.id as teller_id, t.name as teller_name,");
@@ -940,6 +947,7 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
                     .append(" left join r_enum_value renum on loan_txn.transaction_type_enum = renum.enum_id and renum.enum_name = 'transaction_type_enum' ");
             sqlBuilder.append(" left join m_loan loan on loan_txn.loan_id = loan.id ");
             sqlBuilder.append(" left join m_client cl on loan.client_id = cl.id ");
+            sqlBuilder.append(" left join m_payment_detail pd on pd.id = loan_txn.payment_detail_id ");
             sqlBuilder.append(" left join m_group mc on loan.group_id = mc.id ");
             sqlBuilder.append(" left join m_office o on CASE WHEN  cl.office_id IS NULL THEN mc.office_id ELSE cl.office_id END = o.id ");
             sqlBuilder.append(" left join m_appuser user on loan_txn.appuser_id = user.id ");
@@ -984,8 +992,14 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             final String tellerName = rs.getString("teller_name");
             final String cashierName = rs.getString("cashier_name");
 
+            final Long clientId = rs.getLong("clientId");
+            final String accountNo = rs.getString("accountNo");
+            final String clientName = rs.getString("clientName");
+            final String reference = rs.getString("reference");
+
             return CashierTransactionData.instance(id, cashierId, txnType, txnAmount, txnDate, txnNote, entityType, entityId, createdDate,
-                    officeId, officeName, tellerId, tellerName, cashierName, null, null, null,currencyCode,txnRunningBalance);
+                    officeId, officeName, tellerId, tellerName, cashierName, null, null, null,currencyCode,txnRunningBalance,
+                    clientId,clientName,accountNo,reference);
         }
     }
 
