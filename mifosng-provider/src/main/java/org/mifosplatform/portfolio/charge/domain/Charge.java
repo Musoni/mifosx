@@ -574,6 +574,8 @@ public class Charge extends AbstractPersistable<Long> {
         return ChargeTimeType.fromInt(this.chargeTimeType).isAnnualFee();
     }
 
+    public boolean isOnSpecifiedDueDate() { return ChargeTimeType.fromInt(this.chargeTimeType).isOnSpecifiedDueDate(); }
+
     public boolean isOverdueInstallment() {
         return ChargeTimeType.fromInt(this.chargeTimeType).isOverdueInstallment();
     }

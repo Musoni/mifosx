@@ -6,6 +6,7 @@
 package org.mifosplatform.portfolio.charge.service;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import javax.sql.DataSource;
@@ -133,7 +134,17 @@ public class ChargeWritePlatformServiceJpaRepositoryImpl implements ChargeWriteP
                 if (isChargeExistWithLoans) { throw new ChargeCannotBeUpdatedException(
                         "error.msg.charge.frequency.cannot.be.updated.it.is.used.in.loan",
                         "This charge frequency cannot be updated, it is used in loan"); }
-            } 
+            }
+
+            if(changes.containsKey("chargeTimeType") && chargeForUpdate.isOnSpecifiedDueDate()){
+                final Collection<LoanProduct> products = this.loanProductRepository.retrieveLoanProductsByChargeId(chargeId);
+                for(LoanProduct product : products){
+                    List<Charge> productCharges = product.getLoanProductCharges();
+                    productCharges.remove(chargeForUpdate);
+                    product.update(productCharges);
+                    this.loanProductRepository.save(product);
+                }
+            }
 
             // Has account Id been changed ?
             if (changes.containsKey(ChargesApiConstants.glAccountIdParamName)) {
