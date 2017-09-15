@@ -11,11 +11,7 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -32,6 +28,7 @@ import org.mifosplatform.infrastructure.core.domain.MifosPlatformTenant;
 import org.mifosplatform.infrastructure.core.service.ThreadLocalContextUtil;
 import org.mifosplatform.infrastructure.jobs.annotation.CronTarget;
 import org.mifosplatform.infrastructure.jobs.service.JobName;
+import org.mifosplatform.infrastructure.reportmailingjob.data.ReportMailingJobValidator;
 import org.mifosplatform.infrastructure.reportmailingjob.helper.IPv4Helper;
 import org.mifosplatform.infrastructure.scheduledemail.data.EmailMessageWithAttachmentData;
 import org.mifosplatform.infrastructure.scheduledemail.service.EmailMessageJobEmailService;
@@ -75,8 +72,10 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
 	private final RestTemplate restTemplate = new RestTemplate();
 	private final EmailMessageJobEmailService emailMessageJobEmailService;
 	private final ExternalServicesPropertiesReadPlatformService externalServicePropertiesReadPlatformService;
-    
-    /** 
+	private final ReportMailingJobValidator reportMailingJobValidator;
+
+
+	/**
 	 * SmsMessageScheduledJobServiceImpl constructor
 	 **/
 	@Autowired
@@ -85,13 +84,15 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
 			 SmsReadPlatformService smsReadPlatformService,
 			 SmsConfigurationRepository smsConfigurationRepository,
 			 EmailMessageJobEmailService emailMessageJobEmailService,
-			 ExternalServicesPropertiesReadPlatformService externalServicePropertiesReadPlatformService) {
+			 ExternalServicesPropertiesReadPlatformService externalServicePropertiesReadPlatformService,
+			 ReportMailingJobValidator reportMailingJobValidator) {
 		this.smsMessageRepository = smsMessageRepository;
 		this.smsConfigurationRepository = smsConfigurationRepository;
 		this.configurationReadPlatformService = readPlatformService;
 		this.smsReadPlatformService = smsReadPlatformService;
 		this.emailMessageJobEmailService = emailMessageJobEmailService;
 		this.externalServicePropertiesReadPlatformService = externalServicePropertiesReadPlatformService;
+		this.reportMailingJobValidator = reportMailingJobValidator;
 	}
 	
 	/** 
@@ -529,12 +530,18 @@ public class SmsMessageScheduledJobServiceImpl implements SmsMessageScheduledJob
 			String text = "Please be aware that you have a limited number of SMS messages remaining. If you would like to continue sending out automated messages to your clients, please make sure to top up your SMS balance as soon as possible.\n" +
 					"Thank you,";
 			String subject = "Musoni SMS Balance Low";
-			EmailMessageWithAttachmentData emailMessageWithAttachmentData = EmailMessageWithAttachmentData.createNew(to,
-					text,subject,null);
-			this.emailMessageJobEmailService.sendEmailWithAttachment(emailMessageWithAttachmentData);
+			Set<String> emailRecipients =  this.reportMailingJobValidator.validateEmailRecipients(to);
+
+			for(final String sendTo : emailRecipients){
+				EmailMessageWithAttachmentData emailMessageWithAttachmentData = EmailMessageWithAttachmentData.createNew(sendTo,
+						text,subject,null);
+				this.emailMessageJobEmailService.sendEmailWithAttachment(emailMessageWithAttachmentData);
+			}
+
 		}
 
 	}
+
 
 
 	private Integer smsCreditEmailReminder(){
