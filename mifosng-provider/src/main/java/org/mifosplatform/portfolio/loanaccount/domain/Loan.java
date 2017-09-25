@@ -1741,11 +1741,7 @@ public class Loan extends AbstractPersistable<Long> {
 
             }
         } else {
-            chargeAmt = loanCharge.amount();
-            if (loanCharge.isInstalmentFee()) {
-                chargeAmt =  chargeAmt.divide(BigDecimal.valueOf(repaymentScheduleDetail().getNumberOfRepayments()), mc);
-                chargeAmt = Money.of(getCurrency(),chargeAmt).getAmount();
-            }
+            chargeAmt = loanCharge.amountOrPercentage();
         }
         if (loanCharge.isActive()) {
             loanCharge.update(chargeAmt, loanCharge.getDueLocalDate(), amount, fetchNumberOfInstallmensAfterExceptions(), totalChargeAmt, this.getCurrency());
