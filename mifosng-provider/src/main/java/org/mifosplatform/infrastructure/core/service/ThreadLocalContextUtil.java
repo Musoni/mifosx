@@ -5,6 +5,7 @@
  */
 package org.mifosplatform.infrastructure.core.service;
 
+import org.apache.commons.lang.BooleanUtils;
 import org.mifosplatform.infrastructure.core.domain.MifosPlatformTenant;
 import org.springframework.util.Assert;
 
@@ -20,6 +21,8 @@ public class ThreadLocalContextUtil {
     private static final ThreadLocal<MifosPlatformTenant> tenantcontext = new ThreadLocal<>();
     
     private static final ThreadLocal<String> authTokenContext = new ThreadLocal<>();
+    
+    private static final ThreadLocal<Boolean> skipPasswordExpirationCheck = newBooleanThreadLocal(false);
     
     public static void setTenant(final MifosPlatformTenant tenant) {
         Assert.notNull(tenant, "tenant cannot be null");
@@ -53,5 +56,49 @@ public class ThreadLocalContextUtil {
     public static String getAuthToken() {
         return authTokenContext.get();
     }
+    
+    /**
+     * Creates a new boolean thread local variable
+     * 
+     * @param initialValue
+     * @return {@link ThreadLocal}
+     */
+    private static ThreadLocal<Boolean> newBooleanThreadLocal(
+            final Boolean initialValue) {
+        ThreadLocal<Boolean> threadLocal = new ThreadLocal<Boolean>() {
+            @Override
+            protected Boolean initialValue() {
+                return initialValue;
+            }
+        };
+        
+        return threadLocal;
+    }
 
+    /**
+     * Sets the value of the "skipPasswordExpirationCheck" thread local variable
+     * 
+     * @param skip
+     */
+    public static void setSkipPasswordExpirationCheck(final Boolean skip) {
+    	skipPasswordExpirationCheck.set(skip);
+    }
+    
+    /**
+     * Returns true if the value of the "skipPasswordExpirationCheck" thread local variable is true, else false
+     * 
+     * @return true/false
+     */
+    public static Boolean skipPasswordExpirationCheck() {
+    	return BooleanUtils.isNotFalse(skipPasswordExpirationCheck.get());
+    }
+    
+    /**
+     * Returns true if the value of the "skipPasswordExpirationCheck" thread local variable is false, else false
+     * 
+     * @return true/false
+     */
+    public static Boolean doPasswordExpirationCheck() {
+    	return BooleanUtils.isFalse(skipPasswordExpirationCheck.get());
+    }
 }
