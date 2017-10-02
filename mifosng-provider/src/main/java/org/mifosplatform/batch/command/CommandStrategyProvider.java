@@ -92,6 +92,8 @@ public class CommandStrategyProvider {
         this.commandStrategies.put(CommandContext.resource("loans\\/\\d+\\/guarantors").method("POST").build(), "createGuarantorCommandStrategy");
         this.commandStrategies
                 .put(CommandContext.resource("loans\\/template").method("GET").build(), "collectLoanTemplateCommandStrategy");
+        this.commandStrategies.put(CommandContext.resource("groups").method("POST").build(), "createGroupCommandStrategy");
+
     }
 
 }
