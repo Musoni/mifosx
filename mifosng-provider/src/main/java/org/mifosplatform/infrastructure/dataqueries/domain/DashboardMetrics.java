@@ -5,14 +5,17 @@
  */
 package org.mifosplatform.infrastructure.dataqueries.domain;
 
-import org.mifosplatform.organisation.office.domain.Office;
-import org.mifosplatform.organisation.staff.domain.Staff;
-import org.springframework.data.jpa.domain.AbstractPersistable;
-import org.joda.time.LocalDateTime;
-
-import javax.persistence.*;
 import java.math.BigDecimal;
 import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+
+import org.joda.time.LocalDateTime;
+import org.springframework.data.jpa.domain.AbstractPersistable;
 
 @Entity
 @Table(name = "m_dashboard_metric_result")

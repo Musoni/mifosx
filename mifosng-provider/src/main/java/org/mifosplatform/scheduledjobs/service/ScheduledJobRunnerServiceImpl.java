@@ -13,7 +13,10 @@ import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
+import org.mifosplatform.accounting.closure.domain.GLClosure;
+import org.mifosplatform.accounting.journalentry.service.AccountingProcessorHelper;
 import org.mifosplatform.infrastructure.core.data.ApiParameterError;
+import org.mifosplatform.infrastructure.core.exception.AbstractPlatformDomainRuleException;
 import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.mifosplatform.infrastructure.core.service.DateUtils;
 import org.mifosplatform.infrastructure.core.service.RoutingDataSourceServiceFactory;
@@ -33,6 +36,10 @@ import org.mifosplatform.portfolio.savings.DepositAccountType;
 import org.mifosplatform.portfolio.savings.DepositAccountUtils;
 import org.mifosplatform.portfolio.savings.data.DepositAccountData;
 import org.mifosplatform.portfolio.savings.data.SavingsAccountAnnualFeeData;
+import org.mifosplatform.portfolio.savings.domain.SavingsAccount;
+import org.mifosplatform.portfolio.savings.domain.SavingsAccountCharge;
+import org.mifosplatform.portfolio.savings.domain.SavingsAccountChargeRepository;
+import org.mifosplatform.portfolio.savings.domain.SavingsAccountChargeRepositoryWrapper;
 import org.mifosplatform.portfolio.savings.service.DepositAccountReadPlatformService;
 import org.mifosplatform.portfolio.savings.service.DepositAccountWritePlatformService;
 import org.mifosplatform.portfolio.savings.service.SavingsAccountChargeReadPlatformService;
@@ -59,6 +66,8 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
     private final LoanSuspendAccruedIncomeWritePlatformService loanSuspendAccruedIncomeWritePlatformService;
     private final ReadReportingService readExtraDataAndReportingService;
     private final DashboardMetricsRepository dashboardMetricsRepository;
+    private final SavingsAccountChargeRepositoryWrapper savingsAccountChargeRepository;
+    private final AccountingProcessorHelper helper;
 
 
     @Autowired
@@ -68,7 +77,8 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
             final DepositAccountReadPlatformService depositAccountReadPlatformService,
             final DepositAccountWritePlatformService depositAccountWritePlatformService,
             final LoanSuspendAccruedIncomeWritePlatformService loanSuspendAccruedIncomeWritePlatformService, final ReadReportingService readExtraDataAndReportingService,
-                                         final DashboardMetricsRepository dashboardMetricsRepository) {
+            final DashboardMetricsRepository dashboardMetricsRepository, final SavingsAccountChargeRepositoryWrapper savingsAccountChargeRepository,
+            final AccountingProcessorHelper helper) {
         this.dataSourceServiceFactory = dataSourceServiceFactory;
         this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
         this.savingsAccountChargeReadPlatformService = savingsAccountChargeReadPlatformService;
@@ -77,6 +87,8 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
         this.loanSuspendAccruedIncomeWritePlatformService = loanSuspendAccruedIncomeWritePlatformService;
         this.readExtraDataAndReportingService = readExtraDataAndReportingService;
         this.dashboardMetricsRepository = dashboardMetricsRepository;
+        this.savingsAccountChargeRepository = savingsAccountChargeRepository;
+        this.helper = helper;
 
     }
 
@@ -232,8 +244,16 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 
         for (final SavingsAccountAnnualFeeData savingsAccountReference : chargesDueData) {
             try {
-                this.savingsAccountWritePlatformService.applyChargeDue(savingsAccountReference.getId(),
+                final SavingsAccountCharge savingsAccountCharge = this.savingsAccountChargeRepository.findOneWithNotFoundDetection(savingsAccountReference.getId(),
                         savingsAccountReference.getAccountId());
+                final SavingsAccount savingsAccount = savingsAccountCharge.getSavingsAccount();
+                final Long officeId = savingsAccount.officeId();
+                final GLClosure glClosure = this.helper.getLatestClosureByBranch(officeId);
+                if(!this.helper.checkFoBranchClosures(glClosure,savingsAccountCharge.getDueLocalDate().toDate())){
+                    this.savingsAccountWritePlatformService.applyChargeDue(savingsAccountReference.getId(),
+                            savingsAccountReference.getAccountId());
+                }
+
             } catch (final PlatformApiDataValidationException e) {
                 final List<ApiParameterError> errors = e.getErrors();
                 for (final ApiParameterError error : errors) {
@@ -242,6 +262,11 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
                     errorMsg.append("Apply Charges due for savings failed for account:").append(savingsAccountReference.getAccountNo())
                             .append(" with message ").append(error.getDeveloperMessage());
                 }
+            }catch (final AbstractPlatformDomainRuleException ex) {
+                logger.error("Apply Charges due for savings failed for account:" +savingsAccountReference.getAccountNo()+ " with message "
+                        + ex.getDefaultUserMessage());
+                errorMsg.append("Apply Charges due for savings failed for account:").append(savingsAccountReference.getAccountNo()).append(" with message ")
+                        .append(ex.getDefaultUserMessage());
             }
         }
 
@@ -441,7 +466,8 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 
                     final DashboardMetrics newMetric = new DashboardMetrics(value,name,officeId,StaffId,monthYear);
 
-                    DashboardMetrics oldMetric = this.dashboardMetricsRepository.findSpecial(monthYear,StaffId,officeId);
+                    DashboardMetrics oldMetric = this.dashboardMetricsRepository.
+                    		findByMetricNameAndMonthYearAndStaffIdAndOfficeId(name, monthYear, StaffId, officeId);
 
                     if(oldMetric!=null){
 

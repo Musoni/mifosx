@@ -837,4 +837,8 @@ public class SavingsAccountCharge extends AbstractPersistable<Long> {
     public boolean canOverriteSavingAccountRules() {
         return !(this.isSavingsActivation() || this.isWithdrawalFee() || this.isOnSpecifiedDueDate());
     }
+
+    public SavingsAccount getSavingsAccount() {
+        return this.savingsAccount;
+    }
 }

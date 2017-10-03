@@ -64,6 +64,9 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
     @Override
     public CommandProcessingResult processAndLogCommand(final CommandWrapper wrapper, final JsonCommand command,
             final boolean isApprovedByChecker) {
+    	
+    	// initially set the skip password expiration check variable to false
+        ThreadLocalContextUtil.setSkipPasswordExpirationCheck(false);
 
     	CommandSource commandSourceResult = null;
     	
@@ -85,6 +88,10 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
         			// change the current authenticated principal from the checker (currently authenticated user) to
         			// the maker of the request stored in the audit log
                     SecurityContextHolder.getContext().setAuthentication(authentication);
+                    
+                    // skip password expiration check (already checked password expiration for the maker/checker request checker)
+                    // this was added to prevent password expiration check for maker/checker request maker
+                    ThreadLocalContextUtil.setSkipPasswordExpirationCheck(true);
         		}
         	}
         }

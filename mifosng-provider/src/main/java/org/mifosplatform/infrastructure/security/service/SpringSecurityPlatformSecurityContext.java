@@ -14,6 +14,7 @@ import org.mifosplatform.commands.domain.CommandWrapper;
 import org.mifosplatform.commands.service.CommandWrapperBuilder;
 import org.mifosplatform.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.mifosplatform.infrastructure.core.service.DateUtils;
+import org.mifosplatform.infrastructure.core.service.ThreadLocalContextUtil;
 import org.mifosplatform.infrastructure.security.exception.NoAuthorizationException;
 import org.mifosplatform.infrastructure.security.exception.ResetPasswordException;
 import org.mifosplatform.useradministration.domain.AppUser;
@@ -127,7 +128,8 @@ public class SpringSecurityPlatformSecurityContext implements PlatformSecurityCo
     @Override
     public boolean doesPasswordHasToBeRenewed(AppUser currentUser) {
 
-        if (this.configurationDomainService.isPasswordForcedResetEnable() && !currentUser.getPasswordNeverExpires()) {
+        if (this.configurationDomainService.isPasswordForcedResetEnable() && !currentUser.getPasswordNeverExpires() 
+        		&& ThreadLocalContextUtil.doPasswordExpirationCheck()) {
 
             Long passwordDurationDays = this.configurationDomainService.retrievePasswordLiveTime();
             final Date passWordLastUpdateDate = currentUser.getLastTimePasswordUpdated();

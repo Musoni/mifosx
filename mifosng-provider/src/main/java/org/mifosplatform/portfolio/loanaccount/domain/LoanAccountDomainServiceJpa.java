@@ -186,6 +186,9 @@ public class LoanAccountDomainServiceJpa implements LoanAccountDomainService {
                 loan.getLoanTransactions().add(mapEntry.getValue());
                 updateLoanTransaction(mapEntry.getKey(), mapEntry.getValue());
             }
+            /**update this parameter use to release funds on guarantor when transactions has reprocess **/
+            loan.updateChangedTransactionDetail(changedTransactionDetail);
+
         }
 
         if (StringUtils.isNotBlank(noteText)) {
@@ -200,7 +203,6 @@ public class LoanAccountDomainServiceJpa implements LoanAccountDomainService {
          * calculate suspended income to (opposite booking) if loan has suspended income (interest + fees + penalties)
          */
         this.loanSuspendAccruedIncomeWritePlatformService.suspendedIncomeOutOfNPA(loan, newRepaymentTransaction);
-
 
 
         this.businessEventNotifierService.notifyBusinessEventWasExecuted(BUSINESS_EVENTS.LOAN_MAKE_REPAYMENT,
