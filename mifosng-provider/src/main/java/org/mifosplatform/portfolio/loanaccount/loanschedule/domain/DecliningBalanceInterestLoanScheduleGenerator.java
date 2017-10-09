@@ -118,21 +118,6 @@ public class DecliningBalanceInterestLoanScheduleGenerator extends AbstractLoanS
                 }
 
             }
-            if (!periodEndDate.isBefore(compoundingEndDate)) {
-                balanceForInterestCalculation = balanceForInterestCalculation.minus(compoundedMoney);
-                compoundingMap.clear();
-            } else if (compoundedMoney.isGreaterThanZero()) {
-
-                BigDecimal periodStartAmount = BigDecimal.ZERO;
-                if(compoundingMap.containsKey(periodStartDate))
-                {
-                    periodStartAmount = compoundingMap.get(periodStartDate).getAmount();
-                }
-
-                compoundingMap.put(periodEndDate, compoundedMoney.minus(periodStartAmount));
-                compoundingMap.put(compoundingEndDate, compoundedMoney.negated());
-                clearMapDetails(periodEndDate, compoundingMap);
-            }
         }
 
         final PrincipalInterest result = loanApplicationTerms.calculateTotalInterestForPeriod(calculator,
