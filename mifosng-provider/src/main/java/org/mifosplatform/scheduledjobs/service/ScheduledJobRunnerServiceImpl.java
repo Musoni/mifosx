@@ -36,10 +36,7 @@ import org.mifosplatform.portfolio.savings.DepositAccountType;
 import org.mifosplatform.portfolio.savings.DepositAccountUtils;
 import org.mifosplatform.portfolio.savings.data.DepositAccountData;
 import org.mifosplatform.portfolio.savings.data.SavingsAccountAnnualFeeData;
-import org.mifosplatform.portfolio.savings.domain.SavingsAccount;
-import org.mifosplatform.portfolio.savings.domain.SavingsAccountCharge;
-import org.mifosplatform.portfolio.savings.domain.SavingsAccountChargeRepository;
-import org.mifosplatform.portfolio.savings.domain.SavingsAccountChargeRepositoryWrapper;
+import org.mifosplatform.portfolio.savings.domain.*;
 import org.mifosplatform.portfolio.savings.service.DepositAccountReadPlatformService;
 import org.mifosplatform.portfolio.savings.service.DepositAccountWritePlatformService;
 import org.mifosplatform.portfolio.savings.service.SavingsAccountChargeReadPlatformService;
@@ -68,6 +65,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
     private final DashboardMetricsRepository dashboardMetricsRepository;
     private final SavingsAccountChargeRepositoryWrapper savingsAccountChargeRepository;
     private final AccountingProcessorHelper helper;
+    private final SavingsAccountRepository savingsAccountRepository;
 
 
     @Autowired
@@ -78,7 +76,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
             final DepositAccountWritePlatformService depositAccountWritePlatformService,
             final LoanSuspendAccruedIncomeWritePlatformService loanSuspendAccruedIncomeWritePlatformService, final ReadReportingService readExtraDataAndReportingService,
             final DashboardMetricsRepository dashboardMetricsRepository, final SavingsAccountChargeRepositoryWrapper savingsAccountChargeRepository,
-            final AccountingProcessorHelper helper) {
+            final AccountingProcessorHelper helper, final SavingsAccountRepository savingsAccountRepository                            ) {
         this.dataSourceServiceFactory = dataSourceServiceFactory;
         this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
         this.savingsAccountChargeReadPlatformService = savingsAccountChargeReadPlatformService;
@@ -89,6 +87,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
         this.dashboardMetricsRepository = dashboardMetricsRepository;
         this.savingsAccountChargeRepository = savingsAccountChargeRepository;
         this.helper = helper;
+        this.savingsAccountRepository = savingsAccountRepository;
 
     }
 
@@ -327,7 +326,17 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
         for (final DepositAccountData depositAccount : depositAccounts) {
             try {
                 final DepositAccountType depositAccountType = DepositAccountType.fromInt(depositAccount.depositType().getId().intValue());
-                this.depositAccountWritePlatformService.updateMaturityDetails(depositAccount.id(), depositAccountType);
+                SavingsAccount account = this.depositAccountWritePlatformService.updateMaturityDetails(depositAccount.id(), depositAccountType);
+
+                if (depositAccountType.isFixedDeposit() && account !=null) {
+
+                    this.savingsAccountRepository.saveAndFlush(account);
+
+                    this.depositAccountWritePlatformService.autoRenewFDAccount(depositAccount.id(), depositAccountType);
+                }
+
+
+
             } catch (final PlatformApiDataValidationException e) {
                 final List<ApiParameterError> errors = e.getErrors();
                 for (final ApiParameterError error : errors) {

@@ -25,6 +25,7 @@ import org.mifosplatform.infrastructure.accountnumberformat.domain.AccountNumber
 import org.mifosplatform.infrastructure.accountnumberformat.domain.EntityAccountType;
 import org.mifosplatform.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
+import org.mifosplatform.infrastructure.core.domain.Tenant;
 import org.mifosplatform.infrastructure.core.service.DateUtils;
 import org.mifosplatform.organisation.monetary.domain.ApplicationCurrency;
 import org.mifosplatform.organisation.monetary.domain.ApplicationCurrencyRepositoryWrapper;
@@ -198,6 +199,63 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
 
         return savingsTransactionId;
+    }
+    @Transactional
+    @Override
+    public void handleFDAutoRenewOnClosure(FixedDepositAccount account){
+
+
+        final boolean isSavingsInterestPostingAtCurrentPeriodEnd = this.configurationDomainService
+                .isSavingsInterestPostingAtCurrentPeriodEnd();
+        final Integer financialYearBeginningMonth = this.configurationDomainService.retrieveFinancialYearBeginningMonth();
+
+        boolean isRegularTransaction = false;
+        boolean isAccountTransfer = false;
+        final boolean isPreMatureClosure = false;
+
+
+        final Set<Long> existingTransactionIds = new HashSet<>();
+        final Set<Long> existingReversedTransactionIds = new HashSet<>();
+        updateExistingTransactionsDetails(account, existingTransactionIds, existingReversedTransactionIds);
+
+
+        final MathContext mc = MathContext.DECIMAL64;
+        final LocalDate todayDate = DateUtils.getLocalDateOfTenant();
+
+        FixedDepositAccount reinvestedDeposit = account.reInvest(account.getAccountBalance());
+        this.depositAccountAssembler.assignSavingAccountHelpers(reinvestedDeposit);
+
+        reinvestedDeposit.updateMaturityDateAndAmountBeforeAccountActivation(mc, isPreMatureClosure,
+                isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth);
+
+        reinvestedDeposit.approveAndActivateApplication(todayDate.toDate(),null);
+
+        this.savingsAccountRepository.saveAndFlush(reinvestedDeposit);
+
+        autoGenerateAccountNumber(reinvestedDeposit);
+
+        // transfer from old account to new
+
+        final boolean isExceptionForBalanceCheck = false;
+
+        final DateTimeFormatter fmt = DateTimeFormat.forPattern("dd-MM-yyyy").withLocale(Locale.ENGLISH);
+
+        final AccountTransferDTO accountTransferDTO = new AccountTransferDTO(DateUtils.getLocalDateOfTenant(),
+                account.getAccountBalance(), PortfolioAccountType.SAVINGS, PortfolioAccountType.SAVINGS,
+                account.getId(), reinvestedDeposit.getId(), "Account Transfer", Locale.ENGLISH, fmt, null, null, null, null,
+                null, AccountTransferType.ACCOUNT_TRANSFER.getValue(), null, null, null, null, reinvestedDeposit, account,
+                isRegularTransaction, isExceptionForBalanceCheck);
+        this.accountTransfersWritePlatformService.transferFunds(accountTransferDTO);
+
+
+        // update, old account
+
+        updateExistingTransactionsDetails(account, existingTransactionIds, existingReversedTransactionIds);
+        //account.close(user, command, tenantsTodayDate, changes);
+        this.savingsAccountRepository.save(account);
+
+        postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
+
     }
 
     @Transactional

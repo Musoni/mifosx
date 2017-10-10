@@ -8,6 +8,7 @@ package org.mifosplatform.portfolio.savings.domain;
 import static org.mifosplatform.portfolio.interestratechart.InterestRateChartApiConstants.deleteParamName;
 import static org.mifosplatform.portfolio.interestratechart.InterestRateChartApiConstants.idParamName;
 import static org.mifosplatform.portfolio.savings.DepositsApiConstants.FIXED_DEPOSIT_PRODUCT_RESOURCE_NAME;
+import static org.mifosplatform.portfolio.savings.DepositsApiConstants.autoRenewOnClosureParamName;
 import static org.mifosplatform.portfolio.savings.DepositsApiConstants.maxDepositTermParamName;
 
 import java.math.BigDecimal;
@@ -77,7 +78,7 @@ public class FixedDepositProduct extends SavingsProduct {
             final SavingsInterestCalculationDaysInYearType interestCalculationDaysInYearType, final Integer lockinPeriodFrequency,
             final SavingsPeriodFrequencyType lockinPeriodFrequencyType, final AccountingRuleType accountingRuleType,
             final Set<Charge> charges, final DepositProductTermAndPreClosure productTermAndPreClosure, final Set<InterestRateChart> charts,
-            BigDecimal minBalanceForInterestCalculation) {
+            BigDecimal minBalanceForInterestCalculation,final boolean autoRenewOnClosure) {
 
         final BigDecimal minRequiredOpeningBalance = null;
         final boolean withdrawalFeeApplicableForTransfer = false;
@@ -87,7 +88,7 @@ public class FixedDepositProduct extends SavingsProduct {
         return new FixedDepositProduct(name, shortName, description, currency, interestRate, interestCompoundingPeriodType,
                 interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
                 lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeApplicableForTransfer, accountingRuleType, charges,
-                productTermAndPreClosure, charts, allowOverdraft, overdraftLimit, minBalanceForInterestCalculation, productGroup);
+                productTermAndPreClosure, charts, allowOverdraft, overdraftLimit, minBalanceForInterestCalculation, productGroup,autoRenewOnClosure);
     }
 
     protected FixedDepositProduct(final String name, final String shortName, final String description, final MonetaryCurrency currency,
@@ -98,12 +99,12 @@ public class FixedDepositProduct extends SavingsProduct {
             final boolean withdrawalFeeApplicableForTransfer, final AccountingRuleType accountingRuleType, final Set<Charge> charges,
             final DepositProductTermAndPreClosure productTermAndPreClosure, final Set<InterestRateChart> charts,
             final boolean allowOverdraft, final BigDecimal overdraftLimit, final BigDecimal minBalanceForInterestCalculation,
-            final CodeValue productGroup) {
+            final CodeValue productGroup,final boolean autoRenewOnClosure) {
 
         super(name, shortName, description, currency, interestRate, interestCompoundingPeriodType, interestPostingPeriodType,
                 interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency,
                 lockinPeriodFrequencyType, withdrawalFeeApplicableForTransfer, accountingRuleType, charges, allowOverdraft, overdraftLimit,
-                minBalanceForInterestCalculation, productGroup,null,null);
+                minBalanceForInterestCalculation, productGroup,null,null,autoRenewOnClosure);
 
         if (charts != null) {
             this.charts = charts;
@@ -158,6 +159,12 @@ public class FixedDepositProduct extends SavingsProduct {
         // update chart Slabs
         if (command.hasParameter(DepositsApiConstants.chartsParamName)) {
             updateCharts(command, actualChanges, baseDataValidator);
+        }
+
+        if (command.isChangeInBooleanParameterNamed(autoRenewOnClosureParamName, this.getAutoRenewOnClosure())) {
+            final boolean newValue = command.booleanPrimitiveValueOfParameterNamed(autoRenewOnClosureParamName);
+            actualChanges.put(autoRenewOnClosureParamName, newValue);
+            this.setAutoRenewOnClosure(newValue);
         }
 
         return actualChanges;

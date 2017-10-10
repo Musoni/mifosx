@@ -1340,7 +1340,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
 
     @Transactional
     @Override
-    public void updateMaturityDetails(Long depositAccountId, DepositAccountType depositAccountType) {
+    public SavingsAccount updateMaturityDetails(Long depositAccountId, DepositAccountType depositAccountType) {
 
         final boolean isSavingsInterestPostingAtCurrentPeriodEnd = this.configurationDomainService
                 .isSavingsInterestPostingAtCurrentPeriodEnd();
@@ -1353,12 +1353,32 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
 
         if (depositAccountType.isFixedDeposit()) {
             ((FixedDepositAccount) account).updateMaturityStatus(isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth);
+
+
         } else if (depositAccountType.isRecurringDeposit()) {
             ((RecurringDepositAccount) account).updateMaturityStatus(isSavingsInterestPostingAtCurrentPeriodEnd,
                     financialYearBeginningMonth);
         }
 
         postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds);
+
+        return account;
+    }
+
+    @Transactional
+    @Override
+    public void autoRenewFDAccount(final Long depositAccountId,final DepositAccountType depositAccountType){
+
+        if (depositAccountType.isFixedDeposit()){
+
+        final SavingsAccount account = this.depositAccountAssembler.assembleFrom(depositAccountId, depositAccountType);
+
+
+            if (((FixedDepositAccount) account).isAutoRenewOnClosure()) {
+                this.depositAccountDomainService.handleFDAutoRenewOnClosure((FixedDepositAccount) account);
+            }
+        }
+
     }
 
     private void updateExistingTransactionsDetails(SavingsAccount account, Set<Long> existingTransactionIds,

@@ -297,6 +297,10 @@ public class SavingsAccount extends AbstractPersistable<Long> {
     @Column(name = "min_balance_for_interest_calculation", scale = 6, precision = 19, nullable = true)
     private BigDecimal minBalanceForInterestCalculation;
 
+
+    @Column(name = "auto_renew_on_closure")
+    protected boolean autoRenewOnClosure;
+
     protected SavingsAccount() {
         //
     }
@@ -318,7 +322,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
                 submittedBy, interestRate, interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType,
                 interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType,
                 withdrawalFeeApplicableForTransfer, savingsAccountCharges, allowOverdraft, overdraftLimit, enforceMinRequiredBalance,
-                minRequiredBalance, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation);
+                minRequiredBalance, nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation,false);
     }
 
     protected SavingsAccount(final Client client, final Group group, final SavingsProduct product, final Staff fieldOfficer,
@@ -333,7 +337,22 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         this(client, group, product, fieldOfficer, accountNo, externalId, status, accountType, submittedOnDate, submittedBy,
                 nominalAnnualInterestRate, interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType,
                 interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType,
-                withdrawalFeeApplicableForTransfer, savingsAccountCharges, allowOverdraft, overdraftLimit, false, null, null, null);
+                withdrawalFeeApplicableForTransfer, savingsAccountCharges, allowOverdraft, overdraftLimit, false, null, null, null,false);
+    }
+
+    protected SavingsAccount(final Client client, final Group group, final SavingsProduct product, final Staff fieldOfficer,
+                             final String accountNo, final String externalId, final SavingsAccountStatusType status, final AccountType accountType,
+                             final LocalDate submittedOnDate, final AppUser submittedBy, final BigDecimal nominalAnnualInterestRate,
+                             final SavingsCompoundingInterestPeriodType interestCompoundingPeriodType,
+                             final SavingsPostingInterestPeriodType interestPostingPeriodType, final SavingsInterestCalculationType interestCalculationType,
+                             final SavingsInterestCalculationDaysInYearType interestCalculationDaysInYearType, final BigDecimal minRequiredOpeningBalance,
+                             final Integer lockinPeriodFrequency, final SavingsPeriodFrequencyType lockinPeriodFrequencyType,
+                             final boolean withdrawalFeeApplicableForTransfer, final Set<SavingsAccountCharge> savingsAccountCharges,
+                             final boolean allowOverdraft, final BigDecimal overdraftLimit,final boolean autoRenewOnClosure) {
+        this(client, group, product, fieldOfficer, accountNo, externalId, status, accountType, submittedOnDate, submittedBy,
+                nominalAnnualInterestRate, interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType,
+                interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType,
+                withdrawalFeeApplicableForTransfer, savingsAccountCharges, allowOverdraft, overdraftLimit, false, null, null, null,autoRenewOnClosure);
     }
 
     protected SavingsAccount(final Client client, final Group group, final SavingsProduct product, final Staff savingsOfficer,
@@ -346,7 +365,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
             final boolean withdrawalFeeApplicableForTransfer, final Set<SavingsAccountCharge> savingsAccountCharges,
             final boolean allowOverdraft, final BigDecimal overdraftLimit, final boolean enforceMinRequiredBalance,
             final BigDecimal minRequiredBalance, final BigDecimal nominalAnnualInterestRateOverdraft,
-            final BigDecimal minOverdraftForInterestCalculation) {
+            final BigDecimal minOverdraftForInterestCalculation, final boolean autoRenewOnClosure) {
         this.client = client;
         this.group = group;
         this.product = product;
@@ -391,6 +410,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         this.minRequiredBalance = minRequiredBalance;
         this.minBalanceForInterestCalculation = product.minBalanceForInterestCalculation();
         this.savingsOfficerHistory = null;
+        this.autoRenewOnClosure = autoRenewOnClosure;
 
     }
 

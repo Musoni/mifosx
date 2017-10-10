@@ -13,6 +13,7 @@ import org.mifosplatform.organisation.office.domain.Office;
 import org.mifosplatform.organisation.staff.domain.Staff;
 import org.mifosplatform.portfolio.savings.DepositAccountType;
 import org.mifosplatform.portfolio.savings.data.SavingsAccountTransactionDTO;
+import org.mifosplatform.portfolio.savings.domain.SavingsAccount;
 import org.mifosplatform.portfolio.savings.domain.SavingsAccountTransaction;
 
 public interface DepositAccountWritePlatformService {
@@ -73,8 +74,9 @@ public interface DepositAccountWritePlatformService {
 
     void applyChargeDue(final Long savingsAccountChargeId, final Long accountId, final DepositAccountType depositAccountType);
 
-    void updateMaturityDetails(final Long depositAccountId, final DepositAccountType depositAccountType);
+    SavingsAccount updateMaturityDetails(final Long depositAccountId, final DepositAccountType depositAccountType);
 
+    void autoRenewFDAccount(final Long depositAccountId,final DepositAccountType depositAccountType);
     void transferInterestToSavings() throws JobExecutionException;
 
     SavingsAccountTransaction mandatorySavingsAccountDeposit(final SavingsAccountTransactionDTO accountTransactionDTO);

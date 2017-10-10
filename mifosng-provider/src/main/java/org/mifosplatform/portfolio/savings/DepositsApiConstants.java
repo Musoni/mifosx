@@ -190,6 +190,8 @@ public class DepositsApiConstants {
     // allowed column names for sorting the query result
     public final static Set<String> supportedOrderByValues = new HashSet<>(Arrays.asList("id", "accountNumbr", "officeId", "officeName"));
 
+
+    public static final String autoRenewOnClosureParamName="autoRenewOnClosure";
     /**
      * Deposit Product Parameters
      */
@@ -198,7 +200,7 @@ public class DepositsApiConstants {
             digitsAfterDecimalParamName, inMultiplesOfParamName, nominalAnnualInterestRateParamName,
             interestCompoundingPeriodTypeParamName, interestPostingPeriodTypeParamName, interestCalculationTypeParamName,
             interestCalculationDaysInYearTypeParamName, lockinPeriodFrequencyParamName, lockinPeriodFrequencyTypeParamName,
-            accountingRuleParamName, chargesParamName, productGroupIdParamName, SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INCOME_FROM_FEES.getValue(),
+            accountingRuleParamName, chargesParamName, autoRenewOnClosureParamName, productGroupIdParamName, SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INCOME_FROM_FEES.getValue(),
             SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INCOME_FROM_PENALTIES.getValue(),
             SAVINGS_PRODUCT_ACCOUNTING_PARAMS.INTEREST_ON_SAVINGS.getValue(),
             SAVINGS_PRODUCT_ACCOUNTING_PARAMS.PAYMENT_CHANNEL_FUND_SOURCE_MAPPING.getValue(),
@@ -286,7 +288,7 @@ public class DepositsApiConstants {
             interestCompoundingPeriodTypeParamName, interestPostingPeriodTypeParamName, interestCalculationTypeParamName,
             interestCalculationDaysInYearTypeParamName, lockinPeriodFrequencyParamName, lockinPeriodFrequencyTypeParamName,
             chargesParamName, chartsParamName,chartIdParamName, depositAmountParamName, depositPeriodParamName, depositPeriodFrequencyIdParamName,
-            savingsAccounts, expectedFirstDepositOnDateParamName));
+            savingsAccounts, expectedFirstDepositOnDateParamName,autoRenewOnClosureParamName));
 
     public static final Set<String> FIXED_DEPOSIT_ACCOUNT_REQUEST_DATA_PARAMETERS = fixedDepositAccountRequestData();
     public static final Set<String> FIXED_DEPOSIT_ACCOUNT_RESPONSE_DATA_PARAMETERS = fixedDepositAccountResponseData();

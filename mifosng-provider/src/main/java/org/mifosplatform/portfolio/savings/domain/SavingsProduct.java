@@ -150,6 +150,10 @@ public class SavingsProduct extends AbstractPersistable<Long> {
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "savingsProduct", orphanRemoval = true)
     private Set<ApplyChargesToExistingSavingsAccount> applyChargesToExistingSavingsAccounts = new HashSet<>();
 
+
+    @Column(name = "auto_renew_on_closure")
+    private boolean autoRenewOnClosure;
+
     public static SavingsProduct createNew(final String name, final String shortName, final String description,
             final MonetaryCurrency currency, final BigDecimal interestRate, final CodeValue productGroup,
             final SavingsCompoundingInterestPeriodType interestCompoundingPeriodType,
@@ -166,7 +170,7 @@ public class SavingsProduct extends AbstractPersistable<Long> {
                 interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
                 lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeApplicableForTransfer, accountingRuleType, charges,
                 allowOverdraft, overdraftLimit, enforceMinRequiredBalance, minRequiredBalance, minBalanceForInterestCalculation, 
-                nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, null, null, productGroup,savingsProductInterestRateCharts,applyChargesToExistingSavingsAccounts);
+                nominalAnnualInterestRateOverdraft, minOverdraftForInterestCalculation, null, null, productGroup,savingsProductInterestRateCharts,applyChargesToExistingSavingsAccounts,false);
     }
 
     protected SavingsProduct() {
@@ -186,8 +190,26 @@ public class SavingsProduct extends AbstractPersistable<Long> {
         this(name, shortName, description, currency, interestRate, interestCompoundingPeriodType, interestPostingPeriodType,
                 interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency,
                 lockinPeriodFrequencyType, withdrawalFeeApplicableForTransfer, accountingRuleType, charges, allowOverdraft, overdraftLimit,
-                false, null, minBalanceForInterestCalculation, null, null, null, null, productGroup, savingsProductInterestRateCharts,applyChargesToExistingSavingsAccounts);
+                false, null, minBalanceForInterestCalculation, null, null, null, null, productGroup, savingsProductInterestRateCharts,applyChargesToExistingSavingsAccounts,false);
     }
+
+    protected SavingsProduct(final String name, final String shortName, final String description, final MonetaryCurrency currency,
+                             final BigDecimal interestRate, final SavingsCompoundingInterestPeriodType interestCompoundingPeriodType,
+                             final SavingsPostingInterestPeriodType interestPostingPeriodType, final SavingsInterestCalculationType interestCalculationType,
+                             final SavingsInterestCalculationDaysInYearType interestCalculationDaysInYearType, final BigDecimal minRequiredOpeningBalance,
+                             final Integer lockinPeriodFrequency, final SavingsPeriodFrequencyType lockinPeriodFrequencyType,
+                             final boolean withdrawalFeeApplicableForTransfer, final AccountingRuleType accountingRuleType, final Set<Charge> charges,
+                             final boolean allowOverdraft, final BigDecimal overdraftLimit, BigDecimal minBalanceForInterestCalculation,
+                             final CodeValue productGroup,final Set<SavingsProductInterestRateChart> savingsProductInterestRateCharts,
+                             final Set<ApplyChargesToExistingSavingsAccount> applyChargesToExistingSavingsAccounts,final boolean autoRenewOnClosure) {
+        this(name, shortName, description, currency, interestRate, interestCompoundingPeriodType, interestPostingPeriodType,
+                interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency,
+                lockinPeriodFrequencyType, withdrawalFeeApplicableForTransfer, accountingRuleType, charges, allowOverdraft, overdraftLimit,
+                false, null, minBalanceForInterestCalculation, null, null, null, null, productGroup, savingsProductInterestRateCharts,applyChargesToExistingSavingsAccounts,autoRenewOnClosure);
+    }
+
+
+
 
     protected SavingsProduct(final String name, final String shortName, final String description, final MonetaryCurrency currency,
             final BigDecimal interestRate, final SavingsCompoundingInterestPeriodType interestCompoundingPeriodType,
@@ -199,7 +221,7 @@ public class SavingsProduct extends AbstractPersistable<Long> {
             final BigDecimal minRequiredBalance, BigDecimal minBalanceForInterestCalculation,
             final BigDecimal nominalAnnualInterestRateOverdraft, final BigDecimal minOverdraftForInterestCalculation,
             final LocalDate startDate, final LocalDate closeDate, final CodeValue productGroup,final Set<SavingsProductInterestRateChart> savingsProductInterestRateCharts,
-            final Set<ApplyChargesToExistingSavingsAccount> applyChargesToExistingSavingsAccounts) {
+            final Set<ApplyChargesToExistingSavingsAccount> applyChargesToExistingSavingsAccounts, final boolean autoRenewOnClosure) {
 
         this.name = name;
         this.shortName = shortName;
@@ -250,6 +272,8 @@ public class SavingsProduct extends AbstractPersistable<Long> {
         if(applyChargesToExistingSavingsAccounts != null){
             this.applyChargesToExistingSavingsAccounts = associateApplyChargeToExistingSavingsAccountWith(applyChargesToExistingSavingsAccounts);
         }
+
+        this.autoRenewOnClosure = autoRenewOnClosure;
     }
 
     /**
@@ -838,6 +862,11 @@ public class SavingsProduct extends AbstractPersistable<Long> {
         return this.savingsProductInterestRateCharts;
     }
 
+    public boolean getAutoRenewOnClosure() {
+        return autoRenewOnClosure;
+    }
 
-
+    public void setAutoRenewOnClosure(boolean autoRenewOnClosure) {
+        this.autoRenewOnClosure = autoRenewOnClosure;
+    }
 }

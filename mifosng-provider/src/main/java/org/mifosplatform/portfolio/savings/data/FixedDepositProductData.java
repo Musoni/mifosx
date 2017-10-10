@@ -48,6 +48,8 @@ public class FixedDepositProductData extends DepositProductData {
     private Collection<EnumOptionData> periodFrequencyTypeOptions;
     private Collection<CodeValueData> productGroupOptions;
 
+    private Boolean autoRenewOnClosure;
+
     public static FixedDepositProductData template(final CurrencyData currency, final EnumOptionData interestCompoundingPeriodType,
             final EnumOptionData interestPostingPeriodType, final EnumOptionData interestCalculationType,
             final EnumOptionData interestCalculationDaysInYearType, final EnumOptionData accountingRule,
@@ -93,6 +95,8 @@ public class FixedDepositProductData extends DepositProductData {
         final LocalDate closeDate = null;
         final String status = null;
         final CodeValueData productGroup = null;
+        final Boolean autoRenewOnClosure = false;
+
 
         return new FixedDepositProductData(id, name, shortName, description, currency, nominalAnnualInterestRate,
                 interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType,
@@ -104,7 +108,7 @@ public class FixedDepositProductData extends DepositProductData {
                 penaltyToIncomeAccountMappings, interestRateCharts, chartTemplate, preClosurePenalApplicable, preClosurePenalInterest,
                 preClosurePenalInterestOnType, preClosurePenalInterestOnTypeOptions, minDepositTerm, maxDepositTerm, minDepositTermType,
                 maxDepositTermType, inMultiplesOfDepositTerm, inMultiplesOfDepositTermType, minDepositAmount, depositAmount,
-                maxDepositAmount, periodFrequencyTypeOptions, startDate, closeDate, status, productGroup, productGroupOptions);
+                maxDepositAmount, periodFrequencyTypeOptions, startDate, closeDate, status, productGroup, productGroupOptions,autoRenewOnClosure);
     }
 
     public static FixedDepositProductData withCharges(final FixedDepositProductData existingProduct, final Collection<ChargeData> charges) {
@@ -127,7 +131,7 @@ public class FixedDepositProductData extends DepositProductData {
                 existingProduct.maxDepositTermType, existingProduct.inMultiplesOfDepositTerm, existingProduct.inMultiplesOfDepositTermType,
                 existingProduct.minDepositAmount, existingProduct.depositAmount, existingProduct.maxDepositAmount,
                 existingProduct.periodFrequencyTypeOptions, existingProduct.startDate, existingProduct.closeDate,
-                existingProduct.status, existingProduct.productGroup, existingProduct.productGroupOptions);
+                existingProduct.status, existingProduct.productGroup, existingProduct.productGroupOptions,existingProduct.autoRenewOnClosure);
     }
 
     /**
@@ -165,7 +169,7 @@ public class FixedDepositProductData extends DepositProductData {
                 existingProduct.minDepositTermType, existingProduct.maxDepositTermType, existingProduct.inMultiplesOfDepositTerm,
                 existingProduct.inMultiplesOfDepositTermType, existingProduct.minDepositAmount, existingProduct.depositAmount,
                 existingProduct.maxDepositAmount, periodFrequencyTypeOptions, existingProduct.startDate,
-                existingProduct.closeDate, existingProduct.status, existingProduct.productGroup, productGroupOptions);
+                existingProduct.closeDate, existingProduct.status, existingProduct.productGroup, productGroupOptions,existingProduct.autoRenewOnClosure);
     }
 
     public static FixedDepositProductData withAccountingDetails(final FixedDepositProductData existingProduct,
@@ -204,7 +208,7 @@ public class FixedDepositProductData extends DepositProductData {
                 existingProduct.maxDepositTermType, existingProduct.inMultiplesOfDepositTerm, existingProduct.inMultiplesOfDepositTermType,
                 existingProduct.minDepositAmount, existingProduct.depositAmount, existingProduct.maxDepositAmount,
                 existingProduct.periodFrequencyTypeOptions, existingProduct.startDate, existingProduct.closeDate,
-                existingProduct.status, existingProduct.productGroup, existingProduct.productGroupOptions);
+                existingProduct.status, existingProduct.productGroup, existingProduct.productGroupOptions,existingProduct.autoRenewOnClosure);
     }
 
     public static FixedDepositProductData instance(final DepositProductData depositProductData, final boolean preClosurePenalApplicable,
@@ -212,7 +216,7 @@ public class FixedDepositProductData extends DepositProductData {
             final Integer maxDepositTerm, final EnumOptionData minDepositTermType, final EnumOptionData maxDepositTermType,
             final Integer inMultiplesOfDepositTerm, final EnumOptionData inMultiplesOfDepositTermType, final BigDecimal minDepositAmount,
             final BigDecimal depositAmount, final BigDecimal maxDepositAmount, final LocalDate startDate,
-            final LocalDate closeDate, final String status, final CodeValueData productGroup) {
+            final LocalDate closeDate, final String status, final CodeValueData productGroup, final Boolean autoRenewOnClosure) {
 
         final Map<String, Object> accountingMappings = null;
         final Collection<PaymentTypeToGLAccountMapper> paymentChannelToFundSourceMappings = null;
@@ -251,7 +255,7 @@ public class FixedDepositProductData extends DepositProductData {
                 penaltyToIncomeAccountMappings, interestRateCharts, chartTemplate, preClosurePenalApplicable, preClosurePenalInterest,
                 preClosurePenalInterestOnType, preClosurePenalInterestOnTypeOptions, minDepositTerm, maxDepositTerm, minDepositTermType,
                 maxDepositTermType, inMultiplesOfDepositTerm, inMultiplesOfDepositTermType, minDepositAmount, depositAmount,
-                maxDepositAmount, periodFrequencyTypeOptions, startDate, closeDate, status, productGroup, productGroupOptions);
+                maxDepositAmount, periodFrequencyTypeOptions, startDate, closeDate, status, productGroup, productGroupOptions,autoRenewOnClosure);
     }
 
     public static FixedDepositProductData lookup(final Long id, final String name) {
@@ -307,6 +311,7 @@ public class FixedDepositProductData extends DepositProductData {
         final LocalDate closeDate = null;
         final String status = null;
         final CodeValueData productGroup = null;
+        final Boolean autoRenewOnClosure = false;
 
         return new FixedDepositProductData(id, name, shortName, description, currency, nominalAnnualInterestRate,
                 interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType,
@@ -318,7 +323,7 @@ public class FixedDepositProductData extends DepositProductData {
                 penaltyToIncomeAccountMappings, interestRateCharts, chartTemplate, preClosurePenalApplicable, preClosurePenalInterest,
                 preClosurePenalInterestOnType, preClosurePenalInterestOnTypeOptions, minDepositTerm, maxDepositTerm, minDepositTermType,
                 maxDepositTermType, inMultiplesOfDepositTerm, inMultiplesOfDepositTermType, minDepositAmount, depositAmount,
-                maxDepositAmount, periodFrequencyTypeOptions, startDate, closeDate, status, productGroup, productGroupOptions);
+                maxDepositAmount, periodFrequencyTypeOptions, startDate, closeDate, status, productGroup, productGroupOptions,autoRenewOnClosure);
     }
 
     public static FixedDepositProductData withInterestChart(final FixedDepositProductData existingProduct,
@@ -342,7 +347,7 @@ public class FixedDepositProductData extends DepositProductData {
                 existingProduct.maxDepositTermType, existingProduct.inMultiplesOfDepositTerm, existingProduct.inMultiplesOfDepositTermType,
                 existingProduct.minDepositAmount, existingProduct.depositAmount, existingProduct.maxDepositAmount,
                 existingProduct.periodFrequencyTypeOptions, existingProduct.startDate, existingProduct.closeDate, existingProduct.status,
-                existingProduct.productGroup, existingProduct.productGroupOptions);
+                existingProduct.productGroup, existingProduct.productGroupOptions,existingProduct.autoRenewOnClosure);
 
     }
 
@@ -371,7 +376,7 @@ public class FixedDepositProductData extends DepositProductData {
             final EnumOptionData inMultiplesOfDepositTermType, final BigDecimal minDepositAmount, final BigDecimal depositAmount,
             final BigDecimal maxDepositAmount, final Collection<EnumOptionData> periodFrequencyTypeOptions,
             final LocalDate startDate, final LocalDate closeDate, final String status, final CodeValueData productGroup,
-            final Collection<CodeValueData> productGroupOptions) {
+            final Collection<CodeValueData> productGroupOptions,final Boolean autoRenewOnClosure) {
 
         super(id, name, shortName, description, currency, nominalAnnualInterestRate, interestCompoundingPeriodType,
                 interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, lockinPeriodFrequency,
@@ -403,6 +408,7 @@ public class FixedDepositProductData extends DepositProductData {
         this.preClosurePenalInterestOnTypeOptions = preClosurePenalInterestOnTypeOptions;
         this.periodFrequencyTypeOptions = periodFrequencyTypeOptions;
         this.productGroupOptions = productGroupOptions;
+        this.autoRenewOnClosure = autoRenewOnClosure;
     }
 
 }
