@@ -735,6 +735,7 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             sqlBuilder.append(super.selectFieldsSql());
 
             sqlBuilder.append(", datp.pre_closure_penal_applicable as preClosurePenalApplicable, ");
+            sqlBuilder.append(" sa.auto_renew_on_closure as autoRenewOnClosure,");
             sqlBuilder.append("datp.pre_closure_penal_interest as preClosurePenalInterest, ");
             sqlBuilder.append("datp.pre_closure_penal_interest_on_enum as preClosurePenalInterestOnId, ");
             sqlBuilder.append("datp.min_deposit_term as minDepositTerm, ");
@@ -796,11 +797,12 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             final EnumOptionData onAccountClosureType = (onAccountClosureId == null) ? null : SavingsEnumerations
                     .depositAccountOnClosureType(onAccountClosureId);
             final Boolean transferInterestToSavings = rs.getBoolean("transferInterestToSavings");
+            final Boolean autoRenewOnClosure = rs.getBoolean("autoRenewOnClosure");
 
             return FixedDepositAccountData.instance(depositAccountData, preClosurePenalApplicable, preClosurePenalInterest,
                     preClosurePenalInterestOnType, minDepositTerm, maxDepositTerm, minDepositTermType, maxDepositTermType,
                     inMultiplesOfDepositTerm, inMultiplesOfDepositTermType, depositAmount, maturityAmount, maturityDate, depositPeriod,
-                    depositPeriodFrequencyType, onAccountClosureType, transferInterestToSavings);
+                    depositPeriodFrequencyType, onAccountClosureType, transferInterestToSavings,autoRenewOnClosure);
         }
     }
 
@@ -1223,11 +1225,12 @@ public class DepositAccountReadPlatformServiceImpl implements DepositAccountRead
             final EnumOptionData depositPeriodFrequencyType = null;
             final EnumOptionData onAccountClosureType = null;
             final Boolean transferInterestToSavings = false;
+            final Boolean autoRenewOnClosure = false;
 
             return FixedDepositAccountData.instance(depositAccountData, preClosurePenalApplicable, preClosurePenalInterest,
                     preClosurePenalInterestOnType, minDepositTerm, maxDepositTerm, minDepositTermType, maxDepositTermType,
                     inMultiplesOfDepositTerm, inMultiplesOfDepositTermType, depositAmount, maturityAmount, maturityDate, depositPeriod,
-                    depositPeriodFrequencyType, onAccountClosureType, transferInterestToSavings);
+                    depositPeriodFrequencyType, onAccountClosureType, transferInterestToSavings,autoRenewOnClosure);
         }
     }
 

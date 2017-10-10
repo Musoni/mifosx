@@ -5,11 +5,6 @@
  */
 package org.mifosplatform.portfolio.savings.domain;
 
-import static org.mifosplatform.portfolio.savings.DepositsApiConstants.FIXED_DEPOSIT_ACCOUNT_RESOURCE_NAME;
-import static org.mifosplatform.portfolio.savings.DepositsApiConstants.depositPeriodParamName;
-import static org.mifosplatform.portfolio.savings.DepositsApiConstants.maxDepositTermParamName;
-import static org.mifosplatform.portfolio.savings.DepositsApiConstants.onAccountClosureIdParamName;
-
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.ArrayList;
@@ -56,6 +51,8 @@ import org.mifosplatform.portfolio.savings.domain.interest.PostingPeriod;
 import org.mifosplatform.portfolio.savings.service.SavingsEnumerations;
 import org.mifosplatform.useradministration.domain.AppUser;
 
+import static org.mifosplatform.portfolio.savings.DepositsApiConstants.*;
+
 @Entity
 @DiscriminatorValue("200")
 public class FixedDepositAccount extends SavingsAccount {
@@ -81,7 +78,7 @@ public class FixedDepositAccount extends SavingsAccount {
             final SavingsInterestCalculationDaysInYearType interestCalculationDaysInYearType, final BigDecimal minRequiredOpeningBalance,
             final Integer lockinPeriodFrequency, final SavingsPeriodFrequencyType lockinPeriodFrequencyType,
             final boolean withdrawalFeeApplicableForTransfer, final Set<SavingsAccountCharge> savingsAccountCharges,
-            final DepositAccountTermAndPreClosure accountTermAndPreClosure, final DepositAccountInterestRateChart chart) {
+            final DepositAccountTermAndPreClosure accountTermAndPreClosure, final DepositAccountInterestRateChart chart, final boolean autoRenewOnClosure) {
 
         final SavingsAccountStatusType status = SavingsAccountStatusType.SUBMITTED_AND_PENDING_APPROVAL;
         final boolean allowOverdraft = false;
@@ -90,7 +87,7 @@ public class FixedDepositAccount extends SavingsAccount {
                 accountType, submittedOnDate, submittedBy, interestRate, interestCompoundingPeriodType, interestPostingPeriodType,
                 interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency,
                 lockinPeriodFrequencyType, withdrawalFeeApplicableForTransfer, savingsAccountCharges, accountTermAndPreClosure, chart,
-                allowOverdraft, overdraftLimit);
+                allowOverdraft, overdraftLimit,autoRenewOnClosure);
 
         return account;
     }
@@ -104,12 +101,12 @@ public class FixedDepositAccount extends SavingsAccount {
             final Integer lockinPeriodFrequency, final SavingsPeriodFrequencyType lockinPeriodFrequencyType,
             final boolean withdrawalFeeApplicableForTransfer, final Set<SavingsAccountCharge> savingsAccountCharges,
             final DepositAccountTermAndPreClosure accountTermAndPreClosure, DepositAccountInterestRateChart chart,
-            final boolean allowOverdraft, final BigDecimal overdraftLimit) {
+            final boolean allowOverdraft, final BigDecimal overdraftLimit, final boolean autoRenewOnClosure) {
 
         super(client, group, product, fieldOfficer, accountNo, externalId, status, accountType, submittedOnDate, submittedBy,
                 nominalAnnualInterestRate, interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType,
                 interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType,
-                withdrawalFeeApplicableForTransfer, savingsAccountCharges, allowOverdraft, overdraftLimit);
+                withdrawalFeeApplicableForTransfer, savingsAccountCharges, allowOverdraft, overdraftLimit,autoRenewOnClosure);
 
         this.accountTermAndPreClosure = accountTermAndPreClosure;
         this.chart = chart;
@@ -124,6 +121,13 @@ public class FixedDepositAccount extends SavingsAccount {
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(FIXED_DEPOSIT_ACCOUNT_RESOURCE_NAME + SavingsApiConstants.modifyApplicationAction);
         super.modifyApplication(command, actualChanges, baseDataValidator);
+
+        if (command.isChangeInBooleanParameterNamed(autoRenewOnClosureParamName,this.autoRenewOnClosure)) {
+            final boolean newValue = command.booleanPrimitiveValueOfParameterNamed(autoRenewOnClosureParamName);
+            actualChanges.put(autoRenewOnClosureParamName, newValue);
+            this.autoRenewOnClosure = newValue;
+        }
+
         final Map<String, Object> termAndPreClosureChanges = accountTermAndPreClosure.update(command, baseDataValidator);
         actualChanges.putAll(termAndPreClosureChanges);
         validateDomainRules(baseDataValidator);
@@ -247,6 +251,8 @@ public class FixedDepositAccount extends SavingsAccount {
             postMaturityInterest(isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth);
         }
     }
+
+
 
     public LocalDate calculateMaturityDate() {
 
@@ -762,7 +768,7 @@ public class FixedDepositAccount extends SavingsAccount {
                 .createNewApplicationForSubmittal(client, group, product, savingsOfficer, accountNumber, externalId, accountType,
                         getClosedOnDate(), closedBy, interestRate, compoundingPeriodType, postingPeriodType, interestCalculationType,
                         daysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType,
-                        withdrawalFeeApplicableForTransfer, savingsAccountCharges, newAccountTermAndPreClosure, newChart);
+                        withdrawalFeeApplicableForTransfer, savingsAccountCharges, newAccountTermAndPreClosure, newChart,product.getAutoRenewOnClosure());
 
         newAccountTermAndPreClosure.updateAccountReference(reInvestedAccount);
         newChart.updateDepositAccountReference(reInvestedAccount);
@@ -804,4 +810,10 @@ public class FixedDepositAccount extends SavingsAccount {
     public BigDecimal minBalanceForInterestCalculation() {
         return null;
     }
+
+    public boolean isAutoRenewOnClosure(){
+        return  this.autoRenewOnClosure;
+    }
+
+
 }

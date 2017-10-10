@@ -82,7 +82,7 @@ public class RecurringDepositProduct extends FixedDepositProduct {
         super(name, shortName, description, currency, interestRate, interestCompoundingPeriodType, interestPostingPeriodType,
                 interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency,
                 lockinPeriodFrequencyType, withdrawalFeeApplicableForTransfer, accountingRuleType, charges, productTermAndPreClosure,
-                charts, allowOverdraft, overdraftLimit, minBalanceForInterestCalculation, productGroup);
+                charts, allowOverdraft, overdraftLimit, minBalanceForInterestCalculation, productGroup,false);
 
         this.recurringDetail = recurringDetail;
     }

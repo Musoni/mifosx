@@ -203,6 +203,7 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
             final StringBuilder sqlBuilder = new StringBuilder(400);
             sqlBuilder.append(super.schema());
             sqlBuilder.append(", sp.start_date as startDate, ");
+            sqlBuilder.append("sp.auto_renew_on_closure as autoRenewOnClosure, ");
             sqlBuilder.append("sp.close_date as closeDate, ");
             sqlBuilder.append("sp.product_group as productGroupId, cv.code_value as productGroupValue, ");
             sqlBuilder.append("dptp.pre_closure_penal_applicable as preClosurePenalApplicable, ");
@@ -271,10 +272,12 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
             final boolean isActive = false;
             final CodeValueData productGroup = CodeValueData.instance(productGroupId, productGroupValue, isActive);
 
+            final boolean autoRenewOnClosure = rs.getBoolean("autoRenewOnClosure");
+
             return FixedDepositProductData.instance(depositProductData, preClosurePenalApplicable, preClosurePenalInterest,
                     preClosurePenalInterestOnType, minDepositTerm, maxDepositTerm, minDepositTermType, maxDepositTermType,
                     inMultiplesOfDepositTerm, inMultiplesOfDepositTermType, minDepositAmount, depositAmount, maxDepositAmount,
-                    startDate, closeDate, status, productGroup);
+                    startDate, closeDate, status, productGroup,autoRenewOnClosure);
         }
     }
 

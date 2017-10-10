@@ -9,17 +9,7 @@ import static org.mifosplatform.portfolio.collectionsheet.CollectionSheetConstan
 import static org.mifosplatform.portfolio.collectionsheet.CollectionSheetConstants.savingsIdParamName;
 import static org.mifosplatform.portfolio.collectionsheet.CollectionSheetConstants.transactionAmountParamName;
 import static org.mifosplatform.portfolio.collectionsheet.CollectionSheetConstants.transactionDateParamName;
-import static org.mifosplatform.portfolio.savings.DepositsApiConstants.adjustAdvanceTowardsFuturePaymentsParamName;
-import static org.mifosplatform.portfolio.savings.DepositsApiConstants.allowWithdrawalParamName;
-import static org.mifosplatform.portfolio.savings.DepositsApiConstants.chartIdParamName;
-import static org.mifosplatform.portfolio.savings.DepositsApiConstants.depositAmountParamName;
-import static org.mifosplatform.portfolio.savings.DepositsApiConstants.depositPeriodFrequencyIdParamName;
-import static org.mifosplatform.portfolio.savings.DepositsApiConstants.depositPeriodParamName;
-import static org.mifosplatform.portfolio.savings.DepositsApiConstants.expectedFirstDepositOnDateParamName;
-import static org.mifosplatform.portfolio.savings.DepositsApiConstants.isCalendarInheritedParamName;
-import static org.mifosplatform.portfolio.savings.DepositsApiConstants.isMandatoryDepositParamName;
-import static org.mifosplatform.portfolio.savings.DepositsApiConstants.mandatoryRecommendedDepositAmountParamName;
-import static org.mifosplatform.portfolio.savings.DepositsApiConstants.transferInterestToSavingsParamName;
+import static org.mifosplatform.portfolio.savings.DepositsApiConstants.*;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.accountNoParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.clientIdParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.externalIdParamName;
@@ -274,6 +264,17 @@ public class DepositAccountAssembler {
             accountChart = DepositAccountInterestRateChart.from(productChart);
         }
 
+
+        boolean autoRenewOnClosure = false;
+
+        if (command.parameterExists(autoRenewOnClosureParamName)) {
+
+            autoRenewOnClosure = command.booleanPrimitiveValueOfParameterNamed(autoRenewOnClosureParamName);
+
+        } else {
+            autoRenewOnClosure = product.getAutoRenewOnClosure();
+        }
+
         SavingsAccount account = null;
         if (depositAccountType.isFixedDeposit()) {
             final DepositProductTermAndPreClosure prodTermAndPreClosure = ((FixedDepositProduct) product).depositProductTermAndPreClosure();
@@ -284,7 +285,7 @@ public class DepositAccountAssembler {
                     accountNo, externalId, accountType, submittedOnDate, submittedBy, interestRate, interestCompoundingPeriodType,
                     interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
                     lockinPeriodFrequency, lockinPeriodFrequencyType, iswithdrawalFeeApplicableForTransfer, charges,
-                    accountTermAndPreClosure, accountChart);
+                    accountTermAndPreClosure, accountChart,autoRenewOnClosure);
             accountTermAndPreClosure.updateAccountReference(fdAccount);
             fdAccount.validateDomainRules();
             account = fdAccount;

@@ -5,6 +5,7 @@
  */
 package org.mifosplatform.portfolio.savings.domain;
 
+
 import static org.mifosplatform.portfolio.savings.DepositsApiConstants.adjustAdvanceTowardsFuturePaymentsParamName;
 import static org.mifosplatform.portfolio.savings.DepositsApiConstants.allowWithdrawalParamName;
 import static org.mifosplatform.portfolio.savings.DepositsApiConstants.chartsParamName;
@@ -21,6 +22,7 @@ import static org.mifosplatform.portfolio.savings.DepositsApiConstants.minDeposi
 import static org.mifosplatform.portfolio.savings.DepositsApiConstants.preClosurePenalApplicableParamName;
 import static org.mifosplatform.portfolio.savings.DepositsApiConstants.preClosurePenalInterestOnTypeIdParamName;
 import static org.mifosplatform.portfolio.savings.DepositsApiConstants.preClosurePenalInterestParamName;
+import static org.mifosplatform.portfolio.savings.DepositsApiConstants.autoRenewOnClosureParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.*;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.productGroupIdParamName;
 
@@ -135,10 +137,16 @@ public class DepositProductAssembler {
         if (interestRate == null) {
             interestRate = BigDecimal.ZERO;
         }
+
+        boolean autoRenewOnClosure = false;
+        if(command.parameterExists(autoRenewOnClosureParamName)){
+            autoRenewOnClosure = command.booleanPrimitiveValueOfParameterNamed(autoRenewOnClosureParamName);
+
+        }
         FixedDepositProduct fixedDepositProduct = FixedDepositProduct.createNew(name, shortName, description, currency, interestRate,
                 productGroup,interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType,
                 interestCalculationDaysInYearType, lockinPeriodFrequency, lockinPeriodFrequencyType, accountingRuleType,
-                charges, productTermAndPreClosure, charts, minBalanceForInterestCalculation);
+                charges, productTermAndPreClosure, charts, minBalanceForInterestCalculation,autoRenewOnClosure);
 
         // update product reference
         productTermAndPreClosure.updateProductReference(fixedDepositProduct);

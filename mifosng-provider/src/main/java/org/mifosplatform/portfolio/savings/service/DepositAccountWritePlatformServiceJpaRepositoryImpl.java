@@ -1353,6 +1353,13 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
 
         if (depositAccountType.isFixedDeposit()) {
             ((FixedDepositAccount) account).updateMaturityStatus(isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth);
+
+            if(((FixedDepositAccount) account).isAutoRenewOnClosure()){
+                this.depositAccountDomainService.handleFDAutoRenewOnClosure((FixedDepositAccount) account);
+            }
+
+
+
         } else if (depositAccountType.isRecurringDeposit()) {
             ((RecurringDepositAccount) account).updateMaturityStatus(isSavingsInterestPostingAtCurrentPeriodEnd,
                     financialYearBeginningMonth);
