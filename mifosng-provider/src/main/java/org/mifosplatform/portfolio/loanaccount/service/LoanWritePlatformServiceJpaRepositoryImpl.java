@@ -2255,30 +2255,33 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
 
         if (!isHolidayEnabled) { return; }
 
-        final Collection<Integer> loanStatuses = new ArrayList<>(Arrays.asList(LoanStatus.SUBMITTED_AND_PENDING_APPROVAL.getValue(),
+        final List<Integer> loanStatuses = new ArrayList<>(Arrays.asList(LoanStatus.SUBMITTED_AND_PENDING_APPROVAL.getValue(),
                 LoanStatus.APPROVED.getValue(), LoanStatus.ACTIVE.getValue()));
         // Get all Holidays which are active and not processed
         final List<Holiday> holidays = this.holidayRepository.findUnprocessed();
         final WorkingDays workingDays = this.workingDaysRepository.findOne();
         // get all loans
-        final List<Loan> loans = new ArrayList<>();
+        final List<Long> loans = new ArrayList<>();
 
         // Loop through all holidays
         for (final Holiday holiday : holidays) {
+            System.out.print("Found Holiday:" +holiday);
+
             // All offices to which holiday is applied
             final Set<Office> offices = holiday.getOffices();
-            final Collection<Long> officeIds = new ArrayList<>(offices.size());
+            final List<Long> officeIds = new ArrayList<>(offices.size());
             for (final Office office : offices) {
                 officeIds.add(office.getId());
             }
 
-            // get all individual and jlg loans
-            loans.addAll(this.loanRepository.findByClientOfficeIdsAndLoanStatus(officeIds, loanStatuses));
-            // FIXME: AA optimize to get all client and group loans belongs to a
-            // office id
-            // get all group loans
-            loans.addAll(this.loanRepository.findByGroupOfficeIdsAndLoanStatus(officeIds, loanStatuses));
-            
+            System.out.print("Found stauses:" + loanStatuses.toString());
+
+            loans.addAll(this.loanReadPlatformService.fetchIndividualLoansWithInstalmentsDueOnHoliday(holiday.getFromDateLocalDate(), holiday.getToDateLocalDate(), officeIds, loanStatuses));
+            System.out.print("Found a lot of  IND loans:" +loans.size());
+
+            loans.addAll(this.loanReadPlatformService.fetchGroupLoansWithInstalmentsDueOnHoliday(holiday.getFromDateLocalDate(), holiday.getToDateLocalDate(), officeIds, loanStatuses));
+            System.out.print("Found a lot of Group loans:" +loans.size());
+
             holiday.processed();
         }
         
@@ -2286,8 +2289,11 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         CalendarInstance restCalendarInstance = null;
         CalendarInstance compoundingCalendarInstance = null;
         Calendar loanCalendar = null;
-        
-        for (final Loan loan : loans) {
+
+        for (final Long loanId : loans) {
+            System.out.print("Processing LoanID:" +loanId);
+            Loan loan = this.loanRepository.findOne(loanId);
+
         	if (loan.repaymentScheduleDetail().isInterestRecalculationEnabled()) {
                 restCalendarInstance = calendarInstanceRepository.findCalendarInstaneByEntityId(
                         loan.loanInterestRecalculationDetailId(), CalendarEntityType.LOAN_RECALCULATION_REST_DETAIL.getValue());
@@ -2295,7 +2301,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                         loan.loanInterestRecalculationDetailId(), CalendarEntityType.LOAN_RECALCULATION_COMPOUNDING_DETAIL.getValue());
             }
         	
-            final CalendarInstance loanCalendarInstance = calendarInstanceRepository.findCalendarInstaneByEntityId(loan.getId(),
+            final CalendarInstance loanCalendarInstance = calendarInstanceRepository.findCalendarInstaneByEntityId(loanId,
                     CalendarEntityType.LOANS.getValue());
             
             if (loanCalendarInstance != null) {
@@ -2310,12 +2316,9 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                     compoundingCalendarInstance, loanCalendar, floatingRateDTO);
             
             loan.applyHolidayToRepaymentScheduleDates(holidayDetailDTO, loanApplicationTerms);
+            this.loanRepository.save(loan);
         }
-        
-        if (loans != null && !loans.isEmpty()) {
-        	this.loanRepository.save(loans);
-        }
-        
+
         this.holidayRepository.save(holidays);
     }
     
