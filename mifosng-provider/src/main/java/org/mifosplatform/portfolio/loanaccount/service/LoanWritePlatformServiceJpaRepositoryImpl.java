@@ -2245,78 +2245,81 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
         this.loanRepository.save(loansToUpdate);
     }
 
-    @Transactional
     @Override
     @CronTarget(jobName = JobName.APPLY_HOLIDAYS_TO_LOANS)
     public void applyHolidaysToLoans() {
 
-    	final ScheduledDateGenerator scheduledDateGenerator = new DefaultScheduledDateGenerator();
+        final ScheduledDateGenerator scheduledDateGenerator = new DefaultScheduledDateGenerator();
         final boolean isHolidayEnabled = this.configurationDomainService.isRescheduleRepaymentsOnHolidaysEnabled();
 
         if (!isHolidayEnabled) { return; }
 
-        final Collection<Integer> loanStatuses = new ArrayList<>(Arrays.asList(LoanStatus.SUBMITTED_AND_PENDING_APPROVAL.getValue(),
+        final List<Integer> loanStatuses = new ArrayList<>(Arrays.asList(LoanStatus.SUBMITTED_AND_PENDING_APPROVAL.getValue(),
                 LoanStatus.APPROVED.getValue(), LoanStatus.ACTIVE.getValue()));
         // Get all Holidays which are active and not processed
         final List<Holiday> holidays = this.holidayRepository.findUnprocessed();
         final WorkingDays workingDays = this.workingDaysRepository.findOne();
         // get all loans
-        final List<Loan> loans = new ArrayList<>();
+        final List<Long> loans = new ArrayList<>();
 
         // Loop through all holidays
         for (final Holiday holiday : holidays) {
+
             // All offices to which holiday is applied
             final Set<Office> offices = holiday.getOffices();
-            final Collection<Long> officeIds = new ArrayList<>(offices.size());
+            final List<Long> officeIds = new ArrayList<>(offices.size());
             for (final Office office : offices) {
                 officeIds.add(office.getId());
             }
 
-            // get all individual and jlg loans
-            loans.addAll(this.loanRepository.findByClientOfficeIdsAndLoanStatus(officeIds, loanStatuses));
-            // FIXME: AA optimize to get all client and group loans belongs to a
-            // office id
-            // get all group loans
-            loans.addAll(this.loanRepository.findByGroupOfficeIdsAndLoanStatus(officeIds, loanStatuses));
-            
+            loans.addAll(this.loanReadPlatformService.fetchIndividualLoansWithInstalmentsDueOnHoliday(holiday.getFromDateLocalDate(), holiday.getToDateLocalDate(), officeIds, loanStatuses));
+
+            loans.addAll(this.loanReadPlatformService.fetchGroupLoansWithInstalmentsDueOnHoliday(holiday.getFromDateLocalDate(), holiday.getToDateLocalDate(), officeIds, loanStatuses));
+
             holiday.processed();
         }
-        
+
         final HolidayDetailDTO holidayDetailDTO = new HolidayDetailDTO(isHolidayEnabled, holidays, workingDays);
+
+        for (final Long loanId : loans) {
+            // Handle loans in separate transactional method
+            addHolidayToLoan(holidayDetailDTO, loanId);
+        }
+
+        this.holidayRepository.save(holidays);
+    }
+
+    @Transactional
+    private void addHolidayToLoan(final HolidayDetailDTO holidayDetailDTO, final Long loanId)
+    {
+        Loan loan = this.loanRepository.findOne(loanId);
         CalendarInstance restCalendarInstance = null;
         CalendarInstance compoundingCalendarInstance = null;
         Calendar loanCalendar = null;
-        
-        for (final Loan loan : loans) {
-        	if (loan.repaymentScheduleDetail().isInterestRecalculationEnabled()) {
-                restCalendarInstance = calendarInstanceRepository.findCalendarInstaneByEntityId(
-                        loan.loanInterestRecalculationDetailId(), CalendarEntityType.LOAN_RECALCULATION_REST_DETAIL.getValue());
-                compoundingCalendarInstance = calendarInstanceRepository.findCalendarInstaneByEntityId(
-                        loan.loanInterestRecalculationDetailId(), CalendarEntityType.LOAN_RECALCULATION_COMPOUNDING_DETAIL.getValue());
-            }
-        	
-            final CalendarInstance loanCalendarInstance = calendarInstanceRepository.findCalendarInstaneByEntityId(loan.getId(),
-                    CalendarEntityType.LOANS.getValue());
-            
-            if (loanCalendarInstance != null) {
-                loanCalendar = loanCalendarInstance.getCalendar();
-            }
-            
-            final FloatingRateDTO floatingRateDTO = constructFloatingRateDTO(loan);
-            final LoanProductMinimumRepaymentScheduleRelatedDetail loanProductRelatedDetail = loan.getLoanRepaymentScheduleDetail();
-            final MonetaryCurrency currency = loanProductRelatedDetail.getCurrency();
-            final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepository.findOneWithNotFoundDetection(currency);
-            final LoanApplicationTerms loanApplicationTerms = loan.getLoanApplicationTerms(applicationCurrency, restCalendarInstance,
-                    compoundingCalendarInstance, loanCalendar, floatingRateDTO);
-            
-            loan.applyHolidayToRepaymentScheduleDates(holidayDetailDTO, loanApplicationTerms);
+
+        if (loan.repaymentScheduleDetail().isInterestRecalculationEnabled()) {
+            restCalendarInstance = calendarInstanceRepository.findCalendarInstaneByEntityId(
+                    loan.loanInterestRecalculationDetailId(), CalendarEntityType.LOAN_RECALCULATION_REST_DETAIL.getValue());
+            compoundingCalendarInstance = calendarInstanceRepository.findCalendarInstaneByEntityId(
+                    loan.loanInterestRecalculationDetailId(), CalendarEntityType.LOAN_RECALCULATION_COMPOUNDING_DETAIL.getValue());
         }
-        
-        if (loans != null && !loans.isEmpty()) {
-        	this.loanRepository.save(loans);
+
+        final CalendarInstance loanCalendarInstance = calendarInstanceRepository.findCalendarInstaneByEntityId(loanId,
+                CalendarEntityType.LOANS.getValue());
+
+        if (loanCalendarInstance != null) {
+            loanCalendar = loanCalendarInstance.getCalendar();
         }
-        
-        this.holidayRepository.save(holidays);
+
+        final FloatingRateDTO floatingRateDTO = constructFloatingRateDTO(loan);
+        final LoanProductMinimumRepaymentScheduleRelatedDetail loanProductRelatedDetail = loan.getLoanRepaymentScheduleDetail();
+        final MonetaryCurrency currency = loanProductRelatedDetail.getCurrency();
+        final ApplicationCurrency applicationCurrency = this.applicationCurrencyRepository.findOneWithNotFoundDetection(currency);
+        final LoanApplicationTerms loanApplicationTerms = loan.getLoanApplicationTerms(applicationCurrency, restCalendarInstance,
+                compoundingCalendarInstance, loanCalendar, floatingRateDTO);
+
+        loan.applyHolidayToRepaymentScheduleDates(holidayDetailDTO, loanApplicationTerms);
+        this.loanRepository.save(loan);
     }
     
     private FloatingRateDTO constructFloatingRateDTO(final Loan loan) {

@@ -1897,6 +1897,48 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
     }
 
     @Override
+    public Collection<Long> fetchIndividualLoansWithInstalmentsDueOnHoliday(LocalDate fromHolidayDate, LocalDate toHolidayDate, List<Long> officeIds, List<Integer> loanStatuses)
+    {
+        StringBuilder sqlBuilder = new StringBuilder();
+        sqlBuilder.append("select distinct ml.id from m_loan as ml ");
+        sqlBuilder.append("join m_client as mc on ml.client_id = mc.id ");
+        sqlBuilder.append("join m_loan_repayment_schedule as mls on ml.id = mls.loan_id ");
+        sqlBuilder.append("where mls.duedate BETWEEN ? and ? ");
+        sqlBuilder.append("and mc.office_id in (" + StringUtils.join(officeIds, ",").toString() + ") ");
+        sqlBuilder.append("and ml.loan_status_id in (" + StringUtils.join(loanStatuses, ",").toString() + ") ");
+
+        try {
+
+            return this.jdbcTemplate.queryForList(sqlBuilder.toString(), Long.class, new Object[] { formatter.print(fromHolidayDate), formatter.print(toHolidayDate)});
+        } catch (final EmptyResultDataAccessException e) {
+
+            return null;
+        }
+    }
+
+    @Override
+    public Collection<Long> fetchGroupLoansWithInstalmentsDueOnHoliday(LocalDate fromHolidayDate, LocalDate toHolidayDate, List<Long> officeIds, List<Integer> loanStatuses)
+    {
+
+        StringBuilder sqlBuilder = new StringBuilder();
+        sqlBuilder.append("select distinct ml.id from m_loan as ml ");
+        sqlBuilder.append("join m_group as mg on ml.group_id = mg.id ");
+        sqlBuilder.append("join m_loan_repayment_schedule as mls on ml.id = mls.loan_id ");
+        sqlBuilder.append("where mls.duedate BETWEEN ? and ? ");
+        sqlBuilder.append("and mg.office_id in (" + StringUtils.join(officeIds, ",").toString() + ") ");
+        sqlBuilder.append("and ml.loan_status_id in (" + StringUtils.join(loanStatuses, ",").toString() + ") ");
+
+        try {
+
+            return this.jdbcTemplate.queryForList(sqlBuilder.toString(), Long.class, new Object[] { formatter.print(fromHolidayDate), formatter.print(toHolidayDate)});
+        } catch (final EmptyResultDataAccessException e) {
+
+            return null;
+        }
+
+    }
+
+    @Override
     public Collection<Long> fetchOverpayedLoansForAllocation() {
         StringBuilder sqlBuilder = new StringBuilder();
         sqlBuilder.append("SELECT ml.id FROM m_loan ml ");
