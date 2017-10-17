@@ -287,6 +287,10 @@ public class TellerWritePlatformServiceJpaImpl implements TellerWritePlatformSer
 
             final AppUser user =this.appUserRepository.findAppUserByStaffId(staffId);
 
+            if(user == null)
+            {
+                throw new StaffIsNotLinkedToUserAccountException(staffId);
+            }
             final Cashier cashier = Cashier.fromJson(tellerOffice, teller, staff, startTime,endTime, command, user);
 
             cashier.assign();

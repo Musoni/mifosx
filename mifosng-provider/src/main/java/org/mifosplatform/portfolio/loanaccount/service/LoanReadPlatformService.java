@@ -8,6 +8,7 @@ package org.mifosplatform.portfolio.loanaccount.service;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 import org.joda.time.LocalDate;
 import org.mifosplatform.infrastructure.core.service.Page;
@@ -126,4 +127,8 @@ public interface LoanReadPlatformService {
     Collection<LoanScheduleSuspendedAccruedIncomeData> retrieveLoanScheduleForNPASuspendedIncome(Long loanId);
 
     boolean doesLoanHaveSuspendedIncomeAndIsNpa(Long loanId);
+
+    Collection<Long> fetchIndividualLoansWithInstalmentsDueOnHoliday(LocalDate fromHolidayDate, LocalDate toHolidayDate, List<Long> officeIds, List<Integer> loanStatuses);
+
+    Collection<Long> fetchGroupLoansWithInstalmentsDueOnHoliday(LocalDate fromHolidayDate, LocalDate toHolidayDate, List<Long> officeIds, List<Integer> loanStatuses);
 }
