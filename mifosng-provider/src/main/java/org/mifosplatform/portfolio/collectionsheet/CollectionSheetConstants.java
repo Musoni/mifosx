@@ -27,6 +27,7 @@ public class CollectionSheetConstants {
     public static final String calendarIdParamName = "calendarId";
     public static final String officeIdParamName = "officeId";
     public static final String staffIdParamName = "staffId";
+    public static final String groupIdParamName = "groupId";
     public static final String isTransactionDateOnNonMeetingDateParamName = "isTransactionDateOnNonMeetingDate"; 
 
     // attendance parameters
@@ -51,5 +52,5 @@ public class CollectionSheetConstants {
             bulkDisbursementTransactionsParamName, noteParamName, bulkSavingsDueTransactionsParamName));
 
     public static final Set<String> INDIVIDUAL_COLLECTIONSHEET_SUPPORTED_PARAMS = new HashSet<>(Arrays.asList(transactionDateParamName,
-            localeParamName, dateFormatParamName, officeIdParamName, staffIdParamName));
+            localeParamName, dateFormatParamName, officeIdParamName, staffIdParamName,groupIdParamName));
 }

@@ -93,40 +93,8 @@ public class CollectionSheetApiResourse {
             final JsonElement parsedQuery = this.fromJsonHelper.parse(apiRequestBodyAsJson);
             final JsonQuery query = JsonQuery.from(apiRequestBodyAsJson, parsedQuery, this.fromJsonHelper);
 
-            final CurrencyData currencyData = new CurrencyData("XFA","CFA",1,0,"XFA","XFA");
-            final SavingsDueData savingsData = SavingsDueData.instance(new Long("23"),"234",300,"savingsProduct",new Long("3"),currencyData,new BigDecimal(2000));
-
-            Collection<SavingsDueData> collectionSavings =  new ArrayList<SavingsDueData>(
-                    Arrays.asList(savingsData));
-
-            final LoanDueData loanDueData = new  LoanDueData(new Long("23"), "467", 300,"LP",
-                    new Long("2"), currencyData, new BigDecimal(3000), new BigDecimal(3000),
-                    new BigDecimal(2000),  new BigDecimal(500), new BigDecimal(100), new BigDecimal(400));
-
-            Collection<LoanDueData> collectionLoans =  new ArrayList<LoanDueData>(
-                    Arrays.asList(loanDueData));
-
-
-
-            final PaymentTypeData paymentType = PaymentTypeData.instance(new Long("1"),"Cash", "CAsh", true,
-                    new Long("1"), false);
-
-
-
-             IndividualClientData individualClientData = IndividualClientData.instance(new Long("1"),"Raoul Cieyou");
-            individualClientData = IndividualClientData.withSavings (individualClientData,collectionSavings);
-            individualClientData = IndividualClientData.withLoans(individualClientData,collectionLoans);
-
-//            final IndividualCollectionSheetData collectionSheet = this.collectionSheetReadPlatformService
-//                    .generateIndividualCollectionSheet(query);
-
-            Collection<IndividualClientData> collectionClients =  new ArrayList<IndividualClientData>(
-                    Arrays.asList(individualClientData));
-
-            Collection<PaymentTypeData> collectionPayment =  new ArrayList<PaymentTypeData>(
-                    Arrays.asList(paymentType));
-
-            final IndividualCollectionSheetData collectionSheet = IndividualCollectionSheetData.instance(LocalDate.now(),collectionClients, collectionPayment);
+            final IndividualCollectionSheetData collectionSheet = this.collectionSheetReadPlatformService
+                    .generateIndividualGroupCollectionSheet(query);
 
             final ApiRequestJsonSerializationSettings settings = this.apiRequestPrameterHelper.process(uriInfo.getQueryParameters());
             return this.toApiJsonSerializer.serialize(settings, collectionSheet);

@@ -17,4 +17,6 @@ public interface CollectionSheetReadPlatformService {
 
     IndividualCollectionSheetData generateIndividualCollectionSheet(final JsonQuery query);
 
+    IndividualCollectionSheetData generateIndividualGroupCollectionSheet(final JsonQuery query);
+
 }

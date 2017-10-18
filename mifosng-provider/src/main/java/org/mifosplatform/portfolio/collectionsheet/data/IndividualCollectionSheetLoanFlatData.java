@@ -22,6 +22,7 @@ public class IndividualCollectionSheetLoanFlatData {
     private final Integer accountStatusId;
     private final String productShortName;
     private final Long productId;
+    private final Long groupId;
     private final CurrencyData currency;
     private BigDecimal disbursementAmount = BigDecimal.ZERO;
     private BigDecimal principalDue = BigDecimal.ZERO;
@@ -29,6 +30,7 @@ public class IndividualCollectionSheetLoanFlatData {
     private BigDecimal interestDue = BigDecimal.ZERO;
     private BigDecimal interestPaid = BigDecimal.ZERO;
     private BigDecimal chargesDue = BigDecimal.ZERO;
+    private BigDecimal balance = BigDecimal.ZERO;
 
     public IndividualCollectionSheetLoanFlatData(final String clientName, final Long clientId, final Long loanId, final String accountId,
             final Integer accountStatusId, final String productShortName, final Long productId, final CurrencyData currency,
@@ -48,6 +50,30 @@ public class IndividualCollectionSheetLoanFlatData {
         this.interestDue = interestDue;
         this.interestPaid = interestPaid;
         this.chargesDue = chargesDue;
+        this.groupId = null;
+
+    }
+
+    public IndividualCollectionSheetLoanFlatData(final String clientName, final Long clientId, final Long loanId, final String accountId,
+                                                 final Integer accountStatusId, final String productShortName, final Long productId, final CurrencyData currency,
+                                                 final BigDecimal disbursementAmount, final BigDecimal principalDue, final BigDecimal principalPaid,
+                                                 final BigDecimal interestDue, final BigDecimal interestPaid, final BigDecimal chargesDue,final BigDecimal balance, final Long groupId) {
+        this.clientName = clientName;
+        this.clientId = clientId;
+        this.loanId = loanId;
+        this.accountId = accountId;
+        this.accountStatusId = accountStatusId;
+        this.productShortName = productShortName;
+        this.productId = productId;
+        this.currency = currency;
+        this.disbursementAmount = disbursementAmount;
+        this.principalDue = principalDue;
+        this.principalPaid = principalPaid;
+        this.interestDue = interestDue;
+        this.interestPaid = interestPaid;
+        this.chargesDue = chargesDue;
+        this.balance = balance;
+        this.groupId = groupId;
     }
 
     public String getClientName() {
@@ -108,11 +134,18 @@ public class IndividualCollectionSheetLoanFlatData {
 
     public LoanDueData getLoanDueData() {
         return new LoanDueData(this.loanId, this.accountId, this.accountStatusId, this.productShortName, this.productId, this.currency,
-                this.disbursementAmount, this.principalDue, this.principalPaid, this.interestDue, this.interestPaid, this.chargesDue);
+                this.disbursementAmount, this.principalDue, this.principalPaid, this.interestDue, this.interestPaid, this.chargesDue,this.balance);
     }
 
     public IndividualClientData getClientData() {
-        return IndividualClientData.instance(this.clientId, this.clientName);
+        return IndividualClientData.instance(this.clientId, this.clientName,this.groupId);
     }
 
+    public BigDecimal getBalance() {
+        return balance;
+    }
+
+    public Long getGroupId() {
+        return groupId;
+    }
 }

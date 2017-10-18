@@ -15,6 +15,8 @@ public class IndividualClientData {
 
     private final Long clientId;
     private final String clientName;
+    private final Long groupId;
+
     private Collection<LoanDueData> loans;
     private Collection<SavingsDueData> savings;
 
@@ -24,14 +26,20 @@ public class IndividualClientData {
         return new IndividualClientData(clientId, clientName, loans, savings);
     }
 
+    public static IndividualClientData instance(final Long clientId, final String clientName, final Long groupId) {
+        final Collection<LoanDueData> loans = null;
+        final Collection<SavingsDueData> savings = null;
+        return new IndividualClientData(clientId, clientName, groupId, loans, savings);
+    }
+
     public static IndividualClientData withSavings(final IndividualClientData client, final Collection<SavingsDueData> savings) {
 
-        return new IndividualClientData(client.clientId, client.clientName, client.loans, savings);
+        return new IndividualClientData(client.clientId, client.clientName, client.groupId,client.loans, savings);
     }
 
     public static IndividualClientData withLoans(final IndividualClientData client, final Collection<LoanDueData> loans) {
 
-        return new IndividualClientData(client.clientId, client.clientName, loans, client.savings);
+        return new IndividualClientData(client.clientId, client.clientName,client.groupId, loans, client.savings);
     }
 
     /**
@@ -45,8 +53,16 @@ public class IndividualClientData {
         this.clientName = clientName;
         this.loans = loans;
         this.savings = savings;
+        this.groupId = null;
     }
 
+    private IndividualClientData(Long clientId, String clientName, Long groupId, Collection<LoanDueData> loans, Collection<SavingsDueData> savings) {
+        this.clientId = clientId;
+        this.clientName = clientName;
+        this.loans = loans;
+        this.savings = savings;
+        this.groupId = groupId;
+    }
     public Long getClientId() {
         return this.clientId;
     }
@@ -92,5 +108,9 @@ public class IndividualClientData {
     @Override
     public int hashCode() {
         return this.clientId.hashCode();
+    }
+
+    public Long getGroupId() {
+        return groupId;
     }
 }

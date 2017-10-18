@@ -28,6 +28,7 @@ public class LoanDueData {
     private BigDecimal interestPaid = BigDecimal.ZERO;
     private BigDecimal chargesDue = BigDecimal.ZERO;
     private BigDecimal totalDue = BigDecimal.ZERO;
+    private BigDecimal balance = BigDecimal.ZERO;
 
     public LoanDueData(final Long loanId, final String accountId, final Integer accountStatusId, final String productShortName,
             final Long productId, final CurrencyData currency, final BigDecimal disbursementAmount, final BigDecimal principalDue,
@@ -46,6 +47,26 @@ public class LoanDueData {
         this.chargesDue = chargesDue;
         this.totalDue = this.totalDue.add(principalDue).add(interestDue);
     }
+
+    public LoanDueData(final Long loanId, final String accountId, final Integer accountStatusId, final String productShortName,
+                       final Long productId, final CurrencyData currency, final BigDecimal disbursementAmount, final BigDecimal principalDue,
+                       final BigDecimal principalPaid, final BigDecimal interestDue, final BigDecimal interestPaid, final BigDecimal chargesDue,final BigDecimal balance) {
+        this.loanId = loanId;
+        this.accountId = accountId;
+        this.accountStatusId = accountStatusId;
+        this.productShortName = productShortName;
+        this.productId = productId;
+        this.currency = currency;
+        this.disbursementAmount = disbursementAmount;
+        this.principalDue = principalDue;
+        this.principalPaid = principalPaid;
+        this.interestDue = interestDue;
+        this.interestPaid = interestPaid;
+        this.chargesDue = chargesDue;
+        this.totalDue = this.totalDue.add(principalDue).add(interestDue);
+        this.balance = balance;
+    }
+
 
     public Long getLoanId() {
         return this.loanId;
@@ -95,4 +116,7 @@ public class LoanDueData {
         return this.chargesDue;
     }
 
+    public BigDecimal getBalance() {
+        return balance;
+    }
 }
