@@ -15,6 +15,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.lang.StringUtils;
+import org.joda.time.LocalDate;
 import org.mifosplatform.commands.domain.CommandWrapper;
 import org.mifosplatform.commands.service.CommandWrapperBuilder;
 import org.mifosplatform.commands.service.PortfolioCommandSourceWritePlatformService;
@@ -25,14 +26,24 @@ import org.mifosplatform.infrastructure.core.serialization.ApiRequestJsonSeriali
 import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
 import org.mifosplatform.infrastructure.core.serialization.ToApiJsonSerializer;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
+import org.mifosplatform.organisation.monetary.data.CurrencyData;
 import org.mifosplatform.portfolio.collectionsheet.CollectionSheetConstants;
+import org.mifosplatform.portfolio.collectionsheet.data.IndividualClientData;
 import org.mifosplatform.portfolio.collectionsheet.data.IndividualCollectionSheetData;
+import org.mifosplatform.portfolio.collectionsheet.data.LoanDueData;
+import org.mifosplatform.portfolio.collectionsheet.data.SavingsDueData;
 import org.mifosplatform.portfolio.collectionsheet.service.CollectionSheetReadPlatformService;
+import org.mifosplatform.portfolio.paymenttype.data.PaymentTypeData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import com.google.gson.JsonElement;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 
 @Path("/collectionsheet")
 @Component
@@ -75,7 +86,52 @@ public class CollectionSheetApiResourse {
                     .generateIndividualCollectionSheet(query);
             final ApiRequestJsonSerializationSettings settings = this.apiRequestPrameterHelper.process(uriInfo.getQueryParameters());
             return this.toApiJsonSerializer.serialize(settings, collectionSheet);
-        } else if (is(commandParam, "saveCollectionSheet")) {
+        }
+        else if (is(commandParam, "generateGroupCollectionSheet")) {
+
+            this.context.authenticatedUser().validateHasReadPermission(CollectionSheetConstants.COLLECTIONSHEET_RESOURCE_NAME);
+            final JsonElement parsedQuery = this.fromJsonHelper.parse(apiRequestBodyAsJson);
+            final JsonQuery query = JsonQuery.from(apiRequestBodyAsJson, parsedQuery, this.fromJsonHelper);
+
+            final CurrencyData currencyData = new CurrencyData("XFA","CFA",1,0,"XFA","XFA");
+            final SavingsDueData savingsData = SavingsDueData.instance(new Long("23"),"234",300,"savingsProduct",new Long("3"),currencyData,new BigDecimal(2000));
+
+            Collection<SavingsDueData> collectionSavings =  new ArrayList<SavingsDueData>(
+                    Arrays.asList(savingsData));
+
+            final LoanDueData loanDueData = new  LoanDueData(new Long("23"), "467", 300,"LP",
+                    new Long("2"), currencyData, new BigDecimal(3000), new BigDecimal(3000),
+                    new BigDecimal(2000),  new BigDecimal(500), new BigDecimal(100), new BigDecimal(400));
+
+            Collection<LoanDueData> collectionLoans =  new ArrayList<LoanDueData>(
+                    Arrays.asList(loanDueData));
+
+
+
+            final PaymentTypeData paymentType = PaymentTypeData.instance(new Long("1"),"Cash", "CAsh", true,
+                    new Long("1"), false);
+
+
+
+             IndividualClientData individualClientData = IndividualClientData.instance(new Long("1"),"Raoul Cieyou");
+            individualClientData = IndividualClientData.withSavings (individualClientData,collectionSavings);
+            individualClientData = IndividualClientData.withLoans(individualClientData,collectionLoans);
+
+//            final IndividualCollectionSheetData collectionSheet = this.collectionSheetReadPlatformService
+//                    .generateIndividualCollectionSheet(query);
+
+            Collection<IndividualClientData> collectionClients =  new ArrayList<IndividualClientData>(
+                    Arrays.asList(individualClientData));
+
+            Collection<PaymentTypeData> collectionPayment =  new ArrayList<PaymentTypeData>(
+                    Arrays.asList(paymentType));
+
+            final IndividualCollectionSheetData collectionSheet = IndividualCollectionSheetData.instance(LocalDate.now(),collectionClients, collectionPayment);
+
+            final ApiRequestJsonSerializationSettings settings = this.apiRequestPrameterHelper.process(uriInfo.getQueryParameters());
+            return this.toApiJsonSerializer.serialize(settings, collectionSheet);
+        }
+        else if (is(commandParam, "saveCollectionSheet")) {
             final CommandWrapper commandRequest = builder.saveIndividualCollectionSheet().build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
             return this.toApiJsonSerializer.serialize(result);
