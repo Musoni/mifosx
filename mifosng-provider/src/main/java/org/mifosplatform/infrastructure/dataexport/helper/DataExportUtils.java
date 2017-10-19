@@ -99,6 +99,12 @@ public class DataExportUtils {
 	    		replacementArrayList.add("repayment date");
 	    		break;
 	    		
+	    	case M_CLIENT:
+	    		searchArrayList.add(DataExportEntityColumnName.SUBMITTEDON_DATE);
+	    		
+	    		replacementArrayList.add("registration date");
+	    		break;
+	    		
 	    	default:
 	    		break;
 	    }
