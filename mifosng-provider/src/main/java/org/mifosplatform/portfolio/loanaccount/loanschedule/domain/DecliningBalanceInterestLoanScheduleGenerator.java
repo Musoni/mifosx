@@ -135,7 +135,7 @@ public class DecliningBalanceInterestLoanScheduleGenerator extends AbstractLoanS
         Money principalForThisInstallment = loanApplicationTerms.calculateTotalPrincipalForPeriod(calculator, outstandingBalance,
                 periodNumber, mc, interestForPeriod);
 
-        if(loanApplicationTerms.getAmortizationMethod().equals(AmortizationMethod.EQUAL_PRINCIPAL)){
+        /*if(loanApplicationTerms.getAmortizationMethod().equals(AmortizationMethod.EQUAL_PRINCIPAL)){
             Money overflow = loanApplicationTerms.getInterestRoundingOverflow();
             if(overflow != null && !overflow.isZero()){
                 interestForThisInstallment = interestForThisInstallment.plus(overflow);
@@ -150,7 +150,7 @@ public class DecliningBalanceInterestLoanScheduleGenerator extends AbstractLoanS
                 interestForThisInstallment = loanApplicationTerms.adjustInterestIfLastRepaymentPeriod(newInterestForThisInstallment,
                         Money.zero(currency),Money.zero(currency),periodNumber);
             }
-        }
+        } */
         // update cumulative fields for principal & interest
         final Money interestBroughtFowardDueToGrace = cumulatingInterestDueToGrace;
         final Money totalCumulativePrincipalToDate = totalCumulativePrincipal.plus(principalForThisInstallment);
