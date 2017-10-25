@@ -1436,4 +1436,18 @@ public final class LoanApplicationTerms {
 
     public void setInterestRoundingOverflow(Money interestRoundingOverflow){ this.interestRoundingOverflow = interestRoundingOverflow;}
 
+    public Money getTotalDisbursedAmount() {
+        Money disbursedAmount = Money.zero(getCurrency());
+        if (isMultiDisburseLoan()) {
+            for (DisbursementData disbursement : getDisbursementDatas()) {
+                if (disbursement.isDisbursed()) {
+                    disbursedAmount = disbursedAmount.plus(disbursement.amount());
+                }
+            }
+        } else {
+            disbursedAmount = getPrincipal();
+        }
+        return disbursedAmount;
+    }
+
 }
