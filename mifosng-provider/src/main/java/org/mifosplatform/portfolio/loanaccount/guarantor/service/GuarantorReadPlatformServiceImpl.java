@@ -99,7 +99,10 @@ public class GuarantorReadPlatformServiceImpl implements GuarantorReadPlatformSe
         private GuarantorTransactionMapper guarantorTransactionMapper = new GuarantorTransactionMapper();
         private GuarantorFundingMapper guarantorFundingMapper = new GuarantorFundingMapper(guarantorTransactionMapper);
 
-        private final StringBuilder sqlBuilder = new StringBuilder(" g.*, cv.code_value as typeName, cv.is_active as typeIsActive, ")
+        private final StringBuilder sqlBuilder = new StringBuilder(
+                " g.id as id, g.loan_id as loanId, g.client_reln_cv_id clientRelationshipTypeId, g.entity_id as entityId, g.type_enum guarantorType ,g.firstname as firstname, g.lastname as lastname, g.dob as dateOfBirth, g.address_line_1 as addressLine1, g.address_line_2 as addressLine2, g.city as city, g.state as state, g.country as country, g.zip as zip, g.house_phone_number as housePhoneNumber, g.mobile_number as mobilePhoneNumber, g.comment as comment, ")
+                .append(" g.is_active as guarantorStatus,")//
+                .append(" cv.code_value as typeName, cv.is_active as typeIsActive, ")//
                 //.append("gfd.amount,mgl.id as allocationId, mgl.deposited_amount as allocatedInterest, mgl.savings_account_id as savingsAccount, mgl.submitted_on_date as allocatedOnDate,")//
                 .append(this.guarantorFundingMapper.schema())//
                 .append(",")//
@@ -120,8 +123,8 @@ public class GuarantorReadPlatformServiceImpl implements GuarantorReadPlatformSe
         @Override
         public GuarantorData mapRow(final ResultSet rs, final int rowNum) throws SQLException {
             final Long id = rs.getLong("id");
-            final Long loanId = rs.getLong("loan_id");
-            final Long clientRelationshipTypeId = JdbcSupport.getLong(rs, "client_reln_cv_id");
+            final Long loanId = rs.getLong("loanId");
+            final Long clientRelationshipTypeId = JdbcSupport.getLong(rs, "clientRelationshipTypeId");
             CodeValueData clientRelationshipType = null;
 
             if (clientRelationshipTypeId != null) {
@@ -130,22 +133,22 @@ public class GuarantorReadPlatformServiceImpl implements GuarantorReadPlatformSe
                 clientRelationshipType = CodeValueData.instance(clientRelationshipTypeId, typeName, typeIsActive);
             }
 
-            final Integer guarantorTypeId = rs.getInt("type_enum");
+            final Integer guarantorTypeId = rs.getInt("guarantorType");
             final EnumOptionData guarantorType = GuarantorEnumerations.guarantorType(guarantorTypeId);
-            final Long entityId = rs.getLong("entity_id");
+            final Long entityId = rs.getLong("entityId");
             final String firstname = rs.getString("firstname");
             final String lastname = rs.getString("lastname");
-            final LocalDate dob = JdbcSupport.getLocalDate(rs, "dob");
-            final String addressLine1 = rs.getString("address_line_1");
-            final String addressLine2 = rs.getString("address_line_2");
+            final LocalDate dob = JdbcSupport.getLocalDate(rs, "dateOfBirth");
+            final String addressLine1 = rs.getString("addressLine1");
+            final String addressLine2 = rs.getString("addressLine2");
             final String city = rs.getString("city");
             final String state = rs.getString("state");
             final String zip = rs.getString("zip");
             final String country = rs.getString("country");
-            final String mobileNumber = rs.getString("mobile_number");
-            final String housePhoneNumber = rs.getString("house_phone_number");
+            final String mobileNumber = rs.getString("mobilePhoneNumber");
+            final String housePhoneNumber = rs.getString("housePhoneNumber");
             final String comment = rs.getString("comment");
-            final boolean status = rs.getBoolean("is_active");
+            final boolean status = rs.getBoolean("guarantorStatus");
             final Collection<PortfolioAccountData> accountLinkingOptions = null;
             List<GuarantorFundingData> guarantorFundingDetails = null;
             GuarantorFundingData guarantorFundingData = this.guarantorFundingMapper.mapRow(rs, rowNum);
