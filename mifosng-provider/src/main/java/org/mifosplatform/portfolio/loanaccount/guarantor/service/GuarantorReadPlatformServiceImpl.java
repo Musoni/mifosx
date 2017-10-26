@@ -17,6 +17,7 @@ import org.mifosplatform.infrastructure.codes.data.CodeValueData;
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
 import org.mifosplatform.infrastructure.core.service.RoutingDataSource;
+import org.mifosplatform.infrastructure.core.util.ResultSetUtils;
 import org.mifosplatform.organisation.staff.data.StaffData;
 import org.mifosplatform.organisation.staff.service.StaffReadPlatformService;
 import org.mifosplatform.portfolio.account.data.PortfolioAccountData;
@@ -119,33 +120,35 @@ public class GuarantorReadPlatformServiceImpl implements GuarantorReadPlatformSe
 
         @Override
         public GuarantorData mapRow(final ResultSet rs, final int rowNum) throws SQLException {
-            final Long id = rs.getLong("id");
-            final Long loanId = rs.getLong("loan_id");
-            final Long clientRelationshipTypeId = JdbcSupport.getLong(rs, "client_reln_cv_id");
+        	final Long id = ResultSetUtils.getLongSuppressSQLException(rs, "id");
+            final Long loanId = ResultSetUtils.getLongSuppressSQLException(rs, "loan_id");
+            final Long clientRelationshipTypeId = ResultSetUtils.getLongSuppressSQLException(rs, "client_reln_cv_id");
+
             CodeValueData clientRelationshipType = null;
 
             if (clientRelationshipTypeId != null) {
-                final String typeName = rs.getString("typeName");
-                final boolean typeIsActive = rs.getBoolean("typeIsActive");
+                final String typeName = ResultSetUtils.getStringSuppressSQLException(rs, "typeName");
+                final boolean typeIsActive = ResultSetUtils.getBooleanSuppressSQLException(rs, "typeIsActive");
                 clientRelationshipType = CodeValueData.instance(clientRelationshipTypeId, typeName, typeIsActive);
             }
 
-            final Integer guarantorTypeId = rs.getInt("type_enum");
+            final Integer guarantorTypeId = ResultSetUtils.getIntegerSuppressSQLException(rs, "type_enum");
             final EnumOptionData guarantorType = GuarantorEnumerations.guarantorType(guarantorTypeId);
-            final Long entityId = rs.getLong("entity_id");
-            final String firstname = rs.getString("firstname");
-            final String lastname = rs.getString("lastname");
-            final LocalDate dob = JdbcSupport.getLocalDate(rs, "dob");
-            final String addressLine1 = rs.getString("address_line_1");
-            final String addressLine2 = rs.getString("address_line_2");
-            final String city = rs.getString("city");
-            final String state = rs.getString("state");
-            final String zip = rs.getString("zip");
-            final String country = rs.getString("country");
-            final String mobileNumber = rs.getString("mobile_number");
-            final String housePhoneNumber = rs.getString("house_phone_number");
-            final String comment = rs.getString("comment");
-            final boolean status = rs.getBoolean("is_active");
+            final Long entityId = ResultSetUtils.getLongSuppressSQLException(rs, "entity_id");
+            final String firstname = ResultSetUtils.getStringSuppressSQLException(rs, "firstname");
+            final String lastname = ResultSetUtils.getStringSuppressSQLException(rs, "lastname");
+            final LocalDate dob = ResultSetUtils.getLocalDateSuppressSQLException(rs, "dob");
+            final String addressLine1 = ResultSetUtils.getStringSuppressSQLException(rs, "address_line_1");
+            final String addressLine2 = ResultSetUtils.getStringSuppressSQLException(rs, "address_line_2");
+            final String city = ResultSetUtils.getStringSuppressSQLException(rs, "city");
+            final String state = ResultSetUtils.getStringSuppressSQLException(rs, "state");
+            final String zip = ResultSetUtils.getStringSuppressSQLException(rs, "zip");
+            final String country = ResultSetUtils.getStringSuppressSQLException(rs, "country");
+            final String mobileNumber = ResultSetUtils.getStringSuppressSQLException(rs, "mobile_number");
+            final String housePhoneNumber = ResultSetUtils.getStringSuppressSQLException(rs, "house_phone_number");
+            final String comment = ResultSetUtils.getStringSuppressSQLException(rs, "comment");
+            final boolean status = ResultSetUtils.getBooleanSuppressSQLException(rs, "is_active");
+
             final Collection<PortfolioAccountData> accountLinkingOptions = null;
             List<GuarantorFundingData> guarantorFundingDetails = null;
             GuarantorFundingData guarantorFundingData = this.guarantorFundingMapper.mapRow(rs, rowNum);
@@ -164,9 +167,7 @@ public class GuarantorReadPlatformServiceImpl implements GuarantorReadPlatformSe
 
                 }
             }
-
-           
-
+            
             return new GuarantorData(id, loanId, clientRelationshipType, entityId, guarantorType, firstname, lastname, dob, addressLine1,
                     addressLine2, city, state, zip, country, mobileNumber, housePhoneNumber, comment, null, null, null, status,
                     guarantorFundingDetails, null, null, accountLinkingOptions,null);
