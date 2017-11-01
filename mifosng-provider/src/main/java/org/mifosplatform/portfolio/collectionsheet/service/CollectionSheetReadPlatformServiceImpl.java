@@ -614,6 +614,7 @@ public class CollectionSheetReadPlatformServiceImpl implements CollectionSheetRe
             final String productName = rs.getString("productShortName");
             final Long productId = rs.getLong("productId");
             final BigDecimal dueAmount = rs.getBigDecimal("dueAmount");
+            final BigDecimal balance = rs.getBigDecimal("balance");
 
             final String currencyCode = rs.getString("currencyCode");
             final String currencyName = rs.getString("currencyName");
@@ -625,7 +626,7 @@ public class CollectionSheetReadPlatformServiceImpl implements CollectionSheetRe
             final CurrencyData currency = new CurrencyData(currencyCode, currencyName, currencyDigits, inMultiplesOf,
                     currencyDisplaySymbol, currencyNameCode);
 
-            return SavingsDueData.instance(savingsId, accountId, accountStatusId, productName, productId, currency, dueAmount);
+            return SavingsDueData.instance(savingsId, accountId, accountStatusId, productName, productId, currency, dueAmount,balance);
         }
     }
 

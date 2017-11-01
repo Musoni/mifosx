@@ -28,13 +28,24 @@ public class SavingsDueData {
     @SuppressWarnings("unused")
     private BigDecimal dueAmount = BigDecimal.ZERO;
 
+    private BigDecimal balance = BigDecimal.ZERO;
+
     public static SavingsDueData instance(final Long savingsId, final String accountId, final Integer accountStatusId,
             final String productName, final Long productId, final CurrencyData currency, final BigDecimal dueAmount) {
-        return new SavingsDueData(savingsId, accountId, accountStatusId, productName, productId, currency, dueAmount);
+        return new SavingsDueData(savingsId, accountId, accountStatusId, productName, productId, currency, dueAmount,BigDecimal.ZERO);
     }
 
+    public static SavingsDueData instance(final Long savingsId, final String accountId, final Integer accountStatusId,
+                                          final String productName, final Long productId,
+                                          final CurrencyData currency, final BigDecimal dueAmount,final BigDecimal balance) {
+        return new SavingsDueData(savingsId, accountId, accountStatusId,
+                productName, productId, currency, dueAmount,balance);
+    }
+
+
+
     private SavingsDueData(final Long savingsId, final String accountId, final Integer accountStatusId, final String productName,
-            final Long productId, final CurrencyData currency, final BigDecimal dueAmount) {
+            final Long productId, final CurrencyData currency, final BigDecimal dueAmount,final BigDecimal balance) {
         this.savingsId = savingsId;
         this.accountId = accountId;
         this.accountStatusId = accountStatusId;
@@ -42,6 +53,8 @@ public class SavingsDueData {
         this.productId = productId;
         this.currency = currency;
         this.dueAmount = dueAmount;
+        this.balance = balance;
+
     }
     
     public String productName() {
