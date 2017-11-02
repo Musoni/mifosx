@@ -1413,6 +1413,21 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
                 isRegularTransaction);
     }
 
+    @Transactional
+    @Override
+    public SavingsAccountTransaction savingsAccountDeposit(final SavingsAccountTransactionDTO accountTransactionDTO) {
+
+        final SavingsAccount account = (SavingsAccount) this.depositAccountAssembler
+                .assembleFrom(accountTransactionDTO.getSavingsAccountId(), DepositAccountType.SAVINGS_DEPOSIT);
+        final PaymentDetail paymentDetail = accountTransactionDTO.getPaymentDetail();
+        if (paymentDetail != null && paymentDetail.getId() == null) {
+            this.paymentDetailWritePlatformService.persistPaymentDetail(paymentDetail);
+        }
+        return this.depositAccountDomainService.handleDeposit(account, accountTransactionDTO.getFormatter(),
+                accountTransactionDTO.getTransactionDate(), accountTransactionDTO.getTransactionAmount(), paymentDetail);
+    }
+
+
     private AppUser getAppUserIfPresent() {
         AppUser user = null;
         if (this.context != null) {

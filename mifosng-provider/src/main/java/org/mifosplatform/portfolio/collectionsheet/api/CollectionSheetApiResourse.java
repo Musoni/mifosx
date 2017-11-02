@@ -104,6 +104,11 @@ public class CollectionSheetApiResourse {
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
             return this.toApiJsonSerializer.serialize(result);
         }
+        else if (is(commandParam, "saveGroupCollectionSheet") ) {
+            final CommandWrapper commandRequest = builder.saveIndividualGroupCollectionSheet().build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+            return this.toApiJsonSerializer.serialize(result);
+        }
         return null;
     }
 

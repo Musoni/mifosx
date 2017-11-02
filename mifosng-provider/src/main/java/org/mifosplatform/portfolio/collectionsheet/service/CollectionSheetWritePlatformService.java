@@ -13,4 +13,6 @@ public interface CollectionSheetWritePlatformService {
     CommandProcessingResult updateCollectionSheet(JsonCommand command);
 
     CommandProcessingResult saveIndividualCollectionSheet(JsonCommand command);
+
+    CommandProcessingResult saveGroupCollectionSheet(JsonCommand command);
 }

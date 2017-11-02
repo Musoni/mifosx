@@ -976,7 +976,7 @@ public class CollectionSheetReadPlatformServiceImpl implements CollectionSheetRe
             sb.append("LEFT JOIN m_mandatory_savings_schedule mss ON mss.savings_account_id=sa.id AND mss.completed_derived = 0 AND mss.duedate <= :dueDate ");
             sb.append("LEFT JOIN m_office of ON of.id = cl.office_id AND of.hierarchy like :officeHierarchy ");
             sb.append("LEFT JOIN m_currency rc on rc.`code` = sa.currency_code ");
-            sb.append("WHERE sa.status_enum=300 and sa.group_id is null ");
+            sb.append("WHERE sa.status_enum=300 and sa.group_id is null and sa.deposit_type_enum = 100 ");
 
             sb.append("and (cl.status_enum = 300 or (cl.status_enum = 600 and cl.closedon_date >= :dueDate)) ");
             sb.append(" and mgc.group_id = :groupId ");

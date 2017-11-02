@@ -106,6 +106,18 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
 
     @Transactional
     @Override
+    public SavingsAccountTransaction handleDeposit(SavingsAccount account, DateTimeFormatter fmt, LocalDate transactionDate,
+                                            BigDecimal transactionAmount, PaymentDetail paymentDetail){
+
+        boolean isAccountTransfer = false;
+        boolean isRegularTransaction = true;
+        boolean isGuarantorInterest = false;
+        return  this.savingsAccountDomainService.handleDeposit(account, fmt, transactionDate,
+                transactionAmount, paymentDetail, isAccountTransfer, isRegularTransaction,isGuarantorInterest);
+    }
+
+    @Transactional
+    @Override
     public SavingsAccountTransaction handleRDDeposit(final RecurringDepositAccount account, final DateTimeFormatter fmt,
             final LocalDate transactionDate, final BigDecimal transactionAmount, final PaymentDetail paymentDetail,
             final boolean isRegularTransaction) {

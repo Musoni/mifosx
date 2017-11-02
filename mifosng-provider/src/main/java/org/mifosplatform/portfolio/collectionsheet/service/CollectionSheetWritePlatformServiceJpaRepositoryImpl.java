@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URIBuilder;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResultBuilder;
@@ -31,6 +33,8 @@ import org.mifosplatform.portfolio.savings.domain.SavingsAccountTransaction;
 import org.mifosplatform.portfolio.savings.service.DepositAccountWritePlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Service
 public class CollectionSheetWritePlatformServiceJpaRepositoryImpl implements CollectionSheetWritePlatformService {
@@ -93,8 +97,58 @@ public class CollectionSheetWritePlatformServiceJpaRepositoryImpl implements Col
                 .with(changes).with(changes).build();
     }
 
+    private boolean is(final String commandParam, final String commandValue) {
+        return StringUtils.isNotBlank(commandParam) && commandParam.trim().equalsIgnoreCase(commandValue);
+    }
+
     @Override
     public CommandProcessingResult saveIndividualCollectionSheet(final JsonCommand command) {
+
+        this.transactionDataValidator.validateIndividualCollectionSheet(command);
+
+        final Map<String, Object> changes = new HashMap<>();
+        changes.put("locale", command.locale());
+        changes.put("dateFormat", command.dateFormat());
+
+
+        MultiValueMap<String, String> parameters =
+                UriComponentsBuilder.fromUriString(command.getUrl()).build().getQueryParams();
+
+        final String action = parameters.getFirst("command");
+
+
+        final String noteText = command.stringValueOfParameterNamed("note");
+        if (StringUtils.isNotBlank(noteText)) {
+            changes.put("note", noteText);
+        }
+
+        final PaymentDetail paymentDetail = null;
+
+        changes.putAll(updateBulkReapayments(command, paymentDetail));
+
+        changes.putAll(updateBulkDisbursals(command));
+
+        if(is(action, "saveGroupCollectionSheet")){
+
+            changes.putAll(updateBulkSavingsDepositPayments(command, paymentDetail));
+
+        }else{
+
+            changes.putAll(updateBulkMandatorySavingsDuePayments(command, paymentDetail));
+        }
+
+
+
+        return new CommandProcessingResultBuilder() //
+                .withCommandId(command.commandId()) //
+                .withEntityId(command.entityId()) //
+                .withGroupId(command.entityId()) //
+                .with(changes).with(changes).build();
+    }
+
+
+    @Override
+    public CommandProcessingResult saveGroupCollectionSheet(final JsonCommand command) {
 
         this.transactionDataValidator.validateIndividualCollectionSheet(command);
 
@@ -111,9 +165,10 @@ public class CollectionSheetWritePlatformServiceJpaRepositoryImpl implements Col
 
         changes.putAll(updateBulkReapayments(command, paymentDetail));
 
-        changes.putAll(updateBulkDisbursals(command));
+         changes.putAll(updateBulkDisbursals(command));
 
-        changes.putAll(updateBulkMandatorySavingsDuePayments(command, paymentDetail));
+        changes.putAll(updateBulkSavingsDepositPayments(command, paymentDetail));
+
 
         return new CommandProcessingResultBuilder() //
                 .withCommandId(command.commandId()) //
@@ -146,6 +201,24 @@ public class CollectionSheetWritePlatformServiceJpaRepositoryImpl implements Col
         for (SavingsAccountTransactionDTO savingsAccountTransactionDTO : savingsTransactions) {
             try {
                 SavingsAccountTransaction savingsAccountTransaction =  this.accountWritePlatformService.mandatorySavingsAccountDeposit(savingsAccountTransactionDTO);
+                depositTransactionIds.add(savingsAccountTransaction.getId());
+            } catch (Exception e) {
+                // TODO: handle exception
+            }
+        }
+        changes.put("SavingsTransactions", depositTransactionIds);
+        return changes;
+    }
+
+
+    private Map<String, Object> updateBulkSavingsDepositPayments(final JsonCommand command, final PaymentDetail paymentDetail) {
+        final Map<String, Object> changes = new HashMap<>();
+        final Collection<SavingsAccountTransactionDTO> savingsTransactions = this.accountAssembler
+                .assembleBulkMandatorySavingsAccountTransactionDTOs(command, paymentDetail);
+        List<Long> depositTransactionIds = new ArrayList<>();
+        for (SavingsAccountTransactionDTO savingsAccountTransactionDTO : savingsTransactions) {
+            try {
+                SavingsAccountTransaction savingsAccountTransaction =  this.accountWritePlatformService.savingsAccountDeposit(savingsAccountTransactionDTO);
                 depositTransactionIds.add(savingsAccountTransaction.getId());
             } catch (Exception e) {
                 // TODO: handle exception
