@@ -326,6 +326,9 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
         for (final DepositAccountData depositAccount : depositAccounts) {
             try {
                 final DepositAccountType depositAccountType = DepositAccountType.fromInt(depositAccount.depositType().getId().intValue());
+
+                this.depositAccountWritePlatformService.transferInterestToSavings();
+
                 SavingsAccount account = this.depositAccountWritePlatformService.updateMaturityDetails(depositAccount.id(), depositAccountType);
 
                 if (depositAccountType.isFixedDeposit() && account !=null) {
@@ -333,6 +336,8 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
                     this.savingsAccountRepository.saveAndFlush(account);
 
                     this.depositAccountWritePlatformService.autoRenewFDAccount(depositAccount.id(), depositAccountType);
+
+
                 }
 
 

@@ -1119,8 +1119,20 @@ public class SavingsAccount extends AbstractPersistable<Long> {
     }
 
     protected BigDecimal getAccountBalance() {
+
         return this.summary.getAccountBalance(this.currency).getAmount();
     }
+
+    protected BigDecimal getAccountDeposit() {
+
+        return this.summary.getTotalDeposits(this.currency).getAmount();
+    }
+
+    protected BigDecimal getAccountInterestEarned() {
+
+        return this.summary.getTotalInterestEarned(this.currency).getAmount();
+    }
+
 
     public void modifyApplication(final JsonCommand command, final Map<String, Object> actualChanges) {
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
