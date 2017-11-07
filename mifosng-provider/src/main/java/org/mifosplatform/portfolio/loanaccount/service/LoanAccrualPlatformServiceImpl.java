@@ -15,6 +15,8 @@ import org.mifosplatform.infrastructure.jobs.annotation.CronTarget;
 import org.mifosplatform.infrastructure.jobs.exception.JobExecutionException;
 import org.mifosplatform.infrastructure.jobs.service.JobName;
 import org.mifosplatform.portfolio.loanaccount.data.LoanScheduleAccrualData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +25,8 @@ public class LoanAccrualPlatformServiceImpl implements LoanAccrualPlatformServic
 
     private final LoanReadPlatformService loanReadPlatformService;
     private final LoanAccrualWritePlatformService loanAccrualWritePlatformService;
+    private final static Logger logger = LoggerFactory.getLogger(LoanAccrualPlatformService.class);
+
 
     @Autowired
     public LoanAccrualPlatformServiceImpl(final LoanReadPlatformService loanReadPlatformService,
@@ -92,6 +96,8 @@ public class LoanAccrualPlatformServiceImpl implements LoanAccrualPlatformServic
         for (Map.Entry<Long, Collection<LoanScheduleAccrualData>> mapEntry : loanDataMap.entrySet()) {
             try {
                 this.loanAccrualWritePlatformService.addPeriodicAccruals(tilldate, mapEntry.getKey(), mapEntry.getValue());
+                logger.info("Added accruals for loan: " + mapEntry.getKey());
+
             } catch (Exception e) {
                 Throwable realCause = e;
                 if (e.getCause() != null) {
