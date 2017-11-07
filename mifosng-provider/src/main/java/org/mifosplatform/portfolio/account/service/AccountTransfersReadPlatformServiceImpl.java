@@ -33,6 +33,7 @@ import org.mifosplatform.portfolio.account.exception.AccountTransferNotFoundExce
 import org.mifosplatform.portfolio.client.data.ClientData;
 import org.mifosplatform.portfolio.client.service.ClientReadPlatformService;
 import org.mifosplatform.portfolio.group.data.GroupGeneralData;
+import org.mifosplatform.portfolio.savings.DepositAccountType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -267,8 +268,10 @@ public class AccountTransfersReadPlatformServiceImpl implements AccountTransfers
             sqlBuilder.append("fromGroup.id as fromGroupId, fromGroup.display_name as fromGroupName,");
             sqlBuilder.append("toGroup.id as toGroupId, toGroup.display_name as toGroupName,");
             sqlBuilder.append("fromsavacc.id as fromSavingsAccountId, fromsavacc.account_no as fromSavingsAccountNo,");
+            sqlBuilder.append("fromsavacc.deposit_type_enum as fromSavingAccountTypeEnum ,");
             sqlBuilder.append("fromloanacc.id as fromLoanAccountId, fromloanacc.account_no as fromLoanAccountNo,");
             sqlBuilder.append("tosavacc.id as toSavingsAccountId, tosavacc.account_no as toSavingsAccountNo,");
+            sqlBuilder.append("tosavacc.deposit_type_enum as toSavingAccountTypeEnum ,");
             sqlBuilder.append("toloanacc.id as toLoanAccountId, toloanacc.account_no as toLoanAccountNo,");
             sqlBuilder.append("fromsavtran.id as fromSavingsAccountTransactionId,");
             sqlBuilder.append("fromsavtran.transaction_type_enum as fromSavingsAccountTransactionType,");
@@ -363,6 +366,7 @@ public class AccountTransfersReadPlatformServiceImpl implements AccountTransfers
 
 
             final Long fromSavingsAccountId = JdbcSupport.getLong(rs, "fromSavingsAccountId");
+            final Integer fromSavingAccountTypeEnum = JdbcSupport.getInteger(rs, "fromSavingAccountTypeEnum");
             final String fromSavingsAccountNo = rs.getString("fromSavingsAccountNo");
             final Long fromLoanAccountId = JdbcSupport.getLong(rs, "fromLoanAccountId");
             final String fromLoanAccountNo = rs.getString("fromLoanAccountNo");
@@ -370,7 +374,17 @@ public class AccountTransfersReadPlatformServiceImpl implements AccountTransfers
             EnumOptionData fromAccountType = null;
             if (fromSavingsAccountId != null) {
                 fromAccount = PortfolioAccountData.lookup(fromSavingsAccountId, fromSavingsAccountNo);
-                fromAccountType = AccountTransferEnumerations.accountType(PortfolioAccountType.SAVINGS);
+
+                if(fromSavingAccountTypeEnum.equals(DepositAccountType.FIXED_DEPOSIT.getValue())){
+
+                    fromAccountType = AccountTransferEnumerations.savingsType(DepositAccountType.FIXED_DEPOSIT);
+
+                }else{
+
+                    fromAccountType = AccountTransferEnumerations.accountType(PortfolioAccountType.SAVINGS);
+                }
+
+
             } else if (fromLoanAccountId != null) {
                 fromAccount = PortfolioAccountData.lookup(fromLoanAccountId, fromLoanAccountNo);
                 fromAccountType = AccountTransferEnumerations.accountType(PortfolioAccountType.LOAN);
@@ -382,10 +396,21 @@ public class AccountTransfersReadPlatformServiceImpl implements AccountTransfers
             final String toSavingsAccountNo = rs.getString("toSavingsAccountNo");
             final Long toLoanAccountId = JdbcSupport.getLong(rs, "toLoanAccountId");
             final String toLoanAccountNo = rs.getString("toLoanAccountNo");
+            final Integer toSavingAccountTypeEnum = JdbcSupport.getInteger(rs, "toSavingAccountTypeEnum");
 
             if (toSavingsAccountId != null) {
+
                 toAccount = PortfolioAccountData.lookup(toSavingsAccountId, toSavingsAccountNo);
-                toAccountType = AccountTransferEnumerations.accountType(PortfolioAccountType.SAVINGS);
+
+                if(toSavingAccountTypeEnum.equals(DepositAccountType.FIXED_DEPOSIT.getValue())){
+
+                    toAccountType = AccountTransferEnumerations.savingsType(DepositAccountType.FIXED_DEPOSIT);
+
+                }else{
+
+                    toAccountType = AccountTransferEnumerations.accountType(PortfolioAccountType.SAVINGS);
+                }
+
             } else if (toLoanAccountId != null) {
                 toAccount = PortfolioAccountData.lookup(toLoanAccountId, toLoanAccountNo);
                 toAccountType = AccountTransferEnumerations.accountType(PortfolioAccountType.LOAN);

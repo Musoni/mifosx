@@ -12,6 +12,7 @@ import org.mifosplatform.portfolio.account.domain.AccountTransferType;
 import org.mifosplatform.portfolio.account.domain.StandingInstructionPriority;
 import org.mifosplatform.portfolio.account.domain.StandingInstructionStatus;
 import org.mifosplatform.portfolio.account.domain.StandingInstructionType;
+import org.mifosplatform.portfolio.savings.DepositAccountType;
 
 public class AccountTransferEnumerations {
 
@@ -35,6 +36,28 @@ public class AccountTransferEnumerations {
                     optionData = new EnumOptionData(PortfolioAccountType.SAVINGS.getValue().longValue(),
                             PortfolioAccountType.SAVINGS.getCode(), "Savings Account");
                 break;
+            }
+        }
+
+        return optionData;
+    }
+
+    public static EnumOptionData savingsType(final DepositAccountType type) {
+
+        EnumOptionData optionData = null;
+
+        if (type != null) {
+            switch (type) {
+                case INVALID:
+                    break;
+                case FIXED_DEPOSIT:
+                    optionData = new EnumOptionData(PortfolioAccountType.SAVINGS.getValue().longValue(), PortfolioAccountType.SAVINGS.getCode(),
+                            "FD Savings Account");
+                    break;
+                case SAVINGS_DEPOSIT:
+                    optionData = new EnumOptionData(PortfolioAccountType.SAVINGS.getValue().longValue(),
+                            PortfolioAccountType.SAVINGS.getCode(), "Savings Account");
+                    break;
             }
         }
 
