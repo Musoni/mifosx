@@ -33,6 +33,8 @@ public interface DepositAccountDomainService {
 
     void handleFDAutoRenewOnClosure(FixedDepositAccount account);
 
+    void transferToLinkedAccount(FixedDepositAccount account);
+
     Long handleRDAccountClosure(RecurringDepositAccount account, PaymentDetail paymentDetail, AppUser user, JsonCommand command,
             LocalDate tenantsTodayDate, Map<String, Object> changes);
 

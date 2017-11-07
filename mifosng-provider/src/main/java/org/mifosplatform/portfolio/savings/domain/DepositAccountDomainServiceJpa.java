@@ -27,6 +27,7 @@ import org.mifosplatform.infrastructure.configuration.domain.ConfigurationDomain
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.domain.Tenant;
 import org.mifosplatform.infrastructure.core.service.DateUtils;
+import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.organisation.monetary.domain.ApplicationCurrency;
 import org.mifosplatform.organisation.monetary.domain.ApplicationCurrencyRepositoryWrapper;
 import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
@@ -63,6 +64,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
     private final ConfigurationDomainService configurationDomainService;
     private final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository;
     private final AccountAssociationsRepository accountAssociationsRepository;
+    private final PlatformSecurityContext context;
 
     @Autowired
     public DepositAccountDomainServiceJpa(final SavingsAccountRepositoryWrapper savingsAccountRepository,
@@ -71,7 +73,8 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
             final DepositAccountAssembler depositAccountAssembler, final SavingsAccountDomainService savingsAccountDomainService,
             final AccountTransfersWritePlatformService accountTransfersWritePlatformService,
             final ConfigurationDomainService configurationDomainService,
-            final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository,final AccountAssociationsRepository accountAssociationsRepository) {
+            final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository,final AccountAssociationsRepository accountAssociationsRepository,
+            final PlatformSecurityContext context) {
         this.savingsAccountRepository = savingsAccountRepository;
         this.applicationCurrencyRepositoryWrapper = applicationCurrencyRepositoryWrapper;
         this.journalEntryWritePlatformService = journalEntryWritePlatformService;
@@ -82,6 +85,7 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
         this.configurationDomainService = configurationDomainService;
         this.accountNumberFormatRepository = accountNumberFormatRepository;
         this.accountAssociationsRepository = accountAssociationsRepository;
+        this.context = context;
     }
 
     @Transactional
@@ -318,11 +322,64 @@ public class DepositAccountDomainServiceJpa implements DepositAccountDomainServi
 
             }
 
+            final AppUser user = this.context.authenticatedUser();
+
+            account.close(user, DateUtils.getLocalDateOfTenant());
+
+            this.savingsAccountRepository.save(account);
+
 
         }
 
 
 
+
+
+
+    }
+
+    @Transactional
+    @Override
+    public void transferToLinkedAccount(FixedDepositAccount account) {
+
+        boolean isRegularTransaction = false;
+        boolean isAccountTransfer = false;
+        final boolean isPreMatureClosure = false;
+
+        final boolean isExceptionForBalanceCheck = false;
+
+        final Set<Long> existingTransactionIds = new HashSet<>();
+        final Set<Long> existingReversedTransactionIds = new HashSet<>();
+        updateExistingTransactionsDetails(account, existingTransactionIds, existingReversedTransactionIds);
+
+        final DateTimeFormatter fmt = DateTimeFormat.forPattern("dd-MM-yyyy").withLocale(Locale.ENGLISH);
+
+
+        AccountAssociations accountAssociations = this.accountAssociationsRepository.findBySavingsIdAndType(account.getId(),
+                    AccountAssociationType.LINKED_ACCOUNT_ASSOCIATION.getValue());
+
+        if(accountAssociations !=null){
+
+            final AccountTransferDTO accountInterestTransferDTO = new AccountTransferDTO(DateUtils.getLocalDateOfTenant(),
+                    account.getAccountBalance(), PortfolioAccountType.SAVINGS, PortfolioAccountType.SAVINGS,
+                    account.getId(), accountAssociations.linkedSavingsAccount().getId(), "Account Transfer", Locale.ENGLISH, fmt, null, null, null, null,
+                    null, AccountTransferType.ACCOUNT_TRANSFER.getValue(), null, null, null, null, accountAssociations.linkedSavingsAccount(), account,
+                    isRegularTransaction, isExceptionForBalanceCheck);
+            this.accountTransfersWritePlatformService.transferFunds(accountInterestTransferDTO);
+
+            // update, old account
+
+            updateExistingTransactionsDetails(account, existingTransactionIds, existingReversedTransactionIds);
+
+            final AppUser user = this.context.authenticatedUser();
+
+            account.close(user, DateUtils.getLocalDateOfTenant());
+
+            this.savingsAccountRepository.save(account);
+
+            postJournalEntries(account, existingTransactionIds, existingReversedTransactionIds, isAccountTransfer);
+
+        }
 
 
 

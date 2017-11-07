@@ -481,6 +481,45 @@ public class FixedDepositAccount extends SavingsAccount {
         // this.savingsAccountTransactionSummaryWrapper, this.transactions);
     }
 
+
+    public void close(final AppUser currentUser, final LocalDate tenantsTodayDate) {
+
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
+                .resource(FIXED_DEPOSIT_ACCOUNT_RESOURCE_NAME + SavingsApiConstants.closeAction);
+
+        final SavingsAccountStatusType currentStatus = SavingsAccountStatusType.fromInt(this.status);
+
+
+        validateActivityNotBeforeClientOrGroupTransferDate(SavingsEvent.SAVINGS_CLOSE_ACCOUNT, tenantsTodayDate);
+        this.status = SavingsAccountStatusType.CLOSED.getValue();
+
+        final DepositAccountOnClosureType onClosureType = DepositAccountOnClosureType.TRANSFER_TO_SAVINGS;
+        this.accountTermAndPreClosure.updateOnAccountClosureStatus(onClosureType);
+
+        // // withdraw deposit amount before closing the account
+        // final Money transactionAmountMoney = Money.of(this.currency,
+        // this.getAccountBalance());
+        // final SavingsAccountTransaction withdraw =
+        // SavingsAccountTransaction.withdrawal(this, office(), paymentDetail,
+        // closedDate,
+        // transactionAmountMoney, new Date());
+        // this.transactions.add(withdraw);
+
+        //actualChanges.put(SavingsApiConstants.statusParamName, SavingsEnumerations.status(this.status));
+
+       // actualChanges.put(SavingsApiConstants.closedOnDateParamName, closedDate.toString(fmt));
+
+        this.rejectedOnDate = null;
+        this.rejectedBy = null;
+        this.withdrawnOnDate = null;
+        this.withdrawnBy = null;
+        this.closedOnDate = tenantsTodayDate.toDate();
+        this.closedBy = currentUser;
+        // this.summary.updateSummary(this.currency,
+        // this.savingsAccountTransactionSummaryWrapper, this.transactions);
+    }
+
     public void postMaturityInterest(final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth) {
         final LocalDate interestPostingUpToDate = maturityDate();
         final MathContext mc = MathContext.DECIMAL64;

@@ -41,6 +41,7 @@ import org.mifosplatform.portfolio.savings.service.DepositAccountReadPlatformSer
 import org.mifosplatform.portfolio.savings.service.DepositAccountWritePlatformService;
 import org.mifosplatform.portfolio.savings.service.SavingsAccountChargeReadPlatformService;
 import org.mifosplatform.portfolio.savings.service.SavingsAccountWritePlatformService;
+import org.mifosplatform.useradministration.domain.AppUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -322,6 +323,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
     public void updateMaturityDetailsOfDepositAccounts() {
 
         final Collection<DepositAccountData> depositAccounts = this.depositAccountReadPlatformService.retrieveForMaturityUpdate();
+
 
         for (final DepositAccountData depositAccount : depositAccounts) {
             try {

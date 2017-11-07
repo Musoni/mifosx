@@ -1375,7 +1375,12 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
 
 
             if (((FixedDepositAccount) account).isAutoRenewOnClosure()) {
+
                 this.depositAccountDomainService.handleFDAutoRenewOnClosure((FixedDepositAccount) account);
+
+            }else {
+
+                this.depositAccountDomainService.transferToLinkedAccount((FixedDepositAccount) account);
             }
         }
 
