@@ -63,23 +63,8 @@ import org.mifosplatform.portfolio.group.exception.GroupNotActiveException;
 import org.mifosplatform.portfolio.loanaccount.api.LoanApiConstants;
 import org.mifosplatform.portfolio.loanaccount.data.LoanChargeData;
 import org.mifosplatform.portfolio.loanaccount.data.ScheduleGeneratorDTO;
-import org.mifosplatform.portfolio.loanaccount.domain.DefaultLoanLifecycleStateMachine;
-import org.mifosplatform.portfolio.loanaccount.domain.GroupLoanMemberAllocation;
-import org.mifosplatform.portfolio.loanaccount.domain.Loan;
-import org.mifosplatform.portfolio.loanaccount.domain.LoanAccountDomainService;
-import org.mifosplatform.portfolio.loanaccount.domain.LoanCharge;
-import org.mifosplatform.portfolio.loanaccount.domain.LoanDisbursementDetails;
-import org.mifosplatform.portfolio.loanaccount.domain.LoanLifecycleStateMachine;
-import org.mifosplatform.portfolio.loanaccount.domain.LoanRepaymentScheduleInstallment;
-import org.mifosplatform.portfolio.loanaccount.domain.LoanRepaymentScheduleInstallmentRepository;
-import org.mifosplatform.portfolio.loanaccount.domain.LoanRepaymentScheduleTransactionProcessorFactory;
-import org.mifosplatform.portfolio.loanaccount.domain.LoanRepository;
-import org.mifosplatform.portfolio.loanaccount.domain.LoanStatus;
-import org.mifosplatform.portfolio.loanaccount.domain.LoanSummaryWrapper;
-import org.mifosplatform.portfolio.loanaccount.exception.LoanApplicationDateException;
-import org.mifosplatform.portfolio.loanaccount.exception.LoanApplicationNotInSubmittedAndPendingApprovalStateCannotBeDeleted;
-import org.mifosplatform.portfolio.loanaccount.exception.LoanApplicationNotInSubmittedAndPendingApprovalStateCannotBeModified;
-import org.mifosplatform.portfolio.loanaccount.exception.LoanNotFoundException;
+import org.mifosplatform.portfolio.loanaccount.domain.*;
+import org.mifosplatform.portfolio.loanaccount.exception.*;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.AprCalculator;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanScheduleModel;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.service.LoanScheduleAssembler;
@@ -247,7 +232,16 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 
             final Loan newLoanApplication = this.loanAssembler.assembleFrom(command, currentUser);
 
+            /**
+             * validate loan installment charges some installment charges have little amounts ex. 0.11
+             * spread of 25 installment the amount rounds and the installment charge have zero as the total
+             * throw an exception to stop this from happening as the loans cannot be closed if full amounts are even
+             * paid
+             * */
+
+
             validateSubmittedOnDate(newLoanApplication);
+            validateTotalInstallmentCharge(newLoanApplication);
 
             final LoanProductRelatedDetail productRelatedDetail = newLoanApplication.repaymentScheduleDetail();
 
@@ -489,7 +483,8 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
 
     @Transactional
     @Override
-    public CommandProcessingResult modifyApplication(final Long loanId, final JsonCommand command) {
+    public CommandProcessingResult
+    modifyApplication(final Long loanId, final JsonCommand command) {
 
         try {
             AppUser currentUser = getAppUserIfPresent();
@@ -809,6 +804,8 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
             if (changes.containsKey(chargesParamName)) {
                 existingLoanApplication.updateLoanCharges(possiblyModifedLoanCharges);
             }
+
+            validateTotalInstallmentCharge(existingLoanApplication);
             
             saveAndFlushLoanWithDataIntegrityViolationChecks(existingLoanApplication);
 
@@ -1098,6 +1095,22 @@ public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements Loa
         if (loan == null) { throw new LoanNotFoundException(loanId); }
         loan.setHelpers(defaultLoanLifecycleStateMachine(), this.loanSummaryWrapper, this.loanRepaymentScheduleTransactionProcessorFactory);
         return loan;
+    }
+
+    private void validateTotalInstallmentCharge(final Loan loan){
+        BigDecimal totalAmount = BigDecimal.ZERO;
+        if(!loan.charges().isEmpty() && loan.charges().size() > 0){
+            for(final LoanCharge charge : loan.charges()){
+                if(charge.isInstalmentFee()){
+                    for(final LoanInstallmentCharge installmentCharge : charge.getLoanInstallmentCharge()){
+                        totalAmount = totalAmount.add(installmentCharge.getAmount());
+                    }
+                    if(totalAmount.compareTo(BigDecimal.ZERO) == 0){
+                        throw new ZeroLoanChargeInstallmentException(charge.getId());
+                    }
+                }
+            }
+        }
     }
 
     private void validateSubmittedOnDate(final Loan loan) {
