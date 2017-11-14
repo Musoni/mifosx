@@ -698,6 +698,11 @@ public class GuarantorDomainServiceImpl implements GuarantorDomainService {
                 List<Long> reersedTransactions = new ArrayList<>(1);
                 reersedTransactions.add(loanTransaction.getId());
                 reverseTransaction(reersedTransactions);
+
+                final ChangedTransactionDetail changedTransactionDetail = loanTransaction.getLoan().getChangedTransactionDetail();
+                if(changedTransactionDetail !=null){
+                    releaseOrReverseFundsOnTransactionChange(changedTransactionDetail);
+                }
             }
             Object transactionentity = businessEventEntity.get(BUSINESS_ENTITY.LOAN_TRANSACTION);
             if (transactionentity != null && transactionentity instanceof LoanTransaction) {

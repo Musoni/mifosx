@@ -187,7 +187,7 @@ public class LoanAccountDomainServiceJpa implements LoanAccountDomainService {
                 updateLoanTransaction(mapEntry.getKey(), mapEntry.getValue());
             }
             /**update this parameter use to release funds on guarantor when transactions has reprocess **/
-            loan.updateChangedTransactionDetail(changedTransactionDetail);
+            newRepaymentTransaction.getLoan().updateChangedTransactionDetail(changedTransactionDetail);
 
         }
 
