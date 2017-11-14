@@ -19,7 +19,6 @@ import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
 import org.mifosplatform.organisation.monetary.domain.Money;
 import org.mifosplatform.portfolio.loanaccount.data.LoanTermVariationsData;
 import org.mifosplatform.portfolio.loanproduct.domain.AmortizationMethod;
-import org.mifosplatform.portfolio.loanproduct.domain.InterestMethod;
 
 /**
  * <p>
@@ -125,7 +124,7 @@ public class DecliningBalanceInterestLoanScheduleGenerator extends AbstractLoanS
                     compoundingMap.put(periodEndDate, compoundedMoney.minus(compoundingMap.get(periodStartDate).getAmount()));
                     compoundingMap.put(compoundingEndDate, compoundedMoney.negated());
                     clearMapDetails(periodEndDate, compoundingMap);
-            }
+            }*/
         }
 
         final PrincipalInterest result = loanApplicationTerms.calculateTotalInterestForPeriod(calculator,
