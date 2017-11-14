@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.logging.Logger;
 
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
@@ -140,6 +141,7 @@ public class DecliningBalanceInterestLoanScheduleGenerator extends AbstractLoanS
         } else {
             interestForPeriod = cumulatingInterestDueToGrace.minus(cumulatingInterestPaymentDueToGrace);
         }
+
         Money principalForThisInstallment = loanApplicationTerms.calculateTotalPrincipalForPeriod(calculator, outstandingBalance,
                 periodNumber, mc, interestForPeriod);
 
@@ -159,6 +161,12 @@ public class DecliningBalanceInterestLoanScheduleGenerator extends AbstractLoanS
                         Money.zero(currency),Money.zero(currency),periodNumber);
             }
         }
+
+        if(loanApplicationTerms.isInterestRecalculationEnabled() && loanApplicationTerms.getApprovedPrincipal().getAmount().multiply(new BigDecimal(2)).compareTo(interestForThisInstallment.getAmount()) == -1)
+        {
+            interestForThisInstallment = interestForPeriod.zero();
+        }
+
         // update cumulative fields for principal & interest
         final Money interestBroughtFowardDueToGrace = cumulatingInterestDueToGrace;
         final Money totalCumulativePrincipalToDate = totalCumulativePrincipal.plus(principalForThisInstallment);
