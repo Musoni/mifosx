@@ -2225,6 +2225,9 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
                 // process the installment only if recalculate from date is
                 // greater than due date
                 if (installment.getDueDate().isAfter(lastInstallmentDate)) {
+                    if (totalCumulativePrincipal.isGreaterThanOrEqualTo(loanApplicationTerms.getTotalDisbursedAmount())) {
+                        break;
+                    }
                     LocalDate previousRepaymentDate = actualRepaymentDate;
                     actualRepaymentDate = this.scheduledDateGenerator.generateNextRepaymentDate(actualRepaymentDate, loanApplicationTerms,
                             isFirstRepayment, holidayDetailDTO);
@@ -2374,6 +2377,7 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
             final Map<LocalDate, Money> principalPortionMap, LoanRepaymentScheduleInstallment installment,
             Collection<RecalculationDetail> applicableTransactions, Money actualPrincipalPortion) {
         Money unprocessed = Money.zero(currency);
+        Money totalUnprocessed = Money.zero(currency);
         for (RecalculationDetail detail : applicableTransactions) {
             if (!detail.isProcessed()) {
                 Money principalProcessed = installment.getPrincipalCompleted(currency);
@@ -2404,9 +2408,11 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
                         holidayDetailDTO);
                 updateMapWithAmount(principalPortionMap, unprocessed, applicableDate);
 
+                totalUnprocessed = totalUnprocessed.plus(unprocessed);
+
             }
         }
-        return unprocessed;
+        return totalUnprocessed;
     }
 
     private void updateAmortization(final MathContext mc, final LoanApplicationTerms loanApplicationTerms, int periodNumber,

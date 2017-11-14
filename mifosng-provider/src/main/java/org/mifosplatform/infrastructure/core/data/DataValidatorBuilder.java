@@ -297,7 +297,7 @@ public class DataValidatorBuilder {
             final List<Object> valuesList = Arrays.asList(values);
             final String valuesListStr = StringUtils.join(valuesList, ", ");
 
-            if (valuesList.contains(this.value)) {
+            if (!valuesList.contains(this.value)) {
                 final StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(this.resource).append(".")
                         .append(this.parameter).append(".is.one.of.unwanted.enumerations");
                 final StringBuilder defaultEnglishMessage = new StringBuilder("The parameter ").append(this.parameter)

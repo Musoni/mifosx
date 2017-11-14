@@ -44,7 +44,7 @@ public final class CalculateLoanScheduleQueryFromApiJsonHelper {
             LoanApiConstants.emiAmountParameterName, LoanApiConstants.maxOutstandingBalanceParameterName,
             LoanProductConstants.graceOnArrearsAgeingParameterName, LoanProductConstants.recalculationRestFrequencyDateParamName,
             "createStandingInstructionAtDisbursement", LoanApiConstants.isFloatingInterestRateParameterName,
-            LoanApiConstants.interestRateDifferentialParameterName, "groupMemberAllocation"));
+            LoanApiConstants.interestRateDifferentialParameterName, "groupMemberAllocation", LoanProductConstants.recalculationCompoundingFrequencyDateParamName));
 
     private final FromJsonHelper fromApiJsonHelper;
 

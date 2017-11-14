@@ -1091,4 +1091,8 @@ public class LoanCharge extends AbstractPersistable<Long> {
             this.dueDate = dueDate.toDate();
         }
     }
+
+    public Set<LoanInstallmentCharge> getLoanInstallmentCharge() {
+        return this.loanInstallmentCharge;
+    }
 }
