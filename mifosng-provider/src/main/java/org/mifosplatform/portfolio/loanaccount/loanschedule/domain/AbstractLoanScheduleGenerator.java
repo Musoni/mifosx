@@ -1362,6 +1362,10 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
         Money compoundedMoney = Money.zero(currency);
         if (!compoundingMap.isEmpty()) {
             compoundedMoney = compoundingMap.get(lastRestDate);
+            if(compoundedMoney == null)
+            {
+                compoundedMoney = Money.zero(currency);
+            }
         }
         boolean clearCompoundingMap = true;
         for (LoanRepaymentScheduleInstallment loanRepaymentScheduleInstallment : installments) {
@@ -1396,10 +1400,11 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
         }
     }
 
-    private Money updateMapWithCompoundingDetails(final LoanApplicationTerms loanApplicationTerms, final HolidayDetailDTO holidayDetailDTO,
+    private Money   updateMapWithCompoundingDetails(final LoanApplicationTerms loanApplicationTerms, final HolidayDetailDTO holidayDetailDTO,
             final MonetaryCurrency currency, final TreeMap<LocalDate, Money> compoundingMap,
             final LoanRepaymentScheduleInstallment loanRepaymentScheduleInstallment, final LocalDate lastRestDate,
             final Money compoundedMoney, final LocalDate scheduledDueDate) {
+
         Money ignoreMoney = compoundedMoney;
         if (loanApplicationTerms.getInterestRecalculationCompoundingMethod().isCompoundingEnabled()) {
             LocalDate compoundingEffectiveDate = getNextCompoundScheduleDate(loanRepaymentScheduleInstallment.getDueDate().minusDays(1),
