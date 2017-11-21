@@ -162,8 +162,7 @@ public class DecliningBalanceInterestLoanScheduleGenerator extends AbstractLoanS
             }
         }
 
-        if(loanApplicationTerms.isInterestRecalculationEnabled() && loanApplicationTerms.getApprovedPrincipal().getAmount().multiply(new BigDecimal(2)).compareTo(interestForThisInstallment.getAmount()) == -1)
-        {
+        if (loanApplicationTerms.isInterestRecalculationEnabled() && loanApplicationTerms.getPrincipal().getAmount().multiply(new BigDecimal(2)).compareTo(interestForThisInstallment.getAmount()) == -1) {
             interestForThisInstallment = interestForPeriod.zero();
         }
 
