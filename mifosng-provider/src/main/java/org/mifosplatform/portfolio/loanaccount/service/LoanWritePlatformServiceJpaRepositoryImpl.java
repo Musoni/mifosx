@@ -965,6 +965,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
                 loan.getLoanTransactions().add(mapEntry.getValue());
                 this.accountTransfersWritePlatformService.updateLoanTransaction(mapEntry.getKey(), mapEntry.getValue());
             }
+            transactionToAdjust.getLoan().updateChangedTransactionDetail(changedTransactionDetail);
         }
 
         final String noteText = command.stringValueOfParameterNamed("note");
