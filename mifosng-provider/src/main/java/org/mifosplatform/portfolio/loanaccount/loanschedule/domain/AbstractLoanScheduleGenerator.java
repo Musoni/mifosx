@@ -1363,6 +1363,7 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
         if (!compoundingMap.isEmpty()) {
             compoundedMoney = compoundingMap.get(lastRestDate);
         }
+        if(compoundedMoney == null) { compoundedMoney = Money.zero(currency);}
         boolean clearCompoundingMap = true;
         for (LoanRepaymentScheduleInstallment loanRepaymentScheduleInstallment : installments) {
             if (loanRepaymentScheduleInstallment.isNotFullyPaidOff()
