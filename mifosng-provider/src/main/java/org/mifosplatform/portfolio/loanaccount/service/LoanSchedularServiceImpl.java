@@ -115,50 +115,72 @@ public class LoanSchedularServiceImpl implements LoanSchedularService {
         }
     }
 
+
+
 	@Override
 	@CronTarget(jobName = JobName.APPLY_CHARGE_TO_OVERDUE_ON_MATURITY_LOANS)
 	public void applyChargeForOverdueOnMaturityLoans() throws JobExecutionException {
 
-		if(this.chargeReadPlatformService.isOverDueOnMaturityChargeExist(ChargeTimeType.OVERDUE_ON_MATURITY.getValue())){
+		final Long penaltyWaitPeriodValue = this.configurationDomainService.retrievePenaltyWaitPeriod();
+		final Long penaltyOnMaturityWaitPeriodValue = this.configurationDomainService.retrievePenaltyOnMaturityWaitPeriod();
 
-			final Long penaltyOnMaturityWaitPeriodValue = this.configurationDomainService.retrievePenaltyOnMaturityWaitPeriod();
+		final Boolean backdatePenalties = this.configurationDomainService.isBackdatePenaltiesEnabled();
+		final Collection<OverdueLoanScheduleData> overdueLoanScheduledInstallments = this.loanReadPlatformService
+				.retrieveAllLoansWithOverdueInstallmentsWithOnMaturityCharge(penaltyWaitPeriodValue, backdatePenalties);
 
-			final Collection<LoanAccountData> overdueLoans = this.loanReadPlatformService
-					.retrieveAllLoansOverdueOnMaturity(penaltyOnMaturityWaitPeriodValue);
+		if (this.chargeReadPlatformService.isOverDueOnMaturityChargeExist(ChargeTimeType.OVERDUE_ON_MATURITY.getValue())) {
 
-			if (!overdueLoans.isEmpty()) {
+
+			//final Collection<LoanAccountData> overdueLoans = this.loanReadPlatformService.retrieveAllLoansOverdueOnMaturity(penaltyOnMaturityWaitPeriodValue);
+
+			if (!overdueLoanScheduledInstallments.isEmpty()) {
 				final StringBuilder sb = new StringBuilder();
+				final Map<Long, Collection<OverdueLoanScheduleData>> overdueScheduleData = new HashMap<>();
+				for (final OverdueLoanScheduleData overdueInstallment : overdueLoanScheduledInstallments) {
+					if (overdueScheduleData.containsKey(overdueInstallment.getLoanId())) {
 
-				for (final LoanAccountData loanAccountData : overdueLoans) {
-
-					final Loan overdueLoan = this.loanAssembler.assembleFrom(loanAccountData.getId());
-
-					//this.loanWritePlatformService.addLoanCharge()
-					final LoanProduct loanProduct = overdueLoan.getLoanProduct();
-					final Collection<Charge> loanProductCharges = loanProduct.getCharges();
-
-					for (Charge loanProductCharge : loanProductCharges) {
-						if (loanProductCharge.isOverdueOnMaturity()) {
-							final BigDecimal loanPrincipal = overdueLoan.getPrincpal().getAmount();
-							final BigDecimal chargeAmount = loanProductCharge.getAmount();
-							final ChargeTimeType chargeTimeType = ChargeTimeType.fromInt(loanProductCharge.getChargeTimeType());
-							final ChargeCalculationType chargeCalculationType = ChargeCalculationType.fromInt(loanProductCharge.getChargeCalculation());
-							final ChargePaymentMode chargePaymentMode = ChargePaymentMode.fromInt(loanProductCharge.getChargePaymentMode());
-
-							LoanCharge loanCharge = new LoanCharge(overdueLoan, loanProductCharge, loanPrincipal, chargeAmount,
-									chargeTimeType, chargeCalculationType,overdueLoan.getMaturityDate(), chargePaymentMode,null, BigDecimal.ZERO);
-	//
-	//						this.businessEventNotifierService.notifyBusinessEventToBeExecuted(BusinessEventNotificationConstants.BUSINESS_EVENTS.LOAN_ADD_CHARGE,
-	//								constructEntityMap(BusinessEventNotificationConstants.BUSINESS_ENTITY.LOAN_CHARGE, loanCharge));
-
-							// add the loan charge to the loan
-							this.loanWritePlatformService.addLoanCharge(overdueLoan, loanProductCharge, null, loanCharge);
-						}
+						overdueScheduleData.get(overdueInstallment.getLoanId()).clear();
+						overdueScheduleData.get(overdueInstallment.getLoanId()).add(overdueInstallment);
+					} else {
+						Collection<OverdueLoanScheduleData> loanData = new ArrayList<>();
+						loanData.add(overdueInstallment);
+						overdueScheduleData.put(overdueInstallment.getLoanId(), loanData);
 					}
-
 				}
 
-				if (sb.length() > 0) { throw new JobExecutionException(sb.toString()); }
+				for (final Long loanId : overdueScheduleData.keySet()) {
+					try {
+
+
+						this.loanWritePlatformService.applyOverdueChargesForLoan(loanId, overdueScheduleData.get(loanId));
+
+					} catch (final PlatformApiDataValidationException e) {
+						final List<ApiParameterError> errors = e.getErrors();
+						for (final ApiParameterError error : errors) {
+							logger.error("Apply Charges due for overdue loans failed for account:" + loanId + " with message "
+									+ error.getDeveloperMessage());
+							sb.append("Apply Charges due for overdue loans failed for account:").append(loanId).append(" with message ")
+									.append(error.getDeveloperMessage());
+						}
+					} catch (final AbstractPlatformDomainRuleException ex) {
+						logger.error("Apply Charges due for overdue loans failed for account:" + loanId + " with message "
+								+ ex.getDefaultUserMessage());
+						sb.append("Apply Charges due for overdue loans failed for account:").append(loanId).append(" with message ")
+								.append(ex.getDefaultUserMessage());
+					} catch (Exception e) {
+						Throwable realCause = e;
+						if (e.getCause() != null) {
+							realCause = e.getCause();
+						}
+						logger.error("Apply Charges due for overdue loans failed for account:" + loanId + " with message "
+								+ realCause.getMessage());
+						sb.append("Apply Charges due for overdue loans failed for account:").append(loanId).append(" with message ")
+								.append(realCause.getMessage());
+					}
+				}
+				if (sb.length() > 0) {
+					throw new JobExecutionException(sb.toString());
+				}
 			}
 		}
 	}

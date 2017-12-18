@@ -1486,6 +1486,33 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
 
     }
 
+
+    @Override
+    public Collection<OverdueLoanScheduleData> retrieveAllLoansWithOverdueInstallmentsWithOnMaturityCharge(final Long penaltyWaitPeriod,
+                                                                                       final Boolean backdatePenalties) {
+        final MusoniOverdueLoanScheduleMapper rm = new MusoniOverdueLoanScheduleMapper();
+
+        final StringBuilder sqlBuilder = new StringBuilder(400);
+        sqlBuilder.append("select ").append(rm.schema()).append(" where DATE_SUB(CURDATE(),INTERVAL ? DAY) > ls.duedate ")
+                .append(" and ls.completed_derived <> 1 and mc.charge_applies_to_enum =1 ")
+                .append(" and ls.recalculated_interest_component <> 1 ")
+                .append(" and mc.charge_time_enum = 15 and ml.loan_status_id = 300 ")
+                .append(" AND DATE_SUB( ml.maturedon_date , INTERVAL ? DAY) < CURDATE()  ")
+                .append(" AND (select count(id) from m_loan_charge where loan_id = ml.id and charge_time_enum=15 and is_active=1 and waived=0 ) = 0  ");
+
+
+        if (backdatePenalties) {
+            sqlBuilder.append(" and mc.id not in (select m_loan_charge.charge_id from m_loan_charge where m_loan_charge.loan_id = ml.id and m_loan_charge.due_for_collection_as_of_date = ls.duedate)");
+            return this.jdbcTemplate.query(sqlBuilder.toString(), rm, new Object[] { penaltyWaitPeriod,penaltyWaitPeriod  });
+        }
+        // Only apply for duedate = yesterday (so that we don't apply
+        // penalties on the duedate itself)
+        sqlBuilder.append(" and ls.duedate >= DATE_SUB(CURDATE(),INTERVAL (? + 1) DAY)");
+
+        return this.jdbcTemplate.query(sqlBuilder.toString(), rm, new Object[] { penaltyWaitPeriod, penaltyWaitPeriod,penaltyWaitPeriod  });
+
+    }
+
     @Override
     public Collection<LoanAccountData> retrieveAllLoansOverdueOnMaturity(final Long penaltyWaitPeriod ) {
 
