@@ -1706,7 +1706,7 @@ public class Loan extends AbstractPersistable<Long> {
     }
 
     private void updateOverdueScheduleInstallment(final LoanCharge loanCharge) {
-        if (loanCharge.isOverdueInstallmentCharge() && loanCharge.isActive()) {
+        if ((loanCharge.isOverdueInstallmentCharge() || loanCharge.getOverdueInstallmentCharge() !=null) && loanCharge.isActive()) {
             LoanOverdueInstallmentCharge overdueInstallmentCharge = loanCharge.getOverdueInstallmentCharge();
             if (overdueInstallmentCharge != null) {
                 Integer installmentNumber = overdueInstallmentCharge.getInstallment().getInstallmentNumber();
