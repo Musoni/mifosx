@@ -474,7 +474,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
                     }
 
                     SavingsAccountTransaction newPostingTransaction;
-                    if(interestEarnedToBePosted.isGreaterThan(Money.zero(this.currency))) {
+                    if(interestEarnedToBePosted.isGreaterThanOrEqualTo(Money.zero(this.currency))) {
                         newPostingTransaction = SavingsAccountTransaction.interestPosting(this, office(),
                                 interestPostingTransactionDate, interestEarnedToBePosted);
                     } else {
