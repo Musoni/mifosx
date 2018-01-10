@@ -272,9 +272,13 @@ public class GuarantorWritePlatformServiceJpaRepositoryIImpl implements Guaranto
             baseDataValidator.failWithCodeNoParameterAddedToErrorCode(GuarantorConstants.GUARANTOR_NOT_ACTIVE_ERROR);
         }
         GuarantorFundStatusType fundStatusType = GuarantorFundStatusType.DELETED;
-        if (guarantorForDelete.getLoan().isDisbursed() || guarantorForDelete.getLoan().isApproved()) {
+        if (guarantorForDelete.getLoan().isDisbursed() || guarantorForDelete.getLoan().isApproved() || guarantorForDelete.getLoan().isSubmittedAndPendingApproval()) {
             fundStatusType = GuarantorFundStatusType.WITHDRAWN;
             this.guarantorDomainService.releaseGuarantor(guarantorFundingDetails, LocalDate.now());
+
+            AccountAssociations  accountAssociations= guarantorFundingDetails.getAccountAssociations();
+            accountAssociations.disableAssociation();
+            this.accountAssociationsRepository.save(accountAssociations);
         }
         guarantorForDelete.updateStatus(guarantorFundingDetails, fundStatusType);
     }

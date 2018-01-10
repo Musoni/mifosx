@@ -97,7 +97,7 @@ public class AccountAssociationsReadPlatformServiceImpl implements AccountAssoci
         for (final Map<String, Object> statusMap : statusList) {
             AccountAssociationType associationType = AccountAssociationType.fromInt((Integer) statusMap.get("type"));
             if (!associationType.isLinkedAccountAssociation()) {
-                if(statusMap.get("loanStatus") != null){
+                if(statusMap.get("loanStatus") != null && statusMap.get("active").equals(true) ){
                     final LoanStatus loanStatus = LoanStatus.fromInt((Integer) statusMap.get("loanStatus"));
                     if(loanStatus.isActiveOrAwaitingApprovalOrDisbursal() || loanStatus.isOverpaid() || loanStatus.isUnderTransfer()){
                         hasActiveAccount = true;
@@ -107,7 +107,7 @@ public class AccountAssociationsReadPlatformServiceImpl implements AccountAssoci
 
             }
 
-            if (statusMap.get("loanStatus") != null) {
+            if (statusMap.get("loanStatus") != null && statusMap.get("active").equals(true)) {
                 final LoanStatus loanStatus = LoanStatus.fromInt((Integer) statusMap.get("loanStatus"));
                 if (loanStatus.isActiveOrAwaitingApprovalOrDisbursal() || loanStatus.isUnderTransfer() || loanStatus.isOverpaid()) {
                     hasActiveAccount = true;
@@ -115,7 +115,7 @@ public class AccountAssociationsReadPlatformServiceImpl implements AccountAssoci
                 }
             }
 
-            if (statusMap.get("savingsStatus") != null) {
+            if (statusMap.get("savingsStatus") != null && statusMap.get("active").equals(true)) {
                 final SavingsAccountStatusType saveStatus = SavingsAccountStatusType.fromInt((Integer) statusMap.get("savingsStatus"));
                 if (saveStatus.isActiveOrAwaitingApprovalOrDisbursal() || saveStatus.isUnderTransfer()) {
                     hasActiveAccount = true;

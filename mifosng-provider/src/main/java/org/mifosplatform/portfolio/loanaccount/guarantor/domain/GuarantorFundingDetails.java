@@ -66,6 +66,10 @@ public class GuarantorFundingDetails extends AbstractPersistable<Long> {
         this.amountRemaining = amount;
     }
 
+    public AccountAssociations getAccountAssociations(){
+        return this.accountAssociations;
+    }
+
     public void updateGuarantor(final Guarantor guarantor) {
         this.guarantor = guarantor;
     }

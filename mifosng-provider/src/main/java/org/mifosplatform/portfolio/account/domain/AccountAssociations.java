@@ -72,4 +72,8 @@ public class AccountAssociations extends AbstractPersistable<Long> {
     public void updateLinkedSavingsAccount(final SavingsAccount savingsAccount) {
         this.linkedSavingsAccount = savingsAccount;
     }
+
+    public void disableAssociation(){
+        this.active = false;
+    }
 }
