@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.joda.time.LocalDate;
+import org.mifosplatform.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.mifosplatform.organisation.monetary.domain.MonetaryCurrency;
 import org.mifosplatform.organisation.monetary.domain.Money;
 import org.mifosplatform.portfolio.loanaccount.data.LoanChargePaidDetail;
@@ -321,11 +322,31 @@ public abstract class AbstractLoanRepaymentScheduleTransactionProcessor implemen
 
     private void updateChargesPaidAmountBy(final LoanTransaction loanTransaction, final Money feeCharges, final Set<LoanCharge> charges,
             final Integer installmentNumber) {
-
+    	final Integer iterationLimit = 5000;
+    	
+    	LoanCharge currentlyProcessedCharge = null;
+    	Integer iterationCounter = 0;
         Money amountRemaining = feeCharges;
         while (amountRemaining.isGreaterThanZero()) {
-            final LoanCharge unpaidCharge = findEarliestUnpaidChargeFromUnOrderedSet(charges, feeCharges.getCurrency(), false);
-            Money feeAmount = feeCharges.zero();
+        	final LoanCharge unpaidCharge = findEarliestUnpaidChargeFromUnOrderedSet(charges, feeCharges.getCurrency(), false);
+            
+        	// increment the counter if the same charge is been processed, it shouldn't take more than 5000 tries to pay off a charge
+        	if ((currentlyProcessedCharge != null) && (unpaidCharge == currentlyProcessedCharge)) {
+        		// increment the counter
+            	iterationCounter++;
+        	}
+        	
+        	// throw an exception if iteration counter has reach the limit
+        	if (iterationCounter > iterationLimit) {
+            	throw new PlatformDataIntegrityException(
+            			"error.msg.loan.charge.payment.in.infinite.loop", 
+            			"Loan charge payment meltdown", unpaidCharge.name(), unpaidCharge.getId());
+            }
+        	
+        	// update the currently processed charge
+        	currentlyProcessedCharge = unpaidCharge;
+        	
+        	Money feeAmount = feeCharges.zero();
             if (loanTransaction.isChargePayment()) {
                 feeAmount = feeCharges;
             }
