@@ -88,9 +88,11 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             sqlBuilder.append("left join m_cashiers c on c.teller_id = t.id and is_active = 1 ");
             sqlBuilder.append("left join m_staff st on st.id = c.staff_id ");
 
-            sqlBuilder.append("left join (  SELECT SUM( loan_txn.amount ) as balance, ");
-            sqlBuilder.append("c.teller_id as teller_id ");
-            sqlBuilder.append("from m_loan_transaction loan_txn ");
+            sqlBuilder.append(" left join (  SELECT SUM( case when renum.enum_value in ('Repayment At Disbursement','Repayment', 'Recovery Payment') " );
+            sqlBuilder.append(" then loan_txn.amount  else  -1* loan_txn.amount end  ) as balance, ");
+            sqlBuilder.append(" c.teller_id as teller_id ");
+            sqlBuilder.append(" from m_loan_transaction loan_txn ");
+            sqlBuilder.append(" left join r_enum_value renum on loan_txn.transaction_type_enum = renum.enum_id and renum.enum_name = 'transaction_type_enum' ");
             sqlBuilder.append("left join m_loan loan on loan_txn.loan_id = loan.id ");
             sqlBuilder.append(" left join m_appuser user on loan_txn.appuser_id = user.id ");
             sqlBuilder.append(" left join m_cashiers c on c.appuser_id = user.id ");
