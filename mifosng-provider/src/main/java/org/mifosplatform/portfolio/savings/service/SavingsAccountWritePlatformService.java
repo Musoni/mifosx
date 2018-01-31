@@ -5,6 +5,7 @@
  */
 package org.mifosplatform.portfolio.savings.service;
 
+import java.util.List;
 import java.util.Set;
 
 import org.joda.time.LocalDate;
@@ -66,4 +67,6 @@ public interface SavingsAccountWritePlatformService {
             Set<Long> existingReversedTransactionIds);
 
     void postInterest(SavingsAccount account, boolean postInterestAs, LocalDate transactionDate);
+    
+    List<Long> updateIncorrectTransactionOverdraftAmount(String apiRequestBodyAsJson);
 }

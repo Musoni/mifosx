@@ -8,6 +8,7 @@ package org.mifosplatform.portfolio.savings.api;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.ws.rs.Consumes;
@@ -44,6 +45,7 @@ import org.mifosplatform.portfolio.savings.data.SavingsAccountData;
 import org.mifosplatform.portfolio.savings.data.SavingsAccountTransactionData;
 import org.mifosplatform.portfolio.savings.service.SavingsAccountChargeReadPlatformService;
 import org.mifosplatform.portfolio.savings.service.SavingsAccountReadPlatformService;
+import org.mifosplatform.portfolio.savings.service.SavingsAccountWritePlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -60,19 +62,22 @@ public class SavingsAccountsApiResource {
     private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
     private final ApiRequestParameterHelper apiRequestParameterHelper;
     private final SavingsAccountChargeReadPlatformService savingsAccountChargeReadPlatformService;
+    private final SavingsAccountWritePlatformService savingsAccountWritePlatformService;
 
     @Autowired
     public SavingsAccountsApiResource(final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
             final PlatformSecurityContext context, final DefaultToApiJsonSerializer<SavingsAccountData> toApiJsonSerializer,
             final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
             final ApiRequestParameterHelper apiRequestParameterHelper,
-            final SavingsAccountChargeReadPlatformService savingsAccountChargeReadPlatformService) {
+            final SavingsAccountChargeReadPlatformService savingsAccountChargeReadPlatformService, 
+            final SavingsAccountWritePlatformService savingsAccountWritePlatformService) {
         this.savingsAccountReadPlatformService = savingsAccountReadPlatformService;
         this.context = context;
         this.toApiJsonSerializer = toApiJsonSerializer;
         this.commandsSourceWritePlatformService = commandsSourceWritePlatformService;
         this.apiRequestParameterHelper = apiRequestParameterHelper;
         this.savingsAccountChargeReadPlatformService = savingsAccountChargeReadPlatformService;
+        this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
     }
 
     @GET
@@ -115,8 +120,15 @@ public class SavingsAccountsApiResource {
     @POST
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String submitApplication(final String apiRequestBodyAsJson) {
+    public String submitApplication(final String apiRequestBodyAsJson, @QueryParam("command") final String commandParam) {
 
+        if (is(commandParam, "updateIncorrectTransactionOverdraftAmount")) {
+            List<Long> affectedAccountIds = this.savingsAccountWritePlatformService.
+                    updateIncorrectTransactionOverdraftAmount(apiRequestBodyAsJson);
+            
+            return this.toApiJsonSerializer.serialize(affectedAccountIds);
+        }
+        
         final CommandWrapper commandRequest = new CommandWrapperBuilder().createSavingsAccount().withJson(apiRequestBodyAsJson).build();
 
         final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
