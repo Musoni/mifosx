@@ -97,7 +97,7 @@ public final class SavingsAccountTransaction extends AbstractPersistable<Long> {
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "created_date", nullable = false)
-    private final Date createdDate;
+    private Date createdDate;
 
     @ManyToOne
     @JoinColumn(name = "appuser_id", nullable = true)
@@ -673,5 +673,11 @@ public final class SavingsAccountTransaction extends AbstractPersistable<Long> {
     
     public PaymentDetail getPaymentDetail() {
         return this.paymentDetail;
+    }
+
+    public void updateCreatedDate(LocalDateTime createdDate) {
+        if (createdDate != null) {
+            this.createdDate = createdDate.toDate();
+        }
     }
 }

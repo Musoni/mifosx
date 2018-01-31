@@ -30,6 +30,7 @@ import org.mifosplatform.infrastructure.core.data.CommandProcessingResultBuilder
 import org.mifosplatform.infrastructure.core.data.DataValidatorBuilder;
 import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.mifosplatform.infrastructure.core.exception.PlatformServiceUnavailableException;
+import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
 import org.mifosplatform.infrastructure.core.service.DateUtils;
 import org.mifosplatform.infrastructure.dataqueries.data.EntityTables;
 import org.mifosplatform.infrastructure.dataqueries.data.StatusEnum;
@@ -91,6 +92,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import com.google.gson.JsonElement;
+
 
 
 @Service
@@ -121,6 +124,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
     private final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService;
     private final StandingInstructionRepository standingInstructionRepository;
     private final BusinessEventNotifierService businessEventNotifierService;
+    private final FromJsonHelper fromApiJsonHelper;
 
     @Autowired
     public SavingsAccountWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
@@ -142,7 +146,8 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             final DepositAccountOnHoldTransactionRepository depositAccountOnHoldTransactionRepository, 
             final EntityDatatableChecksWritePlatformService entityDatatableChecksWritePlatformService, 
             final StandingInstructionRepository standingInstructionRepository,
-            final BusinessEventNotifierService businessEventNotifierService) {
+            final BusinessEventNotifierService businessEventNotifierService, 
+            final FromJsonHelper fromApiJsonHelper) {
         this.context = context;
         this.savingAccountRepository = savingAccountRepository;
         this.savingsAccountTransactionRepository = savingsAccountTransactionRepository;
@@ -168,6 +173,7 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
         this.entityDatatableChecksWritePlatformService = entityDatatableChecksWritePlatformService;
         this.standingInstructionRepository = standingInstructionRepository;
         this.businessEventNotifierService = businessEventNotifierService;
+        this.fromApiJsonHelper = fromApiJsonHelper;
     }
 
     @Transactional
@@ -1309,5 +1315,73 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 }
             }
         }
+    }
+
+    @Override
+    public List<Long> updateIncorrectTransactionOverdraftAmount(final String apiRequestBodyAsJson) {
+        List<Long> savingsAccountIdList = new ArrayList<>();
+        
+        if (StringUtils.isNotBlank(apiRequestBodyAsJson)) {
+            final JsonElement element = this.fromApiJsonHelper.parse(apiRequestBodyAsJson);
+            final String[] savingsAccountIdArray = this.fromApiJsonHelper.extractArrayNamed("savingsAccounts", element);
+            
+            if (savingsAccountIdArray != null && savingsAccountIdArray.length > 0) {
+                for (String string : savingsAccountIdArray) {
+                    Long id = Long.parseLong(string);
+                    
+                    savingsAccountIdList.add(id);
+                }
+            }
+            
+        }
+        
+        if (savingsAccountIdList.isEmpty()) {
+            savingsAccountIdList = this.savingsRepository.retrieveIdOfAllSavingsAccounts();
+        }
+        
+        final int processLimit = 1000;
+        final List<Long> listOfAffectedAccounts = new ArrayList<>();
+        
+        int counter = 0;
+        
+        for (Long id : savingsAccountIdList) {
+            try {
+                counter++;
+                
+                SavingsAccount savingsAccount = this.savingsRepository.findOneWithTransactions(id);
+                
+                if (savingsAccount != null) {
+                    List<Long> updatedTransactions = savingsAccount.
+                            updateIncorrectTransactionOverdraftAmountAndCreatedDate();
+                    
+                    if (!updatedTransactions.isEmpty()) {
+                        listOfAffectedAccounts.add(savingsAccount.getId());
+                        
+                        this.savingsRepository.save(savingsAccount);
+                        
+                        System.out.println("================================================================================================================================================");
+                        System.out.println("org.mifosplatform.portfolio.savings.service.SavingsAccountWritePlatformServiceJpaRepositoryImpl.updateIncorrectTransactionOverdraftAmount(String)");
+                        System.out.println();
+                        System.out.println("Updated savings account: " + savingsAccount.getId());
+                        System.out.println("Updated savings account transactions: " + updatedTransactions.toString());
+                        System.out.println("================================================================================================================================================");
+                        System.out.println();
+                    }
+                    
+                    if (counter >= processLimit) {
+                        // reset counter
+                        counter = 0;
+                        
+                        // sleep for 20 seconds and resume afterwards
+                        Thread.sleep(20000);
+                    }
+                }
+                
+            } catch (Exception e) {
+                
+            }
+        }
+        
+        return listOfAffectedAccounts;
     }
 }

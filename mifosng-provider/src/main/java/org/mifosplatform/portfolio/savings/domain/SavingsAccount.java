@@ -58,6 +58,8 @@ import org.apache.commons.lang.StringUtils;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
+import org.joda.time.LocalTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
@@ -274,7 +276,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
     @OrderBy(value = "dateOf, createdDate, id")
     @LazyCollection(LazyCollectionOption.FALSE)
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "savingsAccount", orphanRemoval = true)
-    protected final List<SavingsAccountTransaction> transactions = new ArrayList<>();
+    protected List<SavingsAccountTransaction> transactions = new ArrayList<>();
 
     @LazyCollection(LazyCollectionOption.FALSE)
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "savingsAccount", orphanRemoval = true)
@@ -2827,5 +2829,93 @@ public class SavingsAccount extends AbstractPersistable<Long> {
 
     public BigDecimal getWithdrawableBalance() {
         return getAccountBalance().subtract(minRequiredBalanceDerived(getCurrency()).getAmount()).subtract(this.getOnHoldFunds());
+    }
+
+    /**
+     * This will update incorrect overdraft amounts and duplicate created dates
+     * 
+     * @param sortedSavingsTransactionList
+     * @return List of update {@link SavingsAccountTransaction} entities
+     */
+    public List<Long> updateIncorrectTransactionOverdraftAmountAndCreatedDate() {
+        final List<SavingsAccountTransaction> sortedSavingsTransactionList = retreiveListOfTransactions();
+        Money runningBalance = Money.zero(currency);
+        int transactionCounter = 0;
+        final LocalTime zeroLocalTime = new LocalTime(0, 0, 0);
+        final List<Long> updatedTransactions = new ArrayList<>();
+        final List<SavingsAccountTransaction> newTransactionList = new ArrayList<>();
+        
+        for (final SavingsAccountTransaction transaction : sortedSavingsTransactionList) {
+            transactionCounter++;
+            
+            SavingsAccountTransaction updatedTransaction = null;
+            
+            // proceed if not reversed
+            if (!transaction.isReversed()) {
+                LocalDateTime createdDate = transaction.getCreatedDate();
+                LocalTime createdDateLocalTime = createdDate.toLocalTime();
+                
+                if (zeroLocalTime.equals(createdDateLocalTime)) {
+                    // add the value of the transaction counter to the date
+                    createdDate = createdDate.plusSeconds(transactionCounter);
+                    
+                    updatedTransaction = transaction;
+                    
+                    // update the created date
+                    updatedTransaction.updateCreatedDate(createdDate);
+                }
+                
+                Money overdraftAmount = Money.zero(this.currency);
+                Money transactionAmount = Money.zero(this.currency);
+                
+                if (transaction.isCredit()) {
+                    if (runningBalance.plus(transaction.getAmount(this.currency)).isLessThanZero()) {
+                        Money diffAmount = transaction.getAmount(this.currency).plus(runningBalance);
+                        if (diffAmount.isGreaterThanZero()) {
+                            overdraftAmount = transaction.getAmount(this.currency).minus(diffAmount);
+                        } else {
+                            overdraftAmount = transaction.getAmount(this.currency);
+                        }
+                    }
+                    transactionAmount = transactionAmount.plus(transaction.getAmount(this.currency));
+                } else if (transaction.isDebit()) {
+                    if (runningBalance.isLessThanZero()) {
+                        overdraftAmount = transaction.getAmount(this.currency);
+                    }
+                    transactionAmount = transactionAmount.minus(transaction.getAmount(this.currency));
+                }
+
+                runningBalance = runningBalance.plus(transactionAmount);
+                
+                if (overdraftAmount.isZero() && runningBalance.isLessThanZero()) {
+                    overdraftAmount = overdraftAmount.plus(runningBalance.getAmount().negate());
+                }
+                
+                if (overdraftAmount.isNotEqualTo(transaction.getOverdraftAmount(getCurrency()))) {
+                    if (updatedTransaction == null) {
+                        updatedTransaction = transaction;
+                    }
+                    
+                    BigDecimal overdraftAmountAsBigDecimal = overdraftAmount.getAmount();
+                    
+                    if (overdraftAmountAsBigDecimal.equals(BigDecimal.ZERO)) {
+                        overdraftAmountAsBigDecimal = null;
+                    }
+                    
+                    updatedTransaction.updateOverdraftAmount(overdraftAmountAsBigDecimal);
+                }
+                
+                if (updatedTransaction != null && this.transactions.contains(transaction)) {
+                    this.transactions.remove(transaction);
+                    this.transactions.add(updatedTransaction);
+                    
+                    updatedTransactions.add(updatedTransaction.getId());
+                }
+                
+                newTransactionList.add(transaction);
+            }
+        }
+        
+        return updatedTransactions;
     }
 }

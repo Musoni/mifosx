@@ -56,7 +56,7 @@ public class ApplySavingsCommandStrategy implements CommandStrategy {
             // Calls 'submitApplication' function from
             // 'SavingsAccountsApiResource' to Apply Savings to an existing
             // client
-            responseBody = savingsAccountsApiResource.submitApplication(request.getBody());
+            responseBody = savingsAccountsApiResource.submitApplication(request.getBody(), null);
 
             response.setStatusCode(200);
             // Sets the body of the response after savings is successfully

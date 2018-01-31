@@ -5,6 +5,8 @@
  */
 package org.mifosplatform.portfolio.savings.domain;
 
+import java.util.List;
+
 import org.mifosplatform.portfolio.savings.DepositAccountType;
 import org.mifosplatform.portfolio.savings.exception.SavingsAccountNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,5 +56,13 @@ public class SavingsAccountRepositoryWrapper {
 
     public void saveAndFlush(final SavingsAccount account) {
         this.repository.saveAndFlush(account);
+    }
+
+    public SavingsAccount findOneWithTransactions(Long id) {
+        return this.repository.findOne(id);
+    }
+
+    public List<Long> retrieveIdOfAllSavingsAccounts() {
+        return this.repository.retrieveIdOfAllSavingsAccounts();
     }
 }
