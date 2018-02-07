@@ -111,6 +111,10 @@ public class GLClosureWritePlatformServiceJpaRepositoryImpl implements GLClosure
             if (latestGLClosure != null) {
                 if (latestGLClosure.getClosingDate().after(closureDate)) { throw new GLClosureInvalidException(
                         GL_CLOSURE_INVALID_REASON.ACCOUNTING_CLOSED, latestGLClosure.getClosingDate()); }
+                if(latestGLClosure.getClosingDate().equals(closureDate)){
+                    throw new GLClosureDuplicateException(
+                            command.longValueOfParameterNamed(GLClosureJsonInputParams.OFFICE_ID.getValue()), new LocalDate(closureDate));
+                }
             }
             final GLClosure glClosure = GLClosure.fromJson(office, command);
 
@@ -123,6 +127,11 @@ public class GLClosureWritePlatformServiceJpaRepositoryImpl implements GLClosure
                     if (latestChildGlClosure != null) {
                         if (latestChildGlClosure.getClosingDate().after(closureDate)) { throw new GLClosureInvalidException(
                                 GL_CLOSURE_INVALID_REASON.ACCOUNTING_CLOSED, latestChildGlClosure.getClosingDate()); }
+                        if(latestChildGlClosure.getClosingDate().equals(closureDate)){
+                            throw new GLClosureDuplicateException(
+                                    command.longValueOfParameterNamed(GLClosureJsonInputParams.OFFICE_ID.getValue()), new LocalDate(
+                                    command.DateValueOfParameterNamed(GLClosureJsonInputParams.CLOSING_DATE.getValue())));
+                        }
                     }
                 }
             }
