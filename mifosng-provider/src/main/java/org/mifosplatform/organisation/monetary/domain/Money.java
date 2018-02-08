@@ -87,6 +87,9 @@ public class Money implements Comparable<Money> {
         final double floorDiff = existingVal - floorOfValue;
         final double ceilDiff = ceilingOfValue - existingVal;
 
+
+        if(Double.isNaN(ceilDiff) && Double.isNaN(floorDiff)) return 0;
+
         if (ceilDiff > floorDiff) {
             amountScaled = floorOfValue;
         } else {
