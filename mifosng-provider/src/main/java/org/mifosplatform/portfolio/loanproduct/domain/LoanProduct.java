@@ -1098,6 +1098,13 @@ public class LoanProduct extends AbstractPersistable<Long> {
             actualChanges.put(LoanProductConstants.reverseOverdueDaysNPAInterestParameterName, newValue);
             this.reverseOverdueDaysNPAInterest = newValue;
         }
+        
+        if (command.isChangeInBooleanParameterNamed(LoanProductConstants.canAutoAllocateOverpaymentsParameterName, this.canAutoAllocateOverpayments)) {
+            final boolean newValue = command.booleanPrimitiveValueOfParameterNamed(LoanProductConstants.canAutoAllocateOverpaymentsParameterName);
+            actualChanges.put(LoanProductConstants.canAutoAllocateOverpaymentsParameterName, newValue);
+            this.canAutoAllocateOverpayments = newValue;
+        }
+        
         return actualChanges;
     }
 

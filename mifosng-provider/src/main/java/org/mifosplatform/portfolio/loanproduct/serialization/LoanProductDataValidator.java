@@ -923,6 +923,12 @@ public final class LoanProductDataValidator {
             final Long fundId = this.fromApiJsonHelper.extractLongNamed("fundId", element);
             baseDataValidator.reset().parameter("fundId").value(fundId).ignoreIfNull().integerGreaterThanZero();
         }
+        
+        if (this.fromApiJsonHelper.parameterExists(LoanProductConstants.canAutoAllocateOverpaymentsParameterName, element)) {
+            final Boolean canAutoAllocateOverpayments = this.fromApiJsonHelper.extractBooleanNamed(LoanProductConstants.canAutoAllocateOverpaymentsParameterName, element);
+            baseDataValidator.reset().parameter(LoanProductConstants.canAutoAllocateOverpaymentsParameterName).value(canAutoAllocateOverpayments).ignoreIfNull()
+                    .validateForBooleanValue();
+        }
 
         if (this.fromApiJsonHelper.parameterExists("includeInBorrowerCycle", element)) {
             final Boolean includeInBorrowerCycle = this.fromApiJsonHelper.extractBooleanNamed("includeInBorrowerCycle", element);
