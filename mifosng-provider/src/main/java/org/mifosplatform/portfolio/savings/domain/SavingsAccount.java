@@ -476,15 +476,22 @@ public class SavingsAccount extends AbstractPersistable<Long> {
                     }
 
                     SavingsAccountTransaction newPostingTransaction;
-                    if(interestEarnedToBePosted.isGreaterThanOrEqualTo(Money.zero(this.currency))) {
+                    if(interestEarnedToBePosted.isGreaterThan(Money.zero(this.currency))) {
                         newPostingTransaction = SavingsAccountTransaction.interestPosting(this, office(),
                                 interestPostingTransactionDate, interestEarnedToBePosted);
-                    } else {
+                        this.transactions.add(newPostingTransaction);
+                    } else  if(interestEarnedToBePosted.isEqualTo(Money.zero(this.currency))){
+
+                        // do not add interest with of value 0
+                    }
+                    else {
                         newPostingTransaction = SavingsAccountTransaction.overdraftInterest(this, office(), interestPostingTransactionDate,
                                 interestEarnedToBePostedForPeriod.negated());
+
+                        this.transactions.add(newPostingTransaction);
                     }
 
-                    this.transactions.add(newPostingTransaction);
+
                     recalucateDailyBalanceDetails = true;
 
                 } else {
@@ -497,14 +504,21 @@ public class SavingsAccount extends AbstractPersistable<Long> {
                     if (correctionRequired) {
                         postingTransaction.reverse();
                         SavingsAccountTransaction newPostingTransaction;
-                        if (interestEarnedToBePostedForPeriod.isGreaterThanOrEqualTo(Money.zero(currency))) {
+                        if (interestEarnedToBePostedForPeriod.isGreaterThan(Money.zero(currency))) {
                             newPostingTransaction = SavingsAccountTransaction.interestPosting(this, office(),
                                     interestPostingTransactionDate, interestEarnedToBePostedForPeriod);
-                        } else {
+                            this.transactions.add(newPostingTransaction);
+                        } else  if(interestEarnedToBePostedForPeriod.isEqualTo(Money.zero(this.currency))){
+
+                            // do not add interest with of value 0
+                        }
+
+                        else {
                             newPostingTransaction = SavingsAccountTransaction.overdraftInterest(this, office(),
                                     interestPostingTransactionDate, interestEarnedToBePostedForPeriod.negated());
+                            this.transactions.add(newPostingTransaction);
                         }
-                        this.transactions.add(newPostingTransaction);
+
                         recalucateDailyBalanceDetails = true;
                     }
                 }
