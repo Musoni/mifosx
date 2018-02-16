@@ -221,17 +221,24 @@ public class GuarantorDomainServiceImpl implements GuarantorDomainService {
         BigDecimal amoutForWithdraw = guarantorFundingDetails.getAmountRemaining();
         if (amoutForWithdraw.compareTo(BigDecimal.ZERO) == 1 && (guarantorFundingDetails.getStatus().isActive())) {
             SavingsAccount savingsAccount = guarantorFundingDetails.getLinkedSavingsAccount();
-            savingsAccount.releaseFunds(amoutForWithdraw);
-            DepositAccountOnHoldTransaction onHoldTransaction = DepositAccountOnHoldTransaction.release(savingsAccount, amoutForWithdraw,
-                    transactionDate);
-            GuarantorFundingTransaction guarantorFundingTransaction = new GuarantorFundingTransaction(guarantorFundingDetails, null,
-                    onHoldTransaction);
-            guarantorFundingDetails.addGuarantorFundingTransactions(guarantorFundingTransaction);
-            guarantorFundingDetails.releaseFunds(amoutForWithdraw);
-            guarantorFundingDetails.withdrawFunds(amoutForWithdraw);
-            guarantorFundingDetails.getLoanAccount().updateGuaranteeAmount(amoutForWithdraw.negate());
-            this.depositAccountOnHoldTransactionRepository.save(onHoldTransaction);
-            this.guarantorFundingRepository.save(guarantorFundingDetails);
+            if(guarantorFundingDetails.getLoanAccount().isNotSubmittedAndPendingApproval()){
+                savingsAccount.releaseFunds(amoutForWithdraw);
+                DepositAccountOnHoldTransaction onHoldTransaction = DepositAccountOnHoldTransaction.release(savingsAccount, amoutForWithdraw,
+                        transactionDate);
+                GuarantorFundingTransaction guarantorFundingTransaction = new GuarantorFundingTransaction(guarantorFundingDetails, null,
+                        onHoldTransaction);
+                guarantorFundingDetails.addGuarantorFundingTransactions(guarantorFundingTransaction);
+                guarantorFundingDetails.releaseFunds(amoutForWithdraw);
+                guarantorFundingDetails.withdrawFunds(amoutForWithdraw);
+                guarantorFundingDetails.getLoanAccount().updateGuaranteeAmount(amoutForWithdraw.negate());
+                this.depositAccountOnHoldTransactionRepository.save(onHoldTransaction);
+                this.guarantorFundingRepository.save(guarantorFundingDetails);
+            }else{
+                guarantorFundingDetails.releaseFunds(amoutForWithdraw);
+                guarantorFundingDetails.withdrawFunds(amoutForWithdraw);
+                this.guarantorFundingRepository.save(guarantorFundingDetails);
+            }
+
         }
     }
 
