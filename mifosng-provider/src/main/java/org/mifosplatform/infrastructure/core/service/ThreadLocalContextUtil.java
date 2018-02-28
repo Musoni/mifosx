@@ -58,6 +58,23 @@ public class ThreadLocalContextUtil {
     }
     
     /**
+     * Switches the data source to the tenants (`mifosplatform-tenants`) database
+     */
+    public static void switchToPrimaryDataSource() {
+        setDataSourceContext(CONTEXT_TENANTS);
+    }
+    
+    /**
+     * Switches the data source to the specified tenant's database (e.g. - mifostenant-default)
+     * 
+     * @param mifosPlatformTenant
+     */
+    public static void switchToTenantSpecificDataSource(final MifosPlatformTenant mifosPlatformTenant) {
+        setDataSourceContext(null);
+        setTenant(mifosPlatformTenant);
+    }
+    
+    /**
      * Creates a new boolean thread local variable
      * 
      * @param initialValue

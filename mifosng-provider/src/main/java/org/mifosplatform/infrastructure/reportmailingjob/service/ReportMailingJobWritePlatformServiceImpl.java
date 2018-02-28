@@ -48,6 +48,7 @@ import org.mifosplatform.infrastructure.reportmailingjob.domain.ReportMailingJob
 import org.mifosplatform.infrastructure.reportmailingjob.domain.ReportMailingJobStretchyReportParamDateOption;
 import org.mifosplatform.infrastructure.reportmailingjob.helper.IPv4Helper;
 import org.mifosplatform.infrastructure.reportmailingjob.helper.ReportMailingJobStretchyReportDateHelper;
+import org.mifosplatform.infrastructure.security.service.BasicAuthTenantDetailsService;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.portfolio.calendar.service.CalendarUtils;
 import org.mifosplatform.useradministration.domain.AppUser;
@@ -71,6 +72,7 @@ public class ReportMailingJobWritePlatformServiceImpl implements ReportMailingJo
     private final ReadReportingService readReportingService;
     private final ReportMailingJobRunHistoryRepository reportMailingJobRunHistoryRepository;
     private final static String DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
+    private final BasicAuthTenantDetailsService basicAuthTenantDetailsService;
     
     @Autowired
     public ReportMailingJobWritePlatformServiceImpl(final ReportRepositoryWrapper reportRepositoryWrapper, 
@@ -80,7 +82,8 @@ public class ReportMailingJobWritePlatformServiceImpl implements ReportMailingJo
             final PlatformSecurityContext platformSecurityContext, 
             final ReportMailingJobEmailService reportMailingJobEmailService,  
             final ReadReportingService readReportingService, 
-            final ReportMailingJobRunHistoryRepository reportMailingJobRunHistoryRepository) {
+            final ReportMailingJobRunHistoryRepository reportMailingJobRunHistoryRepository, 
+            final BasicAuthTenantDetailsService basicAuthTenantDetailsService) {
         this.reportRepositoryWrapper = reportRepositoryWrapper;
         this.reportMailingJobValidator = reportMailingJobValidator;
         this.reportMailingJobRepositoryWrapper = reportMailingJobRepositoryWrapper;
@@ -89,6 +92,7 @@ public class ReportMailingJobWritePlatformServiceImpl implements ReportMailingJo
         this.reportMailingJobEmailService = reportMailingJobEmailService;
         this.readReportingService = readReportingService;
         this.reportMailingJobRunHistoryRepository = reportMailingJobRunHistoryRepository;
+        this.basicAuthTenantDetailsService = basicAuthTenantDetailsService;
     }
 
     @Override
@@ -228,6 +232,32 @@ public class ReportMailingJobWritePlatformServiceImpl implements ReportMailingJo
         return new CommandProcessingResultBuilder().withEntityId(reportMailingJobId).build();
     }
     
+    /**
+     * Switches the database to the slave read only database
+     */
+    private void switchToReadOnlyDatabase() {
+        ThreadLocalContextUtil.switchToPrimaryDataSource();
+        
+        final String tenantIdentifier = ThreadLocalContextUtil.getTenant().getTenantIdentifier();
+        final MifosPlatformTenant platformTenant = this.basicAuthTenantDetailsService.loadTenantById(
+                tenantIdentifier, true);
+        
+        ThreadLocalContextUtil.switchToTenantSpecificDataSource(platformTenant);
+    }
+    
+    /**
+     * Switches the database to the master write database
+     */
+    private void switchToWriteDatabase() {
+        ThreadLocalContextUtil.switchToPrimaryDataSource();
+        
+        final String tenantIdentifier = ThreadLocalContextUtil.getTenant().getTenantIdentifier();
+        final MifosPlatformTenant platformTenant = this.basicAuthTenantDetailsService.loadTenantById(
+                tenantIdentifier, false);
+        
+        ThreadLocalContextUtil.switchToTenantSpecificDataSource(platformTenant);
+    }
+    
     @Override
     @CronTarget(jobName = JobName.EXECUTE_REPORT_MAILING_JOBS)
     public void executeReportMailingJobs() throws JobExecutionException {
@@ -295,6 +325,8 @@ public class ReportMailingJobWritePlatformServiceImpl implements ReportMailingJo
      **/
     private void updateReportMailingJobAfterJobExecution(final ReportMailingJob reportMailingJob, final StringBuilder errorLog, 
             final DateTime jobStartDateTime) {
+        this.switchToWriteDatabase();
+        
         final String recurrence = reportMailingJob.getRecurrence();
         final DateTime nextRunDateTime = reportMailingJob.getNextRunDateTime();
         ReportMailingJobPreviousRunStatus reportMailingJobPreviousRunStatus = ReportMailingJobPreviousRunStatus.SUCCESS;
@@ -409,6 +441,8 @@ public class ReportMailingJobWritePlatformServiceImpl implements ReportMailingJo
             final Map<String, String> reportParams, final String reportName, final StringBuilder errorLog) {
         
         try {
+            this.switchToReadOnlyDatabase();
+            
             final ByteArrayOutputStream byteArrayOutputStream = this.readReportingService.generatePentahoReportAsOutputStream(reportName, 
                     emailAttachmentFileFormat.getValue(), reportParams, null, reportMailingJob.getRunAsUser(), errorLog);
             final MifosPlatformTenant mifosPlatformTenant = ThreadLocalContextUtil.getTenant();
