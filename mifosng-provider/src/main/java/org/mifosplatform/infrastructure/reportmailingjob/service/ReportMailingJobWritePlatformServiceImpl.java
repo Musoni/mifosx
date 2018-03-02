@@ -18,6 +18,7 @@ import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeFieldType;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -143,30 +144,21 @@ public class ReportMailingJobWritePlatformServiceImpl implements ReportMailingJo
             // get the next run DateTime from the ReportMailingJob entity
             DateTime nextRunDateTime = reportMailingJob.getNextRunDateTime();
             
-            // check if the stretchy report id was updated
-            if (changes.containsKey(ReportMailingJobConstants.STRETCHY_REPORT_ID_PARAM_NAME)) {
-                final Long stretchyReportId = (Long) changes.get(ReportMailingJobConstants.STRETCHY_REPORT_ID_PARAM_NAME);
-                final Report stretchyReport = this.reportRepositoryWrapper.findOneThrowExceptionIfNotFound(stretchyReportId);
-                
-                // update the stretchy report
-                reportMailingJob.update(stretchyReport);
-            }
+            // get the start DateTime from the ReportMailingJob entity
+            DateTime startDateTime = reportMailingJob.getStartDateTime();
             
-            // check if the recurrence was updated
-            if (changes.containsKey(ReportMailingJobConstants.RECURRENCE_PARAM_NAME)) {
-                
+            if (!changes.isEmpty()) {
                 // go ahead if the recurrence is not null
                 if (StringUtils.isNotBlank(recurrence)) {
-                    // set the start DateTime to the current tenant date time
-                    DateTime startDateTime = DateUtils.getLocalDateTimeOfTenant().toDateTime();
+                    final DateTime currentDateTime = DateUtils.getLocalDateTimeOfTenant().toDateTime();
                     
-                    // check if the start DateTime was updated
-                    if (changes.containsKey(ReportMailingJobConstants.START_DATE_TIME_PARAM_NAME)) {
-                        // get the updated start DateTime
-                        startDateTime = reportMailingJob.getStartDateTime();
+                    if (currentDateTime != null && startDateTime != null) {
+                        final int currentYearIntValue = currentDateTime.get(DateTimeFieldType.year());
+                        final int currentMonthIntValue = currentDateTime.get(DateTimeFieldType.monthOfYear());
+                        final int currentDayIntValue = currentDateTime.get(DateTimeFieldType.dayOfMonth());
+                        
+                        startDateTime = startDateTime.withDate(currentYearIntValue, currentMonthIntValue, currentDayIntValue);
                     }
-                    
-                    startDateTime = reportMailingJob.getStartDateTime();
                     
                     // get the next recurring DateTime
                     final DateTime nextRecurringDateTime = this.createNextRecurringDateTime(recurrence, startDateTime);
@@ -175,30 +167,56 @@ public class ReportMailingJobWritePlatformServiceImpl implements ReportMailingJo
                     reportMailingJob.updateNextRunDateTime(nextRecurringDateTime);
                 }
                 
-                // check if the next run DateTime is not empty and the recurrence is empty
-                else if (StringUtils.isBlank(recurrence) && (nextRunDateTime != null)) {
-                    // the next run DateTime should be set to null
-                    reportMailingJob.updateNextRunDateTime(null);
-                }
-            }
-            
-            if (changes.containsKey(ReportMailingJobConstants.START_DATE_TIME_PARAM_NAME)) {
-                final DateTime startDateTime = reportMailingJob.getStartDateTime();
-                
-                // initially set the next recurring date time to the new start date time
-                DateTime nextRecurringDateTime = startDateTime;
-                
-                // ensure that the recurrence pattern string is not empty
-                if (StringUtils.isNotBlank(recurrence)) {
-                    // get the next recurring DateTime
-                    nextRecurringDateTime = this.createNextRecurringDateTime(recurrence, startDateTime);
+                // check if the stretchy report id was updated
+                if (changes.containsKey(ReportMailingJobConstants.STRETCHY_REPORT_ID_PARAM_NAME)) {
+                    final Long stretchyReportId = (Long) changes.get(ReportMailingJobConstants.STRETCHY_REPORT_ID_PARAM_NAME);
+                    final Report stretchyReport = this.reportRepositoryWrapper.findOneThrowExceptionIfNotFound(stretchyReportId);
+                    
+                    // update the stretchy report
+                    reportMailingJob.update(stretchyReport);
                 }
                 
-                // update the next run time property
-                reportMailingJob.updateNextRunDateTime(nextRecurringDateTime);
-            }
-            
-            if (!changes.isEmpty()) {
+                // check if the recurrence was updated
+                if (changes.containsKey(ReportMailingJobConstants.RECURRENCE_PARAM_NAME)) {
+                    
+                    // go ahead if the recurrence is not null
+                    if (StringUtils.isNotBlank(recurrence)) {
+                        // check if the start DateTime was updated
+                        if (changes.containsKey(ReportMailingJobConstants.START_DATE_TIME_PARAM_NAME)) {
+                            // get the updated start DateTime
+                            startDateTime = reportMailingJob.getStartDateTime();
+                        }
+                        
+                        // get the next recurring DateTime
+                        final DateTime nextRecurringDateTime = this.createNextRecurringDateTime(recurrence, startDateTime);
+                        
+                        // update the next run time property
+                        reportMailingJob.updateNextRunDateTime(nextRecurringDateTime);
+                    }
+                    
+                    // check if the next run DateTime is not empty and the recurrence is empty
+                    else if (StringUtils.isBlank(recurrence) && (nextRunDateTime != null)) {
+                        // the next run DateTime should be set to null
+                        reportMailingJob.updateNextRunDateTime(null);
+                    }
+                }
+                
+                if (changes.containsKey(ReportMailingJobConstants.START_DATE_TIME_PARAM_NAME)) {
+                    startDateTime = reportMailingJob.getStartDateTime();
+                    
+                    // initially set the next recurring date time to the new start date time
+                    DateTime nextRecurringDateTime = startDateTime;
+                    
+                    // ensure that the recurrence pattern string is not empty
+                    if (StringUtils.isNotBlank(recurrence)) {
+                        // get the next recurring DateTime
+                        nextRecurringDateTime = this.createNextRecurringDateTime(recurrence, startDateTime);
+                    }
+                    
+                    // update the next run time property
+                    reportMailingJob.updateNextRunDateTime(nextRecurringDateTime);
+                }
+                
                 // save and flush immediately so any data integrity exception can be handled in the "catch" block
                 this.reportMailingJobRepository.saveAndFlush(reportMailingJob);
             }
