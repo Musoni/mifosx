@@ -76,9 +76,8 @@ public class GLClosureJournalEntryBalanceWritePlatformServiceImp implements
                 // (GLClosureJournalEntryBalance entity already created and stored in the database)
                 Long[] processedGLAccountIds = new Long[journalEntriesData.size()];
                 int longArrayIndex = 0;
-                
-                final Map<Long, JournalEntryData> journalEntryDataMap = 
-                        this.getIncomeAndExpenseBookingJournalEntryDataMap(incomeAndExpenseBooking);
+
+                final Map<Long, JournalEntryData> journalEntryDataMap = new HashMap<>();
                 
                 for (GLClosureJournalEntryData journalEntryData : journalEntriesData) {
                     Long glAccountId = journalEntryData.getAccountId();
