@@ -20,8 +20,6 @@ import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeFieldType;
 import org.joda.time.LocalDate;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResultBuilder;
@@ -72,7 +70,6 @@ public class ReportMailingJobWritePlatformServiceImpl implements ReportMailingJo
     private final ReportMailingJobEmailService reportMailingJobEmailService;
     private final ReadReportingService readReportingService;
     private final ReportMailingJobRunHistoryRepository reportMailingJobRunHistoryRepository;
-    private final static String DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
     private final BasicAuthTenantDetailsService basicAuthTenantDetailsService;
     
     @Autowired
@@ -148,25 +145,6 @@ public class ReportMailingJobWritePlatformServiceImpl implements ReportMailingJo
             DateTime startDateTime = reportMailingJob.getStartDateTime();
             
             if (!changes.isEmpty()) {
-                // go ahead if the recurrence is not null
-                if (StringUtils.isNotBlank(recurrence)) {
-                    final DateTime currentDateTime = DateUtils.getLocalDateTimeOfTenant().toDateTime();
-                    
-                    if (currentDateTime != null && startDateTime != null) {
-                        final int currentYearIntValue = currentDateTime.get(DateTimeFieldType.year());
-                        final int currentMonthIntValue = currentDateTime.get(DateTimeFieldType.monthOfYear());
-                        final int currentDayIntValue = currentDateTime.get(DateTimeFieldType.dayOfMonth());
-                        
-                        startDateTime = startDateTime.withDate(currentYearIntValue, currentMonthIntValue, currentDayIntValue);
-                    }
-                    
-                    // get the next recurring DateTime
-                    final DateTime nextRecurringDateTime = this.createNextRecurringDateTime(recurrence, startDateTime);
-                    
-                    // update the next run time property
-                    reportMailingJob.updateNextRunDateTime(nextRecurringDateTime);
-                }
-                
                 // check if the stretchy report id was updated
                 if (changes.containsKey(ReportMailingJobConstants.STRETCHY_REPORT_ID_PARAM_NAME)) {
                     final Long stretchyReportId = (Long) changes.get(ReportMailingJobConstants.STRETCHY_REPORT_ID_PARAM_NAME);
@@ -276,44 +254,6 @@ public class ReportMailingJobWritePlatformServiceImpl implements ReportMailingJo
         ThreadLocalContextUtil.switchToTenantSpecificDataSource(platformTenant);
     }
     
-    /**
-     * Sets the next run date time to a future date or the tenant's current date time if the recurrence was not set
-     * 
-     * @param reportMailingJob
-     */
-    private void setNextRunDateTimeToFutureDate(final ReportMailingJob reportMailingJob) {
-        final DateTime currentDateTime = DateUtils.getLocalDateTimeOfTenant().toDateTime();
-        
-        // get the recurrence rule string
-        final String recurrence = reportMailingJob.getRecurrence();
-        
-        // set the next run date time to tenant's current date time
-        DateTime nextRunDateTime = currentDateTime;
-        
-        // go ahead if the recurrence is not null
-        if (StringUtils.isNotBlank(recurrence)) {
-            // get the start DateTime from the ReportMailingJob entity
-            DateTime startDateTime = reportMailingJob.getStartDateTime();
-            
-            if (currentDateTime != null && startDateTime != null) {
-                final int currentYearIntValue = currentDateTime.get(DateTimeFieldType.year());
-                final int currentMonthIntValue = currentDateTime.get(DateTimeFieldType.monthOfYear());
-                final int currentDayIntValue = currentDateTime.get(DateTimeFieldType.dayOfMonth());
-                
-                startDateTime = startDateTime.withDate(currentYearIntValue, currentMonthIntValue, currentDayIntValue);
-            }
-            
-            // get the next recurring DateTime
-            nextRunDateTime = this.createNextRecurringDateTime(recurrence, startDateTime);
-        }
-        
-        // update the next run time property
-        reportMailingJob.updateNextRunDateTime(nextRunDateTime);
-        
-        // save the report mailing job entity
-        this.reportMailingJobRepository.saveAndFlush(reportMailingJob);
-    }
-    
     @Override
     @CronTarget(jobName = JobName.EXECUTE_REPORT_MAILING_JOBS)
     public void executeReportMailingJobs() throws JobExecutionException {
@@ -327,14 +267,8 @@ public class ReportMailingJobWritePlatformServiceImpl implements ReportMailingJo
                 final DateTime nextRunDateTime = reportMailingJob.getNextRunDateTime();
                 
                 if (nextRunDateTime != null && reportMailingJob.isActive() && reportMailingJob.isNotDeleted()) {
-                    final LocalDate localDateOfTenant = localDateTimeOftenant.toLocalDate();
-                    final LocalDate nextRunDate = nextRunDateTime.toLocalDate();
                     
-                    if (nextRunDate.isBefore(localDateOfTenant)) {
-                        this.setNextRunDateTimeToFutureDate(reportMailingJob);
-                    }
-                    
-                    else if (nextRunDateTime.isBefore(localDateTimeOftenant) || nextRunDateTime.isEqual(localDateTimeOftenant)) {
+                    if (nextRunDateTime.isBefore(localDateTimeOftenant) || nextRunDateTime.isEqual(localDateTimeOftenant)) {
                         // get the emailAttachmentFileFormat enum object
                         final ReportMailingJobEmailAttachmentFileFormat emailAttachmentFileFormat = ReportMailingJobEmailAttachmentFileFormat.
                                 instance(reportMailingJob.getEmailAttachmentFileFormat());
@@ -394,7 +328,7 @@ public class ReportMailingJobWritePlatformServiceImpl implements ReportMailingJo
         this.switchToWriteDatabase();
         
         final String recurrence = reportMailingJob.getRecurrence();
-        final DateTime nextRunDateTime = reportMailingJob.getNextRunDateTime();
+        final DateTime startDateTime = reportMailingJob.getStartDateTime();
         ReportMailingJobPreviousRunStatus reportMailingJobPreviousRunStatus = ReportMailingJobPreviousRunStatus.SUCCESS;
         
         reportMailingJob.updatePreviousRunErrorLog(null);
@@ -417,8 +351,8 @@ public class ReportMailingJobWritePlatformServiceImpl implements ReportMailingJo
             reportMailingJob.updateNextRunDateTime(null);
         }
         
-        else if (nextRunDateTime != null) {
-            final DateTime nextRecurringDateTime = this.createNextRecurringDateTime(recurrence, nextRunDateTime);
+        else if (startDateTime != null) {
+            final DateTime nextRecurringDateTime = this.createNextRecurringDateTime(recurrence, startDateTime);
             
             // finally update the next run date time property
             reportMailingJob.updateNextRunDateTime(nextRecurringDateTime);
@@ -444,14 +378,15 @@ public class ReportMailingJobWritePlatformServiceImpl implements ReportMailingJo
         
         // the recurrence pattern/rule cannot be empty
         if (StringUtils.isNotBlank(recurrencePattern) && startDateTime != null) {
-            final LocalDate nextDayLocalDate = startDateTime.plus(1).toLocalDate();
+            final LocalDate currentDate = DateUtils.getLocalDateTimeOfTenant().toLocalDate();
+            // use the previous day as the start date for calculating the next run date
             final LocalDate nextRecurringLocalDate = CalendarUtils.getNextRecurringDate(recurrencePattern, startDateTime.toLocalDate(), 
-                    nextDayLocalDate);
-            final String nextDateTimeString = nextRecurringLocalDate + " " + startDateTime.getHourOfDay() + ":" + startDateTime.getMinuteOfHour() 
-                    + ":" + startDateTime.getSecondOfMinute();
-            final DateTimeFormatter dateTimeFormatter = DateTimeFormat.forPattern(DATETIME_FORMAT);
+                    currentDate.minusDays(1));
+            final int currentYearIntValue = nextRecurringLocalDate.get(DateTimeFieldType.year());
+            final int currentMonthIntValue = nextRecurringLocalDate.get(DateTimeFieldType.monthOfYear());
+            final int currentDayIntValue = nextRecurringLocalDate.get(DateTimeFieldType.dayOfMonth());
             
-            nextRecurringDateTime = DateTime.parse(nextDateTimeString, dateTimeFormatter);
+            nextRecurringDateTime = startDateTime.withDate(currentYearIntValue, currentMonthIntValue, currentDayIntValue);
         }
         
         return nextRecurringDateTime;
