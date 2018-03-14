@@ -360,7 +360,7 @@ public class ReportMailingJobWritePlatformServiceImpl implements ReportMailingJo
             LocalDate nextRecurringLocalDate = CalendarUtils.getNextRecurringDate(recurrencePattern, 
                     nextRunDate, nextRunDate);
             
-            if (nextRunDate.isBefore(currentDate)) {
+            if (nextRecurringLocalDate.isBefore(currentDate)) {
                 nextRecurringLocalDate = CalendarUtils.getNextRecurringDate(recurrencePattern, 
                         nextRunDate, currentDate);
             }
