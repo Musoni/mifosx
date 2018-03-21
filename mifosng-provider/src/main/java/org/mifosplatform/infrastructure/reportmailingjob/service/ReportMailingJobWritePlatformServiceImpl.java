@@ -166,7 +166,7 @@ public class ReportMailingJobWritePlatformServiceImpl implements ReportMailingJo
                         }
                         
                         // get the next recurring DateTime
-                        final DateTime nextRecurringDateTime = this.createNextRecurringDateTime(recurrence, startDateTime);
+                        final DateTime nextRecurringDateTime = this.createNextRecurringDateTime(reportMailingJob);
                         
                         // update the next run time property
                         reportMailingJob.updateNextRunDateTime(nextRecurringDateTime);
@@ -188,7 +188,7 @@ public class ReportMailingJobWritePlatformServiceImpl implements ReportMailingJo
                     // ensure that the recurrence pattern string is not empty
                     if (StringUtils.isNotBlank(recurrence)) {
                         // get the next recurring DateTime
-                        nextRecurringDateTime = this.createNextRecurringDateTime(recurrence, startDateTime);
+                        nextRecurringDateTime = this.createNextRecurringDateTime(reportMailingJob);
                     }
                     
                     // update the next run time property
@@ -226,32 +226,6 @@ public class ReportMailingJobWritePlatformServiceImpl implements ReportMailingJo
         this.reportMailingJobRepository.save(reportMailingJob);
         
         return new CommandProcessingResultBuilder().withEntityId(reportMailingJobId).build();
-    }
-    
-    /**
-     * Switches the database to the slave read only database
-     */
-    private void switchToReadOnlyDatabase() {
-        ThreadLocalContextUtil.switchToPrimaryDataSource();
-        
-        final String tenantIdentifier = ThreadLocalContextUtil.getTenant().getTenantIdentifier();
-        final MifosPlatformTenant platformTenant = this.basicAuthTenantDetailsService.loadTenantById(
-                tenantIdentifier, true);
-        
-        ThreadLocalContextUtil.switchToTenantSpecificDataSource(platformTenant);
-    }
-    
-    /**
-     * Switches the database to the master write database
-     */
-    private void switchToWriteDatabase() {
-        ThreadLocalContextUtil.switchToPrimaryDataSource();
-        
-        final String tenantIdentifier = ThreadLocalContextUtil.getTenant().getTenantIdentifier();
-        final MifosPlatformTenant platformTenant = this.basicAuthTenantDetailsService.loadTenantById(
-                tenantIdentifier, false);
-        
-        ThreadLocalContextUtil.switchToTenantSpecificDataSource(platformTenant);
     }
     
     @Override
@@ -328,7 +302,7 @@ public class ReportMailingJobWritePlatformServiceImpl implements ReportMailingJo
         this.switchToWriteDatabase();
         
         final String recurrence = reportMailingJob.getRecurrence();
-        final DateTime startDateTime = reportMailingJob.getStartDateTime();
+        final DateTime nextRunDateTime = reportMailingJob.getNextRunDateTime();
         ReportMailingJobPreviousRunStatus reportMailingJobPreviousRunStatus = ReportMailingJobPreviousRunStatus.SUCCESS;
         
         reportMailingJob.updatePreviousRunErrorLog(null);
@@ -351,8 +325,8 @@ public class ReportMailingJobWritePlatformServiceImpl implements ReportMailingJo
             reportMailingJob.updateNextRunDateTime(null);
         }
         
-        else if (startDateTime != null) {
-            final DateTime nextRecurringDateTime = this.createNextRecurringDateTime(recurrence, startDateTime);
+        else if (nextRunDateTime != null) {
+            final DateTime nextRecurringDateTime = this.createNextRecurringDateTime(reportMailingJob);
             
             // finally update the next run date time property
             reportMailingJob.updateNextRunDateTime(nextRecurringDateTime);
@@ -373,20 +347,31 @@ public class ReportMailingJobWritePlatformServiceImpl implements ReportMailingJo
      * @param startDateTime
      * @return DateTime object
      */
-    private DateTime createNextRecurringDateTime(final String recurrencePattern, final DateTime startDateTime) {
+    private DateTime createNextRecurringDateTime(final ReportMailingJob reportMailingJob) {
         DateTime nextRecurringDateTime = null;
+        final String recurrencePattern = reportMailingJob.getRecurrence();
+        final DateTime nextRunDateTime = reportMailingJob.getNextRunDateTime();
         
         // the recurrence pattern/rule cannot be empty
-        if (StringUtils.isNotBlank(recurrencePattern) && startDateTime != null) {
-            final LocalDate currentDate = DateUtils.getLocalDateTimeOfTenant().toLocalDate();
-            // use the previous day as the start date for calculating the next run date
-            final LocalDate nextRecurringLocalDate = CalendarUtils.getNextRecurringDate(recurrencePattern, startDateTime.toLocalDate(), 
-                    currentDate.minusDays(1));
+        if (StringUtils.isNotBlank(recurrencePattern) && nextRunDateTime != null) {
+            final LocalDate currentDate = DateUtils.getLocalDateOfTenant();
+            final LocalDate nextRunDate = nextRunDateTime.toLocalDate();
+            
+            LocalDate nextRecurringLocalDate = CalendarUtils.getNextRecurringDate(recurrencePattern, 
+                    nextRunDate, nextRunDate);
+            
+            if (nextRecurringLocalDate.isBefore(currentDate)) {
+                nextRecurringLocalDate = CalendarUtils.getNextRecurringDate(recurrencePattern, 
+                        nextRunDate, currentDate);
+            }
+            
+            // get the date fields
             final int currentYearIntValue = nextRecurringLocalDate.get(DateTimeFieldType.year());
             final int currentMonthIntValue = nextRecurringLocalDate.get(DateTimeFieldType.monthOfYear());
             final int currentDayIntValue = nextRecurringLocalDate.get(DateTimeFieldType.dayOfMonth());
             
-            nextRecurringDateTime = startDateTime.withDate(currentYearIntValue, currentMonthIntValue, currentDayIntValue);
+            // append the time of the previous next run date time
+            nextRecurringDateTime = nextRunDateTime.withDate(currentYearIntValue, currentMonthIntValue, currentDayIntValue);
         }
         
         return nextRecurringDateTime;
@@ -446,9 +431,9 @@ public class ReportMailingJobWritePlatformServiceImpl implements ReportMailingJo
             
             final ByteArrayOutputStream byteArrayOutputStream = this.readReportingService.generatePentahoReportAsOutputStream(reportName, 
                     emailAttachmentFileFormat.getValue(), reportParams, null, reportMailingJob.getRunAsUser(), errorLog);
-            final MifosPlatformTenant mifosPlatformTenant = ThreadLocalContextUtil.getTenant();
+            final MifosPlatformTenant platformTenant = ThreadLocalContextUtil.getTenant();
             final String fileLocation = FileSystemContentRepository.MIFOSX_BASE_DIR + File.separator + 
-            		mifosPlatformTenant.getTenantIdentifier() + File.separator + "reportmailingjob";
+                    platformTenant.getTenantIdentifier() + File.separator + "reportmailingjob";
             final String fileNameWithoutExtension = fileLocation + File.separator + reportName;
             
             // check if file directory exists, if not create directory
@@ -501,5 +486,31 @@ public class ReportMailingJobWritePlatformServiceImpl implements ReportMailingJo
             errorLog.append("The ReportMailingJobWritePlatformServiceImpl.executeReportMailingJobs threw an IOException "
                     + "exception: " + e.getMessage() + " ---------- ");
         }
+    }
+    
+    /**
+     * Switches the database to the slave read only database
+     */
+    private void switchToReadOnlyDatabase() {
+        ThreadLocalContextUtil.switchToPrimaryDataSource();
+        
+        final String tenantIdentifier = ThreadLocalContextUtil.getTenant().getTenantIdentifier();
+        final MifosPlatformTenant platformTenant = this.basicAuthTenantDetailsService.loadTenantById(
+                tenantIdentifier, true);
+        
+        ThreadLocalContextUtil.switchToTenantSpecificDataSource(platformTenant);
+    }
+    
+    /**
+     * Switches the database to the master write database
+     */
+    private void switchToWriteDatabase() {
+        ThreadLocalContextUtil.switchToPrimaryDataSource();
+        
+        final String tenantIdentifier = ThreadLocalContextUtil.getTenant().getTenantIdentifier();
+        final MifosPlatformTenant platformTenant = this.basicAuthTenantDetailsService.loadTenantById(
+                tenantIdentifier, false);
+        
+        ThreadLocalContextUtil.switchToTenantSpecificDataSource(platformTenant);
     }
 }
