@@ -92,9 +92,10 @@ public class XlsFileHelper {
             		if (columnValue != null) {
             			switch (mysqlDataType.getCategory()) {
 	            			case NUMERIC:
-								// TINYINT(1) is also treated as an alias for a BOOL in MySQL in certain versions of the JDBC connector, option tinyInt1isBit
+	            			    
+								// TINYINT(1), BIT(1), etc are also treated as an alias for a BOOL in MySQL in certain versions of the JDBC connector, option tinyInt1isBit
 								// See: http://stackoverflow.com/questions/16798744/why-does-tinyint1-function-as-a-boolean-but-int1-does-not/35488212#35488212
-								if(mysqlDataType.equals(MysqlDataType.TINYINT) && sqlRowSetMetaData.getPrecision(i) == 1 && (columnValue.equals("true") || columnValue.equals("false")))
+								if(sqlRowSetMetaData.getPrecision(i) == 1 && (columnValue.equals("true") || columnValue.equals("false")))
 								{
 									// Handle the cell as string, it is already a casted boolean:
 									cell.setCellType(Cell.CELL_TYPE_STRING);
