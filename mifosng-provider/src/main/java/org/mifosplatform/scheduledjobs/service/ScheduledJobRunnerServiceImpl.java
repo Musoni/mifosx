@@ -418,7 +418,21 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 
         for (final String endDate : endDates) {
 
-            this.runMetricReport(endDate);
+
+            final Set<String> metrics_reports = new HashSet<>(Arrays.asList("Dashboard principal disbursed",
+                    "Dashboard number of outstanding loans",
+                    "Dashboard principal outstanding",
+                    "Dashboard interest outstanding",
+                    "Dashboard PAR_1",
+                    "Dashboard PAR_30",
+                    "Dashboard PAR_90",
+                    "Dashboard Write off",
+                    "Dashboard Repayments",
+                    "Dashboard POLB"));
+
+            for (final String reportName : metrics_reports) {
+                this.runMetricReport(reportName, endDate);
+            }
         }
 
 
@@ -426,22 +440,10 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
         logger.info(ThreadLocalContextUtil.getTenant().getName() + ": Dashboard metrics updated : " );
     }
 
-    private  void runMetricReport(String endDate){
+    @Transactional
+    private  void runMetricReport(String reportName, String endDate) {
 
-        final Set<String> metrics_reports = new HashSet<>(Arrays.asList("Dashboard principal disbursed",
-                "Dashboard number of outstanding loans",
-                "Dashboard principal outstanding",
-                "Dashboard interest outstanding",
-                "Dashboard PAR_1",
-                "Dashboard PAR_30",
-                "Dashboard PAR_90",
-                "Dashboard Write off",
-                "Dashboard Repayments",
-                "Dashboard POLB"));
-
-        for (final String reportName : metrics_reports) {
             try {
-
                 // run the report to ge the metrics
                 final GenericResultsetData result = this.readExtraDataAndReportingService.runReportByScheduler(reportName,endDate);
 
@@ -479,7 +481,6 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
                     final DashboardMetrics newMetric = new DashboardMetrics(value,name,officeId,StaffId,monthYear);
 
                     this.dashboardMetricsRepository.saveAndFlush(newMetric);
-
 
                 }
 
