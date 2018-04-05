@@ -12,4 +12,7 @@ public interface DashboardMetricsRepository extends JpaRepository<DashboardMetri
 
     DashboardMetrics findByMetricNameAndMonthYearAndStaffIdAndOfficeId(final String metricName, final String monthYear, 
     		final Long staffId, final Long officeId);
+
+    Long deleteByMetricNameAndMonthYear(final String metricName, final String monthYear);
+
 }

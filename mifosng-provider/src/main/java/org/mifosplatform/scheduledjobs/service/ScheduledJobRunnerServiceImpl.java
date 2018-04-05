@@ -445,17 +445,24 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
                 // run the report to ge the metrics
                 final GenericResultsetData result = this.readExtraDataAndReportingService.runReportByScheduler(reportName,endDate);
 
+                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+                Date date = format.parse(endDate);
+                Calendar c = Calendar.getInstance();
+                c.setTime(date);
+                c.set(Calendar.DAY_OF_MONTH, 1);
+                String firstDayOfMonth = format.format(c.getTime());
+                logger.info("Removing data for report  : " + reportName + " on date: " + firstDayOfMonth);
+
+
+                // Remove old date:
+                this.dashboardMetricsRepository.deleteByMetricNameAndMonthYear(reportName,firstDayOfMonth);
+
                 final List<ResultsetColumnHeaderData> columnHeaders = result.getColumnHeaders();
                 final List<ResultsetRowData> data = result.getData();
 
                 List<String> row;
 
-                logger.info("NO. of Columns: " + columnHeaders.size());
                 final Integer chSize = columnHeaders.size();
-
-
-                logger.info("NO. of Rows: " + data.size());
-
                 for (int i = 0; i < data.size(); i++) {
                     row = data.get(i).getRow();
 
@@ -467,19 +474,7 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
 
                     final DashboardMetrics newMetric = new DashboardMetrics(value,name,officeId,StaffId,monthYear);
 
-                    DashboardMetrics oldMetric = this.dashboardMetricsRepository.
-                    		findByMetricNameAndMonthYearAndStaffIdAndOfficeId(name, monthYear, StaffId, officeId);
-
-                    if(oldMetric!=null){
-
-                        oldMetric.setMetricValue(value);
-                        this.dashboardMetricsRepository.saveAndFlush(oldMetric);
-
-                    }else{
-
-                        this.dashboardMetricsRepository.saveAndFlush(newMetric);
-                    }
-
+                    this.dashboardMetricsRepository.saveAndFlush(newMetric);
 
 
                 }
