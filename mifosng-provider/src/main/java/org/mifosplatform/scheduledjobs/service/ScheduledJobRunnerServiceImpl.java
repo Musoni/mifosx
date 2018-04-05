@@ -445,24 +445,28 @@ public class ScheduledJobRunnerServiceImpl implements ScheduledJobRunnerService 
                 // run the report to ge the metrics
                 final GenericResultsetData result = this.readExtraDataAndReportingService.runReportByScheduler(reportName,endDate);
 
-                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-                Date date = format.parse(endDate);
-                Calendar c = Calendar.getInstance();
-                c.setTime(date);
-                c.set(Calendar.DAY_OF_MONTH, 1);
-                String firstDayOfMonth = format.format(c.getTime());
-                logger.info("Removing data for report  : " + reportName + " on date: " + firstDayOfMonth);
-
-
-                // Remove old date:
-                this.dashboardMetricsRepository.deleteByMetricNameAndMonthYear(reportName,firstDayOfMonth);
-
                 final List<ResultsetColumnHeaderData> columnHeaders = result.getColumnHeaders();
                 final List<ResultsetRowData> data = result.getData();
 
                 List<String> row;
 
                 final Integer chSize = columnHeaders.size();
+
+                // Calculate the Date
+                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+                Date date = format.parse(endDate);
+                Calendar c = Calendar.getInstance();
+                c.setTime(date);
+                c.set(Calendar.DAY_OF_MONTH, 1);
+                String firstDayOfMonth = format.format(c.getTime());
+
+                // Find the name of the report:
+                final String metricName = columnHeaders.get(0).getColumnName();
+
+                // Remove old date:
+                this.dashboardMetricsRepository.deleteByMetricNameAndMonthYear(metricName,firstDayOfMonth);
+                logger.info("Removing data for report  : " + metricName + " on date: " + firstDayOfMonth);
+
                 for (int i = 0; i < data.size(); i++) {
                     row = data.get(i).getRow();
 
